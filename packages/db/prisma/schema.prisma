@@ -25,6 +25,31 @@ enum RoleKey {
   CUSTOMER
 }
 
+enum ContentStatus {
+  DRAFT
+  REVIEW
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum DestinationKind {
+  CITY
+  TEMPLE
+  NATURE
+  HERITAGE
+  REGION
+}
+
+enum FaqScope {
+  GENERAL
+  BOOKING
+  PRICING
+  CANCELLATION
+  VEHICLES
+  PACKAGES
+}
+
 model User {
   id              String      @id @default(cuid())
   email           String      @unique
@@ -103,4 +128,173 @@ model AuditLog {
   @@index([actorUserId, createdAt])
   @@index([entityType, entityId])
   @@index([createdAt])
+}
+
+model MediaAsset {
+  id              String   @id @default(cuid())
+  storageProvider String
+  bucket          String?
+  objectKey       String   @unique
+  publicUrl       String?
+  mimeType        String
+  byteSize        BigInt?
+  width           Int?
+  height          Int?
+  altText         String?
+  caption         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  cmsPageHeroes    CmsPage[]     @relation("CmsPageHero")
+  destinationHero Destination[]   @relation("DestinationHero")
+  blogPostHeroes  BlogPost[]     @relation("BlogPostHero")
+
+  @@index([mimeType])
+  @@index([createdAt])
+}
+
+model CmsPage {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  title          String
+  excerpt        String?
+  body           Json
+  status         ContentStatus @default(DRAFT)
+  publishedAt    DateTime?
+  scheduledFor   DateTime?
+  heroMediaId    String?
+  seoTitle       String?
+  seoDescription String?
+  canonicalUrl   String?
+  robotsIndex    Boolean       @default(true)
+  robotsFollow   Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  heroMedia MediaAsset? @relation("CmsPageHero", fields: [heroMediaId], references: [id], onDelete: SetNull)
+
+  @@index([status, publishedAt])
+  @@index([scheduledFor])
+}
+
+model Destination {
+  id             String          @id @default(cuid())
+  slug           String          @unique
+  name           String
+  kind           DestinationKind
+  summary        String?
+  body           Json
+  status         ContentStatus   @default(DRAFT)
+  isFeatured     Boolean         @default(false)
+  publishedAt    DateTime?
+  scheduledFor   DateTime?
+  heroMediaId    String?
+  seoTitle       String?
+  seoDescription String?
+  canonicalUrl   String?
+  robotsIndex    Boolean         @default(true)
+  robotsFollow   Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  heroMedia     MediaAsset?    @relation("DestinationHero", fields: [heroMediaId], references: [id], onDelete: SetNull)
+  templeProfile TempleProfile?
+
+  @@index([kind, status, publishedAt])
+  @@index([isFeatured, status])
+  @@index([scheduledFor])
+}
+
+model TempleProfile {
+  id             String      @id @default(cuid())
+  destinationId  String      @unique
+  templeName     String
+  deity          String?
+  darshanNotes   String?
+  dressCode      String?
+  openingHours   Json?
+  nearbyPlaces   Json?
+  practicalNotes Json?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  destination Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+}
+
+model BlogCategory {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  name        String
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  posts       BlogPost[]
+}
+
+model BlogPost {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  title          String
+  excerpt        String?
+  body           Json
+  status         ContentStatus @default(DRAFT)
+  categoryId     String?
+  heroMediaId    String?
+  publishedAt    DateTime?
+  scheduledFor   DateTime?
+  seoTitle       String?
+  seoDescription String?
+  canonicalUrl   String?
+  robotsIndex    Boolean       @default(true)
+  robotsFollow   Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  category  BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  heroMedia MediaAsset?   @relation("BlogPostHero", fields: [heroMediaId], references: [id], onDelete: SetNull)
+
+  @@index([status, publishedAt])
+  @@index([categoryId, status])
+  @@index([scheduledFor])
+}
+
+model Faq {
+  id           String        @id @default(cuid())
+  scope        FaqScope      @default(GENERAL)
+  question     String
+  answer       String
+  sortOrder    Int           @default(0)
+  status       ContentStatus @default(DRAFT)
+  publishedAt  DateTime?
+  scheduledFor DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([scope, status, sortOrder])
+  @@index([scheduledFor])
+}
+
+model ContentRevision {
+  id         BigInt   @id @default(autoincrement())
+  entityType String
+  entityId   String
+  version    Int
+  payload    Json
+  createdBy  String?
+  createdAt  DateTime @default(now())
+
+  @@unique([entityType, entityId, version])
+  @@index([entityType, entityId, createdAt])
+}
+
+model SeoRedirect {
+  id              String   @id @default(cuid())
+  sourcePath      String   @unique
+  destinationPath String
+  statusCode      Int      @default(301)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([isActive])
 }
