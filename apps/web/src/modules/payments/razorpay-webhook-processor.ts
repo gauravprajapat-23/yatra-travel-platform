@@ -91,6 +91,62 @@ async function confirmBookingFromPayment(
   }
 }
 
+async function markBookingRefunded(
+  tx: Prisma.TransactionClient,
+  intent: {
+    carBookingId: string | null;
+    packageBookingId: string | null;
+  },
+) {
+  if (intent.carBookingId) {
+    const booking = await tx.carBooking.findUnique({
+      where: { id: intent.carBookingId },
+      select: { id: true, status: true },
+    });
+
+    if (booking?.status === "REFUND_PENDING") {
+      await tx.carBooking.update({
+        where: { id: booking.id },
+        data: {
+          status: "REFUNDED",
+          statusHistory: {
+            create: {
+              fromStatus: "REFUND_PENDING",
+              toStatus: "REFUNDED",
+              reason: "Full refund processed from verified Razorpay webhook.",
+            },
+          },
+        },
+      });
+    }
+
+    return;
+  }
+
+  if (intent.packageBookingId) {
+    const booking = await tx.packageBooking.findUnique({
+      where: { id: intent.packageBookingId },
+      select: { id: true, status: true },
+    });
+
+    if (booking?.status === "REFUND_PENDING") {
+      await tx.packageBooking.update({
+        where: { id: booking.id },
+        data: {
+          status: "REFUNDED",
+          statusHistory: {
+            create: {
+              fromStatus: "REFUND_PENDING",
+              toStatus: "REFUNDED",
+              reason: "Full refund processed from verified Razorpay webhook.",
+            },
+          },
+        },
+      });
+    }
+  }
+}
+
 async function processPaymentEvent(
   eventType: string,
   payload: unknown,
@@ -243,15 +299,21 @@ async function processRefundEvent(
 
       const refundedMinor = processed._sum.amountMinor ?? 0n;
 
+      const fullyRefunded =
+        refundedMinor >= paymentIntent.amountPaidMinor;
+
       await tx.paymentIntent.update({
         where: { id: paymentIntent.id },
         data: {
-          status:
-            refundedMinor >= paymentIntent.amountPaidMinor
-              ? "REFUNDED"
-              : "PARTIALLY_REFUNDED",
+          status: fullyRefunded
+            ? "REFUNDED"
+            : "PARTIALLY_REFUNDED",
         },
       });
+
+      if (fullyRefunded) {
+        await markBookingRefunded(tx, paymentIntent);
+      }
     });
   } else if (eventType === "refund.failed") {
     await db.refund.update({
