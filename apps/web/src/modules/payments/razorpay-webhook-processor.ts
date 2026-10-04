@@ -329,15 +329,19 @@ export async function processRazorpayWebhookEvent(input: {
   webhookEventId: bigint;
   eventType: string;
   payload: unknown;
-}) {
+}): Promise<{ processed: boolean; error: string | null }> {
   const db = getDb();
 
   const event = await db.paymentWebhookEvent.findUnique({
     where: { id: input.webhookEventId },
   });
 
-  if (!event || event.processedAt) {
-    return;
+  if (!event) {
+    return { processed: false, error: "webhook event not found" };
+  }
+
+  if (event.processedAt) {
+    return { processed: true, error: null };
   }
 
   let processingError: string | null = null;
@@ -368,9 +372,19 @@ export async function processRazorpayWebhookEvent(input: {
 
   await db.paymentWebhookEvent.update({
     where: { id: input.webhookEventId },
-    data: {
-      processedAt: new Date(),
-      processingError,
-    },
+    data: processingError
+      ? {
+          processedAt: null,
+          processingError,
+        }
+      : {
+          processedAt: new Date(),
+          processingError: null,
+        },
   });
+
+  return {
+    processed: processingError === null,
+    error: processingError,
+  };
 }
