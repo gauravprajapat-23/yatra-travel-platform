@@ -18,6 +18,7 @@ jobs:
       DATABASE_URL: postgresql://ci_user:ci_password@localhost:5432/yatra_ci
       NEXT_PUBLIC_APP_URL: https://example.com
       BOOKING_WRITE_ENABLED: "false"
+      PACKAGE_BOOKING_WRITE_ENABLED: "false"
 
     steps:
       - name: Checkout
@@ -46,8 +47,14 @@ jobs:
       - name: Typecheck Domain
         run: npm run typecheck:domain
 
+      - name: Typecheck Providers
+        run: npm run typecheck:providers
+
       - name: Domain tests
         run: npm run test:domain
+
+      - name: Provider tests
+        run: npm run test:providers
 
       - name: Production build
         run: npm run build
