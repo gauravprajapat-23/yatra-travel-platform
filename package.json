@@ -1,0 +1,19 @@
+{
+  "name": "yatra-travel-platform",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.13.0 <25"
+  },
+  "scripts": {
+    "dev": "npm run dev -w @yatra/web",
+    "build": "npm run build -w @yatra/web",
+    "lint": "npm run lint -w @yatra/web",
+    "typecheck": "npm run typecheck -w @yatra/web",
+    "check": "npm run lint && npm run typecheck && npm run build"
+  }
+}
