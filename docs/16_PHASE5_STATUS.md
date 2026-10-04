@@ -1,6 +1,6 @@
 # Phase 5 — Car Booking Flow Status
 
-Status: IN PROGRESS
+Status: FOUNDATION CERTIFIED — WRITE API BLOCKED ON BOOKING POLICY CONFIGURATION
 
 ## Implemented
 - [x] BookingStatus enum
@@ -18,13 +18,27 @@ Status: IN PROGRESS
 - [x] Guest identity domain policy
 - [x] Versioned migration
 - [x] Live booking foundation verifier
+- [x] Prisma schema validation
+- [x] Live Neon migration
+- [x] Live booking verification
+- [x] Domain typecheck
+- [x] Production build
 
-## Certification pending
-- [ ] Prisma schema validation
-- [ ] Live Neon migration
-- [ ] Live booking verification
-- [ ] Domain typecheck
-- [ ] Production build
-- [ ] Booking write API/service
+## Certification evidence
+- Neon Migration Verify run: 37212637415 — PASS
+- Phase 1-2 CI run: 37212665090 — PASS
+
+## Deliberately blocked before public write API
+The booking service/API will not be enabled until a server-side booking policy source exists for:
+- cancellation terms
+- refund eligibility rules
+- policy version identifier
+- any material booking terms that must be snapshotted
+
+The browser must never submit authoritative policy or monetary rules.
+
+## Remaining Phase 5 work after policy configuration
+- [ ] Booking write service/API
 - [ ] Idempotency integration test
 - [ ] Status transition integration test
+- [ ] Assignment conflict integration test
