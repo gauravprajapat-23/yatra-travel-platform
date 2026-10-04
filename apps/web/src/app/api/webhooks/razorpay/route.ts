@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { getDb } from "@yatra/db/client";
 import { verifyRazorpayWebhookSignature } from "@yatra/providers/payments/razorpay-signature";
 import { NextResponse } from "next/server";
+import { processRazorpayWebhookEvent } from "@/modules/payments/razorpay-webhook-processor";
 
 export const dynamic = "force-dynamic";
 
@@ -74,7 +75,7 @@ export async function POST(request: Request) {
   const db = getDb();
 
   try {
-    await db.paymentWebhookEvent.create({
+    const event = await db.paymentWebhookEvent.create({
       data: {
         provider: "RAZORPAY",
         dedupeKey: eventKey,
@@ -82,6 +83,12 @@ export async function POST(request: Request) {
         payload: JSON.parse(rawBody),
         signatureVerifiedAt: new Date(),
       },
+    });
+
+    await processRazorpayWebhookEvent({
+      webhookEventId: event.id,
+      eventType,
+      payload,
     });
   } catch (error) {
     if (
