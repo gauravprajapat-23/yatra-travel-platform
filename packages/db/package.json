@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    "./client": "./src/client.ts"
+  },
   "scripts": {
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
@@ -14,7 +17,8 @@
     "db:verify:auth": "node scripts/verify-auth-foundation.mjs",
     "db:verify:cms": "node scripts/verify-cms-foundation.mjs",
     "db:verify:fleet": "node scripts/verify-fleet-pricing-foundation.mjs",
-    "db:verify:booking": "node scripts/verify-car-booking-foundation.mjs"
+    "db:verify:booking": "node scripts/verify-car-booking-foundation.mjs",
+    "db:verify:booking-policy": "node scripts/verify-booking-policy-foundation.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
