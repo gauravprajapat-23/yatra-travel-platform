@@ -71,5 +71,8 @@ jobs:
       - name: Verify booking database invariants
         run: npm run db:verify:booking-invariants -w @yatra/db
 
+      - name: Verify package booking foundation
+        run: npm run db:verify:package-booking -w @yatra/db
+
       - name: Verify migration status
         run: npm run db:migrate:status -w @yatra/db
