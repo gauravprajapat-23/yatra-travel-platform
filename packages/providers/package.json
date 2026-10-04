@@ -10,7 +10,8 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/**/*.test.ts"
+    "test": "tsx --test src/**/*.test.ts",
+    "verify:razorpay": "node scripts/verify-razorpay-connectivity.mjs"
   },
   "devDependencies": {
     "@types/node": "^24",
