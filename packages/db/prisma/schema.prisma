@@ -83,6 +83,21 @@ enum PricingBasis {
   QUOTE_ONLY
 }
 
+enum BookingStatus {
+  DRAFT
+  PENDING_PAYMENT
+  PENDING_REVIEW
+  CONFIRMED
+  DRIVER_ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  EXPIRED
+  FAILED
+  REFUND_PENDING
+  REFUNDED
+}
+
 model User {
   id              String      @id @default(cuid())
   email           String      @unique
@@ -99,6 +114,8 @@ model User {
   assignedRoles   UserRole[]  @relation("AssignedRoles")
   sessions        Session[]
   auditLogs       AuditLog[]  @relation("AuditActor")
+  carBookings     CarBooking[] @relation("CustomerBookings")
+  bookingChanges  BookingStatusHistory[] @relation("BookingStatusActor")
 
   @@index([status])
   @@index([createdAt])
@@ -349,6 +366,8 @@ model VehicleClass {
   vehicles             Vehicle[]
   pricingRules         PricingRule[]
   driverQualifications DriverVehicleClass[]
+  quotes               CarQuote[]
+  bookings             CarBooking[]
 
   @@index([isActive, sortOrder])
 }
@@ -372,6 +391,7 @@ model Vehicle {
   vehicleClass VehicleClass               @relation(fields: [vehicleClassId], references: [id], onDelete: Restrict)
   media        VehicleMedia[]
   availability VehicleAvailabilityBlock[]
+  bookings     CarBooking[] @relation("AssignedVehicleBookings")
 
   @@index([vehicleClassId, status])
   @@index([isFeatured, status])
@@ -405,6 +425,7 @@ model Driver {
 
   qualifications DriverVehicleClass[]
   availability   DriverAvailabilityBlock[]
+  bookings       CarBooking[] @relation("AssignedDriverBookings")
 
   @@index([status])
   @@index([licenseExpiry])
@@ -470,8 +491,105 @@ model PricingRule {
   updatedAt                  DateTime          @updatedAt
 
   vehicleClass VehicleClass @relation(fields: [vehicleClassId], references: [id], onDelete: Restrict)
+  quotes       CarQuote[]
+  bookings     CarBooking[]
 
   @@index([vehicleClassId, tripType, status, priority])
   @@index([originKey, destinationKey])
   @@index([activeFrom, activeTo])
+}
+
+
+model CarQuote {
+  id              String   @id @default(cuid())
+  tripType        TripType
+  originText      String
+  destinationText String
+  startsAt        DateTime
+  endsAt          DateTime?
+  travellers      Int
+  vehicleClassId  String
+  pricingRuleId   String?
+  currency        String   @default("INR")
+  subtotalMinor   BigInt
+  discountMinor   BigInt   @default(0)
+  taxMinor        BigInt   @default(0)
+  totalMinor      BigInt
+  priceBreakdown  Json
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+
+  vehicleClass VehicleClass @relation(fields: [vehicleClassId], references: [id], onDelete: Restrict)
+  pricingRule  PricingRule? @relation(fields: [pricingRuleId], references: [id], onDelete: SetNull)
+  booking      CarBooking?
+
+  @@index([vehicleClassId, startsAt])
+  @@index([tripType])
+  @@index([expiresAt])
+}
+
+model CarBooking {
+  id                   String        @id @default(cuid())
+  reference            String        @unique
+  quoteId              String?       @unique
+  idempotencyKey       String        @unique
+  status               BookingStatus @default(DRAFT)
+  tripType             TripType
+  originText           String
+  destinationText      String
+  startsAt             DateTime
+  endsAt               DateTime?
+  travellers           Int
+  customerUserId       String?
+  guestName            String?
+  guestEmail           String?
+  guestPhoneCiphertext String?
+  vehicleClassId       String
+  selectedVehicleId    String?
+  assignedDriverId     String?
+  pricingRuleId        String?
+  currency             String        @default("INR")
+  subtotalMinor        BigInt
+  discountMinor        BigInt        @default(0)
+  taxMinor             BigInt        @default(0)
+  totalMinor           BigInt
+  priceSnapshot        Json
+  policySnapshot       Json
+  expiresAt            DateTime?
+  confirmedAt          DateTime?
+  completedAt          DateTime?
+  cancelledAt          DateTime?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  quote           CarQuote?     @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  customer        User?         @relation("CustomerBookings", fields: [customerUserId], references: [id], onDelete: SetNull)
+  vehicleClass    VehicleClass  @relation(fields: [vehicleClassId], references: [id], onDelete: Restrict)
+  selectedVehicle Vehicle?      @relation("AssignedVehicleBookings", fields: [selectedVehicleId], references: [id], onDelete: SetNull)
+  assignedDriver  Driver?       @relation("AssignedDriverBookings", fields: [assignedDriverId], references: [id], onDelete: SetNull)
+  pricingRule     PricingRule?  @relation(fields: [pricingRuleId], references: [id], onDelete: SetNull)
+  statusHistory   BookingStatusHistory[]
+
+  @@index([status, startsAt])
+  @@index([customerUserId, createdAt])
+  @@index([selectedVehicleId, startsAt])
+  @@index([assignedDriverId, startsAt])
+  @@index([vehicleClassId, startsAt])
+}
+
+model BookingStatusHistory {
+  id          BigInt        @id @default(autoincrement())
+  bookingId   String
+  fromStatus  BookingStatus?
+  toStatus    BookingStatus
+  actorUserId String?
+  reason      String?
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+
+  booking CarBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  actor   User?      @relation("BookingStatusActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId, createdAt])
+  @@index([actorUserId, createdAt])
 }
