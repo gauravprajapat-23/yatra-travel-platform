@@ -5,9 +5,13 @@ import {
   canTransitionBooking,
 } from "./status-machine";
 
-test("booking status machine allows the main lifecycle", () => {
+test("booking status machine allows the reviewed payment lifecycle", () => {
   assert.equal(canTransitionBooking("DRAFT", "PENDING_REVIEW"), true);
-  assert.equal(canTransitionBooking("PENDING_REVIEW", "CONFIRMED"), true);
+  assert.equal(
+    canTransitionBooking("PENDING_REVIEW", "PENDING_PAYMENT"),
+    true,
+  );
+  assert.equal(canTransitionBooking("PENDING_PAYMENT", "CONFIRMED"), true);
   assert.equal(canTransitionBooking("CONFIRMED", "DRIVER_ASSIGNED"), true);
   assert.equal(canTransitionBooking("DRIVER_ASSIGNED", "IN_PROGRESS"), true);
   assert.equal(canTransitionBooking("IN_PROGRESS", "COMPLETED"), true);
