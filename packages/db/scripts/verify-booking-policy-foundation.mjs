@@ -48,6 +48,9 @@ try {
     "BookingPolicyVersion_version_check",
     "BookingPolicyVersion_code_check",
     "BookingPolicyVersion_effective_range_check",
+    "BookingPolicyVersion_document_object_check",
+    "BookingPolicyVersion_activation_timestamp_check",
+    "BookingPolicyVersion_retirement_timestamp_check",
   ]) {
     if (!constraints.has(expected)) {
       throw new Error(`Missing booking policy constraint: ${expected}`);
@@ -72,6 +75,21 @@ try {
     if (!indexes.has(expected)) {
       throw new Error(`Missing booking policy index: ${expected}`);
     }
+  }
+
+  const triggerResult = await client.query(
+    `
+      SELECT tgname
+      FROM pg_trigger
+      WHERE tgrelid = '"BookingPolicyVersion"'::regclass
+        AND NOT tgisinternal
+    `,
+  );
+
+  const triggers = new Set(triggerResult.rows.map((row) => row.tgname));
+
+  if (!triggers.has("BookingPolicyVersion_immutability_trigger")) {
+    throw new Error("Booking policy immutability trigger is missing.");
   }
 
   const bookingColumns = await client.query(
