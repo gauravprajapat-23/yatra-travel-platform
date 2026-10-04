@@ -1,4 +1,4 @@
-name: Phase 1 CI
+name: Phase 1-2 CI
 
 on:
   push:
@@ -14,6 +14,9 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      DATABASE_URL: postgresql://ci_user:ci_password@localhost:5432/yatra_ci
+      NEXT_PUBLIC_APP_URL: https://example.com
 
     steps:
       - name: Checkout
@@ -27,13 +30,20 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Generate Prisma Client
+        run: npm run db:generate
+
+      - name: Validate Prisma Schema
+        run: npm run db:validate
+
       - name: Lint
         run: npm run lint
 
-      - name: Typecheck
+      - name: Typecheck Web
         run: npm run typecheck
 
+      - name: Typecheck Domain
+        run: npm run typecheck:domain
+
       - name: Production build
-        env:
-          NEXT_PUBLIC_APP_URL: https://example.com
         run: npm run build
