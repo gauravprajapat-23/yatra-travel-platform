@@ -104,6 +104,13 @@ enum BookingPolicyStatus {
   RETIRED
 }
 
+enum PackagePriceMode {
+  PER_PERSON
+  PER_VEHICLE
+  PER_GROUP
+  FIXED
+}
+
 model User {
   id              String      @id @default(cuid())
   email           String      @unique
@@ -122,6 +129,7 @@ model User {
   auditLogs       AuditLog[]  @relation("AuditActor")
   carBookings     CarBooking[] @relation("CustomerBookings")
   bookingChanges  BookingStatusHistory[] @relation("BookingStatusActor")
+  packageBookings PackageBooking[] @relation("CustomerPackageBookings")
 
   @@index([status])
   @@index([createdAt])
@@ -205,6 +213,7 @@ model MediaAsset {
   destinationHero Destination[]   @relation("DestinationHero")
   blogPostHeroes  BlogPost[]     @relation("BlogPostHero")
   vehicleMedia    VehicleMedia[]
+  packageHeroes   TourPackage[] @relation("PackageHero")
 
   @@index([mimeType])
   @@index([createdAt])
@@ -256,6 +265,7 @@ model Destination {
 
   heroMedia     MediaAsset?    @relation("DestinationHero", fields: [heroMediaId], references: [id], onDelete: SetNull)
   templeProfile TempleProfile?
+  packageLinks   PackageDestination[]
 
   @@index([kind, status, publishedAt])
   @@index([isFeatured, status])
@@ -374,6 +384,7 @@ model VehicleClass {
   driverQualifications DriverVehicleClass[]
   quotes               CarQuote[]
   bookings             CarBooking[]
+  packagePriceOptions  PackagePriceOption[]
 
   @@index([isActive, sortOrder])
 }
@@ -619,8 +630,159 @@ model BookingPolicyVersion {
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 
-  bookings CarBooking[]
+  bookings        CarBooking[]
+  packageBookings PackageBooking[]
 
   @@unique([code, version])
   @@index([code, status, effectiveFrom, effectiveTo])
+}
+
+
+model TourPackage {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  title          String
+  summary        String?
+  body           Json
+  status         ContentStatus @default(DRAFT)
+  durationDays   Int
+  durationNights Int
+  heroMediaId    String?
+  publishedAt    DateTime?
+  scheduledFor   DateTime?
+  seoTitle       String?
+  seoDescription String?
+  canonicalUrl   String?
+  robotsIndex    Boolean       @default(true)
+  robotsFollow   Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  heroMedia      MediaAsset?          @relation("PackageHero", fields: [heroMediaId], references: [id], onDelete: SetNull)
+  destinations   PackageDestination[]
+  itinerary      PackageItineraryDay[]
+  priceOptions   PackagePriceOption[]
+  quotes         PackageQuote[]
+  bookings       PackageBooking[]
+
+  @@index([status, publishedAt])
+  @@index([scheduledFor])
+}
+
+model PackageDestination {
+  packageId     String
+  destinationId String
+  sortOrder     Int @default(0)
+
+  package     TourPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  destination Destination @relation(fields: [destinationId], references: [id], onDelete: Restrict)
+
+  @@id([packageId, destinationId])
+  @@index([destinationId])
+}
+
+model PackageItineraryDay {
+  id          String @id @default(cuid())
+  packageId   String
+  dayNumber   Int
+  title       String
+  description String?
+  body        Json?
+
+  package TourPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@unique([packageId, dayNumber])
+  @@index([packageId, dayNumber])
+}
+
+model PackagePriceOption {
+  id             String           @id @default(cuid())
+  packageId      String
+  mode           PackagePriceMode
+  currency       String           @default("INR")
+  amountMinor    BigInt
+  vehicleClassId String?
+  minTravellers  Int?
+  maxTravellers  Int?
+  isActive       Boolean          @default(true)
+  sortOrder      Int              @default(0)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  package      TourPackage  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  vehicleClass VehicleClass? @relation(fields: [vehicleClassId], references: [id], onDelete: Restrict)
+  quotes       PackageQuote[]
+  bookings     PackageBooking[]
+
+  @@index([packageId, isActive, sortOrder])
+  @@index([vehicleClassId])
+}
+
+model PackageQuote {
+  id             String   @id @default(cuid())
+  packageId      String
+  priceOptionId  String
+  travellers     Int
+  vehicleCount   Int?
+  quantity       Int
+  travelStartAt  DateTime
+  currency       String   @default("INR")
+  subtotalMinor  BigInt
+  discountMinor  BigInt   @default(0)
+  taxMinor       BigInt   @default(0)
+  totalMinor     BigInt
+  priceBreakdown Json
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+
+  package     TourPackage        @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  priceOption PackagePriceOption @relation(fields: [priceOptionId], references: [id], onDelete: Restrict)
+  booking     PackageBooking?
+
+  @@index([packageId, travelStartAt])
+  @@index([priceOptionId])
+  @@index([expiresAt])
+}
+
+model PackageBooking {
+  id                     String        @id @default(cuid())
+  reference              String        @unique
+  quoteId                String?       @unique
+  idempotencyKey         String        @unique
+  requestFingerprint     String
+  status                 BookingStatus @default(DRAFT)
+  packageId              String
+  priceOptionId          String?
+  travellers             Int
+  vehicleCount           Int?
+  travelStartAt          DateTime
+  customerUserId         String?
+  guestName              String?
+  guestEmail             String?
+  guestPhoneCiphertext   String?
+  currency               String        @default("INR")
+  subtotalMinor          BigInt
+  discountMinor          BigInt        @default(0)
+  taxMinor               BigInt        @default(0)
+  totalMinor             BigInt
+  packageSnapshot        Json
+  priceSnapshot          Json
+  policySnapshot         Json
+  bookingPolicyVersionId String?
+  confirmedAt            DateTime?
+  completedAt            DateTime?
+  cancelledAt            DateTime?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+
+  quote         PackageQuote?         @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  package       TourPackage           @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  priceOption   PackagePriceOption?   @relation(fields: [priceOptionId], references: [id], onDelete: SetNull)
+  customer      User?                 @relation("CustomerPackageBookings", fields: [customerUserId], references: [id], onDelete: SetNull)
+  bookingPolicy BookingPolicyVersion? @relation(fields: [bookingPolicyVersionId], references: [id], onDelete: SetNull)
+
+  @@index([status, travelStartAt])
+  @@index([packageId, travelStartAt])
+  @@index([customerUserId, createdAt])
+  @@index([bookingPolicyVersionId])
 }
