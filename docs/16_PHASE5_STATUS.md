@@ -1,6 +1,6 @@
 # Phase 5 — Car Booking Flow Status
 
-Status: FOUNDATION CERTIFIED — WRITE API BLOCKED ON BOOKING POLICY CONFIGURATION
+Status: CERTIFIED — PRODUCTION WRITE FLAG REMAINS OFF UNTIL REAL POLICY ACTIVATION
 
 ## Implemented
 - [x] BookingStatus enum
@@ -12,33 +12,42 @@ Status: FOUNDATION CERTIFIED — WRITE API BLOCKED ON BOOKING POLICY CONFIGURATI
 - [x] Integer minor-unit money constraints
 - [x] Quote-to-booking one-use relationship
 - [x] Idempotency key uniqueness
-- [x] Immutable price/policy snapshot fields
+- [x] Deterministic request fingerprint
+- [x] Immutable price snapshot
+- [x] Immutable policy snapshot
+- [x] Versioned BookingPolicyVersion model
+- [x] DRAFT → ACTIVE → RETIRED policy lifecycle
+- [x] One active version per policy code
+- [x] Database policy immutability trigger
 - [x] Booking lifecycle state machine
-- [x] Quote money/expiry domain policy
-- [x] Guest identity domain policy
-- [x] Versioned migration
-- [x] Live booking foundation verifier
+- [x] Quote money/expiry policy
+- [x] Guest identity policy
+- [x] Guest booking write service
+- [x] POST /api/bookings/car
+- [x] BOOKING_WRITE_ENABLED deployment gate
+- [x] Serializable booking transaction
+- [x] Idempotent replay behavior
+- [x] Versioned migrations
+- [x] Live booking/policy verifiers
+- [x] Rollback-based idempotency database invariant test
+- [x] Domain tests
 - [x] Prisma schema validation
 - [x] Live Neon migration
-- [x] Live booking verification
-- [x] Domain typecheck
+- [x] Domain/web typechecks
 - [x] Production build
 
 ## Certification evidence
-- Neon Migration Verify run: 37212637415 — PASS
-- Phase 1-2 CI run: 37212665090 — PASS
+- Application CI run: 37213486122 — PASS
+- Neon Migration Verify run: 37213486251 — PASS
 
-## Deliberately blocked before public write API
-The booking service/API will not be enabled until a server-side booking policy source exists for:
-- cancellation terms
-- refund eligibility rules
-- policy version identifier
-- any material booking terms that must be snapshotted
+## Production launch gate
+No fake booking policy was seeded.
 
-The browser must never submit authoritative policy or monetary rules.
+Before enabling public writes:
+1. Create and approve a real CAR_BOOKING policy version.
+2. Activate it through the privileged admin workflow.
+3. Set BOOKING_WRITE_ENABLED=true in the deployment environment.
 
-## Remaining Phase 5 work after policy configuration
-- [ ] Booking write service/API
-- [ ] Idempotency integration test
-- [ ] Status transition integration test
-- [ ] Assignment conflict integration test
+Until then the endpoint fails closed with HTTP 503.
+
+Phase 5 is technically complete and safe to keep deployed with writes disabled.
