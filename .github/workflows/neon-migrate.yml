@@ -62,5 +62,8 @@ jobs:
       - name: Verify fleet, driver and pricing foundation
         run: npm run db:verify:fleet -w @yatra/db
 
+      - name: Verify car booking foundation
+        run: npm run db:verify:booking -w @yatra/db
+
       - name: Verify migration status
         run: npm run db:migrate:status -w @yatra/db
