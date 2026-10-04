@@ -50,6 +50,39 @@ enum FaqScope {
   PACKAGES
 }
 
+enum VehicleStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+  RETIRED
+}
+
+enum DriverStatus {
+  ACTIVE
+  INACTIVE
+  ON_LEAVE
+  SUSPENDED
+}
+
+enum PricingRuleStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum TripType {
+  ONE_WAY
+  ROUND_TRIP
+  MULTI_CITY
+}
+
+enum PricingBasis {
+  PER_KM
+  FIXED
+  QUOTE_ONLY
+}
+
 model User {
   id              String      @id @default(cuid())
   email           String      @unique
@@ -148,6 +181,7 @@ model MediaAsset {
   cmsPageHeroes    CmsPage[]     @relation("CmsPageHero")
   destinationHero Destination[]   @relation("DestinationHero")
   blogPostHeroes  BlogPost[]     @relation("BlogPostHero")
+  vehicleMedia    VehicleMedia[]
 
   @@index([mimeType])
   @@index([createdAt])
@@ -297,4 +331,147 @@ model SeoRedirect {
   updatedAt       DateTime @updatedAt
 
   @@index([isActive])
+}
+
+
+model VehicleClass {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  name           String
+  description    String?
+  defaultSeats   Int
+  defaultLuggage Int?
+  isActive       Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  vehicles             Vehicle[]
+  pricingRules         PricingRule[]
+  driverQualifications DriverVehicleClass[]
+
+  @@index([isActive, sortOrder])
+}
+
+model Vehicle {
+  id                 String        @id @default(cuid())
+  slug               String        @unique
+  registrationNumber String        @unique
+  displayName        String
+  vehicleClassId     String
+  status             VehicleStatus @default(ACTIVE)
+  seats              Int
+  luggage            Int?
+  airConditioned     Boolean       @default(true)
+  features           Json?
+  description        String?
+  isFeatured         Boolean       @default(false)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  vehicleClass VehicleClass               @relation(fields: [vehicleClassId], references: [id], onDelete: Restrict)
+  media        VehicleMedia[]
+  availability VehicleAvailabilityBlock[]
+
+  @@index([vehicleClassId, status])
+  @@index([isFeatured, status])
+}
+
+model VehicleMedia {
+  vehicleId String
+  mediaId   String
+  sortOrder Int     @default(0)
+  isPrimary Boolean @default(false)
+
+  vehicle Vehicle    @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  media   MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([vehicleId, mediaId])
+  @@index([mediaId])
+  @@index([vehicleId, isPrimary])
+}
+
+model Driver {
+  id                      String       @id @default(cuid())
+  displayName             String
+  status                  DriverStatus @default(ACTIVE)
+  phoneCiphertext         String?
+  phoneLast4              String?
+  licenseNumberCiphertext String?
+  licenseExpiry           DateTime?
+  internalNotes           String?
+  createdAt               DateTime     @default(now())
+  updatedAt               DateTime     @updatedAt
+
+  qualifications DriverVehicleClass[]
+  availability   DriverAvailabilityBlock[]
+
+  @@index([status])
+  @@index([licenseExpiry])
+}
+
+model DriverVehicleClass {
+  driverId       String
+  vehicleClassId String
+  approvedAt     DateTime @default(now())
+
+  driver       Driver       @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  vehicleClass VehicleClass @relation(fields: [vehicleClassId], references: [id], onDelete: Cascade)
+
+  @@id([driverId, vehicleClassId])
+  @@index([vehicleClassId])
+}
+
+model VehicleAvailabilityBlock {
+  id        String   @id @default(cuid())
+  vehicleId String
+  startsAt  DateTime
+  endsAt    DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId, startsAt, endsAt])
+}
+
+model DriverAvailabilityBlock {
+  id        String   @id @default(cuid())
+  driverId  String
+  startsAt  DateTime
+  endsAt    DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+
+  driver Driver @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@index([driverId, startsAt, endsAt])
+}
+
+model PricingRule {
+  id                         String            @id @default(cuid())
+  name                       String
+  vehicleClassId             String
+  tripType                   TripType
+  basis                      PricingBasis
+  currency                   String            @default("INR")
+  baseAmountMinor            BigInt?
+  perKmMinor                 BigInt?
+  minimumDistanceKm          Int?
+  driverAllowancePerDayMinor BigInt?
+  nightAllowanceMinor        BigInt?
+  originKey                  String?
+  destinationKey             String?
+  priority                   Int               @default(0)
+  status                     PricingRuleStatus @default(DRAFT)
+  activeFrom                 DateTime?
+  activeTo                   DateTime?
+  createdAt                  DateTime          @default(now())
+  updatedAt                  DateTime          @updatedAt
+
+  vehicleClass VehicleClass @relation(fields: [vehicleClassId], references: [id], onDelete: Restrict)
+
+  @@index([vehicleClassId, tripType, status, priority])
+  @@index([originKey, destinationKey])
+  @@index([activeFrom, activeTo])
 }
