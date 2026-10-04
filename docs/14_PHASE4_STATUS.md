@@ -1,6 +1,6 @@
 # Phase 4 — Vehicle, Driver & Pricing Domain Status
 
-Status: IN PROGRESS
+Status: CERTIFIED
 
 ## Implemented
 - [x] VehicleClass schema
@@ -20,10 +20,14 @@ Status: IN PROGRESS
 - [x] Availability overlap policy
 - [x] Versioned migration
 - [x] Live fleet/pricing verifier
+- [x] Prisma schema validation
+- [x] Live Neon migration
+- [x] Live fleet/pricing verification
+- [x] Domain typecheck
+- [x] Full production build
 
-## Certification pending
-- [ ] Prisma schema validation
-- [ ] Live Neon migration
-- [ ] Live fleet/pricing verification
-- [ ] Domain typecheck
-- [ ] Full production build
+## Certification evidence
+- Neon Migration Verify run: 37212347216 — PASS
+- Phase 1-2 CI run: 37212347259 — PASS
+
+Phase 4 is complete. No real fares were seeded or hard-coded.
