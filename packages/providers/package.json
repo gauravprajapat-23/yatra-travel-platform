@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./payments/razorpay-client": "./src/payments/razorpay-client.ts",
     "./payments/razorpay-signature": "./src/payments/razorpay-signature.ts"
   },
   "scripts": {
