@@ -85,11 +85,27 @@ export async function POST(request: Request) {
       },
     });
 
-    await processRazorpayWebhookEvent({
+    const result = await processRazorpayWebhookEvent({
       webhookEventId: event.id,
       eventType,
       payload,
     });
+
+    if (!result.processed) {
+      return NextResponse.json(
+        {
+          received: true,
+          processed: false,
+          retryable: true,
+        },
+        { status: 503 },
+      );
+    }
+
+    return NextResponse.json(
+      { received: true, duplicate: false, processed: true },
+      { status: 202 },
+    );
   } catch (error) {
     if (
       typeof error === "object" &&
@@ -97,17 +113,46 @@ export async function POST(request: Request) {
       "code" in error &&
       error.code === "P2002"
     ) {
+      const existing = await db.paymentWebhookEvent.findUnique({
+        where: {
+          provider_dedupeKey: {
+            provider: "RAZORPAY",
+            dedupeKey: eventKey,
+          },
+        },
+      });
+
+      if (!existing) {
+        return NextResponse.json(
+          { error: { code: "WEBHOOK_DEDUPE_LOOKUP_FAILED" } },
+          { status: 500 },
+        );
+      }
+
+      const result = await processRazorpayWebhookEvent({
+        webhookEventId: existing.id,
+        eventType: existing.eventType,
+        payload: existing.payload,
+      });
+
+      if (!result.processed) {
+        return NextResponse.json(
+          {
+            received: true,
+            duplicate: true,
+            processed: false,
+            retryable: true,
+          },
+          { status: 503 },
+        );
+      }
+
       return NextResponse.json(
-        { received: true, duplicate: true },
+        { received: true, duplicate: true, processed: true },
         { status: 200 },
       );
     }
 
     throw error;
   }
-
-  return NextResponse.json(
-    { received: true, duplicate: false },
-    { status: 202 },
-  );
 }
