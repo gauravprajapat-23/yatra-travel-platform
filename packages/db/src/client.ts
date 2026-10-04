@@ -5,7 +5,7 @@ const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
 };
 
-function createPrismaClient() {
+function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
@@ -19,8 +19,13 @@ function createPrismaClient() {
   });
 }
 
-export const db = globalForPrisma.prisma ?? createPrismaClient();
+export function getDb(): PrismaClient {
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = createPrismaClient();
+  }
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = db;
+  return globalForPrisma.prisma;
 }
+
+export type { PrismaClient };
+export { Prisma } from "./generated/prisma/client";
