@@ -111,6 +111,27 @@ enum PackagePriceMode {
   FIXED
 }
 
+enum PaymentProvider {
+  RAZORPAY
+}
+
+enum PaymentStatus {
+  CREATED
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  CANCELLED
+  PARTIALLY_REFUNDED
+  REFUNDED
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSED
+  FAILED
+  CANCELLED
+}
+
 model User {
   id              String      @id @default(cuid())
   email           String      @unique
@@ -590,6 +611,7 @@ model CarBooking {
   pricingRule     PricingRule?  @relation(fields: [pricingRuleId], references: [id], onDelete: SetNull)
   bookingPolicy   BookingPolicyVersion? @relation(fields: [bookingPolicyVersionId], references: [id], onDelete: SetNull)
   statusHistory   BookingStatusHistory[]
+  paymentIntents  PaymentIntent[] @relation("CarBookingPayments")
 
   @@index([status, startsAt])
   @@index([customerUserId, createdAt])
@@ -782,6 +804,7 @@ model PackageBooking {
   customer      User?                 @relation("CustomerPackageBookings", fields: [customerUserId], references: [id], onDelete: SetNull)
   bookingPolicy BookingPolicyVersion? @relation(fields: [bookingPolicyVersionId], references: [id], onDelete: SetNull)
   statusHistory PackageBookingStatusHistory[]
+  paymentIntents PaymentIntent[] @relation("PackageBookingPayments")
 
   @@index([status, travelStartAt])
   @@index([packageId, travelStartAt])
@@ -805,4 +828,74 @@ model PackageBookingStatusHistory {
 
   @@index([bookingId, createdAt])
   @@index([actorUserId, createdAt])
+}
+
+
+model PaymentIntent {
+  id                String          @id @default(cuid())
+  provider          PaymentProvider @default(RAZORPAY)
+  status            PaymentStatus   @default(CREATED)
+  idempotencyKey    String          @unique
+  carBookingId      String?
+  packageBookingId  String?
+  providerOrderId   String?         @unique
+  providerPaymentId String?         @unique
+  currency          String          @default("INR")
+  amountMinor       BigInt
+  amountPaidMinor   BigInt          @default(0)
+  receipt           String?
+  authorizedAt      DateTime?
+  capturedAt        DateTime?
+  failedAt          DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  carBooking     CarBooking?      @relation("CarBookingPayments", fields: [carBookingId], references: [id], onDelete: Restrict)
+  packageBooking PackageBooking?  @relation("PackageBookingPayments", fields: [packageBookingId], references: [id], onDelete: Restrict)
+  webhookEvents  PaymentWebhookEvent[]
+  refunds        Refund[]
+
+  @@index([carBookingId, createdAt])
+  @@index([packageBookingId, createdAt])
+  @@index([status, createdAt])
+}
+
+model PaymentWebhookEvent {
+  id                  BigInt          @id @default(autoincrement())
+  provider            PaymentProvider @default(RAZORPAY)
+  dedupeKey           String
+  eventType           String
+  payload             Json
+  signatureVerifiedAt DateTime
+  paymentIntentId     String?
+  receivedAt          DateTime        @default(now())
+  processedAt         DateTime?
+  processingError     String?
+
+  paymentIntent PaymentIntent? @relation(fields: [paymentIntentId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, dedupeKey])
+  @@index([paymentIntentId, receivedAt])
+  @@index([eventType, receivedAt])
+  @@index([processedAt])
+}
+
+model Refund {
+  id               String          @id @default(cuid())
+  paymentIntentId  String
+  provider         PaymentProvider @default(RAZORPAY)
+  status           RefundStatus    @default(PENDING)
+  idempotencyKey   String          @unique
+  providerRefundId String?         @unique
+  currency         String          @default("INR")
+  amountMinor      BigInt
+  reason           String?
+  processedAt      DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  paymentIntent PaymentIntent @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
+
+  @@index([paymentIntentId, createdAt])
+  @@index([status, createdAt])
 }
