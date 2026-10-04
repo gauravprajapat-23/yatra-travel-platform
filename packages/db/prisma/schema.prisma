@@ -129,7 +129,8 @@ model User {
   auditLogs       AuditLog[]  @relation("AuditActor")
   carBookings     CarBooking[] @relation("CustomerBookings")
   bookingChanges  BookingStatusHistory[] @relation("BookingStatusActor")
-  packageBookings PackageBooking[] @relation("CustomerPackageBookings")
+  packageBookings       PackageBooking[] @relation("CustomerPackageBookings")
+  packageBookingChanges PackageBookingStatusHistory[] @relation("PackageBookingStatusActor")
 
   @@index([status])
   @@index([createdAt])
@@ -780,9 +781,28 @@ model PackageBooking {
   priceOption   PackagePriceOption?   @relation(fields: [priceOptionId], references: [id], onDelete: SetNull)
   customer      User?                 @relation("CustomerPackageBookings", fields: [customerUserId], references: [id], onDelete: SetNull)
   bookingPolicy BookingPolicyVersion? @relation(fields: [bookingPolicyVersionId], references: [id], onDelete: SetNull)
+  statusHistory PackageBookingStatusHistory[]
 
   @@index([status, travelStartAt])
   @@index([packageId, travelStartAt])
   @@index([customerUserId, createdAt])
   @@index([bookingPolicyVersionId])
+}
+
+
+model PackageBookingStatusHistory {
+  id          BigInt        @id @default(autoincrement())
+  bookingId   String
+  fromStatus  BookingStatus?
+  toStatus    BookingStatus
+  actorUserId String?
+  reason      String?
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+
+  booking PackageBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  actor   User?          @relation("PackageBookingStatusActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId, createdAt])
+  @@index([actorUserId, createdAt])
 }
