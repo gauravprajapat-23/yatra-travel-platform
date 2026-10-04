@@ -1,0 +1,59 @@
+name: Neon Migration Verify
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/db/prisma/**"
+      - "packages/db/scripts/**"
+      - "packages/db/package.json"
+      - ".github/workflows/neon-migrate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  migrate-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require DATABASE_URL secret
+        shell: bash
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "DATABASE_URL repository secret is missing."
+            exit 1
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Generate Prisma Client
+        run: npm run db:generate
+
+      - name: Validate Prisma Schema
+        run: npm run db:validate
+
+      - name: Deploy migrations
+        run: npm run db:migrate:deploy -w @yatra/db
+
+      - name: Seed canonical roles
+        run: npm run db:seed:roles -w @yatra/db
+
+      - name: Verify auth foundation
+        run: npm run db:verify:auth -w @yatra/db
+
+      - name: Verify migration status
+        run: npm run db:migrate:status -w @yatra/db
