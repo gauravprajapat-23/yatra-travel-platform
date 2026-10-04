@@ -15,9 +15,11 @@
     "lint": "npm run lint -w @yatra/web",
     "typecheck": "npm run typecheck -w @yatra/web",
     "typecheck:domain": "npm run typecheck -w @yatra/domain",
+    "typecheck:providers": "npm run typecheck -w @yatra/providers",
     "test:domain": "npm run test -w @yatra/domain",
+    "test:providers": "npm run test -w @yatra/providers",
     "db:generate": "npm run db:generate -w @yatra/db",
     "db:validate": "npm run db:validate -w @yatra/db",
-    "check": "npm run lint && npm run typecheck && npm run typecheck:domain && npm run test:domain && npm run db:validate && npm run build"
+    "check": "npm run lint && npm run typecheck && npm run typecheck:domain && npm run typecheck:providers && npm run test:domain && npm run test:providers && npm run db:validate && npm run build"
   }
 }
