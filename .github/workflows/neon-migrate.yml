@@ -17,7 +17,7 @@ jobs:
   migrate-and-verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    environment: yatra
+    environment: yantra
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
@@ -29,7 +29,7 @@ jobs:
         shell: bash
         run: |
           if [ -z "$DATABASE_URL" ]; then
-            echo "DATABASE_URL is not available. Add it as an Environment secret in the yatra environment."
+            echo "DATABASE_URL is not available. Add it as an Environment secret in the yantra environment."
             exit 1
           fi
 
