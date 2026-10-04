@@ -87,6 +87,8 @@ try {
 
   let duplicateIdempotencyRejected = false;
 
+  await client.query("SAVEPOINT duplicate_idempotency");
+
   try {
     await client.query(
       `
