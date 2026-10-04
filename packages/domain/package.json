@@ -11,6 +11,7 @@
     "./booking/status-machine": "./src/booking/status-machine.ts",
     "./fleet/availability": "./src/fleet/availability.ts",
     "./fleet/public-vehicle-dto": "./src/fleet/public-vehicle-dto.ts",
+    "./package/pricing": "./src/package/pricing.ts",
     "./pricing/rule-selection": "./src/pricing/rule-selection.ts"
   },
   "scripts": {
