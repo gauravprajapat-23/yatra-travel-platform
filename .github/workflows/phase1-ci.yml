@@ -1,4 +1,4 @@
-name: Phase 1-2 CI
+name: Application CI
 
 on:
   push:
@@ -17,6 +17,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://ci_user:ci_password@localhost:5432/yatra_ci
       NEXT_PUBLIC_APP_URL: https://example.com
+      BOOKING_WRITE_ENABLED: "false"
 
     steps:
       - name: Checkout
@@ -44,6 +45,9 @@ jobs:
 
       - name: Typecheck Domain
         run: npm run typecheck:domain
+
+      - name: Domain tests
+        run: npm run test:domain
 
       - name: Production build
         run: npm run build
