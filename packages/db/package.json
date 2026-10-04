@@ -11,7 +11,8 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:status": "prisma migrate status",
     "db:seed:roles": "node scripts/seed-roles.mjs",
-    "db:verify:auth": "node scripts/verify-auth-foundation.mjs"
+    "db:verify:auth": "node scripts/verify-auth-foundation.mjs",
+    "db:verify:cms": "node scripts/verify-cms-foundation.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
