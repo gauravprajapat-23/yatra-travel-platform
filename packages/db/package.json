@@ -18,7 +18,8 @@
     "db:verify:cms": "node scripts/verify-cms-foundation.mjs",
     "db:verify:fleet": "node scripts/verify-fleet-pricing-foundation.mjs",
     "db:verify:booking": "node scripts/verify-car-booking-foundation.mjs",
-    "db:verify:booking-policy": "node scripts/verify-booking-policy-foundation.mjs"
+    "db:verify:booking-policy": "node scripts/verify-booking-policy-foundation.mjs",
+    "db:verify:booking-invariants": "node scripts/verify-booking-invariants.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
