@@ -7,12 +7,12 @@ export const metadata: Metadata = {
 };
 
 const stories = [
-  ["Omkareshwar Travel Guide","Destinations","/assets/packages-hero.webp"],
-  ["Raipur to Ujjain by Car","Road Trips","/assets/home-hero.webp"],
-  ["Rameswaram Travel Guide","Destinations","/assets/packages-hero.webp"],
-  ["Best Time to Visit Kedarnath","Temple Guide","/assets/packages-hero.webp"],
-  ["A Spiritual Journey Through Varanasi","Culture","/assets/packages-hero.webp"],
-  ["Rajasthan Road Trip","Travel Tips","/assets/home-hero.webp"],
+  { title: "Omkareshwar Travel Guide", category: "Destinations", assetClass: "asset-temple--omkareshwar" },
+  { title: "Raipur to Ujjain by Car", category: "Road Trips", assetClass: "asset-temple--ujjain" },
+  { title: "Rameswaram Travel Guide", category: "Destinations", assetClass: "asset-temple--rameswaram" },
+  { title: "Best Time to Visit Kedarnath", category: "Temple Guide", assetClass: "asset-temple--kedarnath" },
+  { title: "A Spiritual Journey Through Varanasi", category: "Culture", assetClass: "asset-destination--varanasi" },
+  { title: "Rajasthan Road Trip", category: "Travel Tips", assetClass: "asset-vp--rajasthan" },
 ];
 
 export default function TravelGuidesPage() {
@@ -33,9 +33,11 @@ export default function TravelGuidesPage() {
         </div>
 
         <div className="shell featured-story">
-          <div className="featured-story__image">
-            <img src="/assets/packages-hero.webp" alt="Mahakaleshwar Ujjain temple travel guide" loading="lazy" />
-          </div>
+          <div
+            className="featured-story__image asset-sprite asset-temple--ujjain"
+            role="img"
+            aria-label="Mahakaleshwar Ujjain temple travel guide"
+          />
           <div className="featured-story__copy">
             <p className="eyebrow">TEMPLE GUIDE</p>
             <h2>A Complete Guide to Mahakaleshwar Ujjain.</h2>
@@ -45,12 +47,18 @@ export default function TravelGuidesPage() {
         </div>
 
         <div className="shell story-grid">
-          {stories.map(([title,cat,image]) => (
-            <article className="story-card" key={title}>
-              <div className="story-card__image">
-                <img src={image} alt={title} loading="lazy" />
+          {stories.map((story) => (
+            <article className="story-card" key={story.title}>
+              <div
+                className={`story-card__image asset-sprite ${story.assetClass}`}
+                role="img"
+                aria-label={story.title}
+              />
+              <div className="story-card__body">
+                <p className="eyebrow">{story.category}</p>
+                <h3>{story.title}</h3>
+                <Link href="/travel-guides/spiritual-journey-varanasi">Read More →</Link>
               </div>
-              <div className="story-card__body"><p className="eyebrow">{cat}</p><h3>{title}</h3><Link href="/travel-guides/spiritual-journey-varanasi">Read More →</Link></div>
             </article>
           ))}
         </div>
