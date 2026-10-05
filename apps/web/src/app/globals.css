@@ -3697,3 +3697,187 @@ body:has(.admin-root) {
 @media (max-width: 700px) {
   .admin-media-grid { grid-template-columns:1fr 1fr; }
 }
+
+
+/* === Generated asset integration: card and booking imagery === */
+.journey-card__image,
+.fleet-card__visual,
+.vehicle-list-card__image,
+.package-card__image,
+.offer-card__visual,
+.story-card__image,
+.featured-story__image,
+.search-result-card__image,
+.car-detail-gallery__main,
+.car-detail-gallery__thumbs,
+.selected-vehicle__visual,
+.trip-list-card__image {
+  overflow: hidden;
+}
+
+.journey-card__image img,
+.fleet-card__visual img,
+.vehicle-list-card__image img,
+.package-card__image img,
+.offer-card__visual img,
+.story-card__image img,
+.featured-story__image img,
+.search-result-card__image img,
+.car-detail-gallery__main img,
+.car-detail-gallery__thumbs img,
+.selected-vehicle__visual img,
+.trip-list-card__image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.journey-card__image {
+  height: 180px;
+  min-height: 0;
+}
+
+.journey-card__image img,
+.package-card__image img,
+.offer-card__visual img,
+.story-card__image img,
+.destination-card__image {
+  transition: transform .45s ease;
+}
+
+.journey-card:hover .journey-card__image img,
+.package-card:hover .package-card__image img,
+.offer-card:hover .offer-card__visual img,
+.story-card:hover .story-card__image img,
+.destination-card:hover .destination-card__image {
+  transform: scale(1.045);
+}
+
+.fleet-card__visual {
+  height: 180px;
+  min-height: 0;
+  background: #efe6d9;
+}
+
+.fleet-card__visual img {
+  object-fit: cover;
+}
+
+.vehicle-list-card__image {
+  height: 190px;
+  min-height: 0;
+  display: block;
+  background: #f3ece2;
+}
+
+.vehicle-list-card__image img {
+  object-fit: cover;
+}
+
+.package-card__image {
+  height: 195px;
+  min-height: 0;
+  background: #e9dfcf;
+}
+
+.offer-card__visual {
+  height: 175px;
+  min-height: 0;
+  background: #e9dfcf;
+}
+
+.offer-card__visual > span {
+  z-index: 2;
+}
+
+.story-card__image {
+  height: 170px;
+  min-height: 0;
+}
+
+.featured-story__image {
+  min-height: 320px;
+}
+
+.featured-story__image img {
+  min-height: 320px;
+}
+
+.destination-card {
+  background: #17352b;
+}
+
+.destination-card__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.destination-card__shade {
+  z-index: 1;
+}
+
+.destination-card__content {
+  z-index: 2;
+}
+
+.search-result-card__image {
+  height: 132px;
+  min-height: 0;
+  background: #f1e9dc;
+}
+
+.car-detail-gallery__main {
+  height: 430px;
+  min-height: 0;
+  display: block;
+  background: #eee6da;
+}
+
+.car-detail-gallery__main img {
+  object-position: center;
+}
+
+.car-detail-gallery__thumbs {
+  overflow: visible;
+}
+
+.car-detail-gallery__thumbs img {
+  height: 78px;
+  border-radius: 9px;
+  border: 1px solid #eadfce;
+  background: #f3ece2;
+}
+
+.selected-vehicle__visual {
+  height: 185px;
+  min-height: 0;
+  background: #f1e8db;
+}
+
+.trip-list-card__image {
+  height: 112px;
+  min-height: 0;
+  background: #f1e8db;
+}
+
+@media (max-width: 700px) {
+  .journey-card__image,
+  .fleet-card__visual,
+  .vehicle-list-card__image,
+  .package-card__image {
+    height: 210px;
+  }
+
+  .car-detail-gallery__main {
+    height: 300px;
+  }
+
+  .search-result-card__image,
+  .trip-list-card__image {
+    height: 180px;
+  }
+}
