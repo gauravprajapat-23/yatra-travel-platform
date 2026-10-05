@@ -7,10 +7,10 @@ export const metadata: Metadata = {
 };
 
 const offers = [
-  ["Festive Offer", "Char Dham Yatra Special", "Up to ₹10,000 OFF", "/assets/packages-hero.webp"],
-  ["Limited Time", "Uttarakhand Temple Tours", "Flat 15% OFF", "/assets/packages-hero.webp"],
-  ["Car Rental Offer", "Long Distance Travel", "Up to 20% OFF", "/assets/home-hero.webp"],
-  ["Group Offer", "Family & Group Bookings", "Special group rates", "/assets/fleet-hero.webp"],
+  { tag: "Festive Offer", title: "Char Dham Yatra Special", saving: "Up to ₹10,000 OFF", assetClass: "asset-vp--char-dham" },
+  { tag: "Limited Time", title: "Uttarakhand Temple Tours", saving: "Flat 15% OFF", assetClass: "asset-temple--kedarnath" },
+  { tag: "Car Rental Offer", title: "Long Distance Travel", saving: "Up to 20% OFF", assetClass: "asset-vp--fortuner" },
+  { tag: "Group Offer", title: "Family & Group Bookings", saving: "Special group rates", assetClass: "asset-vp--tempo" },
 ];
 
 export default function OffersPage() {
@@ -27,15 +27,18 @@ export default function OffersPage() {
 
       <section className="reference-section reference-section--cream">
         <div className="shell offer-grid">
-          {offers.map(([tag, title, saving, image]) => (
-            <article className="offer-card" key={title}>
-              <div className="offer-card__visual">
-                <img src={image} alt={`${title} travel offer`} loading="lazy" />
-                <span>{tag}</span>
+          {offers.map((offer) => (
+            <article className="offer-card" key={offer.title}>
+              <div
+                className={`offer-card__visual asset-sprite ${offer.assetClass}`}
+                role="img"
+                aria-label={`${offer.title} travel offer`}
+              >
+                <span>{offer.tag}</span>
               </div>
               <div className="offer-card__body">
-                <h2>{title}</h2>
-                <strong>{saving}</strong>
+                <h2>{offer.title}</h2>
+                <strong>{offer.saving}</strong>
                 <p>Selected dates and availability. Final eligibility is verified at booking.</p>
                 <ButtonLink href="/custom-trip">Book Now →</ButtonLink>
               </div>
