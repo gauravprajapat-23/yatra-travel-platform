@@ -20,6 +20,9 @@ jobs:
     environment: yantra
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      ADMIN_EMAIL: admin@yatra.com
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      ADMIN_NAME: YATRA Super Admin
 
     steps:
       - name: Checkout
@@ -52,6 +55,14 @@ jobs:
 
       - name: Seed canonical roles
         run: npm run db:seed:roles -w @yatra/db
+
+      - name: Bootstrap super admin
+        if: ${{ env.ADMIN_PASSWORD != '' }}
+        run: npm run admin:bootstrap
+
+      - name: Admin bootstrap guidance
+        if: ${{ env.ADMIN_PASSWORD == '' }}
+        run: echo "ADMIN_PASSWORD is not set. Add it as a yantra Environment secret and rerun this workflow to create admin@yatra.com."
 
       - name: Verify auth foundation
         run: npm run db:verify:auth -w @yatra/db
