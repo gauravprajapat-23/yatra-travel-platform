@@ -3881,3 +3881,97 @@ body:has(.admin-root) {
     height: 180px;
   }
 }
+
+
+/* === Extracted composite asset atlas ===
+   Card-level imagery from the approved generated asset sheet.
+   Three cached WebP atlases replace repeated hero-image placeholders. */
+.asset-sprite {
+  background-repeat: no-repeat !important;
+  background-color: #e9e0d2;
+}
+
+/* Vehicle + package atlas: 5 columns × 2 rows */
+[class*="asset-vp--"] {
+  background-image: url("/assets/vehicle-package-sprite.webp") !important;
+  background-size: 500% 200% !important;
+}
+.asset-vp--innova { background-position: 0% 0% !important; }
+.asset-vp--fortuner { background-position: 25% 0% !important; }
+.asset-vp--ertiga { background-position: 50% 0% !important; }
+.asset-vp--tempo { background-position: 75% 0% !important; }
+.asset-vp--luxury { background-position: 100% 0% !important; }
+.asset-vp--sedan { background-position: 0% 100% !important; }
+.asset-vp--char-dham { background-position: 25% 100% !important; }
+.asset-vp--rajasthan { background-position: 50% 100% !important; }
+.asset-vp--kerala { background-position: 75% 100% !important; }
+.asset-vp--south-india { background-position: 100% 100% !important; }
+
+/* Destination atlas: 3 columns × 3 rows */
+[class*="asset-destination--"] {
+  background-image: url("/assets/destination-sprite.webp") !important;
+  background-size: 300% 300% !important;
+}
+.asset-destination--varanasi { background-position: 0% 0% !important; }
+.asset-destination--jaipur { background-position: 50% 0% !important; }
+.asset-destination--udaipur { background-position: 100% 0% !important; }
+.asset-destination--rishikesh { background-position: 0% 50% !important; }
+.asset-destination--manali { background-position: 50% 50% !important; }
+.asset-destination--goa { background-position: 100% 50% !important; }
+.asset-destination--ladakh { background-position: 0% 100% !important; }
+.asset-destination--amritsar { background-position: 50% 100% !important; }
+.asset-destination--mumbai { background-position: 100% 100% !important; }
+
+/* Temple atlas: 3 columns × 3 rows */
+[class*="asset-temple--"] {
+  background-image: url("/assets/temple-sprite.webp") !important;
+  background-size: 300% 300% !important;
+}
+.asset-temple--kedarnath { background-position: 0% 0% !important; }
+.asset-temple--badrinath { background-position: 50% 0% !important; }
+.asset-temple--rameswaram { background-position: 100% 0% !important; }
+.asset-temple--somnath { background-position: 0% 50% !important; }
+.asset-temple--tirupati { background-position: 50% 50% !important; }
+.asset-temple--vaishno-devi { background-position: 100% 50% !important; }
+.asset-temple--dwarka { background-position: 0% 100% !important; }
+.asset-temple--omkareshwar { background-position: 50% 100% !important; }
+.asset-temple--ujjain { background-position: 100% 100% !important; }
+
+.journey-card__image.asset-sprite,
+.fleet-card__visual.asset-sprite,
+.vehicle-list-card__image.asset-sprite,
+.package-card__image.asset-sprite {
+  background-origin: border-box;
+  background-clip: border-box;
+}
+
+.destination-card.asset-sprite {
+  background-color: #17352b;
+}
+
+.temple-video-card.asset-sprite {
+  position: relative;
+  overflow: hidden;
+  color: white;
+  isolation: isolate;
+}
+
+.temple-video-card.asset-sprite::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgb(12 26 22 / .08), rgb(12 26 22 / .76));
+}
+
+.temple-video-card.asset-sprite > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-data: reduce) {
+  .asset-sprite {
+    background-image: none !important;
+    background-color: var(--color-sand-100) !important;
+  }
+}
