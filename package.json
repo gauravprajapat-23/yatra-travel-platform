@@ -20,6 +20,7 @@
     "test:providers": "npm run test -w @yatra/providers",
     "db:generate": "npm run db:generate -w @yatra/db",
     "db:validate": "npm run db:validate -w @yatra/db",
-    "check": "npm run lint && npm run typecheck && npm run typecheck:domain && npm run typecheck:providers && npm run test:domain && npm run test:providers && npm run db:validate && npm run build"
+    "check": "npm run lint && npm run typecheck && npm run typecheck:domain && npm run typecheck:providers && npm run test:domain && npm run test:providers && npm run db:validate && npm run build",
+    "admin:bootstrap": "npm run db:bootstrap:admin -w @yatra/db"
   }
 }
