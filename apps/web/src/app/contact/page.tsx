@@ -52,7 +52,7 @@ export default function ContactPage() {
               <div><dt>Hours</dt><dd>Mon–Sat · 9:00 AM–8:00 PM</dd></div>
               <div><dt>Support</dt><dd>24×7 for active journeys</dd></div>
             </dl>
-            <div className="office-map">YATRA · India</div>
+            <div className="office-map asset-sprite asset-destination--jaipur">YATRA · India</div>
           </aside>
         </div>
       </section>
