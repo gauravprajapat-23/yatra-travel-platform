@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { requireAdminSession } from "@/lib/auth/session";
 
 const nav = [
   ["/admin","Dashboard"],
@@ -21,27 +22,62 @@ const nav = [
   ["/admin/settings","Settings"],
 ];
 
-export function AdminShell({active, title, subtitle, actions, children}:{active:string;title:string;subtitle?:string;actions?:ReactNode;children:ReactNode}) {
+export async function AdminShell({
+  active,
+  title,
+  subtitle,
+  actions,
+  children,
+}: {
+  active: string;
+  title: string;
+  subtitle?: string;
+  actions?: ReactNode;
+  children: ReactNode;
+}) {
+  const session = await requireAdminSession();
+
   return (
     <div className="admin-root">
       <aside className="admin-sidebar">
         <Link className="admin-brand" href="/admin">YATRA</Link>
         <nav>
           {nav.map(([href,label]) => (
-            <Link className={active===label ? "admin-nav-link admin-nav-link--active":"admin-nav-link"} href={href} key={href}><span className="admin-nav-icon">◈</span>{label}</Link>
+            <Link
+              className={active===label ? "admin-nav-link admin-nav-link--active":"admin-nav-link"}
+              href={href}
+              key={href}
+            >
+              <span className="admin-nav-icon">◈</span>
+              {label}
+            </Link>
           ))}
         </nav>
       </aside>
 
       <div className="admin-workspace">
         <header className="admin-topbar">
-          <label className="admin-search"><span>⌕</span><input aria-label="Admin search" placeholder="Search bookings, customers, tours..." /></label>
-          <div className="admin-topbar__right"><button aria-label="Notifications">♢</button><span className="admin-avatar">AA</span><strong>Admin</strong><span>⌄</span></div>
+          <label className="admin-search">
+            <span>⌕</span>
+            <input aria-label="Admin search" placeholder="Search bookings, customers, tours..." />
+          </label>
+
+          <div className="admin-topbar__right">
+            <button aria-label="Notifications" type="button">♢</button>
+            <span className="admin-avatar">AA</span>
+            <strong>{session.name ?? "Admin"}</strong>
+            <form action="/api/admin-auth/logout" method="post">
+              <button className="admin-logout-button" type="submit">Logout</button>
+            </form>
+          </div>
         </header>
 
         <main className="admin-main">
           <div className="admin-page-heading">
-            <div><h1>{title}</h1>{subtitle ? <p>{subtitle}</p> : null}</div>
+            <div>
+              <h1>{title}</h1>
+              {subtitle ? <p>{subtitle}</p> : null}
+            </div>
             <div className="admin-heading-actions">{actions}</div>
           </div>
           {children}
@@ -51,10 +87,33 @@ export function AdminShell({active, title, subtitle, actions, children}:{active:
   );
 }
 
-export function AdminMetric({label,value,meta,tone="green"}:{label:string;value:string;meta?:string;tone?:"green"|"orange"|"red"|"blue"}) {
-  return <article className="admin-metric"><span className={`admin-metric__icon admin-metric__icon--${tone}`}>◆</span><small>{label}</small><strong>{value}</strong>{meta ? <p>{meta}</p> : null}</article>;
+export function AdminMetric({
+  label,
+  value,
+  meta,
+  tone="green",
+}: {
+  label: string;
+  value: string;
+  meta?: string;
+  tone?: "green"|"orange"|"red"|"blue";
+}) {
+  return (
+    <article className="admin-metric">
+      <span className={`admin-metric__icon admin-metric__icon--${tone}`}>◆</span>
+      <small>{label}</small>
+      <strong>{value}</strong>
+      {meta ? <p>{meta}</p> : null}
+    </article>
+  );
 }
 
-export function StatusPill({children,tone="green"}:{children:ReactNode;tone?:"green"|"orange"|"red"|"blue"|"gray"}) {
+export function StatusPill({
+  children,
+  tone="green",
+}: {
+  children: ReactNode;
+  tone?: "green"|"orange"|"red"|"blue"|"gray";
+}) {
   return <span className={`admin-status admin-status--${tone}`}>{children}</span>;
 }
