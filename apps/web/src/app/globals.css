@@ -5390,3 +5390,37 @@ body:has(.admin-root) {
   color: #777b74;
   line-height: 1.45;
 }
+
+
+/* Admin authentication states */
+.admin-login-error {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border: 1px solid #e7b2a7;
+  border-radius: 8px;
+  background: #fff1ee;
+  color: #9e2f20;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.admin-login-submit:disabled {
+  cursor: wait;
+  opacity: .68;
+}
+
+.admin-logout-button {
+  border: 1px solid #eadfce;
+  border-radius: 999px;
+  background: #fff;
+  color: #17352b;
+  padding: 7px 11px;
+  font-size: .68rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-logout-button:hover {
+  border-color: #ef6c18;
+  color: #ef6c18;
+}
