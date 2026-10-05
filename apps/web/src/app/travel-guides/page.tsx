@@ -29,7 +29,9 @@ export default function TravelGuidesPage() {
 
       <section className="reference-section reference-section--cream">
         <div className="shell reference-filter-row">
-          {["All Stories","Destinations","Temple Guides","Travel Tips","Road Trips","Culture & Food"].map((item,i) => <button className={i===0?"filter-chip filter-chip--active":"filter-chip"} key={item}>{item}</button>)}
+          {["All Stories","Destinations","Temple Guides","Travel Tips","Road Trips","Culture & Food"].map((item,i) => (
+            <button className={i===0?"filter-chip filter-chip--active":"filter-chip"} key={item}>{item}</button>
+          ))}
         </div>
 
         <div className="shell featured-story">
