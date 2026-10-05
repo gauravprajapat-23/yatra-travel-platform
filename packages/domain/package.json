@@ -12,7 +12,9 @@
     "./fleet/availability": "./src/fleet/availability.ts",
     "./fleet/public-vehicle-dto": "./src/fleet/public-vehicle-dto.ts",
     "./package/pricing": "./src/package/pricing.ts",
-    "./pricing/rule-selection": "./src/pricing/rule-selection.ts"
+    "./pricing/rule-selection": "./src/pricing/rule-selection.ts",
+    "./auth/permissions": "./src/auth/permissions.ts",
+    "./auth/session-policy": "./src/auth/session-policy.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
