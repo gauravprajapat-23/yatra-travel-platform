@@ -5185,3 +5185,140 @@ body:has(.admin-root) {
   .search-result-card--reference { grid-template-columns: 160px minmax(0,1fr) 140px !important; }
 }
 
+
+
+/* =========================================================
+   APPROVED REFERENCE — LIVE SCREENSHOT CORRECTIONS
+   ========================================================= */
+
+/* Reference screens use a normal top header, not a sticky/floating one.
+   This also prevents full-page captures from duplicating the header mid-page. */
+.site-header,
+.site-header--reference {
+  position: relative !important;
+  top: auto !important;
+  z-index: 20 !important;
+}
+
+/* Keep accessibility skip link hidden unless keyboard focus is visibly present. */
+.skip-link {
+  top: -80px !important;
+  transform: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+.skip-link:focus {
+  top: -80px !important;
+  opacity: 0 !important;
+}
+.skip-link:focus-visible {
+  top: 16px !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Fleet hero: blend the existing verified car photo into the scenic hero.
+   The source image contains scenery, so feather its edges instead of showing
+   it as a framed inset photograph. */
+.fleet-reference-hero::after {
+  right: 2.5% !important;
+  bottom: -8px !important;
+  width: min(46vw, 590px) !important;
+  aspect-ratio: 1.62 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background-image: url("/assets/car-innova.webp") !important;
+  background-size: 142% auto !important;
+  background-position: 54% 56% !important;
+  background-repeat: no-repeat !important;
+  filter: drop-shadow(0 24px 22px rgb(0 0 0 / .28)) !important;
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at 52% 54%, #000 48%, rgb(0 0 0 / .88) 63%, transparent 86%);
+  mask-image: radial-gradient(ellipse 70% 70% at 52% 54%, #000 48%, rgb(0 0 0 / .88) 63%, transparent 86%);
+}
+.fleet-reference-hero .reference-page-hero__overlay {
+  background: linear-gradient(90deg, rgba(3,43,34,.97) 0%, rgba(3,43,34,.90) 39%, rgba(3,43,34,.48) 61%, rgba(3,43,34,.10) 100%) !important;
+}
+.fleet-reference-hero .reference-page-hero__content {
+  max-width: 720px;
+}
+.fleet-reference-hero .reference-page-hero__content h1 {
+  max-width: 500px !important;
+  line-height: .9 !important;
+}
+
+/* Fleet card imagery: crop the verified vehicle image more tightly so cards
+   resemble the reference thumbnails instead of repeating a large scenic photo. */
+.vehicle-list-card--reference .vehicle-list-card__image img {
+  object-fit: cover !important;
+  object-position: 52% 60% !important;
+  transform: scale(1.08);
+}
+
+/* Car Details: a single photographic gallery image, not a photo layered on
+   top of another photo. */
+.car-detail-reference .car-detail-gallery__main {
+  background: #efe5d7 !important;
+}
+.car-detail-reference .car-detail-gallery__main img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: 52% 58% !important;
+  filter: none !important;
+}
+.car-detail-reference .car-detail-gallery__main .vehicle-card-badge {
+  z-index: 4;
+}
+.car-detail-reference .car-detail-gallery__thumbs img:first-child,
+.car-detail-reference .car-detail-gallery__thumbs img:nth-child(3) {
+  object-fit: cover !important;
+  object-position: 52% 58% !important;
+}
+.car-detail-reference .car-detail-gallery__thumbs img:nth-child(2) {
+  object-fit: cover !important;
+  object-position: center 55% !important;
+}
+
+/* Keep the details page content visually connected before the footer. */
+.car-detail-reference {
+  min-height: 720px;
+}
+.car-detail-reference .car-detail-body {
+  padding-bottom: 34px !important;
+}
+.car-detail-reference .benefit-grid {
+  grid-template-columns: repeat(2,minmax(0,1fr)) !important;
+}
+
+/* Search cards use the same verified image but crop it like a proper vehicle
+   thumbnail instead of a scenic banner. */
+.search-result-card--reference .search-result-card__image img {
+  object-position: 52% 60% !important;
+  transform: scale(1.07);
+}
+
+/* laptop calibration observed in the user's screenshots */
+@media (min-width: 1001px) {
+  .fleet-reference-hero {
+    min-height: 345px !important;
+  }
+  .fleet-reference-section {
+    padding-top: 18px !important;
+    padding-bottom: 58px !important;
+  }
+  .car-detail-reference .car-detail-top {
+    align-items: start !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .fleet-reference-hero::after {
+    right: -20% !important;
+    bottom: 4px !important;
+    width: 85vw !important;
+    opacity: .38;
+  }
+  .car-detail-reference {
+    min-height: auto;
+  }
+}
