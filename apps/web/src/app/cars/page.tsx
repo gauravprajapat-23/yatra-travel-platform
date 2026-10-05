@@ -7,12 +7,12 @@ export const metadata: Metadata = {
 };
 
 const vehicles = [
-  ["Innova Crysta", "Premium · 6 Seats", "₹ 14 / km", "/assets/car-innova.webp", "/cars/innova-crysta"],
-  ["Ertiga", "Comfort · 6 Seats", "₹ 12 / km", "/assets/car-ertiga.webp", "/custom-trip"],
-  ["Innova Hycross", "Premium Hybrid · 6 Seats", "₹ 16 / km", "/assets/car-innova.webp", "/custom-trip"],
-  ["Toyota Fortuner", "Luxury SUV · 6 Seats", "₹ 20 / km", "/assets/car-fortuner.webp", "/custom-trip"],
-  ["Tempo Traveller", "12–17 Seats · Group", "₹ 26 / km", "/assets/fleet-hero.webp", "/custom-trip"],
-  ["Luxury Vellfire", "Executive · 6 Seats", "₹ 28 / km", "/assets/car-fortuner.webp", "/custom-trip"],
+  { name: "Innova Crysta", meta: "Premium · 6 Seats", price: "₹ 14 / km", assetClass: "asset-vp--innova", seats: "6 Seats", bags: "4 Bags", href: "/cars/innova-crysta" },
+  { name: "Ertiga", meta: "Comfort · 6 Seats", price: "₹ 12 / km", assetClass: "asset-vp--ertiga", seats: "6 Seats", bags: "4 Bags", href: "/custom-trip" },
+  { name: "Innova Hycross", meta: "Premium Hybrid · 6 Seats", price: "₹ 16 / km", assetClass: "asset-vp--innova", seats: "6 Seats", bags: "4 Bags", href: "/custom-trip" },
+  { name: "Toyota Fortuner", meta: "Luxury SUV · 6 Seats", price: "₹ 20 / km", assetClass: "asset-vp--fortuner", seats: "6 Seats", bags: "4 Bags", href: "/custom-trip" },
+  { name: "Tempo Traveller", meta: "12–17 Seats · Group", price: "₹ 26 / km", assetClass: "asset-vp--tempo", seats: "12–17 Seats", bags: "10 Bags", href: "/custom-trip" },
+  { name: "Luxury Vellfire", meta: "Executive · 6 Seats", price: "₹ 28 / km", assetClass: "asset-vp--luxury", seats: "6 Seats", bags: "5 Bags", href: "/custom-trip" },
 ];
 
 export default function CarsPage() {
@@ -39,16 +39,18 @@ export default function CarsPage() {
           </div>
 
           <div className="vehicle-grid">
-            {vehicles.map(([name, meta, price, image, href]) => (
-              <article className="vehicle-list-card" key={name}>
-                <div className="vehicle-list-card__image">
-                  <img src={image} alt={`${name} available in the YATRA chauffeur-driven fleet`} loading="lazy" />
-                </div>
-                <h2>{name}</h2>
-                <p>{meta}</p>
-                <div className="vehicle-list-card__specs"><span>6 Seats</span><span>4 Bags</span><span>AC</span></div>
-                <strong>{price}</strong>
-                <ButtonLink href={href}>View Details →</ButtonLink>
+            {vehicles.map((vehicle) => (
+              <article className="vehicle-list-card" key={vehicle.name}>
+                <div
+                  className={`vehicle-list-card__image asset-sprite ${vehicle.assetClass}`}
+                  role="img"
+                  aria-label={`${vehicle.name} available in the YATRA chauffeur-driven fleet`}
+                />
+                <h2>{vehicle.name}</h2>
+                <p>{vehicle.meta}</p>
+                <div className="vehicle-list-card__specs"><span>{vehicle.seats}</span><span>{vehicle.bags}</span><span>AC</span></div>
+                <strong>{vehicle.price}</strong>
+                <ButtonLink href={vehicle.href}>View Details →</ButtonLink>
               </article>
             ))}
           </div>
