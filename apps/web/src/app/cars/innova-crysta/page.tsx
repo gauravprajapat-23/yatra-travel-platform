@@ -7,7 +7,12 @@ export default function CarDetailPage() {
   return (
     <section className="reference-section reference-section--cream">
       <div className="shell car-detail-top">
-        <div className="car-detail-gallery"><div className="car-detail-gallery__main"><div className="car-detail-suv"/></div><div className="car-detail-gallery__thumbs">{[1,2,3,4].map(x=><span key={x}/>)}</div></div>
+        <div className="car-detail-gallery">
+          <div className="car-detail-gallery__main"><img src="/assets/car-innova.webp" alt="Toyota Innova Crysta for YATRA chauffeur-driven journeys"/></div>
+          <div className="car-detail-gallery__thumbs">
+            {["/assets/car-innova.webp","/assets/fleet-hero.webp","/assets/car-ertiga.webp","/assets/car-fortuner.webp"].map((src,i)=><img src={src} alt={`Innova Crysta gallery view ${i+1}`} loading="lazy" key={src+i}/>)}
+          </div>
+        </div>
         <div className="car-detail-summary"><span className="reference-badge">Most Popular</span><h1>Toyota Innova Crysta</h1><p>Premium · 6 Seats · Ideal for family and long tours</p><div className="rating-row">★★★★★ <strong>4.8</strong> (320+ reviews)</div><div className="spec-icon-grid"><span>6 Seats</span><span>4 Bags</span><span>AC</span><span>Diesel</span><span>GPS</span></div><div className="car-price-panel"><strong>₹14 / km</strong><small>Driver, fuel, toll & state permit included</small><ButtonLink href="/booking/car">Book This Car →</ButtonLink></div></div>
       </div>
 
