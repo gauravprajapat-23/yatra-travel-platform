@@ -1,0 +1,103 @@
+import { createHash, randomBytes } from "node:crypto";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { getDb } from "@yatra/db/client";
+import { hasPermission, type RoleKey } from "@yatra/domain/auth/permissions";
+
+export const ADMIN_SESSION_COOKIE = "__Host-yatra_session";
+const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+export function hashSessionToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+export async function createAdminSession(userId: string) {
+  const db = getDb();
+  const rawToken = randomBytes(32).toString("base64url");
+  const tokenHash = hashSessionToken(rawToken);
+  const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
+
+  await db.session.create({
+    data: {
+      tokenHash,
+      userId,
+      expiresAt,
+      lastSeenAt: new Date(),
+    },
+  });
+
+  const jar = await cookies();
+  jar.set(ADMIN_SESSION_COOKIE, rawToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    expires: expiresAt,
+  });
+
+  return expiresAt;
+}
+
+export async function revokeCurrentAdminSession() {
+  const jar = await cookies();
+  const rawToken = jar.get(ADMIN_SESSION_COOKIE)?.value;
+
+  if (rawToken) {
+    const db = getDb();
+    await db.session.updateMany({
+      where: {
+        tokenHash: hashSessionToken(rawToken),
+        revokedAt: null,
+      },
+      data: { revokedAt: new Date() },
+    });
+  }
+
+  jar.delete(ADMIN_SESSION_COOKIE);
+}
+
+export async function getAdminSession() {
+  const jar = await cookies();
+  const rawToken = jar.get(ADMIN_SESSION_COOKIE)?.value;
+  if (!rawToken) return null;
+
+  const db = getDb();
+  const session = await db.session.findUnique({
+    where: { tokenHash: hashSessionToken(rawToken) },
+    include: {
+      user: {
+        include: {
+          roles: {
+            include: { role: true },
+          },
+        },
+      },
+    },
+  });
+
+  if (!session || session.revokedAt || session.expiresAt <= new Date()) return null;
+  if (session.user.status !== "ACTIVE") return null;
+
+  const roles = session.user.roles.map((entry) => entry.role.key) as RoleKey[];
+  if (!hasPermission(roles, "admin.access")) return null;
+
+  await db.session.update({
+    where: { id: session.id },
+    data: { lastSeenAt: new Date() },
+  }).catch(() => undefined);
+
+  return {
+    sessionId: session.id,
+    userId: session.user.id,
+    email: session.user.email,
+    name: session.user.name,
+    roles,
+    expiresAt: session.expiresAt,
+  };
+}
+
+export async function requireAdminSession() {
+  const session = await getAdminSession();
+  if (!session) redirect("/admin/login");
+  return session;
+}
