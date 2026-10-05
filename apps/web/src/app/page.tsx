@@ -2,15 +2,15 @@ import { ButtonLink } from "@/components/button-link";
 import { HeroJourney } from "@/components/hero-journey";
 
 const sacredJourneys = [
-  { title: "Mahakaleshwar", place: "Ujjain", assetClass: "asset-temple--ujjain" },
-  { title: "Omkareshwar", place: "Narmada", assetClass: "asset-temple--omkareshwar" },
-  { title: "Rameswaram", place: "Tamil Nadu", assetClass: "asset-temple--rameswaram" },
+  { title: "Mahakaleshwar", place: "Ujjain", objectPosition: "22% center" },
+  { title: "Omkareshwar", place: "Narmada", objectPosition: "52% center" },
+  { title: "Rameswaram", place: "Tamil Nadu", objectPosition: "82% center" },
 ];
 
 const fleet = [
-  { name: "Innova Crysta", meta: "Premium · 6 Seats", price: "₹ 14 / km", assetClass: "asset-vp--innova" },
-  { name: "Ertiga", meta: "Comfort · 6 Seats", price: "₹ 12 / km", assetClass: "asset-vp--ertiga" },
-  { name: "Toyota Fortuner", meta: "Luxury SUV · 6 Seats", price: "₹ 20 / km", assetClass: "asset-vp--fortuner" },
+  { name: "Innova Crysta", meta: "Premium · 6 Seats", price: "₹ 14 / km", objectPosition: "center" },
+  { name: "Ertiga", meta: "Comfort · 6 Seats", price: "₹ 12 / km", objectPosition: "46% center" },
+  { name: "Toyota Fortuner", meta: "Luxury SUV · 6 Seats", price: "₹ 20 / km", objectPosition: "58% center" },
 ];
 
 export default function HomePage() {
@@ -34,11 +34,14 @@ export default function HomePage() {
           <div className="reference-card-grid reference-card-grid--three">
             {sacredJourneys.map((journey) => (
               <article className="journey-card" key={journey.title}>
-                <div
-                  className={`journey-card__image asset-sprite ${journey.assetClass}`}
-                  role="img"
-                  aria-label={`${journey.title} temple journey in ${journey.place}`}
-                />
+                <div className="journey-card__image">
+                  <img
+                    src="/assets/temple-hero.webp"
+                    alt={`${journey.title} temple journey in ${journey.place}`}
+                    loading="lazy"
+                    style={{ objectPosition: journey.objectPosition }}
+                  />
+                </div>
                 <div className="journey-card__body">
                   <h3>{journey.title}</h3>
                   <p>{journey.place}</p>
@@ -64,11 +67,14 @@ export default function HomePage() {
           <div className="reference-card-grid reference-card-grid--three">
             {fleet.map((car) => (
               <article className="fleet-card" key={car.name}>
-                <div
-                  className={`fleet-card__visual asset-sprite ${car.assetClass}`}
-                  role="img"
-                  aria-label={`${car.name} chauffeur-driven vehicle`}
-                />
+                <div className="fleet-card__visual">
+                  <img
+                    src="/assets/car-innova.webp"
+                    alt={`${car.name} chauffeur-driven vehicle`}
+                    loading="lazy"
+                    style={{ objectPosition: car.objectPosition }}
+                  />
+                </div>
                 <div className="fleet-card__body">
                   <h3>{car.name}</h3>
                   <p>{car.meta}</p>
