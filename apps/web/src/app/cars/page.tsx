@@ -7,12 +7,12 @@ export const metadata: Metadata = {
 };
 
 const vehicles = [
-  ["Innova Crysta", "Premium · 6 Seats", "₹ 14 / km"],
-  ["Ertiga", "Comfort · 6 Seats", "₹ 12 / km"],
-  ["Innova Hycross", "Premium Hybrid · 6 Seats", "₹ 16 / km"],
-  ["Toyota Fortuner", "Luxury SUV · 6 Seats", "₹ 20 / km"],
-  ["Tempo Traveller", "12–17 Seats · Group", "₹ 26 / km"],
-  ["Luxury Vellfire", "Executive · 6 Seats", "₹ 28 / km"],
+  ["Innova Crysta", "Premium · 6 Seats", "₹ 14 / km", "/assets/car-innova.webp", "/cars/innova-crysta"],
+  ["Ertiga", "Comfort · 6 Seats", "₹ 12 / km", "/assets/car-ertiga.webp", "/custom-trip"],
+  ["Innova Hycross", "Premium Hybrid · 6 Seats", "₹ 16 / km", "/assets/car-innova.webp", "/custom-trip"],
+  ["Toyota Fortuner", "Luxury SUV · 6 Seats", "₹ 20 / km", "/assets/car-fortuner.webp", "/custom-trip"],
+  ["Tempo Traveller", "12–17 Seats · Group", "₹ 26 / km", "/assets/fleet-hero.webp", "/custom-trip"],
+  ["Luxury Vellfire", "Executive · 6 Seats", "₹ 28 / km", "/assets/car-fortuner.webp", "/custom-trip"],
 ];
 
 export default function CarsPage() {
@@ -39,16 +39,16 @@ export default function CarsPage() {
           </div>
 
           <div className="vehicle-grid">
-            {vehicles.map(([name, meta, price], index) => (
+            {vehicles.map(([name, meta, price, image, href]) => (
               <article className="vehicle-list-card" key={name}>
-                <div className={`vehicle-list-card__image vehicle-list-card__image--${(index % 3) + 1}`}>
-                  <div className="vehicle-list-card__car" />
+                <div className="vehicle-list-card__image">
+                  <img src={image} alt={`${name} available in the YATRA chauffeur-driven fleet`} loading="lazy" />
                 </div>
                 <h2>{name}</h2>
                 <p>{meta}</p>
                 <div className="vehicle-list-card__specs"><span>6 Seats</span><span>4 Bags</span><span>AC</span></div>
                 <strong>{price}</strong>
-                <ButtonLink href="/custom-trip">View Details →</ButtonLink>
+                <ButtonLink href={href}>View Details →</ButtonLink>
               </article>
             ))}
           </div>
