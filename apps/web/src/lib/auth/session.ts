@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission, type RoleKey } from "@yatra/domain/auth/permissions";
 
-export const ADMIN_SESSION_COOKIE = "__Host-yatra_session";
+export const ADMIN_SESSION_COOKIE =
+  process.env.NODE_ENV === "production" ? "__Host-yatra_session" : "yatra_session";
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 export function hashSessionToken(token: string): string {
