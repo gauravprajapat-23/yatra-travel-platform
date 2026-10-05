@@ -7,10 +7,10 @@ export const metadata: Metadata = {
 };
 
 const offers = [
-  ["Festive Offer", "Char Dham Yatra Special", "Up to ₹10,000 OFF"],
-  ["Limited Time", "Uttarakhand Temple Tours", "Flat 15% OFF"],
-  ["Car Rental Offer", "Long Distance Travel", "Up to 20% OFF"],
-  ["Group Offer", "Family & Group Bookings", "Special group rates"],
+  ["Festive Offer", "Char Dham Yatra Special", "Up to ₹10,000 OFF", "/assets/packages-hero.webp"],
+  ["Limited Time", "Uttarakhand Temple Tours", "Flat 15% OFF", "/assets/packages-hero.webp"],
+  ["Car Rental Offer", "Long Distance Travel", "Up to 20% OFF", "/assets/home-hero.webp"],
+  ["Group Offer", "Family & Group Bookings", "Special group rates", "/assets/fleet-hero.webp"],
 ];
 
 export default function OffersPage() {
@@ -27,9 +27,10 @@ export default function OffersPage() {
 
       <section className="reference-section reference-section--cream">
         <div className="shell offer-grid">
-          {offers.map(([tag, title, saving], index) => (
+          {offers.map(([tag, title, saving, image]) => (
             <article className="offer-card" key={title}>
-              <div className={`offer-card__visual offer-card__visual--${(index % 3) + 1}`}>
+              <div className="offer-card__visual">
+                <img src={image} alt={`${title} travel offer`} loading="lazy" />
                 <span>{tag}</span>
               </div>
               <div className="offer-card__body">
