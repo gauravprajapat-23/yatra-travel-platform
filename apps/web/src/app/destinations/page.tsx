@@ -7,10 +7,10 @@ export const metadata: Metadata = {
 };
 
 const destinations = [
-  ["Varanasi", "Spiritual · Culture · Heritage", "/assets/packages-hero.webp", "/destinations/varanasi"],
-  ["Ujjain", "Jyotirlinga · Sacred City", "/assets/home-hero.webp", "/packages"],
-  ["Omkareshwar", "Narmada · Jyotirlinga", "/assets/packages-hero.webp", "/packages"],
-  ["Kedarnath", "Himalayas · Pilgrimage", "/assets/packages-hero.webp", "/temples/kedarnath"],
+  { name: "Varanasi", meta: "Spiritual · Culture · Heritage", assetClass: "asset-destination--varanasi", href: "/destinations/varanasi" },
+  { name: "Ujjain", meta: "Jyotirlinga · Sacred City", assetClass: "asset-temple--ujjain", href: "/packages" },
+  { name: "Omkareshwar", meta: "Narmada · Jyotirlinga", assetClass: "asset-temple--omkareshwar", href: "/packages" },
+  { name: "Kedarnath", meta: "Himalayas · Pilgrimage", assetClass: "asset-temple--kedarnath", href: "/temples/kedarnath" },
 ];
 
 export default function DestinationsPage() {
@@ -28,14 +28,17 @@ export default function DestinationsPage() {
       <section className="reference-section reference-section--cream">
         <div className="shell">
           <div className="destination-grid">
-            {destinations.map(([name, meta, image, href]) => (
-              <article className="destination-card" key={name}>
-                <img className="destination-card__image" src={image} alt={`${name} travel destination in India`} loading="lazy" />
+            {destinations.map((destination) => (
+              <article
+                className={`destination-card asset-sprite ${destination.assetClass}`}
+                key={destination.name}
+                aria-label={`${destination.name} travel destination in India`}
+              >
                 <div className="destination-card__shade" />
                 <div className="destination-card__content">
-                  <p>{meta}</p>
-                  <h2>{name}</h2>
-                  <ButtonLink href={href} variant="ghost">Explore →</ButtonLink>
+                  <p>{destination.meta}</p>
+                  <h2>{destination.name}</h2>
+                  <ButtonLink href={destination.href} variant="ghost">Explore →</ButtonLink>
                 </div>
               </article>
             ))}
