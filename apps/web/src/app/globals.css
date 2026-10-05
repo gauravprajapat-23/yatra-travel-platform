@@ -917,7 +917,7 @@ input {
   inset: 0;
   background-image:
     linear-gradient(90deg, rgba(248,244,234,.92) 0%, rgba(248,244,234,.75) 34%, rgba(12,26,22,.08) 64%, rgba(12,26,22,.26) 100%),
-    url("/assets/home-hero.webp");
+    url("/assets/home-hero.svg");
   background-size: cover;
   background-position: center;
 }
@@ -1087,7 +1087,7 @@ input {
 .offer-card__visual--1 {
   background-image:
     linear-gradient(180deg, transparent, rgba(6,62,49,.22)),
-    url("/assets/packages-hero.webp");
+    url("/assets/packages-hero.svg");
 }
 
 .journey-card--two,
@@ -1095,7 +1095,7 @@ input {
 .offer-card__visual--2 {
   background-image:
     linear-gradient(180deg, transparent, rgba(6,62,49,.2)),
-    url("/assets/temple-hero.webp");
+    url("/assets/temple-hero.svg");
 }
 
 .journey-card--three,
@@ -1103,7 +1103,7 @@ input {
 .offer-card__visual--3 {
   background-image:
     linear-gradient(180deg, transparent, rgba(6,62,49,.22)),
-    url("/assets/home-hero.webp");
+    url("/assets/home-hero.svg");
 }
 
 .journey-card__body,
@@ -1198,7 +1198,7 @@ input {
   align-items: center;
   background:
     linear-gradient(90deg, rgba(6,45,36,.95), rgba(6,45,36,.45)),
-    url("/assets/home-hero.webp") center/cover;
+    url("/assets/home-hero.svg") center/cover;
 }
 
 .reference-journey-cta__inner {
@@ -1247,15 +1247,15 @@ input {
 }
 
 .reference-page-hero--fleet {
-  background-image: url("/assets/fleet-hero.webp");
+  background-image: url("/assets/fleet-hero.svg");
 }
 .reference-page-hero--packages,
 .reference-page-hero--destination {
-  background-image: url("/assets/packages-hero.webp");
+  background-image: url("/assets/packages-hero.svg");
 }
 .reference-page-hero--offers,
 .reference-page-hero--custom {
-  background-image: url("/assets/home-hero.webp");
+  background-image: url("/assets/home-hero.svg");
 }
 
 .reference-page-hero__overlay {
@@ -1430,10 +1430,10 @@ input {
   background-position: center;
 }
 
-.destination-card--1 { background-image: url("/assets/packages-hero.webp"); }
-.destination-card--2 { background-image: url("/assets/home-hero.webp"); }
-.destination-card--3 { background-image: url("/assets/offers-hero.webp"); }
-.destination-card--4 { background-image: url("/assets/temple-hero.webp"); }
+.destination-card--1 { background-image: url("/assets/packages-hero.svg"); }
+.destination-card--2 { background-image: url("/assets/home-hero.svg"); }
+.destination-card--3 { background-image: url("/assets/offers-hero.svg"); }
+.destination-card--4 { background-image: url("/assets/temple-hero.svg"); }
 
 .destination-card__shade {
   position: absolute;
@@ -1653,20 +1653,20 @@ input {
   color: #fff;
 }
 
-.story-hero--about { background-image: url("/assets/home-hero.webp"); }
+.story-hero--about { background-image: url("/assets/home-hero.svg"); }
 .story-hero--contact,
 .story-hero--faq,
-.story-hero--my-trips { background-image: url("/assets/custom-trip-hero.webp"); }
+.story-hero--my-trips { background-image: url("/assets/custom-trip-hero.svg"); }
 .story-hero--blog,
-.article-hero { background-image: url("/assets/blog-hero.webp"); }
-.story-hero--payment { background-image: url("/assets/home-hero.webp"); }
-.destination-detail-hero { background-image: url("/assets/blog-hero.webp"); }
-.temple-detail-hero { background-image: url("/assets/temple-hero.webp"); }
+.article-hero { background-image: url("/assets/blog-hero.svg"); }
+.story-hero--payment { background-image: url("/assets/home-hero.svg"); }
+.destination-detail-hero { background-image: url("/assets/blog-hero.svg"); }
+.temple-detail-hero { background-image: url("/assets/temple-hero.svg"); }
 .success-hero {
   min-height: 290px;
   background:
     linear-gradient(90deg, rgba(4,55,43,.93), rgba(4,55,43,.58)),
-    url("/assets/home-hero.webp") center/cover;
+    url("/assets/home-hero.svg") center/cover;
 }
 
 .story-hero__overlay,
@@ -1744,7 +1744,7 @@ input {
   border-radius: 18px;
   background:
     linear-gradient(180deg, rgba(5,45,35,.04), rgba(5,45,35,.12)),
-    url("/assets/fleet-hero.webp") center/cover;
+    url("/assets/fleet-hero.svg") center/cover;
   box-shadow: 0 16px 36px rgba(12,26,22,.12);
 }
 
@@ -1971,7 +1971,7 @@ input {
   min-height: 320px;
   background:
     linear-gradient(180deg, transparent, rgba(7,45,35,.16)),
-    url("/assets/blog-hero.webp") center/cover;
+    url("/assets/blog-hero.svg") center/cover;
 }
 
 .featured-story__copy {
@@ -2011,9 +2011,9 @@ input {
   background-size: cover;
   background-position: center;
 }
-.story-card__image--1 { background-image: url("/assets/packages-hero.webp"); }
-.story-card__image--2 { background-image: url("/assets/custom-trip-hero.webp"); }
-.story-card__image--3 { background-image: url("/assets/blog-hero.webp"); }
+.story-card__image--1 { background-image: url("/assets/packages-hero.svg"); }
+.story-card__image--2 { background-image: url("/assets/custom-trip-hero.svg"); }
+.story-card__image--3 { background-image: url("/assets/blog-hero.svg"); }
 .story-card__body { padding: 16px; }
 .story-card h3 { margin: 5px 0 12px; color: #17352b; line-height: 1.25; }
 
@@ -2173,7 +2173,7 @@ input {
   border-radius: 16px;
   background:
     linear-gradient(180deg, rgba(255,255,255,.18), rgba(5,45,35,.18)),
-    url("/assets/fleet-hero.webp") center/cover;
+    url("/assets/fleet-hero.svg") center/cover;
 }
 
 .car-detail-suv {
@@ -2326,7 +2326,7 @@ input {
 .checkout-trip-image {
   min-height: 140px;
   border-radius: 10px;
-  background: url("/assets/temple-hero.webp") center/cover;
+  background: url("/assets/temple-hero.svg") center/cover;
 }
 .checkout-summary ul { padding-left: 18px; color: #606661; font-size: .78rem; line-height: 1.7; }
 .traveller-row {
@@ -2443,7 +2443,7 @@ input {
   inset: 0;
   background:
     linear-gradient(to top, rgba(5,45,35,.88), transparent 65%),
-    url("/assets/temple-hero.webp") center/cover;
+    url("/assets/temple-hero.svg") center/cover;
 }
 .package-detail-title {
   position: relative;
@@ -2498,7 +2498,7 @@ input {
 .temple-intro-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:center; margin-bottom:46px; }
 .temple-intro-grid article h2 { font-family:var(--font-display),Georgia,serif; color:#17352b; font-size:2.25rem; }
 .temple-intro-grid article p { color:#686d68; line-height:1.7; }
-.temple-video-card { min-height:270px; display:grid; place-items:center; align-content:center; gap:8px; border-radius:14px; color:#fff; background:linear-gradient(rgba(5,45,35,.28),rgba(5,45,35,.55)),url("/assets/temple-hero.webp") center/cover; }
+.temple-video-card { min-height:270px; display:grid; place-items:center; align-content:center; gap:8px; border-radius:14px; color:#fff; background:linear-gradient(rgba(5,45,35,.28),rgba(5,45,35,.55)),url("/assets/temple-hero.svg") center/cover; }
 .temple-video-card > span { display:grid; width:56px; height:56px; place-items:center; border-radius:50%; background:#fff; color:#ef6c18; font-size:1.3rem; }
 .reference-title--small { font-size: clamp(1.9rem,3.5vw,3rem); }
 
@@ -2999,7 +2999,7 @@ body:has(.admin-root) {
 .admin-login-visual {
   position:relative;
   min-height:100vh;
-  background:url("/assets/admin-login-bg.webp") center/cover;
+  background:url("/assets/admin-login-bg.svg") center/cover;
   color:#fff;
 }
 
@@ -3190,7 +3190,7 @@ body:has(.admin-root) {
   border-radius: 9px;
   background:
     linear-gradient(180deg,rgba(5,45,35,.02),rgba(5,45,35,.18)),
-    url("/assets/temple-hero.webp") center/cover;
+    url("/assets/temple-hero.svg") center/cover;
 }
 
 .admin-vehicle-visual {
@@ -3446,7 +3446,7 @@ body:has(.admin-root) {
 .admin-image-uploader__preview {
   min-height: 170px;
   border-radius: 8px;
-  background: url("/assets/temple-hero.webp") center/cover;
+  background: url("/assets/temple-hero.svg") center/cover;
 }
 
 .admin-image-uploader button {
@@ -3520,10 +3520,10 @@ body:has(.admin-root) {
   background-position:center;
 }
 
-.admin-media-thumb--1 { background-image:url("/assets/packages-hero.webp"); }
-.admin-media-thumb--2 { background-image:url("/assets/blog-hero.webp"); }
-.admin-media-thumb--3 { background-image:url("/assets/temple-hero.webp"); }
-.admin-media-thumb--4 { background-image:url("/assets/home-hero.webp"); }
+.admin-media-thumb--1 { background-image:url("/assets/packages-hero.svg"); }
+.admin-media-thumb--2 { background-image:url("/assets/blog-hero.svg"); }
+.admin-media-thumb--3 { background-image:url("/assets/temple-hero.svg"); }
+.admin-media-thumb--4 { background-image:url("/assets/home-hero.svg"); }
 
 .admin-media-card strong { color:#33443d;font-size:.68rem; }
 .admin-media-card small { color:#8a8d89;font-size:.6rem; }
@@ -3537,7 +3537,7 @@ body:has(.admin-root) {
 .admin-media-preview {
   min-height:170px;
   border-radius:7px;
-  background:url("/assets/packages-hero.webp") center/cover;
+  background:url("/assets/packages-hero.svg") center/cover;
 }
 
 .admin-media-inspector h2 { color:#243a32;font-size:.9rem; }
