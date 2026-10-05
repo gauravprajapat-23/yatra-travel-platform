@@ -4,10 +4,10 @@ import { ButtonLink } from "@/components/button-link";
 export const metadata: Metadata = { title: "Car Search Results", robots: { index: false, follow: false } };
 
 const cars = [
-  ["Innova Crysta","6 Seats · Premium","₹14 / km","₹12,600"],
-  ["Ertiga","6 Seats · Comfort","₹12 / km","₹10,800"],
-  ["Toyota Fortuner","6 Seats · Luxury","₹20 / km","₹18,000"],
-  ["Tempo Traveller","12–17 Seats · Group","₹26 / km","₹23,400"],
+  ["Innova Crysta","6 Seats · Premium","₹14 / km","₹12,600","/assets/car-innova.webp"],
+  ["Ertiga","6 Seats · Comfort","₹12 / km","₹10,800","/assets/car-ertiga.webp"],
+  ["Toyota Fortuner","6 Seats · Luxury","₹20 / km","₹18,000","/assets/car-fortuner.webp"],
+  ["Tempo Traveller","12–17 Seats · Group","₹26 / km","₹23,400","/assets/fleet-hero.webp"],
 ];
 
 export default function CarSearchPage() {
@@ -26,7 +26,11 @@ export default function CarSearchPage() {
         </aside>
         <div className="search-results">
           <div className="results-heading"><h1>12 Cars Available</h1><select><option>Recommended</option></select></div>
-          {cars.map(([name,meta,rate,total],i)=><article className="search-result-card" key={name}><div className={`search-result-card__image vehicle-list-card__image--${(i%3)+1}`}><div className="vehicle-list-card__car"/></div><div className="search-result-card__body"><h2>{name}</h2><p>{meta}</p><ul><li>Driver, fuel & toll included</li><li>Clean & well maintained</li><li>Experienced driver</li></ul></div><div className="search-result-card__price"><strong>{rate}</strong><small>Total approx. {total}</small><ButtonLink href="/cars/innova-crysta">Choose Vehicle →</ButtonLink></div></article>)}
+          {cars.map(([name,meta,rate,total,image])=><article className="search-result-card" key={name}>
+            <div className="search-result-card__image"><img src={image} alt={`${name} vehicle option`} loading="lazy"/></div>
+            <div className="search-result-card__body"><h2>{name}</h2><p>{meta}</p><ul><li>Driver, fuel & toll included</li><li>Clean & well maintained</li><li>Experienced driver</li></ul></div>
+            <div className="search-result-card__price"><strong>{rate}</strong><small>Total approx. {total}</small><ButtonLink href="/cars/innova-crysta">Choose Vehicle →</ButtonLink></div>
+          </article>)}
         </div>
       </div>
     </section>
