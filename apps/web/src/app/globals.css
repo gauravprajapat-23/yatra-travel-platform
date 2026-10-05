@@ -5322,3 +5322,71 @@ body:has(.admin-root) {
     min-height: auto;
   }
 }
+
+
+/* Custom Trip functional-flow states */
+.trip-builder__error {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border: 1px solid #e8b8ae;
+  border-radius: 10px;
+  background: #fff2ef;
+  color: #9a2f20;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.trip-builder__form .button-link:disabled {
+  cursor: wait;
+  opacity: .68;
+}
+
+.checkout-trip-details {
+  display: grid;
+  gap: 7px;
+  margin: 12px 0;
+}
+
+.checkout-trip-details > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid #eee3d3;
+}
+
+.checkout-trip-details dt {
+  color: #777b74;
+  font-size: .7rem;
+}
+
+.checkout-trip-details dd {
+  margin: 0;
+  color: #17352b;
+  font-size: .72rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.checkout-special-request,
+.custom-trip-checkout-notice {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #fff7e9;
+}
+
+.checkout-special-request p,
+.custom-trip-checkout-notice p {
+  margin: 5px 0 0;
+  color: #5f655f;
+  font-size: .72rem;
+  line-height: 1.5;
+}
+
+.checkout-quote-note {
+  display: block;
+  margin-top: 8px;
+  color: #777b74;
+  line-height: 1.45;
+}
