@@ -7,12 +7,12 @@ export const metadata: Metadata = {
 };
 
 const packages = [
-  ["Spiritual Ujjain – Omkareshwar", "3 Nights · 4 Days", "₹ 12,999"],
-  ["Char Dham Yatra", "8 Nights · 9 Days", "₹ 28,999"],
-  ["South India Temple Trail", "5 Nights · 6 Days", "₹ 18,499"],
-  ["Rajasthan Heritage Explorer", "6 Nights · 7 Days", "₹ 21,999"],
-  ["Kerala Backwaters Escape", "4 Nights · 5 Days", "₹ 16,999"],
-  ["Varanasi Spiritual Journey", "3 Nights · 4 Days", "₹ 11,499"],
+  ["Spiritual Ujjain – Omkareshwar", "3 Nights · 4 Days", "₹ 12,999", "/assets/packages-hero.webp"],
+  ["Char Dham Yatra", "8 Nights · 9 Days", "₹ 28,999", "/assets/packages-hero.webp"],
+  ["South India Temple Trail", "5 Nights · 6 Days", "₹ 18,499", "/assets/home-hero.webp"],
+  ["Rajasthan Heritage Explorer", "6 Nights · 7 Days", "₹ 21,999", "/assets/packages-hero.webp"],
+  ["Kerala Backwaters Escape", "4 Nights · 5 Days", "₹ 16,999", "/assets/home-hero.webp"],
+  ["Varanasi Spiritual Journey", "3 Nights · 4 Days", "₹ 11,499", "/assets/packages-hero.webp"],
 ];
 
 export default function PackagesPage() {
@@ -43,9 +43,11 @@ export default function PackagesPage() {
             <h2 className="reference-title">Handpicked journeys for every kind of traveller.</h2>
           </div>
           <div className="package-grid">
-            {packages.map(([name, duration, price], index) => (
+            {packages.map(([name, duration, price, image]) => (
               <article className="package-card" key={name}>
-                <div className={`package-card__image package-card__image--${(index % 3) + 1}`} />
+                <div className="package-card__image">
+                  <img src={image} alt={`${name} tour package`} loading="lazy" />
+                </div>
                 <div className="package-card__body">
                   <h3>{name}</h3>
                   <p>{duration}</p>
