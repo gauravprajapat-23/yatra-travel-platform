@@ -7,10 +7,10 @@ export const metadata: Metadata = {
 };
 
 const destinations = [
-  ["Varanasi", "Spiritual · Culture · Heritage"],
-  ["Ujjain", "Jyotirlinga · Sacred City"],
-  ["Omkareshwar", "Narmada · Jyotirlinga"],
-  ["Kedarnath", "Himalayas · Pilgrimage"],
+  ["Varanasi", "Spiritual · Culture · Heritage", "/assets/packages-hero.webp", "/destinations/varanasi"],
+  ["Ujjain", "Jyotirlinga · Sacred City", "/assets/home-hero.webp", "/packages"],
+  ["Omkareshwar", "Narmada · Jyotirlinga", "/assets/packages-hero.webp", "/packages"],
+  ["Kedarnath", "Himalayas · Pilgrimage", "/assets/packages-hero.webp", "/temples/kedarnath"],
 ];
 
 export default function DestinationsPage() {
@@ -28,13 +28,14 @@ export default function DestinationsPage() {
       <section className="reference-section reference-section--cream">
         <div className="shell">
           <div className="destination-grid">
-            {destinations.map(([name, meta], index) => (
-              <article className={`destination-card destination-card--${index + 1}`} key={name}>
+            {destinations.map(([name, meta, image, href]) => (
+              <article className="destination-card" key={name}>
+                <img className="destination-card__image" src={image} alt={`${name} travel destination in India`} loading="lazy" />
                 <div className="destination-card__shade" />
                 <div className="destination-card__content">
                   <p>{meta}</p>
                   <h2>{name}</h2>
-                  <ButtonLink href="/packages" variant="ghost">Explore →</ButtonLink>
+                  <ButtonLink href={href} variant="ghost">Explore →</ButtonLink>
                 </div>
               </article>
             ))}
