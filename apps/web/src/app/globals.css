@@ -873,3 +873,764 @@ input {
     animation-iteration-count: 1 !important;
   }
 }
+
+
+/* === Generated reference-design visual system === */
+.site-header--reference {
+  background: rgba(255, 252, 246, 0.96);
+  border-bottom: 1px solid rgba(12, 26, 22, 0.09);
+}
+
+.site-header--reference .site-header__inner {
+  min-height: 64px;
+}
+
+.site-header--reference .brand-mark {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.45rem;
+  letter-spacing: 0.04em;
+}
+
+.desktop-nav--cta {
+  margin-left: 8px;
+}
+
+.reference-hero {
+  position: relative;
+  min-height: 700px;
+  display: grid;
+  align-items: end;
+  overflow: hidden;
+  background: #163f34;
+}
+
+.reference-hero__backdrop,
+.reference-page-hero {
+  background:
+    linear-gradient(90deg, rgba(248,244,234,.92) 0%, rgba(248,244,234,.72) 35%, rgba(12,26,22,.12) 65%, rgba(12,26,22,.18) 100%),
+    radial-gradient(circle at 75% 30%, rgba(234,124,43,.4), transparent 28%),
+    linear-gradient(145deg, #d2c3a0 0%, #789080 35%, #174a3a 100%);
+}
+
+.reference-hero__backdrop {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(90deg, rgba(248,244,234,.92) 0%, rgba(248,244,234,.75) 34%, rgba(12,26,22,.08) 64%, rgba(12,26,22,.26) 100%),
+    url("/assets/home-hero.webp");
+  background-size: cover;
+  background-position: center;
+}
+
+.reference-hero__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(7, 22, 18, .22), transparent 45%);
+}
+
+.reference-hero__content {
+  position: relative;
+  z-index: 2;
+  padding: 105px 0 160px;
+}
+
+.reference-hero__content h1,
+.reference-page-hero__content h1 {
+  margin: 12px 0 18px;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(4rem, 7vw, 7rem);
+  line-height: .9;
+  letter-spacing: -.045em;
+  color: #0d2a22;
+  max-width: 720px;
+}
+
+.reference-hero__lede {
+  max-width: 640px;
+  font-size: 1.08rem;
+  line-height: 1.65;
+  color: #364a43;
+}
+
+.reference-hero__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.reference-search-card {
+  position: relative;
+  z-index: 4;
+  margin-top: -75px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr) auto;
+  align-items: stretch;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.96);
+  border: 1px solid rgba(12,26,22,.1);
+  box-shadow: 0 18px 50px rgba(12,26,22,.18);
+}
+
+.reference-search-card__field {
+  padding: 9px 14px;
+  border-right: 1px solid #eee5d6;
+  min-width: 0;
+}
+
+.reference-search-card__field span {
+  display: block;
+  margin-bottom: 4px;
+  color: #7b7f78;
+  font-size: .66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.reference-search-card__field strong {
+  color: #17352b;
+  white-space: nowrap;
+}
+
+.reference-trust-row {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 22px 0 26px;
+  font-size: .76rem;
+  font-weight: 750;
+  color: #6b5b3d;
+}
+
+.reference-section {
+  padding: 76px 0;
+}
+
+.reference-section--cream {
+  background: #fffaf1;
+}
+
+.reference-section--forest {
+  background:
+    radial-gradient(circle at 15% 20%, rgba(234,124,43,.08), transparent 30%),
+    #063e31;
+  color: #fff;
+}
+
+.reference-split {
+  display: grid;
+  grid-template-columns: .72fr 1.28fr;
+  gap: 50px;
+  align-items: center;
+}
+
+.reference-title {
+  margin: 8px 0 14px;
+  font-family: var(--font-display), Georgia, serif;
+  color: #153b31;
+  font-size: clamp(2.35rem, 4.4vw, 4.2rem);
+  line-height: .98;
+  font-weight: 600;
+}
+
+.reference-title--light {
+  color: #fff;
+}
+
+.reference-copy {
+  color: #63665f;
+  line-height: 1.75;
+  max-width: 500px;
+  margin-bottom: 24px;
+}
+
+.reference-card-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.reference-card-grid--three {
+  grid-template-columns: repeat(3, minmax(0,1fr));
+}
+
+.journey-card,
+.fleet-card,
+.vehicle-list-card,
+.package-card,
+.offer-card {
+  overflow: hidden;
+  border: 1px solid rgba(22,53,43,.09);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 10px 25px rgba(12,26,22,.08);
+}
+
+.journey-card__image,
+.package-card__image,
+.offer-card__visual,
+.vehicle-list-card__image {
+  min-height: 170px;
+  background:
+    linear-gradient(180deg, rgba(6,62,49,.02), rgba(6,62,49,.2)),
+    linear-gradient(135deg, #d7a95f, #f47a1f 45%, #1f6653);
+  background-size: cover;
+  background-position: center;
+}
+
+.journey-card--one,
+.package-card__image--1,
+.offer-card__visual--1 {
+  background-image:
+    linear-gradient(180deg, transparent, rgba(6,62,49,.22)),
+    url("/assets/packages-hero.webp");
+}
+
+.journey-card--two,
+.package-card__image--2,
+.offer-card__visual--2 {
+  background-image:
+    linear-gradient(180deg, transparent, rgba(6,62,49,.2)),
+    url("/assets/temple-hero.webp");
+}
+
+.journey-card--three,
+.package-card__image--3,
+.offer-card__visual--3 {
+  background-image:
+    linear-gradient(180deg, transparent, rgba(6,62,49,.22)),
+    url("/assets/home-hero.webp");
+}
+
+.journey-card__body,
+.fleet-card__body,
+.package-card__body,
+.offer-card__body {
+  padding: 16px;
+}
+
+.journey-card h3,
+.fleet-card h3,
+.package-card h3,
+.offer-card h2,
+.vehicle-list-card h2 {
+  margin: 0 0 6px;
+  color: #132c25;
+  font-size: 1.05rem;
+}
+
+.journey-card p,
+.fleet-card p,
+.package-card p,
+.offer-card p,
+.vehicle-list-card p {
+  color: #686a64;
+  font-size: .83rem;
+  line-height: 1.55;
+}
+
+.reference-section-heading {
+  margin-bottom: 26px;
+}
+
+.reference-section-heading--row {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: end;
+}
+
+.reference-section--forest .reference-section-heading p {
+  color: #d6d7d2;
+}
+
+.fleet-card {
+  color: #111;
+  border-color: rgba(255,255,255,.16);
+}
+
+.fleet-card__visual {
+  min-height: 160px;
+  display: grid;
+  place-items: center;
+  background: #f0e5d1;
+}
+
+.fleet-card__visual--2 { background: #f7efe4; }
+.fleet-card__visual--3 { background: #e3ebe5; }
+
+.fleet-card__car-shape,
+.vehicle-list-card__car {
+  position: relative;
+  width: 72%;
+  height: 60px;
+  border-radius: 30px 38px 16px 16px;
+  background: linear-gradient(180deg,#fbfbf9,#d7d8d5);
+  box-shadow: 0 18px 30px rgba(0,0,0,.18);
+}
+
+.fleet-card__car-shape::before,
+.fleet-card__car-shape::after,
+.vehicle-list-card__car::before,
+.vehicle-list-card__car::after {
+  content: "";
+  position: absolute;
+  bottom: -11px;
+  width: 30px;
+  height: 30px;
+  border: 7px solid #222;
+  border-radius: 50%;
+  background: #777;
+}
+
+.fleet-card__car-shape::before,
+.vehicle-list-card__car::before { left: 22px; }
+.fleet-card__car-shape::after,
+.vehicle-list-card__car::after { right: 22px; }
+
+.reference-journey-cta {
+  min-height: 430px;
+  display: grid;
+  align-items: center;
+  background:
+    linear-gradient(90deg, rgba(6,45,36,.95), rgba(6,45,36,.45)),
+    url("/assets/home-hero.webp") center/cover;
+}
+
+.reference-journey-cta__inner {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 68px 0;
+}
+
+.reference-journey-cta__panel {
+  max-width: 520px;
+  padding: 30px;
+  border-radius: 16px;
+  background: rgba(4,48,38,.92);
+  color: #fff;
+}
+
+.reference-journey-cta__panel h2 {
+  margin: 6px 0 10px;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(2rem,4vw,3.6rem);
+  line-height: 1;
+}
+
+.reference-journey-cta__panel p:not(.eyebrow) {
+  color: #e5ded2;
+  line-height: 1.6;
+}
+
+.reference-journey-cta__features {
+  display: flex;
+  gap: 12px;
+  color: #f7d49a;
+  font-size: .8rem;
+}
+
+.reference-page-hero {
+  position: relative;
+  min-height: 410px;
+  display: grid;
+  align-items: center;
+  color: #fff;
+  background-size: cover;
+  background-position: center;
+}
+
+.reference-page-hero--fleet {
+  background-image: url("/assets/fleet-hero.webp");
+}
+.reference-page-hero--packages,
+.reference-page-hero--destination {
+  background-image: url("/assets/packages-hero.webp");
+}
+.reference-page-hero--offers,
+.reference-page-hero--custom {
+  background-image: url("/assets/home-hero.webp");
+}
+
+.reference-page-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(6,45,36,.95), rgba(6,45,36,.62) 42%, rgba(6,45,36,.18));
+}
+
+.reference-page-hero__content {
+  position: relative;
+  z-index: 1;
+  padding: 70px 0;
+}
+
+.reference-page-hero__content h1 {
+  color: #fff;
+  font-size: clamp(3.1rem,6vw,5.4rem);
+  max-width: 800px;
+}
+
+.reference-page-hero__content > p:last-child {
+  max-width: 650px;
+  color: #f3eadc;
+  line-height: 1.65;
+}
+
+.reference-hero-badges {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 26px;
+}
+
+.reference-hero-badges span {
+  padding: 9px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.28);
+  background: rgba(6,45,36,.55);
+  font-size: .76rem;
+}
+
+.reference-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.filter-chip {
+  min-height: 42px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid #eadfce;
+  background: #fff;
+  color: #263a34;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.filter-chip--active {
+  background: #063e31;
+  color: #fff;
+  border-color: #063e31;
+}
+
+.vehicle-grid,
+.package-grid,
+.offer-grid {
+  display: grid;
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 18px;
+}
+
+.vehicle-list-card {
+  padding: 14px;
+}
+
+.vehicle-list-card__image {
+  min-height: 190px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+
+.vehicle-list-card__image--1 { background: linear-gradient(135deg,#eee0c7,#f6e9d7); }
+.vehicle-list-card__image--2 { background: linear-gradient(135deg,#eee5dc,#faf7f1); }
+.vehicle-list-card__image--3 { background: linear-gradient(135deg,#d7e0d9,#f2f2e9); }
+
+.vehicle-list-card__specs {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0;
+  color: #62665f;
+  font-size: .75rem;
+}
+
+.vehicle-list-card > strong {
+  display: block;
+  color: #17352b;
+  margin-bottom: 13px;
+}
+
+.package-search-strip {
+  position: relative;
+  z-index: 3;
+  margin-top: -30px;
+}
+
+.package-search-strip__inner {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(12,26,22,.15);
+}
+
+.package-search-strip input,
+.package-search-strip select,
+.trip-builder input,
+.trip-builder select,
+.trip-builder textarea {
+  min-height: 48px;
+  width: 100%;
+  padding: 0 14px;
+  border: 1px solid #e7ddcd;
+  border-radius: 10px;
+  background: #fff;
+  color: #17352b;
+}
+
+.package-grid {
+  margin-top: 18px;
+}
+
+.package-card__image {
+  min-height: 190px;
+}
+
+.package-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.package-card__footer small {
+  color: #777b74;
+  font-size: .68rem;
+  font-weight: 500;
+}
+
+.destination-grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 18px;
+}
+
+.destination-card {
+  position: relative;
+  min-height: 360px;
+  overflow: hidden;
+  display: flex;
+  align-items: end;
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg,#d08c4c,#17352b);
+  background-size: cover;
+  background-position: center;
+}
+
+.destination-card--1 { background-image: url("/assets/packages-hero.webp"); }
+.destination-card--2 { background-image: url("/assets/home-hero.webp"); }
+.destination-card--3 { background-image: url("/assets/offers-hero.webp"); }
+.destination-card--4 { background-image: url("/assets/temple-hero.webp"); }
+
+.destination-card__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(7,31,25,.92), rgba(7,31,25,.05));
+}
+
+.destination-card__content {
+  position: relative;
+  z-index: 1;
+  padding: 28px;
+  color: #fff;
+}
+
+.destination-card__content h2 {
+  margin: 6px 0 14px;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 2.5rem;
+}
+
+.destination-card__content p {
+  color: #eadfce;
+}
+
+.offer-grid {
+  grid-template-columns: repeat(4,minmax(0,1fr));
+}
+
+.offer-card__visual {
+  position: relative;
+  min-height: 170px;
+}
+
+.offer-card__visual span {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #ef6c18;
+  color: #fff;
+  font-size: .68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.offer-card__body strong {
+  display: block;
+  color: #ef6c18;
+  margin: 6px 0 10px;
+}
+
+.trip-builder {
+  display: grid;
+  grid-template-columns: 1.6fr .8fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.trip-builder__form,
+.trip-builder__summary {
+  padding: 26px;
+  border: 1px solid #eadfce;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(12,26,22,.06);
+}
+
+.trip-builder__form h2,
+.trip-builder__summary h2 {
+  margin-top: 0;
+  font-family: var(--font-display), Georgia, serif;
+  color: #17352b;
+}
+
+.trip-builder__grid {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 14px;
+}
+
+.trip-builder label {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 14px;
+  color: #424f49;
+  font-size: .8rem;
+  font-weight: 750;
+}
+
+.trip-builder textarea {
+  min-height: 120px;
+  padding-top: 12px;
+}
+
+.trip-builder__summary {
+  position: sticky;
+  top: 90px;
+}
+
+.trip-builder__price {
+  display: block;
+  color: #ef6c18;
+  font-size: 2.2rem;
+}
+
+.trip-builder__route {
+  display: grid;
+  gap: 9px;
+  padding: 18px 0;
+  margin: 18px 0;
+  border-top: 1px solid #eee5d6;
+  border-bottom: 1px solid #eee5d6;
+}
+
+.trip-builder__route span {
+  font-size: .8rem;
+  color: #4d5954;
+}
+
+@media (max-width: 1000px) {
+  .reference-search-card {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .reference-search-card .button-link {
+    grid-column: 1 / -1;
+  }
+
+  .reference-trust-row {
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+  }
+
+  .reference-split,
+  .trip-builder {
+    grid-template-columns: 1fr;
+  }
+
+  .reference-card-grid--three,
+  .vehicle-grid,
+  .package-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+
+  .offer-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+
+  .trip-builder__summary {
+    position: static;
+  }
+}
+
+@media (max-width: 700px) {
+  .reference-hero {
+    min-height: 620px;
+  }
+
+  .reference-hero__content {
+    padding: 76px 0 120px;
+  }
+
+  .reference-hero__content h1 {
+    font-size: clamp(3.5rem,16vw,5.2rem);
+  }
+
+  .reference-search-card,
+  .package-search-strip__inner,
+  .trip-builder__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reference-search-card__field {
+    border-right: 0;
+    border-bottom: 1px solid #eee5d6;
+  }
+
+  .reference-trust-row {
+    grid-template-columns: 1fr;
+  }
+
+  .reference-card-grid--three,
+  .vehicle-grid,
+  .package-grid,
+  .offer-grid,
+  .destination-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reference-section-heading--row,
+  .reference-journey-cta__inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .reference-journey-cta__features {
+    flex-wrap: wrap;
+  }
+}
