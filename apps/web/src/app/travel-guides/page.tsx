@@ -7,12 +7,12 @@ export const metadata: Metadata = {
 };
 
 const stories = [
-  ["Omkareshwar Travel Guide","Destinations"],
-  ["Raipur to Ujjain by Car","Road Trips"],
-  ["Rameswaram Travel Guide","Destinations"],
-  ["Best Time to Visit Kedarnath","Temple Guide"],
-  ["A Spiritual Journey Through Varanasi","Culture"],
-  ["Rajasthan Road Trip","Travel Tips"],
+  ["Omkareshwar Travel Guide","Destinations","/assets/packages-hero.webp"],
+  ["Raipur to Ujjain by Car","Road Trips","/assets/home-hero.webp"],
+  ["Rameswaram Travel Guide","Destinations","/assets/packages-hero.webp"],
+  ["Best Time to Visit Kedarnath","Temple Guide","/assets/packages-hero.webp"],
+  ["A Spiritual Journey Through Varanasi","Culture","/assets/packages-hero.webp"],
+  ["Rajasthan Road Trip","Travel Tips","/assets/home-hero.webp"],
 ];
 
 export default function TravelGuidesPage() {
@@ -33,7 +33,9 @@ export default function TravelGuidesPage() {
         </div>
 
         <div className="shell featured-story">
-          <div className="featured-story__image" />
+          <div className="featured-story__image">
+            <img src="/assets/packages-hero.webp" alt="Mahakaleshwar Ujjain temple travel guide" loading="lazy" />
+          </div>
           <div className="featured-story__copy">
             <p className="eyebrow">TEMPLE GUIDE</p>
             <h2>A Complete Guide to Mahakaleshwar Ujjain.</h2>
@@ -43,9 +45,11 @@ export default function TravelGuidesPage() {
         </div>
 
         <div className="shell story-grid">
-          {stories.map(([title,cat],index) => (
+          {stories.map(([title,cat,image]) => (
             <article className="story-card" key={title}>
-              <div className={`story-card__image story-card__image--${(index%3)+1}`} />
+              <div className="story-card__image">
+                <img src={image} alt={title} loading="lazy" />
+              </div>
               <div className="story-card__body"><p className="eyebrow">{cat}</p><h3>{title}</h3><Link href="/travel-guides/spiritual-journey-varanasi">Read More →</Link></div>
             </article>
           ))}
