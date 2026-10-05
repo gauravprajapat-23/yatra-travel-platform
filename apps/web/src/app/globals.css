@@ -3969,14 +3969,6 @@ body:has(.admin-root) {
   z-index: 1;
 }
 
-@media (prefers-reduced-data: reduce) {
-  .asset-sprite {
-    background-image: none !important;
-    background-color: var(--color-sand-100) !important;
-  }
-}
-
-
 /* Extracted atlas presentation refinements */
 .offer-card__visual.asset-sprite,
 .story-card__image.asset-sprite,
@@ -4027,53 +4019,53 @@ body:has(.admin-root) {
 }
 
 
-/* === Homepage image hotfix ===
-   Use one known-good atlas generated from the approved visual asset sheet.
-   This replaces the corrupted WebP files that rendered as blank color blocks. */
+/* === Homepage direct-image rendering ===
+   No sprite/atlas dependency: direct asset paths only. */
 .reference-hero__backdrop {
-  background-image: url("/assets/home-atlas.webp") !important;
-  background-size: 300% 300% !important;
-  background-position: 0% 0% !important;
+  background-image:
+    linear-gradient(90deg, rgba(248,244,234,.90) 0%, rgba(248,244,234,.68) 34%, rgba(12,26,22,.06) 64%, rgba(12,26,22,.20) 100%),
+    url("/assets/home-hero-fixed.jpg") !important;
+  background-size: cover !important;
+  background-position: center !important;
   background-repeat: no-repeat !important;
 }
 
 .reference-journey-cta {
   background-image:
-    linear-gradient(90deg, rgba(6,45,36,.94), rgba(6,45,36,.42)),
-    url("/assets/home-atlas.webp") !important;
-  background-size: auto, 300% 300% !important;
-  background-position: center, 0% 0% !important;
+    linear-gradient(90deg, rgba(6,45,36,.92), rgba(6,45,36,.38)),
+    url("/assets/home-hero-fixed.jpg") !important;
+  background-size: cover !important;
+  background-position: center 58% !important;
   background-repeat: no-repeat !important;
 }
 
-/* Atlas cell mapping (3 columns × 3 rows) */
-.asset-temple--ujjain {
-  background-image: url("/assets/home-atlas.webp") !important;
-  background-size: 300% 300% !important;
-  background-position: 50% 0% !important;
+/* Sacred Journey cards: use reliable direct JPEG with distinct crops.
+   These intentionally override the old temple sprite mappings. */
+.journey-card__image.asset-temple--ujjain,
+.journey-card__image.asset-temple--omkareshwar,
+.journey-card__image.asset-temple--rameswaram {
+  background-image: url("/assets/home-hero-fixed.jpg") !important;
+  background-size: 190% auto !important;
+  background-repeat: no-repeat !important;
 }
-.asset-temple--omkareshwar {
-  background-image: url("/assets/home-atlas.webp") !important;
-  background-size: 300% 300% !important;
-  background-position: 100% 0% !important;
+.journey-card__image.asset-temple--ujjain { background-position: 8% 48% !important; }
+.journey-card__image.asset-temple--omkareshwar { background-position: 52% 48% !important; }
+.journey-card__image.asset-temple--rameswaram { background-position: 94% 48% !important; }
+
+/* Fleet cards: direct individual vehicle files, no atlas. */
+.fleet-card__visual.asset-vp--innova {
+  background-image: url("/assets/car-innova.webp") !important;
 }
-.asset-temple--rameswaram {
-  background-image: url("/assets/home-atlas.webp") !important;
-  background-size: 300% 300% !important;
-  background-position: 0% 50% !important;
+.fleet-card__visual.asset-vp--ertiga {
+  background-image: url("/assets/car-ertiga.webp") !important;
 }
-.asset-vp--innova {
-  background-image: url("/assets/home-atlas.webp") !important;
-  background-size: 300% 300% !important;
-  background-position: 50% 50% !important;
+.fleet-card__visual.asset-vp--fortuner {
+  background-image: url("/assets/car-fortuner.webp") !important;
 }
-.asset-vp--ertiga {
-  background-image: url("/assets/home-atlas.webp") !important;
-  background-size: 300% 300% !important;
-  background-position: 100% 50% !important;
-}
-.asset-vp--fortuner {
-  background-image: url("/assets/home-atlas.webp") !important;
-  background-size: 300% 300% !important;
-  background-position: 0% 100% !important;
+.fleet-card__visual.asset-vp--innova,
+.fleet-card__visual.asset-vp--ertiga,
+.fleet-card__visual.asset-vp--fortuner {
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
 }
