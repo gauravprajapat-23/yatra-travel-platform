@@ -32,7 +32,11 @@ export default function AboutPage() {
             <p className="reference-copy">YATRA was built around a simple idea: help travellers experience India in comfort, safety and style. Reliable cars, thoughtful itineraries and transparent service sit at the heart of every journey.</p>
             <ButtonLink href="/custom-trip">Our Journey →</ButtonLink>
           </div>
-          <div className="about-image-panel" />
+          <div
+            className="about-image-panel asset-sprite asset-destination--udaipur"
+            role="img"
+            aria-label="Indian destination landscape representing the YATRA story"
+          />
         </div>
 
         <div className="shell value-grid">
