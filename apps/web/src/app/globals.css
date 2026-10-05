@@ -4944,3 +4944,244 @@ body:has(.admin-root) {
     gap: 18px;
   }
 }
+
+
+/* =========================================================
+   APPROVED REFERENCE — PIXEL-TIGHT PASS 2
+   ========================================================= */
+
+:root {
+  --shell: 1220px;
+}
+
+/* overall page density from reference screenshots */
+.reference-section--cream {
+  background: #fffaf3 !important;
+}
+
+/* HOME */
+.reference-hero {
+  min-height: 560px !important;
+}
+.reference-hero__backdrop {
+  background-position: center 47% !important;
+}
+.reference-hero::after {
+  right: max(4vw, 52px) !important;
+  bottom: 102px !important;
+  width: min(38vw, 520px) !important;
+}
+.reference-hero__content {
+  padding: 64px 0 118px !important;
+}
+.reference-hero__content .eyebrow {
+  font-size: .66rem !important;
+}
+.reference-hero__content h1 {
+  max-width: 560px !important;
+  font-size: clamp(4rem, 6vw, 6.15rem) !important;
+  line-height: .88 !important;
+}
+.reference-hero__lede {
+  max-width: 530px !important;
+  font-size: .84rem !important;
+}
+.reference-search-card {
+  grid-template-columns: 1fr 1fr 1fr 1fr .85fr auto !important;
+  border-radius: 13px !important;
+}
+.reference-search-card__field {
+  min-height: 48px;
+  display: grid;
+  align-content: center;
+}
+.reference-trust-row {
+  padding-top: 12px !important;
+  padding-bottom: 14px !important;
+}
+.reference-split {
+  grid-template-columns: .7fr 1.3fr !important;
+}
+.reference-split > div:first-child {
+  max-width: 340px;
+}
+.reference-card-grid--three {
+  gap: 12px !important;
+}
+.journey-card__image {
+  height: 140px !important;
+}
+.journey-card__body {
+  padding: 11px 12px 12px !important;
+}
+.reference-section--forest {
+  padding-top: 52px !important;
+  padding-bottom: 58px !important;
+}
+.reference-section--forest .reference-section-heading--row {
+  margin-bottom: 18px !important;
+}
+.reference-section--forest .reference-title {
+  margin-bottom: 5px !important;
+}
+.fleet-card__visual {
+  height: 148px !important;
+}
+.fleet-card__body {
+  padding: 11px 12px 12px !important;
+}
+.reference-journey-cta {
+  min-height: 300px !important;
+}
+.reference-journey-cta__panel {
+  max-width: 390px !important;
+}
+
+/* FLEET LIST */
+.fleet-reference-hero {
+  min-height: 330px !important;
+}
+.fleet-reference-hero::after {
+  right: 6% !important;
+  bottom: 16px !important;
+  width: min(39vw, 495px) !important;
+}
+.fleet-reference-hero .reference-page-hero__content {
+  padding: 46px 0 48px !important;
+}
+.fleet-reference-hero .reference-page-hero__content h1 {
+  max-width: 520px !important;
+  font-size: clamp(3.15rem,4.7vw,4.8rem) !important;
+}
+.fleet-reference-hero .reference-page-hero__content > p {
+  max-width: 510px !important;
+  font-size: .8rem !important;
+}
+.fleet-reference-filters {
+  gap: 8px !important;
+}
+.fleet-reference-filters .filter-chip {
+  min-width: 96px !important;
+  min-height: 34px !important;
+  border-radius: 999px !important;
+}
+.vehicle-grid--reference {
+  gap: 14px !important;
+}
+.vehicle-list-card--reference {
+  padding: 10px !important;
+  border-color: #e9dfd1 !important;
+}
+.vehicle-list-card--reference .vehicle-list-card__image {
+  height: 152px !important;
+  min-height: 152px !important;
+}
+.vehicle-list-card--reference h2 {
+  font-size: .86rem !important;
+}
+.vehicle-list-card--reference .vehicle-list-card__specs {
+  gap: 9px !important;
+  font-size: .61rem !important;
+}
+.vehicle-list-card--reference .button-link {
+  min-height: 33px !important;
+}
+
+/* CAR DETAILS */
+.car-detail-reference {
+  padding-top: 24px !important;
+  padding-bottom: 52px !important;
+}
+.car-detail-reference .car-detail-top {
+  grid-template-columns: 1.06fr .72fr !important;
+  gap: 18px !important;
+}
+.car-detail-reference .car-detail-gallery__main {
+  height: 360px !important;
+  min-height: 360px !important;
+}
+.car-detail-reference .car-detail-gallery__main img {
+  width: 76% !important;
+  height: 75% !important;
+}
+.car-detail-reference .car-detail-gallery__thumbs img,
+.car-gallery-more {
+  height: 64px !important;
+}
+.car-detail-reference .car-detail-summary h1 {
+  font-size: 1.88rem !important;
+}
+.car-detail-reference .car-price-panel {
+  padding: 14px !important;
+}
+.car-detail-reference .car-price-panel strong {
+  font-size: 1.25rem !important;
+}
+.car-detail-tabs {
+  margin-top: 16px !important;
+  gap: 24px !important;
+}
+.car-detail-reference .car-detail-body {
+  margin-top: 20px !important;
+}
+.car-detail-reference .car-detail-body h2 {
+  font-size: 1.48rem !important;
+}
+.car-detail-reference aside {
+  padding: 14px !important;
+}
+.car-detail-reference .route-mini {
+  padding-block: 10px !important;
+}
+
+/* SEARCH RESULTS */
+.car-search-reference {
+  padding-top: 20px !important;
+}
+.route-summary-bar--reference {
+  padding: 11px 14px !important;
+  gap: 10px !important;
+}
+.search-results-layout--reference {
+  grid-template-columns: 205px 1fr !important;
+  gap: 16px !important;
+  margin-top: 18px !important;
+}
+.search-results-layout--reference .search-filter-panel {
+  padding: 12px !important;
+}
+.search-results {
+  gap: 9px !important;
+}
+.search-result-card--reference {
+  grid-template-columns: 175px minmax(0,1fr) 145px !important;
+  gap: 12px !important;
+  padding: 10px !important;
+}
+.search-result-card--reference .search-result-card__image {
+  height: 108px !important;
+  min-height: 108px !important;
+}
+.search-result-card--reference .search-result-card__body h2 {
+  font-size: .82rem !important;
+}
+.search-result-card--reference .search-result-card__body ul {
+  margin-bottom: 0 !important;
+}
+.search-result-card--reference .search-result-card__price strong {
+  font-size: .9rem !important;
+}
+.search-result-card--reference .search-result-card__price .button-link {
+  min-height: 31px !important;
+}
+
+/* prevent reference screens feeling oversized on standard laptop widths */
+@media (min-width: 1001px) and (max-width: 1360px) {
+  :root { --shell: 1120px; }
+  .reference-hero::after { width: 43vw !important; }
+  .fleet-reference-hero::after { width: 42vw !important; }
+  .reference-hero__content h1 { font-size: 5.3rem !important; }
+  .vehicle-list-card--reference .vehicle-list-card__image { height: 140px !important; }
+  .search-result-card--reference { grid-template-columns: 160px minmax(0,1fr) 140px !important; }
+}
+
