@@ -21,7 +21,8 @@
     "db:verify:booking-policy": "node scripts/verify-booking-policy-foundation.mjs",
     "db:verify:booking-invariants": "node scripts/verify-booking-invariants.mjs",
     "db:verify:package-booking": "node scripts/verify-package-booking-foundation.mjs",
-    "db:verify:payments": "node scripts/verify-payment-foundation.mjs"
+    "db:verify:payments": "node scripts/verify-payment-foundation.mjs",
+    "db:bootstrap:admin": "node scripts/bootstrap-admin.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
