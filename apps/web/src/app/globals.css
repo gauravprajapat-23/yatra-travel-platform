@@ -4025,3 +4025,55 @@ body:has(.admin-root) {
     min-height: 250px;
   }
 }
+
+
+/* === Homepage image hotfix ===
+   Use one known-good atlas generated from the approved visual asset sheet.
+   This replaces the corrupted WebP files that rendered as blank color blocks. */
+.reference-hero__backdrop {
+  background-image: url("/assets/home-atlas.webp") !important;
+  background-size: 300% 300% !important;
+  background-position: 0% 0% !important;
+  background-repeat: no-repeat !important;
+}
+
+.reference-journey-cta {
+  background-image:
+    linear-gradient(90deg, rgba(6,45,36,.94), rgba(6,45,36,.42)),
+    url("/assets/home-atlas.webp") !important;
+  background-size: auto, 300% 300% !important;
+  background-position: center, 0% 0% !important;
+  background-repeat: no-repeat !important;
+}
+
+/* Atlas cell mapping (3 columns × 3 rows) */
+.asset-temple--ujjain {
+  background-image: url("/assets/home-atlas.webp") !important;
+  background-size: 300% 300% !important;
+  background-position: 50% 0% !important;
+}
+.asset-temple--omkareshwar {
+  background-image: url("/assets/home-atlas.webp") !important;
+  background-size: 300% 300% !important;
+  background-position: 100% 0% !important;
+}
+.asset-temple--rameswaram {
+  background-image: url("/assets/home-atlas.webp") !important;
+  background-size: 300% 300% !important;
+  background-position: 0% 50% !important;
+}
+.asset-vp--innova {
+  background-image: url("/assets/home-atlas.webp") !important;
+  background-size: 300% 300% !important;
+  background-position: 50% 50% !important;
+}
+.asset-vp--ertiga {
+  background-image: url("/assets/home-atlas.webp") !important;
+  background-size: 300% 300% !important;
+  background-position: 100% 50% !important;
+}
+.asset-vp--fortuner {
+  background-image: url("/assets/home-atlas.webp") !important;
+  background-size: 300% 300% !important;
+  background-position: 0% 100% !important;
+}
