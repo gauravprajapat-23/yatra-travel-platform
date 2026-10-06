@@ -54,9 +54,14 @@ export default async function BlogPage() {
       subtitle="Live travel stories and editorial content from Neon."
       actions={
         hasPermission(session.roles, "content.write") ? (
-          <Link className="admin-primary-button" href="/admin/blog/new">
-            ＋ New Blog Post
-          </Link>
+          <div>
+            <Link className="admin-secondary-button" href="/admin/blog/categories">
+              Categories
+            </Link>
+            <Link className="admin-primary-button" href="/admin/blog/new">
+              ＋ New Blog Post
+            </Link>
+          </div>
         ) : null
       }
       metrics={[
