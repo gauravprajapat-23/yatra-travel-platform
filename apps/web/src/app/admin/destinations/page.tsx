@@ -51,6 +51,13 @@ export default async function DestinationsPage() {
       active="Destinations"
       title="Destinations"
       subtitle="Live destination content and publication state from Neon."
+      actions={
+        hasPermission(session.roles, "content.write") ? (
+          <Link className="admin-primary-button" href="/admin/destinations/new">
+            ＋ New Destination
+          </Link>
+        ) : null
+      }
       metrics={[
         { label: "Total Destinations", value: total.toString(), meta: "all records", tone: "green" },
         { label: "Published", value: published.toString(), meta: "visible publicly", tone: "green" },
