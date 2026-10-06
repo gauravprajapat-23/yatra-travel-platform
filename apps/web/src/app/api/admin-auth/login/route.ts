@@ -192,7 +192,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const expiresAt = await createAdminSession(user.id);
+    const expiresAt = await createAdminSession(user.id, request);
 
     await db.$transaction([
       db.user.update({
