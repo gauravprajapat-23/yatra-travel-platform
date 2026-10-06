@@ -22,6 +22,13 @@ export async function DELETE(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  if (process.env.MEDIA_WRITE_ENABLED !== "true") {
+    return NextResponse.json(
+      { error: { code: "MEDIA_WRITES_DISABLED", message: "Media deletion is temporarily disabled." } },
+      { status: 503 },
+    );
+  }
+
   if (!sameOrigin(request)) {
     return NextResponse.json(
       { error: { code: "INVALID_ORIGIN", message: "Invalid request origin." } },
