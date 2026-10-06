@@ -15,6 +15,17 @@ export default async function MediaPage() {
 
   const media = await db.mediaAsset.findMany({
     orderBy: { createdAt: "desc" },
+    include: {
+      _count: {
+        select: {
+          cmsPageHeroes: true,
+          destinationHero: true,
+          blogPostHeroes: true,
+          vehicleMedia: true,
+          packageHeroes: true,
+        },
+      },
+    },
     take: 100,
   });
 
@@ -27,6 +38,12 @@ export default async function MediaPage() {
     altText: asset.altText,
     caption: asset.caption,
     createdAt: asset.createdAt.toISOString(),
+    referenceCount:
+      asset._count.cmsPageHeroes +
+      asset._count.destinationHero +
+      asset._count.blogPostHeroes +
+      asset._count.vehicleMedia +
+      asset._count.packageHeroes,
   }));
 
   return (
