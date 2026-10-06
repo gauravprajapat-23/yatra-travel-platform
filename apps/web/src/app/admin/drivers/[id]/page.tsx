@@ -86,6 +86,8 @@ export default async function DriverDetailPage({
       driverId,
       displayName: String(formData.get("displayName") ?? ""),
       status,
+      phoneNumber: String(formData.get("phoneNumber") ?? ""),
+      licenseNumber: String(formData.get("licenseNumber") ?? ""),
       licenseExpiry,
       internalNotes: String(formData.get("internalNotes") ?? ""),
       qualificationIds: formData
@@ -211,6 +213,35 @@ export default async function DriverDetailPage({
               </label>
 
               <label>
+                Replace phone number
+                <input
+                  name="phoneNumber"
+                  inputMode="tel"
+                  autoComplete="off"
+                  placeholder={
+                    driver.phoneLast4
+                      ? `Current: •••• ${driver.phoneLast4}`
+                      : "Enter phone number"
+                  }
+                  maxLength={40}
+                />
+              </label>
+
+              <label>
+                Replace license number
+                <input
+                  name="licenseNumber"
+                  autoComplete="off"
+                  placeholder={
+                    driver.licenseNumberCiphertext
+                      ? "Encrypted value already stored"
+                      : "Enter license number"
+                  }
+                  maxLength={80}
+                />
+              </label>
+
+              <label>
                 License expiry
                 <input
                   type="date"
@@ -248,8 +279,9 @@ export default async function DriverDetailPage({
               </label>
 
               <p>
-                Sensitive phone/license-number values remain read-only until an
-                encryption-at-rest service is introduced.
+                Leave phone/license number blank to keep the current encrypted
+                value. New values are encrypted before persistence and are not
+                included in audit logs.
               </p>
 
               <button className="admin-primary-button" type="submit">
