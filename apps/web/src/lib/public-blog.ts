@@ -9,6 +9,7 @@ export type PublicBlogCard = {
   heroUrl: string | null;
   heroClass: string | null;
   publishedAt: Date | null;
+  robotsIndex: boolean;
 };
 
 export type PublicBlogDetail = PublicBlogCard & {
@@ -53,6 +54,7 @@ function fallbackCards(): PublicBlogCard[] {
     heroUrl: null,
     heroClass: guide.heroClass,
     publishedAt: null,
+    robotsIndex: true,
   }));
 }
 
@@ -68,6 +70,7 @@ function fallbackDetail(slug: string): PublicBlogDetail | null {
     heroUrl: null,
     heroClass: guide.heroClass,
     publishedAt: null,
+    robotsIndex: true,
     body: legacyBody(guide),
     seoTitle: null,
     seoDescription: null,
@@ -94,6 +97,7 @@ export async function getPublicBlogPosts(): Promise<PublicBlogCard[]> {
         title: true,
         excerpt: true,
         publishedAt: true,
+        robotsIndex: true,
         category: { select: { name: true } },
         heroMedia: { select: { publicUrl: true } },
       },
@@ -108,6 +112,7 @@ export async function getPublicBlogPosts(): Promise<PublicBlogCard[]> {
       heroUrl: row.heroMedia?.publicUrl ?? null,
       heroClass: null,
       publishedAt: row.publishedAt,
+      robotsIndex: row.robotsIndex,
     }));
   } catch (error) {
     console.error(
@@ -159,6 +164,7 @@ export async function getPublicBlogPostBySlug(
       heroUrl: row.heroMedia?.publicUrl ?? null,
       heroClass: null,
       publishedAt: row.publishedAt,
+      robotsIndex: row.robotsIndex,
       body: row.body,
       seoTitle: row.seoTitle,
       seoDescription: row.seoDescription,
