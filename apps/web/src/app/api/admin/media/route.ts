@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { getAdminSession } from "@/lib/auth/session";
-import { storeAdminMedia } from "@/modules/media/media-storage-service";
+import {
+  MAX_MEDIA_BYTES,
+  storeAdminMedia,
+} from "@/modules/media/media-storage-service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,6 +49,27 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: { code: "FORBIDDEN", message: "Media write permission required." } },
       { status: 403 },
+    );
+  }
+
+  const declaredLength = Number(request.headers.get("content-length") ?? "0");
+  const maxMultipartBytes = MAX_MEDIA_BYTES + 1024 * 1024;
+
+  if (
+    Number.isFinite(declaredLength) &&
+    declaredLength > maxMultipartBytes
+  ) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "BODY_TOO_LARGE",
+          message: "Upload request exceeds the allowed size.",
+        },
+      },
+      {
+        status: 413,
+        headers: { "Cache-Control": "no-store" },
+      },
     );
   }
 
