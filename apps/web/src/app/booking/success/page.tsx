@@ -1,28 +1,125 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { getDb } from "@yatra/db/client";
 
-export const metadata: Metadata = { title: "Booking Confirmed", robots: { index: false, follow: false } };
+export const metadata: Metadata = {
+  title: "Booking Confirmed",
+  robots: { index: false, follow: false },
+};
 
-export default function BookingSuccessPage() {
+function money(minor: bigint, currency: string): string {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(Number(minor) / 100);
+}
+
+export default async function BookingSuccessPage() {
+  const jar = await cookies();
+  const reference = jar.get("yatra_checkout_booking")?.value;
+
+  let booking:
+    | {
+        reference: string;
+        status: string;
+        originText: string;
+        destinationText: string;
+        startsAt: Date;
+        endsAt: Date | null;
+        travellers: number;
+        currency: string;
+        totalMinor: bigint;
+        vehicleClass: { name: string };
+      }
+    | null = null;
+
+  if (reference && process.env.DATABASE_URL) {
+    const db = getDb();
+    booking = await db.carBooking.findUnique({
+      where: { reference },
+      select: {
+        reference: true,
+        status: true,
+        originText: true,
+        destinationText: true,
+        startsAt: true,
+        endsAt: true,
+        travellers: true,
+        currency: true,
+        totalMinor: true,
+        vehicleClass: { select: { name: true } },
+      },
+    });
+  }
+
+  if (!booking) {
+    return (
+      <section className="reference-section reference-section--cream">
+        <div className="shell payment-state-card">
+          <h1>Booking details unavailable</h1>
+          <p>Please use your booking reference to contact YATRA support.</p>
+          <a className="button-link button-link--primary" href="/contact">Contact Support →</a>
+        </div>
+      </section>
+    );
+  }
+
+  const confirmed = booking.status === "CONFIRMED";
+
   return (
     <>
-      <section className="success-hero">
-        <div className="shell"><span className="success-icon">✓</span><h1>Booking Confirmed!</h1><p>Your journey with YATRA is all set.</p></div>
+      <section className={confirmed ? "success-hero" : "success-hero success-hero--pending"}>
+        <div className="shell">
+          <span className="success-icon">{confirmed ? "✓" : "◷"}</span>
+          <h1>{confirmed ? "Booking Confirmed!" : "Booking Received"}</h1>
+          <p>
+            {confirmed
+              ? "Your payment has been verified and your journey is confirmed."
+              : "Your booking exists, but confirmation is still pending."}
+          </p>
+        </div>
       </section>
+
       <section className="reference-section reference-section--cream">
         <div className="shell success-banner">
-          <span className="success-icon success-icon--small">✓</span>
-          <div><h2>Thank you for choosing YATRA!</h2><p>A confirmation has been sent to your registered email address.</p></div>
-          <div><small>BOOKING ID</small><strong>YTR241015678</strong></div>
+          <span className="success-icon success-icon--small">{confirmed ? "✓" : "◷"}</span>
+          <div>
+            <h2>{confirmed ? "Thank you for choosing YATRA!" : "We are processing your booking."}</h2>
+            <p>Keep your booking reference for support and future lookup.</p>
+          </div>
+          <div>
+            <small>BOOKING ID</small>
+            <strong>{booking.reference}</strong>
+          </div>
         </div>
+
         <div className="shell success-grid">
           <article className="booking-card">
             <h2>Trip Summary</h2>
             <div className="selected-vehicle">
-              <div className="selected-vehicle__visual"><img src="/assets/car-fortuner.webp" alt="Toyota Fortuner booked for the journey"/></div>
-              <div><h3>Toyota Fortuner</h3><p>SUV · 6 Seats · Automatic</p><dl><div><dt>Pickup</dt><dd>Raipur</dd></div><div><dt>Drop</dt><dd>Ujjain</dd></div><div><dt>Dates</dt><dd>12–15 Oct</dd></div><div><dt>Travellers</dt><dd>4 Adults</dd></div></dl><strong>₹26,000 · Paid Successfully</strong></div>
+              <div className="selected-vehicle__visual">
+                <img src="/assets/car-innova.webp" alt="Booked chauffeur-driven vehicle"/>
+              </div>
+              <div>
+                <h3>{booking.vehicleClass.name}</h3>
+                <p>{booking.originText} → {booking.destinationText}</p>
+                <dl>
+                  <div><dt>Departure</dt><dd>{booking.startsAt.toLocaleDateString("en-IN")}</dd></div>
+                  <div><dt>Return</dt><dd>{booking.endsAt?.toLocaleDateString("en-IN") ?? "One way"}</dd></div>
+                  <div><dt>Travellers</dt><dd>{booking.travellers}</dd></div>
+                  <div><dt>Status</dt><dd>{booking.status.replaceAll("_"," ")}</dd></div>
+                </dl>
+                <strong>{money(booking.totalMinor, booking.currency)} · {confirmed ? "Payment verified" : "Payment/confirmation pending"}</strong>
+              </div>
             </div>
           </article>
-          <aside className="booking-card"><h2>Download / Share</h2>{["Download Invoice","Share Booking Details","Add to Calendar"].map(x=><button className="utility-action" key={x}>{x}<span>→</span></button>)}<div className="support-box"><strong>Need Help?</strong><p>Our travel experts are available 24×7.</p><a className="button-link button-link--primary" href="/contact">Contact Support →</a></div></aside>
+
+          <aside className="booking-card">
+            <h2>Need Help?</h2>
+            <p>Our travel experts can assist with this booking using reference <strong>{booking.reference}</strong>.</p>
+            <a className="button-link button-link--primary" href="/contact">Contact Support →</a>
+          </aside>
         </div>
       </section>
     </>
