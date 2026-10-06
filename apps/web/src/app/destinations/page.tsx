@@ -1,19 +1,17 @@
 import type { Metadata } from "next";
-import { ButtonLink } from "@/components/button-link";
+import Link from "next/link";
+import { getPublicDestinations } from "@/lib/public-destinations";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Destinations",
-  description: "Discover temple towns, spiritual cities and road-trip destinations across India.",
+  description: "Discover published temple towns, spiritual cities and road-trip destinations across India.",
 };
 
-const destinations = [
-  { name: "Varanasi", meta: "Spiritual · Culture · Heritage", assetClass: "asset-destination--varanasi", href: "/destinations/varanasi" },
-  { name: "Ujjain", meta: "Jyotirlinga · Sacred City", assetClass: "asset-temple--ujjain", href: "/packages" },
-  { name: "Omkareshwar", meta: "Narmada · Jyotirlinga", assetClass: "asset-temple--omkareshwar", href: "/packages" },
-  { name: "Kedarnath", meta: "Himalayas · Pilgrimage", assetClass: "asset-temple--kedarnath", href: "/temples/kedarnath" },
-];
+export default async function DestinationsPage() {
+  const destinations = await getPublicDestinations();
 
-export default function DestinationsPage() {
   return (
     <>
       <section className="reference-page-hero reference-page-hero--destination">
@@ -21,28 +19,45 @@ export default function DestinationsPage() {
         <div className="shell reference-page-hero__content">
           <p className="eyebrow">DISCOVER INDIA</p>
           <h1>Destinations with<br />a deeper story.</h1>
-          <p>Sacred cities, mountain temples and meaningful road journeys — all in one place.</p>
+          <p>Published sacred cities, mountain temples and meaningful road journeys — managed from the YATRA CMS.</p>
         </div>
       </section>
 
       <section className="reference-section reference-section--cream">
         <div className="shell">
-          <div className="destination-grid">
-            {destinations.map((destination) => (
-              <article
-                className={`destination-card asset-sprite ${destination.assetClass}`}
-                key={destination.name}
-                aria-label={`${destination.name} travel destination in India`}
-              >
-                <div className="destination-card__shade" />
-                <div className="destination-card__content">
-                  <p>{destination.meta}</p>
-                  <h2>{destination.name}</h2>
-                  <ButtonLink href={destination.href} variant="ghost">Explore →</ButtonLink>
-                </div>
-              </article>
-            ))}
-          </div>
+          {destinations.length ? (
+            <div className="destination-grid">
+              {destinations.map((destination) => (
+                <article
+                  className="destination-card"
+                  key={destination.id}
+                  style={{
+                    backgroundImage: `url("${destination.heroUrl || "/assets/temple-hero.webp"}")`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                >
+                  <div className="destination-card__shade" />
+                  <div className="destination-card__content">
+                    <p>{destination.kind.replaceAll("_", " ")}</p>
+                    <h2>{destination.name}</h2>
+                    {destination.summary ? <p>{destination.summary}</p> : null}
+                    <Link className="button-link button-link--ghost" href={`/destinations/${destination.slug}`}>
+                      Explore →
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="search-empty-state">
+              <h2>No destinations are published yet.</h2>
+              <p>Please use the custom trip request while destination content is being prepared.</p>
+              <Link className="button-link button-link--primary" href="/custom-trip">
+                Plan a Custom Trip →
+              </Link>
+            </div>
+          )}
         </div>
       </section>
     </>
