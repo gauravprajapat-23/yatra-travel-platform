@@ -5499,3 +5499,113 @@ body:has(.admin-root) {
     grid-column: 1 / -1;
   }
 }
+
+
+/* Launch-readiness customer flow states */
+.lead-honeypot {
+  position: absolute !important;
+  left: -10000px !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+}
+
+.lead-form-success,
+.lead-form-error,
+.booking-flow-error,
+.payment-flow-error {
+  margin: 10px 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  font-size: .76rem;
+  font-weight: 700;
+}
+
+.lead-form-success {
+  border: 1px solid #b8d8c5;
+  background: #eef8f1;
+  color: #1e6542;
+}
+
+.lead-form-error,
+.booking-flow-error,
+.payment-flow-error {
+  border: 1px solid #e5b7ad;
+  background: #fff2ef;
+  color: #9b3122;
+}
+
+.booking-flow-error {
+  grid-column: 1 / -1;
+}
+
+.booking-layout button.button-link:disabled,
+.contact-form button:disabled,
+.booking-lookup button:disabled,
+.razorpay-payment-box button:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
+.payment-live-grid {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(320px,.65fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.checkout-assurance ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: #59635e;
+  line-height: 1.75;
+  font-size: .78rem;
+}
+
+.razorpay-payment-box {
+  display: grid;
+  gap: 10px;
+}
+
+.razorpay-payment-box > strong {
+  color: #17352b;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.8rem;
+}
+
+.razorpay-payment-box p {
+  margin: 0;
+  color: #68716c;
+  font-size: .72rem;
+  line-height: 1.5;
+}
+
+.checkout-invalid-state {
+  max-width: 620px;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.booking-lookup--functional > div {
+  grid-template-columns: 1fr 1fr auto !important;
+}
+
+.trip-list-card--live {
+  margin-top: 22px;
+}
+
+.trip-list-card--live .trip-actions a {
+  color: #ef6c18;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+@media (max-width: 780px) {
+  .payment-live-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-lookup--functional > div {
+    grid-template-columns: 1fr !important;
+  }
+}
