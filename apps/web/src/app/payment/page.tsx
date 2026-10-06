@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { getDb } from "@yatra/db/client";
 import { RazorpayPayment } from "@/components/razorpay-payment";
@@ -26,7 +27,7 @@ export default async function PaymentPage() {
         <div className="shell payment-state-card">
           <h1>Payment session unavailable</h1>
           <p>Please return to search and create a new booking.</p>
-          <a className="button-link button-link--primary" href="/">Start New Search →</a>
+          <Link className="button-link button-link--primary" href="/">Start New Search →</Link>
         </div>
       </section>
     );
@@ -55,7 +56,7 @@ export default async function PaymentPage() {
         <div className="shell payment-state-card">
           <h1>Booking not found</h1>
           <p>The booking linked to this payment session no longer exists.</p>
-          <a className="button-link button-link--primary" href="/">Return Home →</a>
+          <Link className="button-link button-link--primary" href="/">Return Home →</Link>
         </div>
       </section>
     );
