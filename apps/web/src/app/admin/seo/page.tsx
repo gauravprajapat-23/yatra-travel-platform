@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminMetric, AdminShell, StatusPill } from "@/components/admin-shell";
@@ -39,6 +40,91 @@ export default async function SeoPage() {
   if (!hasPermission(session.roles, "seo.manage")) redirect("/admin");
 
   const db = getDb();
+
+  async function saveRedirect(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "seo.manage")) redirect("/admin");
+
+    const sourcePath = String(formData.get("sourcePath") ?? "").trim();
+    const destinationPath = String(formData.get("destinationPath") ?? "").trim();
+    const statusCode = Number(formData.get("statusCode") ?? 301);
+
+    if (
+      !sourcePath.startsWith("/") ||
+      sourcePath.startsWith("//") ||
+      sourcePath.length > 500
+    ) {
+      throw new Error("Source path must be a same-origin path beginning with /.");
+    }
+
+    if (
+      !destinationPath.startsWith("/") ||
+      destinationPath.startsWith("//") ||
+      destinationPath.length > 500
+    ) {
+      throw new Error("Destination path must be a same-origin path beginning with /.");
+    }
+
+    if (![301, 302, 307, 308].includes(statusCode)) {
+      throw new Error("Unsupported redirect status code.");
+    }
+
+    const item = await db.seoRedirect.upsert({
+      where: { sourcePath },
+      update: {
+        destinationPath,
+        statusCode,
+        isActive: true,
+      },
+      create: {
+        sourcePath,
+        destinationPath,
+        statusCode,
+        isActive: true,
+      },
+    });
+
+    await db.auditLog.create({
+      data: {
+        actorUserId: currentSession.userId,
+        action: "SEO_REDIRECT_SAVED",
+        entityType: "SeoRedirect",
+        entityId: item.id,
+        metadata: { sourcePath, destinationPath, statusCode },
+      },
+    });
+
+    revalidatePath("/admin/seo");
+  }
+
+  async function toggleRedirect(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "seo.manage")) redirect("/admin");
+
+    const id = String(formData.get("id") ?? "");
+    const isActive = String(formData.get("isActive") ?? "") === "true";
+
+    const item = await db.seoRedirect.update({
+      where: { id },
+      data: { isActive: !isActive },
+    });
+
+    await db.auditLog.create({
+      data: {
+        actorUserId: currentSession.userId,
+        action: item.isActive ? "SEO_REDIRECT_ENABLED" : "SEO_REDIRECT_DISABLED",
+        entityType: "SeoRedirect",
+        entityId: item.id,
+        metadata: { sourcePath: item.sourcePath },
+      },
+    });
+
+    revalidatePath("/admin/seo");
+  }
 
   const [pages, posts, destinations, packages, redirects] = await Promise.all([
     db.cmsPage.findMany({
@@ -178,19 +264,52 @@ export default async function SeoPage() {
           <div className="admin-panel-heading">
             <h2>Redirects</h2>
           </div>
+
+          <form action={saveRedirect} className="admin-card-body">
+            <label>
+              Source path
+              <input name="sourcePath" required placeholder="/old-page" maxLength={500}/>
+            </label>
+            <label>
+              Destination path
+              <input name="destinationPath" required placeholder="/new-page" maxLength={500}/>
+            </label>
+            <label>
+              Status code
+              <select name="statusCode" defaultValue="301">
+                <option value="301">301 Permanent</option>
+                <option value="302">302 Temporary</option>
+                <option value="307">307 Temporary</option>
+                <option value="308">308 Permanent</option>
+              </select>
+            </label>
+            <button className="admin-primary-button" type="submit">
+              Save Redirect
+            </button>
+          </form>
+
           <table className="admin-table">
             <thead>
-              <tr><th>Source</th><th>Destination</th><th>Code</th><th>Status</th></tr>
+              <tr><th>Source</th><th>Destination</th><th>Code</th><th>Status</th><th>Action</th></tr>
             </thead>
             <tbody>
               {redirects.length === 0 ? (
-                <tr><td colSpan={4}>No redirects configured.</td></tr>
+                <tr><td colSpan={5}>No redirects configured.</td></tr>
               ) : redirects.map((item) => (
                 <tr key={item.id}>
                   <td>{item.sourcePath}</td>
                   <td>{item.destinationPath}</td>
                   <td>{item.statusCode}</td>
                   <td>{item.isActive ? "Active" : "Disabled"}</td>
+                  <td>
+                    <form action={toggleRedirect}>
+                      <input type="hidden" name="id" value={item.id}/>
+                      <input type="hidden" name="isActive" value={item.isActive ? "true" : "false"}/>
+                      <button className="admin-secondary-button" type="submit">
+                        {item.isActive ? "Disable" : "Enable"}
+                      </button>
+                    </form>
+                  </td>
                 </tr>
               ))}
             </tbody>
