@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
 import { TravelGuideBrowser } from "@/components/travel-guide-browser";
+import { getPublicBlogPosts } from "@/lib/public-blog";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Travel Stories & Guides",
   description: "Destination stories, temple guides and road-trip inspiration from YATRA.",
 };
 
-export default function TravelGuidesPage() {
+export default async function TravelGuidesPage() {
+  const stories = await getPublicBlogPosts();
+
   return (
     <>
       <section className="story-hero story-hero--blog">
@@ -19,7 +24,7 @@ export default function TravelGuidesPage() {
       </section>
 
       <section className="reference-section reference-section--cream">
-        <TravelGuideBrowser />
+        <TravelGuideBrowser stories={stories} />
       </section>
     </>
   );
