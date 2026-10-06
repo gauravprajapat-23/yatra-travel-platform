@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type BookingInput = {
@@ -74,10 +74,6 @@ export function CarBookingForm({ trip }: { trip: BookingInput }) {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
-  const tripLabel = useMemo(
-    () => `${trip.from} → ${trip.to}`,
-    [trip.from, trip.to],
-  );
 
   async function createQuote(): Promise<QuoteResponse["quote"]> {
     const response = await fetch("/api/quotes/car", {
