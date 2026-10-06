@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
@@ -50,7 +51,9 @@ export default async function OffersPage() {
   ]);
 
   const rows = rules.map((rule) => [
-    rule.name,
+    <Link key={rule.id} href={`/admin/offers/${rule.id}`}>
+      {rule.name}
+    </Link>,
     rule.vehicleClass.name,
     rule.tripType.replaceAll("_", " "),
     rule.basis.replaceAll("_", " "),
@@ -71,6 +74,13 @@ export default async function OffersPage() {
       active="Offers"
       title="Pricing Rules / Offers"
       subtitle="Live server-side pricing rules. Coupon codes are not enabled until a dedicated promotion engine is implemented."
+      actions={
+        hasPermission(session.roles, "settings.manage") ? (
+          <Link className="admin-primary-button" href="/admin/offers/new">
+            ＋ New Pricing Rule
+          </Link>
+        ) : null
+      }
       metrics={[
         { label: "Pricing Rules", value: total.toString(), meta: "live DB records", tone: "blue" },
         { label: "Active Rules", value: active.toString(), meta: "eligible for quoting", tone: "green" },
