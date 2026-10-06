@@ -1,3 +1,63 @@
+import { redirect } from "next/navigation";
+import { getDb } from "@yatra/db/client";
+import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
-const rows=[["Complete Guide to Ladakh","Destinations","Rahul Mehta","12.4K",<StatusPill key="1">Published</StatusPill>,"12 Oct 2024","•••"],["Top 10 Must Visit Places in Kerala","Travel Guide","Priya Sharma","9.8K",<StatusPill key="2">Published</StatusPill>,"10 Oct 2024","•••"],["A Spiritual Journey to Varanasi","Culture","Amit Verma","8.1K",<StatusPill key="3">Published</StatusPill>,"08 Oct 2024","•••"],["Best Time to Visit Rajasthan","Travel Tips","Neha Kapoor","6.5K",<StatusPill key="4">Published</StatusPill>,"05 Oct 2024","•••"],["Himalayan Road Trip Itinerary","Road Trips","Karan Soni","5.4K",<StatusPill key="5" tone="orange">Draft</StatusPill>,"04 Oct 2024","•••"]];
-export default function Page(){return <AdminTablePage active="Blog" title="Blog Posts" subtitle="Manage travel stories, guides and destination content." buttonLabel="New Post" metrics={[{label:"All Posts",value:"36",meta:"total",tone:"orange"},{label:"Published",value:"28",meta:"live",tone:"green"},{label:"Drafts",value:"6",meta:"in progress",tone:"orange"},{label:"Scheduled",value:"2",meta:"upcoming",tone:"blue"}]} filters={["All Posts (36)","Published (28)","Drafts (6)","Scheduled (2)"]} columns={["Title","Category","Author","Views","Status","Published","Actions"]} rows={rows}/>;}
+import { requireAdminSession } from "@/lib/auth/session";
+
+export const dynamic = "force-dynamic";
+
+function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
+  if (status === "PUBLISHED") return "green";
+  if (status === "SCHEDULED") return "blue";
+  if (status === "DRAFT" || status === "REVIEW") return "orange";
+  if (status === "ARCHIVED") return "red";
+  return "gray";
+}
+
+export default async function BlogPage() {
+  const session = await requireAdminSession();
+  if (!hasPermission(session.roles, "content.read")) redirect("/admin");
+
+  const db = getDb();
+
+  const [posts, total, published, drafts, scheduled] = await Promise.all([
+    db.blogPost.findMany({
+      orderBy: { updatedAt: "desc" },
+      include: { category: { select: { name: true } } },
+      take: 100,
+    }),
+    db.blogPost.count(),
+    db.blogPost.count({ where: { status: "PUBLISHED" } }),
+    db.blogPost.count({ where: { status: { in: ["DRAFT", "REVIEW"] } } }),
+    db.blogPost.count({ where: { status: "SCHEDULED" } }),
+  ]);
+
+  const rows = posts.map((post) => [
+    post.title,
+    post.category?.name ?? "Uncategorized",
+    post.slug,
+    post.seoTitle ? "SEO ready" : "SEO missing",
+    <StatusPill key={post.id} tone={tone(post.status)}>
+      {post.status.replaceAll("_", " ")}
+    </StatusPill>,
+    post.publishedAt?.toLocaleDateString("en-IN") ?? "—",
+    post.updatedAt.toLocaleDateString("en-IN"),
+  ]);
+
+  return (
+    <AdminTablePage
+      active="Blog"
+      title="Blog Posts"
+      subtitle="Live travel stories and editorial content from Neon."
+      metrics={[
+        { label: "All Posts", value: total.toString(), meta: "all records", tone: "orange" },
+        { label: "Published", value: published.toString(), meta: "live articles", tone: "green" },
+        { label: "Draft / Review", value: drafts.toString(), meta: "work in progress", tone: "orange" },
+        { label: "Scheduled", value: scheduled.toString(), meta: "future publish", tone: "blue" },
+      ]}
+      filters={["Latest 100"]}
+      columns={["Title", "Category", "Slug", "SEO", "Status", "Published", "Updated"]}
+      rows={rows}
+    />
+  );
+}
