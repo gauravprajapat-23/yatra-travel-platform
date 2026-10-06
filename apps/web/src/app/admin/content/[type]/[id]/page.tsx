@@ -154,6 +154,7 @@ export default async function AdminContentEditorPage({
     : null;
 
   const contentId = content.id;
+  const contentSlug = content.slug;
   const contentType = type;
 
   async function saveBody(formData: FormData) {
@@ -174,7 +175,7 @@ export default async function AdminContentEditorPage({
     revalidatePath(backPath(contentType));
     revalidatePath(`/admin/content/${contentType}/${contentId}`);
     if (contentType === "destination") {
-      revalidatePath(`/destinations/${content.slug}`);
+      revalidatePath(`/destinations/${contentSlug}`);
     }
   }
 
