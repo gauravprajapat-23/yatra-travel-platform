@@ -34,6 +34,15 @@ export async function GET() {
         process.env.STORAGE_SECRET_ACCESS_KEY &&
         process.env.STORAGE_PUBLIC_BASE_URL,
     ),
+    fieldEncryptionConfigured: (() => {
+      const raw = process.env.FIELD_ENCRYPTION_KEY?.trim();
+      if (!raw) return false;
+      try {
+        return Buffer.from(raw, "base64").length === 32;
+      } catch {
+        return false;
+      }
+    })(),
     appUrlConfigured: Boolean(process.env.NEXT_PUBLIC_APP_URL),
     leadFormsReady: false,
     carBookingReady: false,
