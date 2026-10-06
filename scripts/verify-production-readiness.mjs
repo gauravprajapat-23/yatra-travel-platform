@@ -20,6 +20,7 @@ const baseUrl = (
 ).replace(/\/$/, "");
 
 const mode = value("--mode", "core").toLowerCase();
+const expectedCommit = value("--expect-commit").trim().toLowerCase();
 
 const allowedModes = new Set([
   "core",
@@ -83,6 +84,21 @@ check(
   response.ok,
   `HTTP ${response.status}`,
 );
+
+if (expectedCommit) {
+  const actualCommit =
+    typeof health.deploymentCommit === "string"
+      ? health.deploymentCommit.toLowerCase()
+      : "";
+
+  check(
+    "expected deployment revision",
+    Boolean(actualCommit) &&
+      (actualCommit.startsWith(expectedCommit) ||
+        expectedCommit.startsWith(actualCommit)),
+    actualCommit || "not exposed",
+  );
+}
 check(
   "database configured",
   health.databaseConfigured === true,
