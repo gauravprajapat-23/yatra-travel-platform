@@ -6,14 +6,47 @@ import { getPublicDestinationBySlug } from "@/lib/public-destinations";
 
 export const dynamic = "force-dynamic";
 
-function stringifyStructured(value: unknown): string | null {
-  if (value === null || value === undefined) return null;
-  if (typeof value === "string") return value;
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return null;
+function factLines(value: unknown): string[] {
+  if (value === null || value === undefined) return [];
+
+  if (typeof value === "string") {
+    return value.trim() ? [value.trim()] : [];
   }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return [String(value)];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => factLines(item)).slice(0, 30);
+  }
+
+  if (typeof value === "object") {
+    return Object.entries(value as Record<string, unknown>)
+      .flatMap(([key, entry]) => {
+        const values = factLines(entry);
+        return values.map(
+          (item) =>
+            `${key.replaceAll("_", " ")}: ${item}`,
+        );
+      })
+      .slice(0, 30);
+  }
+
+  return [];
+}
+
+function FactList({ value }: { value: unknown }) {
+  const lines = factLines(value);
+  if (lines.length === 0) return null;
+
+  return (
+    <ul>
+      {lines.map((line, index) => (
+        <li key={`${line}-${index}`}>{line}</li>
+      ))}
+    </ul>
+  );
 }
 
 export async function generateMetadata({
@@ -26,10 +59,18 @@ export async function generateMetadata({
   if (!destination) return {};
 
   return {
-    title: destination.name,
+    title: destination.seoTitle ?? destination.name,
     description:
+      destination.seoDescription ??
       destination.summary ??
       `Plan a chauffeur-driven journey to ${destination.name} with YATRA.`,
+    alternates: destination.canonicalUrl
+      ? { canonical: destination.canonicalUrl }
+      : undefined,
+    robots: {
+      index: destination.robotsIndex,
+      follow: destination.robotsFollow,
+    },
   };
 }
 
@@ -87,13 +128,26 @@ export default async function DestinationDetailPage({
                   {temple.dressCode ? (
                     <span><strong>Dress Code</strong>{temple.dressCode}</span>
                   ) : null}
-                  {stringifyStructured(temple.openingHours) ? (
-                    <span><strong>Opening Hours</strong>{stringifyStructured(temple.openingHours)}</span>
+                  {factLines(temple.openingHours).length ? (
+                    <span>
+                      <strong>Opening Hours</strong>
+                      <FactList value={temple.openingHours} />
+                    </span>
                   ) : null}
-                  {stringifyStructured(temple.practicalNotes) ? (
-                    <span><strong>Practical Notes</strong>{stringifyStructured(temple.practicalNotes)}</span>
+                  {factLines(temple.practicalNotes).length ? (
+                    <span>
+                      <strong>Practical Notes</strong>
+                      <FactList value={temple.practicalNotes} />
+                    </span>
                   ) : null}
                 </div>
+
+                {factLines(temple.nearbyPlaces).length ? (
+                  <>
+                    <h3>Nearby Places</h3>
+                    <FactList value={temple.nearbyPlaces} />
+                  </>
+                ) : null}
               </>
             ) : null}
           </article>
