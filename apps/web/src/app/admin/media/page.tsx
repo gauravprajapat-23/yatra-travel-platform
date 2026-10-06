@@ -1,3 +1,85 @@
+import { redirect } from "next/navigation";
+import { getDb } from "@yatra/db/client";
+import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell } from "@/components/admin-shell";
-const media=[["ladakh-mountains.jpg","Ladakh"],["kerala-backwaters.jpg","Kerala"],["varanasi-ghats.jpg","Varanasi"],["rajasthan-fort.jpg","Rajasthan"],["himalayas.jpg","Himalayas"],["south-india-temple.jpg","South India"],["wildlife-tiger.jpg","Wildlife"],["family-travel.jpg","Travel"],["beach-goa.jpg","Goa"]];
-export default function Page(){return <AdminShell active="Media Library" title="Media Library" subtitle="Store, organize and manage images, videos and documents." actions={<button className="admin-primary-button">↑ Upload Files</button>}><section className="admin-panel"><div className="admin-filter-tabs"><button className="admin-filter-tab admin-filter-tab--active">All Files (482)</button><button className="admin-filter-tab">Images (412)</button><button className="admin-filter-tab">Videos (36)</button><button className="admin-filter-tab">Documents (28)</button><label className="admin-table-search"><span>⌕</span><input placeholder="Search files..."/></label></div><div className="admin-media-layout"><div className="admin-media-grid">{media.map(([name,tag],i)=><article className="admin-media-card" key={name}><div className={`admin-media-thumb admin-media-thumb--${(i%4)+1}`}/><strong>{name}</strong><small>2.4 MB · 14 Oct 2024</small><span>{tag}</span></article>)}</div><aside className="admin-media-inspector"><div className="admin-media-preview"/><h2>ladakh-mountains.jpg</h2><p>2.4 MB · 4000 × 2667 · JPG</p><dl><div><dt>Tags</dt><dd>Ladakh, Mountains, India</dd></div><div><dt>Uploaded By</dt><dd>Rahul Mehta</dd></div><div><dt>Alt Text</dt><dd>Snow covered mountains in Ladakh, India</dd></div></dl><button className="admin-primary-button">Download File</button><button className="admin-danger-button">Delete File</button></aside></div></section></AdminShell>;}
+import { requireAdminSession } from "@/lib/auth/session";
+
+export const dynamic = "force-dynamic";
+
+function humanBytes(bytes: bigint | null): string {
+  if (bytes === null) return "Unknown size";
+  const value = Number(bytes);
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export default async function MediaPage() {
+  const session = await requireAdminSession();
+  if (!hasPermission(session.roles, "content.read")) redirect("/admin");
+
+  const db = getDb();
+
+  const [media, total, images, videos, documents] = await Promise.all([
+    db.mediaAsset.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    }),
+    db.mediaAsset.count(),
+    db.mediaAsset.count({ where: { mimeType: { startsWith: "image/" } } }),
+    db.mediaAsset.count({ where: { mimeType: { startsWith: "video/" } } }),
+    db.mediaAsset.count({
+      where: {
+        NOT: [
+          { mimeType: { startsWith: "image/" } },
+          { mimeType: { startsWith: "video/" } },
+        ],
+      },
+    }),
+  ]);
+
+  return (
+    <AdminShell
+      active="Media Library"
+      title="Media Library"
+      subtitle="Live uploaded assets referenced by CMS, destinations, packages and fleet."
+    >
+      <section className="admin-panel">
+        <div className="admin-filter-tabs">
+          <button className="admin-filter-tab admin-filter-tab--active">All Files ({total})</button>
+          <button className="admin-filter-tab">Images ({images})</button>
+          <button className="admin-filter-tab">Videos ({videos})</button>
+          <button className="admin-filter-tab">Other ({documents})</button>
+        </div>
+
+        {media.length === 0 ? (
+          <div className="admin-card-body">
+            <p>No media assets have been uploaded yet.</p>
+          </div>
+        ) : (
+          <div className="admin-media-grid">
+            {media.map((asset) => (
+              <article className="admin-media-card" key={asset.id}>
+                {asset.mimeType.startsWith("image/") && asset.publicUrl ? (
+                  <img
+                    src={asset.publicUrl}
+                    alt={asset.altText ?? asset.caption ?? asset.objectKey}
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="admin-media-thumb"/>
+                )}
+                <strong>{asset.objectKey.split("/").pop() ?? asset.objectKey}</strong>
+                <small>
+                  {humanBytes(asset.byteSize)} · {asset.mimeType}
+                </small>
+                <span>{asset.altText ?? asset.caption ?? "No alt text"}</span>
+                <small>{asset.createdAt.toLocaleDateString("en-IN")}</small>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </AdminShell>
+  );
+}
