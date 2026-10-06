@@ -1,5 +1,6 @@
 import { ButtonLink } from "@/components/button-link";
 import { HeroJourney } from "@/components/hero-journey";
+import { getPublicFleet } from "@/lib/public-fleet";
 
 const sacredJourneys = [
   { title: "Mahakaleshwar", place: "Ujjain", objectPosition: "22% center" },
@@ -7,13 +8,9 @@ const sacredJourneys = [
   { title: "Rameswaram", place: "Tamil Nadu", objectPosition: "82% center" },
 ];
 
-const fleet = [
-  { name: "Innova Crysta", meta: "Premium · 6 Seats", price: "₹ 14 / km", objectPosition: "center" },
-  { name: "Ertiga", meta: "Comfort · 6 Seats", price: "₹ 12 / km", objectPosition: "46% center" },
-  { name: "Toyota Fortuner", meta: "Luxury SUV · 6 Seats", price: "₹ 20 / km", objectPosition: "58% center" },
-];
+export default async function HomePage() {
+  const fleet = (await getPublicFleet()).slice(0, 3);
 
-export default function HomePage() {
   return (
     <>
       <HeroJourney />
@@ -45,7 +42,7 @@ export default function HomePage() {
                 <div className="journey-card__body">
                   <h3>{journey.title}</h3>
                   <p>{journey.place}</p>
-                  <ButtonLink href="/packages" variant="ghost">View tour →</ButtonLink>
+                  <ButtonLink href="/packages" variant="ghost">View tours →</ButtonLink>
                 </div>
               </article>
             ))}
@@ -59,30 +56,36 @@ export default function HomePage() {
             <div>
               <p className="eyebrow">OUR FLEET</p>
               <h2 className="reference-title reference-title--light">Travel in exceptional comfort.</h2>
-              <p>Modern, well-maintained vehicles for every kind of journey.</p>
+              <p>Active, chauffeur-driven vehicles available for real trip requests.</p>
             </div>
             <ButtonLink href="/cars" variant="ghost">View all cars →</ButtonLink>
           </div>
 
-          <div className="reference-card-grid reference-card-grid--three">
-            {fleet.map((car) => (
-              <article className="fleet-card" key={car.name}>
-                <div className="fleet-card__visual">
-                  <img
-                    src="/assets/car-innova.webp"
-                    alt={`${car.name} chauffeur-driven vehicle`}
-                    loading="lazy"
-                    style={{ objectPosition: car.objectPosition }}
-                  />
-                </div>
-                <div className="fleet-card__body">
-                  <h3>{car.name}</h3>
-                  <p>{car.meta}</p>
-                  <strong>{car.price}</strong>
-                </div>
-              </article>
-            ))}
-          </div>
+          {fleet.length ? (
+            <div className="reference-card-grid reference-card-grid--three">
+              {fleet.map((car) => (
+                <article className="fleet-card" key={car.id}>
+                  <div className="fleet-card__visual">
+                    <img
+                      src="/assets/car-innova.webp"
+                      alt={car.displayName}
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="fleet-card__body">
+                    <h3>{car.displayName}</h3>
+                    <p>{car.className} · {car.seats} Seats</p>
+                    <strong>Server quote</strong>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="fleet-empty-state">
+              <p>No vehicles are currently published. Please use the Custom Trip form and our team will assist.</p>
+              <ButtonLink href="/custom-trip">Request a Trip →</ButtonLink>
+            </div>
+          )}
         </div>
       </section>
 
