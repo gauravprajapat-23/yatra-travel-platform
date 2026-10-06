@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { getDb, Prisma } from "@yatra/db/client";
+import { getDb } from "@yatra/db/client";
 import { createRazorpayOrder } from "@yatra/providers/payments/razorpay-client";
 
 export type PaymentBookingType = "CAR" | "PACKAGE";
