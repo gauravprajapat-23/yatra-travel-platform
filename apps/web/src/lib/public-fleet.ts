@@ -58,7 +58,7 @@ export async function getPublicFleet(): Promise<PublicFleetVehicle[]> {
     }));
   } catch (error) {
     console.error(
-      "[public-fleet] Unable to load fleet:",
+      "[public-fleet] Unable to read active fleet:",
       error instanceof Error ? error.message : "Unknown database error",
     );
     return [];
