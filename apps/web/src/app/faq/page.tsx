@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
 import { FaqBrowser } from "@/components/faq-browser";
+import { getPublicFaqs } from "@/lib/public-faqs";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Frequently Asked Questions",
   description: "Answers about YATRA bookings, pricing, vehicles and travel support.",
 };
 
-export default function FaqPage() {
+export default async function FaqPage() {
+  const faqs = await getPublicFaqs();
+
   return (
     <>
       <section className="story-hero story-hero--faq">
@@ -14,12 +19,12 @@ export default function FaqPage() {
         <div className="shell story-hero__content">
           <p className="eyebrow">HELP CENTRE</p>
           <h1>Frequently Asked<br />Questions.</h1>
-          <p>Everything you need to know before booking, travelling and exploring India with YATRA.</p>
+          <p>Published answers about booking, pricing, vehicles and travel support.</p>
         </div>
       </section>
 
       <section className="reference-section reference-section--cream">
-        <FaqBrowser />
+        <FaqBrowser items={faqs} />
       </section>
     </>
   );
