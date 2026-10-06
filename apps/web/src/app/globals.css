@@ -5424,3 +5424,78 @@ body:has(.admin-root) {
   border-color: #ef6c18;
   color: #ef6c18;
 }
+
+
+/* U1 functional search controls */
+.reference-search-card--interactive {
+  position: relative;
+}
+
+.reference-search-card--interactive .reference-search-card__field {
+  min-width: 0;
+}
+
+.reference-search-card--interactive .reference-search-card__field input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #17352b;
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 800;
+}
+
+.reference-search-card--interactive .reference-search-card__field input[type="date"],
+.reference-search-card--interactive .reference-search-card__field input[type="number"] {
+  font-size: .72rem;
+}
+
+.reference-search-card__error {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 7px);
+  margin: 0;
+  color: #a33322;
+  font-size: .7rem;
+  font-weight: 700;
+}
+
+.search-filter-panel input[type="radio"] {
+  accent-color: #ef6c18;
+}
+
+.search-empty-state {
+  padding: 34px;
+  border: 1px solid #eadfce;
+  border-radius: 10px;
+  background: #fff;
+  text-align: center;
+}
+
+.search-empty-state h2 {
+  margin: 0 0 6px;
+  color: #17352b;
+  font-family: var(--font-display), Georgia, serif;
+}
+
+.search-empty-state p {
+  margin: 0;
+  color: #69716d;
+}
+
+@media (max-width: 720px) {
+  .reference-search-card--interactive {
+    gap: 6px !important;
+  }
+  .reference-search-card--interactive .reference-search-card__field {
+    padding: 9px 10px !important;
+    border-bottom: 1px solid #eee3d3;
+  }
+  .reference-search-card__error {
+    position: static;
+    grid-column: 1 / -1;
+  }
+}
