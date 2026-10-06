@@ -5,6 +5,18 @@ import { hasPermission, type RoleKey } from "@yatra/domain/auth/permissions";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+async function readAdmin() {
+  const db = getDb();
+  return db.user.findUnique({
+    where: { emailNormalized: "admin@yatra.com" },
+    include: {
+      roles: {
+        include: { role: true },
+      },
+    },
+  });
+}
+
 export async function GET() {
   const result = {
     databaseConfigured: Boolean(process.env.DATABASE_URL),
@@ -30,21 +42,15 @@ export async function GET() {
     try {
       await db.$queryRawUnsafe("SELECT 1");
       result.databasePing = true;
-    } catch {
+    } catch (error) {
+      console.error("[admin-auth-diagnostic] database ping failed", error);
       result.failedStage = "DATABASE_PING";
       return NextResponse.json(result, { status: 503 });
     }
 
-    let user: Awaited<ReturnType<typeof db.user.findUnique>>;
+    let user: Awaited<ReturnType<typeof readAdmin>>;
     try {
-      user = await db.user.findUnique({
-        where: { emailNormalized: "admin@yatra.com" },
-        include: {
-          roles: {
-            include: { role: true },
-          },
-        },
-      });
+      user = await readAdmin();
       result.adminLookup = Boolean(user);
     } catch (error) {
       console.error("[admin-auth-diagnostic] user lookup failed", error);
