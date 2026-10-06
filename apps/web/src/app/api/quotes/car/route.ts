@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { JsonBodyError, readJsonBody } from "@/lib/read-json-body";
 import {
   consumePublicWriteAttempt,
   rateLimitedResponse,
@@ -73,12 +74,23 @@ export async function POST(request: Request) {
 
   let body: Body;
   try {
-    body = (await request.json()) as Body;
-  } catch {
-    return NextResponse.json(
-      { error: { code: "INVALID_JSON", message: "Request body must be valid JSON." } },
-      { status: 400 },
-    );
+    body = await readJsonBody<Body>(request, 8192);
+  } catch (error) {
+    if (error instanceof JsonBodyError) {
+      return NextResponse.json(
+        {
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        },
+        {
+          status: error.httpStatus,
+          headers: { "Cache-Control": "no-store" },
+        },
+      );
+    }
+    throw error;
   }
 
   const origin = text(body.origin, 120);
