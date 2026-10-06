@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { ButtonLink } from "@/components/button-link";
 import { getPublicFleet } from "@/lib/public-fleet";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Cars & Fleet",
   description: "Explore active YATRA chauffeur-driven vehicles for road journeys across India.",
