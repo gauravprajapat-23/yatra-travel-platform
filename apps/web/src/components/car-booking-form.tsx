@@ -75,7 +75,7 @@ export function CarBookingForm({ trip }: { trip: BookingInput }) {
   const [pending, setPending] = useState(false);
 
 
-  async function createQuote(): Promise<QuoteResponse["quote"]> {
+  async function createQuote(): Promise<NonNullable<QuoteResponse["quote"]>> {
     const response = await fetch("/api/quotes/car", {
       method: "POST",
       headers: { "content-type": "application/json" },
