@@ -1,0 +1,75 @@
+name: Production Readiness
+
+on:
+  workflow_dispatch:
+    inputs:
+      production_url:
+        description: "Production base URL, e.g. https://example.com"
+        required: true
+        type: string
+      mode:
+        description: "Readiness scope"
+        required: true
+        default: "core"
+        type: choice
+        options:
+          - core
+          - car
+          - package
+          - payments
+          - media
+          - scheduled
+          - full
+      expected_commit:
+        description: "Expected deployed commit SHA or prefix (optional)"
+        required: false
+        type: string
+      require_refunds:
+        description: "Require refund writes to be enabled"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-readiness
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify production readiness
+        shell: bash
+        env:
+          PRODUCTION_URL: ${{ inputs.production_url }}
+          READINESS_MODE: ${{ inputs.mode }}
+          EXPECTED_COMMIT: ${{ inputs.expected_commit }}
+          REQUIRE_REFUNDS: ${{ inputs.require_refunds }}
+        run: |
+          args=(--url "$PRODUCTION_URL" --mode "$READINESS_MODE")
+
+          if [ -n "$EXPECTED_COMMIT" ]; then
+            args+=(--expect-commit "$EXPECTED_COMMIT")
+          fi
+
+          if [ "$REQUIRE_REFUNDS" = "true" ]; then
+            args+=(--require-refunds)
+          fi
+
+          npm run verify:production -- "${args[@]}"
