@@ -141,6 +141,10 @@ export default async function AdminContentEditorPage({
     },
   });
 
+  const currentHero = content.heroMediaId
+    ? heroOptions.find((asset) => asset.id === content.heroMediaId) ?? null
+    : null;
+
   const contentId = content.id;
   const contentType = type;
 
@@ -224,8 +228,15 @@ export default async function AdminContentEditorPage({
 
         <section className="admin-panel admin-detail-card">
           <h2>Hero Media</h2>
-          {content.heroMediaId ? (
-            <p>Current hero asset: {content.heroMediaId}</p>
+          {currentHero?.publicUrl ? (
+            <>
+              <img
+                src={currentHero.publicUrl}
+                alt={currentHero.altText ?? content.title}
+                loading="lazy"
+              />
+              <p>{currentHero.altText ?? currentHero.objectKey}</p>
+            </>
           ) : (
             <p>No hero media assigned.</p>
           )}
