@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { CarSearchResults } from "@/components/car-search-results";
 import { getPublicFleet } from "@/lib/public-fleet";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Car Search Results",
   robots: { index: false, follow: false },
