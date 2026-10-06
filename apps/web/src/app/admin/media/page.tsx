@@ -35,9 +35,17 @@ export default async function MediaPage() {
       title="Media Library"
       subtitle="Upload and manage assets stored through the configured S3-compatible provider."
     >
+      {process.env.MEDIA_WRITE_ENABLED !== "true" ? (
+        <p className="admin-notice">
+          Media writes are disabled. Complete the storage connectivity drill, then enable MEDIA_WRITE_ENABLED.
+        </p>
+      ) : null}
       <AdminMediaManager
         media={serialized}
-        canWrite={hasPermission(session.roles, "content.write")}
+        canWrite={
+          process.env.MEDIA_WRITE_ENABLED === "true" &&
+          hasPermission(session.roles, "content.write")
+        }
       />
     </AdminShell>
   );
