@@ -1,4 +1,9 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import {
+  CHECKOUT_SESSION_COOKIE,
+  verifyCheckoutSessionToken,
+} from "@/lib/checkout-session";
 import {
   createPaymentOrder,
   PaymentOrderServiceError,
@@ -70,10 +75,36 @@ export async function POST(request: Request) {
     );
   }
 
+  const jar = await cookies();
+  const checkoutSession = verifyCheckoutSessionToken(
+    jar.get(CHECKOUT_SESSION_COOKIE)?.value,
+  );
+
+  const normalizedReference = body.bookingReference.trim().toUpperCase();
+
+  if (
+    !checkoutSession ||
+    checkoutSession.t !== body.bookingType ||
+    checkoutSession.r !== normalizedReference
+  ) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "CHECKOUT_SESSION_MISMATCH",
+          message: "A valid checkout session is required for this booking.",
+        },
+      },
+      {
+        status: 403,
+        headers: { "Cache-Control": "no-store" },
+      },
+    );
+  }
+
   try {
     const result = await createPaymentOrder({
       bookingType: body.bookingType,
-      bookingReference: body.bookingReference.trim(),
+      bookingReference: normalizedReference,
       idempotencyKey,
     });
 
