@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { getDb } from "@yatra/db/client";
+import {
+  CHECKOUT_SESSION_COOKIE,
+  verifyCheckoutSessionToken,
+  type CheckoutBookingType,
+} from "@/lib/checkout-session";
 
 export const metadata: Metadata = {
   title: "Booking Confirmed",
@@ -29,10 +34,13 @@ function money(minor: bigint, currency: string): string {
   }).format(Number(minor) / 100);
 }
 
-async function loadBooking(reference: string): Promise<SuccessBooking | null> {
+async function loadBooking(
+  bookingType: CheckoutBookingType,
+  reference: string,
+): Promise<SuccessBooking | null> {
   const db = getDb();
 
-  if (reference.startsWith("YPK-")) {
+  if (bookingType === "PACKAGE") {
     const booking = await db.packageBooking.findUnique({
       where: { reference },
       select: {
@@ -96,11 +104,13 @@ async function loadBooking(reference: string): Promise<SuccessBooking | null> {
 
 export default async function BookingSuccessPage() {
   const jar = await cookies();
-  const reference = jar.get("yatra_checkout_booking")?.value;
+  const checkoutSession = verifyCheckoutSessionToken(
+    jar.get(CHECKOUT_SESSION_COOKIE)?.value,
+  );
 
   const booking =
-    reference && process.env.DATABASE_URL
-      ? await loadBooking(reference)
+    checkoutSession && process.env.DATABASE_URL
+      ? await loadBooking(checkoutSession.t, checkoutSession.r)
       : null;
 
   if (!booking) {
