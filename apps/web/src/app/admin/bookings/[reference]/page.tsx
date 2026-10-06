@@ -149,10 +149,21 @@ export default async function BookingDetailPage({
         vehicleClassId: rawBooking.data.vehicleClassId,
       };
 
+  const hasCapturedPayment = booking.paymentIntents.some(
+    (intent) =>
+      ["CAPTURED", "PARTIALLY_REFUNDED", "REFUNDED"].includes(intent.status) &&
+      intent.amountPaidMinor >= booking.totalMinor,
+  );
+
   const nextStatuses = bookingStatuses.filter(
     (status) =>
       canTransitionBooking(booking.status, status) &&
-      !["REFUND_PENDING", "REFUNDED"].includes(status),
+      !["REFUND_PENDING", "REFUNDED"].includes(status) &&
+      !(
+        status === "CONFIRMED" &&
+        booking.totalMinor > 0n &&
+        !hasCapturedPayment
+      ),
   );
 
   const [assignableVehicles, assignableDrivers] =
