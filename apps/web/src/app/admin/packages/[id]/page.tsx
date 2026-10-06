@@ -578,13 +578,74 @@ export default async function PackageDetailPage({
         </section>
 
         <section className="admin-panel admin-detail-card">
+          <h2>Itinerary</h2>
+          {pkg.itinerary.length === 0 ? (
+            <p>No itinerary days configured.</p>
+          ) : (
+            <div className="admin-timeline">
+              {pkg.itinerary.map((day) => (
+                <div key={day.id}>
+                  <span>{day.dayNumber}</span>
+                  <div>
+                    <strong>Day {day.dayNumber}: {day.title}</strong>
+                    {day.description ? <p>{day.description}</p> : null}
+                    {hasPermission(session.roles, "package.write") ? (
+                      <form action={deleteItineraryDay}>
+                        <input type="hidden" name="itineraryId" value={day.id}/>
+                        <button className="admin-danger-button" type="submit">
+                          Delete Day
+                        </button>
+                      </form>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {hasPermission(session.roles, "package.write") ? (
+            <form action={saveItineraryDay}>
+              <h3>Add or Update Day</h3>
+              <label>
+                Day number
+                <input
+                  type="number"
+                  name="dayNumber"
+                  min={1}
+                  max={pkg.durationDays}
+                  required
+                />
+              </label>
+              <label>
+                Title
+                <input name="title" required minLength={2} maxLength={180}/>
+              </label>
+              <label>
+                Description
+                <textarea name="description" maxLength={3000}/>
+              </label>
+              <button className="admin-primary-button" type="submit">
+                Save Itinerary Day
+              </button>
+            </form>
+          ) : null}
+        </section>
+
+        <section className="admin-panel admin-detail-card">
           <h2>Pricing</h2>
           {pkg.priceOptions.length === 0 ? (
             <p>No package pricing options configured.</p>
           ) : (
             <table className="admin-table">
               <thead>
-                <tr><th>Mode</th><th>Price</th><th>Travellers</th><th>Status</th></tr>
+                <tr>
+                  <th>Mode</th>
+                  <th>Price</th>
+                  <th>Travellers</th>
+                  <th>Vehicle Class</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
               </thead>
               <tbody>
                 {pkg.priceOptions.map((option) => (
@@ -592,12 +653,151 @@ export default async function PackageDetailPage({
                     <td>{option.mode.replaceAll("_", " ")}</td>
                     <td>{money(option.amountMinor, option.currency)}</td>
                     <td>{option.minTravellers ?? "—"} – {option.maxTravellers ?? "—"}</td>
+                    <td>
+                      {option.vehicleClassId
+                        ? vehicleClasses.find((item) => item.id === option.vehicleClassId)?.name ?? "Unknown"
+                        : "—"}
+                    </td>
                     <td>{option.isActive ? "Active" : "Inactive"}</td>
+                    <td>
+                      {hasPermission(session.roles, "package.write") ? (
+                        <form action={togglePriceOption}>
+                          <input type="hidden" name="optionId" value={option.id}/>
+                          <button className="admin-secondary-button" type="submit">
+                            {option.isActive ? "Deactivate" : "Activate"}
+                          </button>
+                        </form>
+                      ) : "—"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
+
+          {hasPermission(session.roles, "package.write") ? (
+            <>
+              <h3>Add Price Option</h3>
+              <form action={savePriceOption}>
+                <label>
+                  Mode
+                  <select name="mode" defaultValue="PER_PERSON">
+                    {packagePriceModes.map((mode) => (
+                      <option key={mode} value={mode}>{mode.replaceAll("_", " ")}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Price
+                  <input
+                    name="amount"
+                    inputMode="decimal"
+                    placeholder="14000"
+                    required
+                  />
+                </label>
+                <label>
+                  Currency
+                  <input name="currency" defaultValue="INR" maxLength={3} required/>
+                </label>
+                <label>
+                  Minimum travellers
+                  <input type="number" name="minTravellers" min={1}/>
+                </label>
+                <label>
+                  Maximum travellers
+                  <input type="number" name="maxTravellers" min={1}/>
+                </label>
+                <label>
+                  Vehicle class
+                  <select name="vehicleClassId" defaultValue="">
+                    <option value="">Not applicable</option>
+                    {vehicleClasses.map((vehicleClass) => (
+                      <option key={vehicleClass.id} value={vehicleClass.id}>
+                        {vehicleClass.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Sort order
+                  <input type="number" name="sortOrder" defaultValue={0}/>
+                </label>
+                <button className="admin-primary-button" type="submit">
+                  Add Price Option
+                </button>
+              </form>
+
+              {pkg.priceOptions.length ? (
+                <>
+                  <h3>Edit Existing Price Option</h3>
+                  {pkg.priceOptions.map((option) => (
+                    <form action={savePriceOption} key={`edit-${option.id}`}>
+                      <input type="hidden" name="optionId" value={option.id}/>
+                      <strong>{option.mode.replaceAll("_", " ")} · {money(option.amountMinor, option.currency)}</strong>
+                      <label>
+                        Mode
+                        <select name="mode" defaultValue={option.mode}>
+                          {packagePriceModes.map((mode) => (
+                            <option key={mode} value={mode}>{mode.replaceAll("_", " ")}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Price
+                        <input
+                          name="amount"
+                          defaultValue={(Number(option.amountMinor) / 100).toFixed(2)}
+                          inputMode="decimal"
+                          required
+                        />
+                      </label>
+                      <label>
+                        Currency
+                        <input name="currency" defaultValue={option.currency} maxLength={3} required/>
+                      </label>
+                      <label>
+                        Minimum travellers
+                        <input
+                          type="number"
+                          name="minTravellers"
+                          min={1}
+                          defaultValue={option.minTravellers ?? ""}
+                        />
+                      </label>
+                      <label>
+                        Maximum travellers
+                        <input
+                          type="number"
+                          name="maxTravellers"
+                          min={1}
+                          defaultValue={option.maxTravellers ?? ""}
+                        />
+                      </label>
+                      <label>
+                        Vehicle class
+                        <select name="vehicleClassId" defaultValue={option.vehicleClassId ?? ""}>
+                          <option value="">Not applicable</option>
+                          {vehicleClasses.map((vehicleClass) => (
+                            <option key={vehicleClass.id} value={vehicleClass.id}>
+                              {vehicleClass.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Sort order
+                        <input type="number" name="sortOrder" defaultValue={option.sortOrder}/>
+                      </label>
+                      <button className="admin-secondary-button" type="submit">
+                        Update Price Option
+                      </button>
+                    </form>
+                  ))}
+                </>
+              ) : null}
+            </>
+          ) : null}
         </section>
 
         <section className="admin-panel admin-detail-card">
