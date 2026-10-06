@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 
 type Booking = {
@@ -92,7 +93,7 @@ export function BookingLookup() {
               <p>Amount <strong>{money(booking.totalMinor,booking.currency)}</strong></p>
               <p>Payment/booking status <span className="status-pill status-pill--green">{booking.status.replaceAll("_"," ")}</span></p>
               <div className="trip-actions">
-                <a href="/contact">Contact Support</a>
+                <Link href="/contact">Contact Support</Link>
               </div>
             </div>
           </article>
