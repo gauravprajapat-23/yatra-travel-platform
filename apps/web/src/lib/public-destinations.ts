@@ -33,10 +33,7 @@ export async function getPublicDestinations(): Promise<PublicDestinationCard[]> 
     const rows = await db.destination.findMany({
       where: {
         status: "PUBLISHED",
-        OR: [
-          { publishedAt: null },
-          { publishedAt: { lte: now } },
-        ],
+        publishedAt: { lte: now },
       },
       select: {
         id: true,
@@ -84,10 +81,7 @@ export async function getPublicDestinationBySlug(
       where: {
         slug,
         status: "PUBLISHED",
-        OR: [
-          { publishedAt: null },
-          { publishedAt: { lte: now } },
-        ],
+        publishedAt: { lte: now },
       },
       select: {
         id: true,
