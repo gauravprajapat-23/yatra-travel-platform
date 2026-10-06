@@ -1,4 +1,8 @@
 import { getDb, Prisma } from "@yatra/db/client";
+import {
+  encryptSensitiveString,
+  lastFourDigits,
+} from "@yatra/providers/security/field-encryption";
 
 export const vehicleStatuses = ["ACTIVE", "INACTIVE", "MAINTENANCE", "RETIRED"] as const;
 export const driverStatuses = ["ACTIVE", "INACTIVE", "ON_LEAVE", "SUSPENDED"] as const;
@@ -285,6 +289,8 @@ export async function deleteVehicleAvailabilityBlock(input: {
 
 export async function createDriver(input: {
   displayName: string;
+  phoneNumber: string;
+  licenseNumber: string;
   licenseExpiry: Date | null;
   internalNotes: string;
   qualificationIds: string[];
@@ -312,10 +318,20 @@ export async function createDriver(input: {
         throw new Error("One or more vehicle classes are unavailable.");
       }
 
+      const phoneNumber = input.phoneNumber.trim();
+      const licenseNumber = input.licenseNumber.trim();
+
       const driver = await tx.driver.create({
         data: {
           displayName,
           status: "ACTIVE",
+          phoneCiphertext: phoneNumber
+            ? encryptSensitiveString(phoneNumber, "driver-phone")
+            : null,
+          phoneLast4: phoneNumber ? lastFourDigits(phoneNumber) : null,
+          licenseNumberCiphertext: licenseNumber
+            ? encryptSensitiveString(licenseNumber, "driver-license")
+            : null,
           licenseExpiry: input.licenseExpiry,
           internalNotes: input.internalNotes.trim().slice(0, 1000) || null,
           qualifications: {
@@ -333,6 +349,8 @@ export async function createDriver(input: {
           metadata: {
             displayName,
             qualificationIds,
+            phoneStored: Boolean(phoneNumber),
+            licenseNumberStored: Boolean(licenseNumber),
             licenseExpiry: input.licenseExpiry?.toISOString() ?? null,
           },
         },
@@ -348,6 +366,8 @@ export async function updateDriver(input: {
   driverId: string;
   displayName: string;
   status: DriverStatusValue;
+  phoneNumber: string;
+  licenseNumber: string;
   licenseExpiry: Date | null;
   internalNotes: string;
   qualificationIds: string[];
@@ -423,11 +443,23 @@ export async function updateDriver(input: {
         });
       }
 
+      const phoneNumber = input.phoneNumber.trim();
+      const licenseNumber = input.licenseNumber.trim();
+
       const updated = await tx.driver.update({
         where: { id: input.driverId },
         data: {
           displayName,
           status: input.status,
+          phoneCiphertext: phoneNumber
+            ? encryptSensitiveString(phoneNumber, "driver-phone")
+            : undefined,
+          phoneLast4: phoneNumber
+            ? lastFourDigits(phoneNumber)
+            : undefined,
+          licenseNumberCiphertext: licenseNumber
+            ? encryptSensitiveString(licenseNumber, "driver-license")
+            : undefined,
           licenseExpiry: input.licenseExpiry,
           internalNotes: input.internalNotes.trim().slice(0, 1000) || null,
         },
@@ -444,6 +476,8 @@ export async function updateDriver(input: {
             toStatus: input.status,
             fromQualificationIds: currentQualificationIds,
             toQualificationIds: qualificationIds,
+            phoneReplaced: Boolean(phoneNumber),
+            licenseNumberReplaced: Boolean(licenseNumber),
             licenseExpiry: input.licenseExpiry?.toISOString() ?? null,
           },
         },
