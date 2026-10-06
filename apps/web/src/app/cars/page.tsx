@@ -1,21 +1,15 @@
 import type { Metadata } from "next";
 import { ButtonLink } from "@/components/button-link";
+import { getPublicFleet } from "@/lib/public-fleet";
 
 export const metadata: Metadata = {
   title: "Cars & Fleet",
-  description: "Explore YATRA chauffeur-driven cars for road journeys across India.",
+  description: "Explore active YATRA chauffeur-driven vehicles for road journeys across India.",
 };
 
-const vehicles = [
-  { name: "Innova Crysta", meta: "Premium · 6 Seats", price: "₹ 14 / km", seats: "6 Seats", bags: "4 Bags", href: "/cars/innova-crysta", badge: "Most Popular" },
-  { name: "Ertiga", meta: "Comfort · 6 Seats", price: "₹ 12 / km", seats: "6 Seats", bags: "4 Bags", href: "/custom-trip" },
-  { name: "Innova Hycross", meta: "Premium Hybrid · 6 Seats", price: "₹ 16 / km", seats: "6 Seats", bags: "4 Bags", href: "/custom-trip" },
-  { name: "Toyota Fortuner", meta: "Luxury SUV · 6 Seats", price: "₹ 20 / km", seats: "6 Seats", bags: "4 Bags", href: "/custom-trip" },
-  { name: "Tempo Traveller", meta: "12–17 Seats · Group", price: "₹ 26 / km", seats: "12+ Seats", bags: "10 Bags", href: "/custom-trip" },
-  { name: "Luxury Vellfire", meta: "Executive · 6 Seats", price: "₹ 28 / km", seats: "6 Seats", bags: "5 Bags", href: "/custom-trip" },
-];
+export default async function CarsPage() {
+  const vehicles = await getPublicFleet();
 
-export default function CarsPage() {
   return (
     <>
       <section className="reference-page-hero reference-page-hero--fleet fleet-reference-hero">
@@ -23,44 +17,50 @@ export default function CarsPage() {
         <div className="shell reference-page-hero__content">
           <p className="eyebrow">OUR FLEET</p>
           <h1>Comfort for every<br />kind of journey.</h1>
-          <p>Well-maintained, chauffeur-driven vehicles for temple tours, family trips and long-distance travel across India.</p>
+          <p>Active, chauffeur-driven vehicles for temple tours, family trips and long-distance travel across India.</p>
           <div className="reference-hero-badges">
-            <span>◉ Clean Vehicles</span>
-            <span>◉ Experienced Drivers</span>
-            <span>◉ GPS Enabled</span>
-            <span>◉ 24×7 Support</span>
+            <span>◉ Active Fleet Only</span>
+            <span>◉ Server-Verified Quote</span>
+            <span>◉ Vehicle Availability Checked</span>
+            <span>◉ Travel Support</span>
           </div>
         </div>
       </section>
 
       <section className="reference-section reference-section--cream fleet-reference-section">
         <div className="shell">
-          <div className="reference-filter-row fleet-reference-filters">
-            {["All Vehicles", "Sedan", "SUV", "Premium", "Tempo Traveller", "Luxury"].map((item, i) => (
-              <button className={i === 0 ? "filter-chip filter-chip--active" : "filter-chip"} key={item}>{item}</button>
-            ))}
-          </div>
-
-          <div className="vehicle-grid vehicle-grid--reference">
-            {vehicles.map((vehicle) => (
-              <article className="vehicle-list-card vehicle-list-card--reference" key={vehicle.name}>
-                <div className="vehicle-list-card__image">
-                  <img src="/assets/car-innova.webp" alt={vehicle.name} loading="lazy" />
-                  {vehicle.badge ? <span className="vehicle-card-badge">{vehicle.badge}</span> : null}
-                </div>
-                <h2>{vehicle.name}</h2>
-                <p>{vehicle.meta}</p>
-                <div className="vehicle-list-card__specs">
-                  <span>♙ {vehicle.seats}</span>
-                  <span>▣ {vehicle.bags}</span>
-                  <span>❄ AC</span>
-                </div>
-                <strong>{vehicle.price}</strong>
-                <small className="vehicle-list-card__included">Driver, fuel & toll included</small>
-                <ButtonLink href={vehicle.href}>View Details →</ButtonLink>
-              </article>
-            ))}
-          </div>
+          {vehicles.length ? (
+            <div className="vehicle-grid vehicle-grid--reference">
+              {vehicles.map((vehicle) => (
+                <article className="vehicle-list-card vehicle-list-card--reference" key={vehicle.id}>
+                  <div className="vehicle-list-card__image">
+                    <img src="/assets/car-innova.webp" alt={vehicle.displayName} loading="lazy" />
+                    {vehicle.isFeatured ? <span className="vehicle-card-badge">Featured</span> : null}
+                  </div>
+                  <h2>{vehicle.displayName}</h2>
+                  <p>{vehicle.className}</p>
+                  <div className="vehicle-list-card__specs">
+                    <span>♙ {vehicle.seats} Seats</span>
+                    <span>▣ {vehicle.luggage ?? "—"} Bags</span>
+                    <span>❄ {vehicle.airConditioned ? "AC" : "Non-AC"}</span>
+                  </div>
+                  <strong>Server quote</strong>
+                  <small className="vehicle-list-card__included">Final price depends on route and active pricing rules</small>
+                  {vehicle.slug === "innova-crysta" ? (
+                    <ButtonLink href="/cars/innova-crysta">View Details →</ButtonLink>
+                  ) : (
+                    <ButtonLink href="/custom-trip">Request This Vehicle →</ButtonLink>
+                  )}
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="search-empty-state">
+              <h2>No active vehicles are published yet.</h2>
+              <p>Use the custom trip request while the fleet is being configured.</p>
+              <ButtonLink href="/custom-trip">Request a Trip →</ButtonLink>
+            </div>
+          )}
         </div>
       </section>
     </>
