@@ -16,7 +16,6 @@ export type PublicDestinationDetail = PublicDestinationCard & {
   seoTitle: string | null;
   seoDescription: string | null;
   canonicalUrl: string | null;
-  robotsIndex: boolean;
   robotsFollow: boolean;
   templeProfile: {
     templeName: string;
@@ -135,7 +134,6 @@ export async function getPublicDestinationBySlug(
       robotsFollow: row.robotsFollow,
       heroUrl: row.heroMedia?.publicUrl ?? null,
       isFeatured: row.isFeatured,
-      robotsIndex: row.robotsIndex,
       templeProfile: row.templeProfile,
     };
   } catch (error) {
