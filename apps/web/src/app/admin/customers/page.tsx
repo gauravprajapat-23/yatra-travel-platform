@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
@@ -88,7 +89,9 @@ export default async function CustomersPage() {
   );
 
   const rows = customers.slice(0, 100).map((customer) => [
-    customer.name,
+    <Link key={customer.email} href={`/admin/customers/${encodeURIComponent(customer.email)}`}>
+      {customer.name}
+    </Link>,
     customer.email,
     customer.lastBookingAt?.toLocaleDateString("en-IN") ?? "—",
     customer.bookings.toString(),
