@@ -1,4 +1,5 @@
 import { ButtonLink } from "@/components/button-link";
+import { HomeCarSearch } from "@/components/home-car-search";
 
 export function HeroJourney() {
   return (
@@ -14,28 +15,14 @@ export function HeroJourney() {
           long-distance tours — designed around you.
         </p>
         <div className="reference-hero__actions">
-          <ButtonLink href="/cars">Find a Car</ButtonLink>
+          <ButtonLink href="/cars">Explore Fleet</ButtonLink>
           <ButtonLink href="/packages" variant="ghost">
             Explore Tours
           </ButtonLink>
         </div>
       </div>
 
-      <div className="shell reference-search-card">
-        {[
-          ["From", "Raipur"],
-          ["To", "Ujjain"],
-          ["Departure", "12 Oct"],
-          ["Return", "15 Oct"],
-          ["Travellers", "4"],
-        ].map(([label, value]) => (
-          <div className="reference-search-card__field" key={label}>
-            <span>{label}</span>
-            <strong>{value}</strong>
-          </div>
-        ))}
-        <ButtonLink href="/cars">Find Cars →</ButtonLink>
-      </div>
+      <HomeCarSearch />
 
       <div className="shell reference-trust-row" aria-label="Travel assurances">
         <span>◉ Verified Drivers</span>
