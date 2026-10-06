@@ -1,0 +1,288 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { getDb } from "@yatra/db/client";
+import { hasPermission } from "@yatra/domain/auth/permissions";
+import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { requireAdminSession } from "@/lib/auth/session";
+import {
+  isPricingBasis,
+  isPricingRuleStatus,
+  isTripType,
+  pricingBases,
+  pricingRuleStatuses,
+  savePricingRule,
+  tripTypes,
+} from "@/modules/pricing/pricing-rule-management-service";
+
+export const dynamic = "force-dynamic";
+
+function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
+  if (status === "ACTIVE") return "green";
+  if (status === "DRAFT") return "orange";
+  if (status === "ARCHIVED") return "red";
+  return "gray";
+}
+
+function decimal(minor: bigint | null): string {
+  if (minor === null) return "";
+  return (Number(minor) / 100).toFixed(2);
+}
+
+function parseMinor(value: FormDataEntryValue | null): bigint | null {
+  const text = String(value ?? "").trim();
+  if (!text) return null;
+  if (!/^\d{1,9}(?:\.\d{1,2})?$/.test(text)) {
+    throw new Error("Money values must be positive with up to two decimals.");
+  }
+  const [whole, fraction = ""] = text.split(".");
+  return BigInt(whole) * 100n + BigInt((fraction + "00").slice(0, 2));
+}
+
+function parseOptionalInt(value: FormDataEntryValue | null): number | null {
+  const text = String(value ?? "").trim();
+  if (!text) return null;
+  const parsed = Number(text);
+  if (!Number.isInteger(parsed)) throw new Error("Expected a whole number.");
+  return parsed;
+}
+
+function parseOptionalDate(value: FormDataEntryValue | null): Date | null {
+  const text = String(value ?? "").trim();
+  if (!text) return null;
+  const parsed = new Date(text);
+  if (Number.isNaN(parsed.getTime())) throw new Error("Invalid date.");
+  return parsed;
+}
+
+function localDateTime(value: Date | null): string {
+  if (!value) return "";
+  return new Date(
+    value.getTime() - value.getTimezoneOffset() * 60_000,
+  )
+    .toISOString()
+    .slice(0, 16);
+}
+
+export default async function PricingRuleDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const session = await requireAdminSession();
+  if (!hasPermission(session.roles, "settings.manage")) redirect("/admin");
+
+  const { id } = await params;
+  const db = getDb();
+
+  const [rule, classes] = await Promise.all([
+    db.pricingRule.findUnique({
+      where: { id },
+      include: {
+        vehicleClass: { select: { name: true } },
+      },
+    }),
+    db.vehicleClass.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      select: { id: true, name: true },
+    }),
+  ]);
+
+  if (!rule) notFound();
+
+  const ruleId = rule.id;
+
+  async function save(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "settings.manage")) {
+      redirect("/admin/offers");
+    }
+
+    const tripType = String(formData.get("tripType") ?? "");
+    const basis = String(formData.get("basis") ?? "");
+    const status = String(formData.get("status") ?? "");
+
+    if (!isTripType(tripType)) throw new Error("Invalid trip type.");
+    if (!isPricingBasis(basis)) throw new Error("Invalid pricing basis.");
+    if (!isPricingRuleStatus(status)) throw new Error("Invalid pricing rule status.");
+
+    await savePricingRule({
+      id: ruleId,
+      name: String(formData.get("name") ?? ""),
+      vehicleClassId: String(formData.get("vehicleClassId") ?? ""),
+      tripType,
+      basis,
+      currency: String(formData.get("currency") ?? "INR"),
+      baseAmountMinor: parseMinor(formData.get("baseAmount")),
+      perKmMinor: parseMinor(formData.get("perKm")),
+      minimumDistanceKm: parseOptionalInt(formData.get("minimumDistanceKm")),
+      driverAllowancePerDayMinor: parseMinor(formData.get("driverAllowancePerDay")),
+      nightAllowanceMinor: parseMinor(formData.get("nightAllowance")),
+      originKey: String(formData.get("originKey") ?? ""),
+      destinationKey: String(formData.get("destinationKey") ?? ""),
+      priority: Number(formData.get("priority") ?? 0),
+      status,
+      activeFrom: parseOptionalDate(formData.get("activeFrom")),
+      activeTo: parseOptionalDate(formData.get("activeTo")),
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath("/admin/offers");
+    revalidatePath(`/admin/offers/${ruleId}`);
+  }
+
+  return (
+    <AdminShell
+      active="Offers"
+      title={rule.name}
+      subtitle="Server-authoritative pricing rule"
+      actions={
+        <Link className="admin-secondary-button" href="/admin/offers">
+          ← Pricing Rules
+        </Link>
+      }
+    >
+      <div className="admin-detail-grid">
+        <section className="admin-panel admin-detail-card">
+          <div className="admin-panel-heading">
+            <h2>Rule Overview</h2>
+            <StatusPill tone={tone(rule.status)}>
+              {rule.status.replaceAll("_", " ")}
+            </StatusPill>
+          </div>
+
+          <dl>
+            <div><dt>Vehicle class</dt><dd>{rule.vehicleClass.name}</dd></div>
+            <div><dt>Trip type</dt><dd>{rule.tripType.replaceAll("_", " ")}</dd></div>
+            <div><dt>Basis</dt><dd>{rule.basis.replaceAll("_", " ")}</dd></div>
+            <div><dt>Priority</dt><dd>{rule.priority}</dd></div>
+            <div><dt>Origin scope</dt><dd>{rule.originKey ?? "Wildcard"}</dd></div>
+            <div><dt>Destination scope</dt><dd>{rule.destinationKey ?? "Wildcard"}</dd></div>
+          </dl>
+        </section>
+
+        <section className="admin-panel admin-detail-card">
+          <h2>Edit Pricing Rule</h2>
+
+          <form action={save}>
+            <label>
+              Rule name
+              <input name="name" defaultValue={rule.name} required minLength={2} maxLength={160}/>
+            </label>
+
+            <label>
+              Vehicle class
+              <select name="vehicleClassId" defaultValue={rule.vehicleClassId}>
+                {classes.map((item) => (
+                  <option key={item.id} value={item.id}>{item.name}</option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Trip type
+              <select name="tripType" defaultValue={rule.tripType}>
+                {tripTypes.map((item) => (
+                  <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Pricing basis
+              <select name="basis" defaultValue={rule.basis}>
+                {pricingBases.map((item) => (
+                  <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              Currency
+              <input name="currency" defaultValue={rule.currency} maxLength={3} required/>
+            </label>
+
+            <label>
+              Fixed base amount
+              <input name="baseAmount" inputMode="decimal" defaultValue={decimal(rule.baseAmountMinor)}/>
+            </label>
+
+            <label>
+              Per-km amount
+              <input name="perKm" inputMode="decimal" defaultValue={decimal(rule.perKmMinor)}/>
+            </label>
+
+            <label>
+              Minimum distance (km)
+              <input type="number" name="minimumDistanceKm" min={0} defaultValue={rule.minimumDistanceKm ?? ""}/>
+            </label>
+
+            <label>
+              Driver allowance / day
+              <input
+                name="driverAllowancePerDay"
+                inputMode="decimal"
+                defaultValue={decimal(rule.driverAllowancePerDayMinor)}
+              />
+            </label>
+
+            <label>
+              Night allowance
+              <input
+                name="nightAllowance"
+                inputMode="decimal"
+                defaultValue={decimal(rule.nightAllowanceMinor)}
+              />
+            </label>
+
+            <label>
+              Origin scope key
+              <input name="originKey" defaultValue={rule.originKey ?? ""} maxLength={200}/>
+            </label>
+
+            <label>
+              Destination scope key
+              <input name="destinationKey" defaultValue={rule.destinationKey ?? ""} maxLength={200}/>
+            </label>
+
+            <label>
+              Priority
+              <input type="number" name="priority" defaultValue={rule.priority} min={-100000} max={100000}/>
+            </label>
+
+            <label>
+              Active from
+              <input type="datetime-local" name="activeFrom" defaultValue={localDateTime(rule.activeFrom)}/>
+            </label>
+
+            <label>
+              Active to
+              <input type="datetime-local" name="activeTo" defaultValue={localDateTime(rule.activeTo)}/>
+            </label>
+
+            <label>
+              Status
+              <select name="status" defaultValue={rule.status}>
+                {pricingRuleStatuses.map((item) => (
+                  <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
+                ))}
+              </select>
+            </label>
+
+            <p>
+              Activating a rule is rejected if another active rule has the same
+              class, trip type, route scope, priority and overlapping dates.
+            </p>
+
+            <button className="admin-primary-button" type="submit">
+              Save Pricing Rule
+            </button>
+          </form>
+        </section>
+      </div>
+    </AdminShell>
+  );
+}
