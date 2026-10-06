@@ -12,7 +12,7 @@ function isAuthorized(request: Request): boolean {
   return authorization === `Bearer ${secret}`;
 }
 
-export async function POST(request: Request) {
+async function runScheduledPublication(request: Request) {
   if (!isAuthorized(request)) {
     return NextResponse.json(
       { error: { code: "UNAUTHORIZED", message: "Unauthorized cron request." } },
@@ -63,20 +63,10 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
-  return NextResponse.json(
-    {
-      error: {
-        code: "METHOD_NOT_ALLOWED",
-        message: "Use authenticated POST.",
-      },
-    },
-    {
-      status: 405,
-      headers: {
-        Allow: "POST",
-        "Cache-Control": "no-store",
-      },
-    },
-  );
+export async function GET(request: Request) {
+  return runScheduledPublication(request);
+}
+
+export async function POST(request: Request) {
+  return runScheduledPublication(request);
 }
