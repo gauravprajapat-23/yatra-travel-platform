@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { StructuredContentRenderer } from "@/components/structured-content-renderer";
 import { getPublicPackageBySlug } from "@/lib/public-packages";
 
 export const dynamic = "force-dynamic";
@@ -70,6 +71,8 @@ export default async function PackageDetailPage({
             <h2 className="reference-title reference-title--small">
               Your journey, day by day.
             </h2>
+
+            <StructuredContentRenderer body={pkg.body} />
 
             {pkg.itinerary.length ? (
               <div className="package-itinerary-list">
