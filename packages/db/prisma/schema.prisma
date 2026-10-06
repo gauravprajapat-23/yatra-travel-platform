@@ -111,6 +111,20 @@ enum PackagePriceMode {
   FIXED
 }
 
+
+enum LeadType {
+  CONTACT
+  CUSTOM_TRIP
+}
+
+enum LeadStatus {
+  NEW
+  IN_PROGRESS
+  QUALIFIED
+  CLOSED
+  SPAM
+}
+
 enum PaymentProvider {
   RAZORPAY
 }
@@ -830,6 +844,28 @@ model PackageBookingStatusHistory {
   @@index([actorUserId, createdAt])
 }
 
+
+
+model Lead {
+  id              String     @id @default(cuid())
+  reference       String     @unique
+  type            LeadType
+  status          LeadStatus @default(NEW)
+  idempotencyKey  String     @unique
+  name            String
+  email           String
+  emailNormalized String
+  phone           String?
+  message         String?
+  tripData        Json?
+  sourcePath      String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([status, createdAt])
+  @@index([type, status, createdAt])
+  @@index([emailNormalized, createdAt])
+}
 
 model PaymentIntent {
   id                String          @id @default(cuid())
