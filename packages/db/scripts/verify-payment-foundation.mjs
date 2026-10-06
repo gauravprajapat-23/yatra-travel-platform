@@ -71,6 +71,48 @@ try {
     throw new Error("Payment webhook dedupe index is missing.");
   }
 
+  const activeIntentIndexes = await client.query(
+    `
+      SELECT indexname, indexdef
+      FROM pg_indexes
+      WHERE schemaname = 'public'
+        AND tablename = 'PaymentIntent'
+        AND indexname = ANY($1::text[])
+    `,
+    [[
+      "PaymentIntent_one_active_car_booking_idx",
+      "PaymentIntent_one_active_package_booking_idx",
+    ]],
+  );
+
+  const activeIntentNames = new Set(
+    activeIntentIndexes.rows.map((row) => row.indexname),
+  );
+
+  for (const expected of [
+    "PaymentIntent_one_active_car_booking_idx",
+    "PaymentIntent_one_active_package_booking_idx",
+  ]) {
+    if (!activeIntentNames.has(expected)) {
+      throw new Error(
+        `Missing active-payment uniqueness index: ${expected}`,
+      );
+    }
+  }
+
+  for (const row of activeIntentIndexes.rows) {
+    const definition = String(row.indexdef ?? "");
+    if (
+      !definition.includes("UNIQUE INDEX") ||
+      !definition.includes("'CREATED'") ||
+      !definition.includes("'AUTHORIZED'")
+    ) {
+      throw new Error(
+        `Active-payment uniqueness index is malformed: ${row.indexname}`,
+      );
+    }
+  }
+
   console.log("Payment foundation verification passed.");
 } finally {
   await client.end();
