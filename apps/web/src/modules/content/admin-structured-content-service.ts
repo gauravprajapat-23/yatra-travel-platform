@@ -162,3 +162,68 @@ export async function updateStructuredContentBody(input: {
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
   );
 }
+
+
+export async function updatePackageStructuredContentBody(input: {
+  packageId: string;
+  actorUserId: string;
+  rawBody: string;
+}) {
+  const blocks = parseBlocks(input.rawBody);
+  const db = getDb();
+
+  return db.$transaction(
+    async (tx) => {
+      const current = await tx.tourPackage.findUnique({
+        where: { id: input.packageId },
+        select: { body: true, title: true },
+      });
+
+      if (!current) throw new Error("Tour package not found.");
+
+      const latestRevision = await tx.contentRevision.aggregate({
+        where: {
+          entityType: "package",
+          entityId: input.packageId,
+        },
+        _max: { version: true },
+      });
+
+      await tx.contentRevision.create({
+        data: {
+          entityType: "package",
+          entityId: input.packageId,
+          version: (latestRevision._max.version ?? 0) + 1,
+          createdBy: input.actorUserId,
+          payload: {
+            body: current.body,
+          } as Prisma.InputJsonValue,
+        },
+      });
+
+      await tx.tourPackage.update({
+        where: { id: input.packageId },
+        data: {
+          body: blocks as unknown as Prisma.InputJsonValue,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorUserId: input.actorUserId,
+          action: "PACKAGE_BODY_UPDATED",
+          entityType: "TourPackage",
+          entityId: input.packageId,
+          metadata: {
+            title: current.title,
+            blockCount: blocks.length,
+            blockTypes: blocks.map((block) => block.type),
+          },
+        },
+      });
+
+      return { blockCount: blocks.length };
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
+}
