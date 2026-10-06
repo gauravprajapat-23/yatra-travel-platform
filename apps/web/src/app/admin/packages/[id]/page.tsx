@@ -122,6 +122,8 @@ export default async function PackageDetailPage({
   if (!pkg) notFound();
 
   const packageId = pkg.id;
+  const packageSlug = pkg.slug;
+  const packageDurationDays = pkg.durationDays;
 
   async function saveBody(formData: FormData) {
     "use server";
@@ -138,7 +140,7 @@ export default async function PackageDetailPage({
     });
 
     revalidatePath(`/admin/packages/${packageId}`);
-    revalidatePath(`/packages/${pkg.slug}`);
+    revalidatePath(`/packages/${packageSlug}`);
   }
 
   async function saveItineraryDay(formData: FormData) {
@@ -156,9 +158,9 @@ export default async function PackageDetailPage({
     if (
       !Number.isInteger(dayNumber) ||
       dayNumber < 1 ||
-      dayNumber > pkg.durationDays
+      dayNumber > packageDurationDays
     ) {
-      throw new Error(`Day number must be between 1 and ${pkg.durationDays}.`);
+      throw new Error(`Day number must be between 1 and ${packageDurationDays}.`);
     }
 
     if (title.length < 2 || title.length > 180) {
@@ -203,7 +205,7 @@ export default async function PackageDetailPage({
     });
 
     revalidatePath(`/admin/packages/${packageId}`);
-    revalidatePath(`/packages/${pkg.slug}`);
+    revalidatePath(`/packages/${packageSlug}`);
   }
 
   async function deleteItineraryDay(formData: FormData) {
@@ -247,7 +249,7 @@ export default async function PackageDetailPage({
     ]);
 
     revalidatePath(`/admin/packages/${packageId}`);
-    revalidatePath(`/packages/${pkg.slug}`);
+    revalidatePath(`/packages/${packageSlug}`);
   }
 
   async function savePriceOption(formData: FormData) {
@@ -361,7 +363,7 @@ export default async function PackageDetailPage({
     });
 
     revalidatePath(`/admin/packages/${packageId}`);
-    revalidatePath(`/packages/${pkg.slug}`);
+    revalidatePath(`/packages/${packageSlug}`);
   }
 
   async function togglePriceOption(formData: FormData) {
@@ -404,7 +406,7 @@ export default async function PackageDetailPage({
     });
 
     revalidatePath(`/admin/packages/${packageId}`);
-    revalidatePath(`/packages/${pkg.slug}`);
+    revalidatePath(`/packages/${packageSlug}`);
   }
 
   async function saveMetadata(formData: FormData) {
@@ -545,7 +547,7 @@ export default async function PackageDetailPage({
     <AdminShell
       active="Tours & Packages"
       title={pkg.title}
-      subtitle={`${pkg.durationDays}D / ${pkg.durationNights}N · ${pkg.slug}`}
+      subtitle={`${packageDurationDays}D / ${pkg.durationNights}N · ${packageSlug}`}
       actions={
         <Link className="admin-secondary-button" href="/admin/packages">
           ← All Packages
@@ -659,7 +661,7 @@ export default async function PackageDetailPage({
                   type="number"
                   name="dayNumber"
                   min={1}
-                  max={pkg.durationDays}
+                  max={packageDurationDays}
                   required
                 />
               </label>
