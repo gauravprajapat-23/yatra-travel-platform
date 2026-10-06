@@ -47,6 +47,8 @@ export async function GET() {
     scheduledPublisherConfigured: Boolean(
       process.env.CRON_SECRET && process.env.CRON_SECRET.trim().length >= 16,
     ),
+    scheduledPublisherLastRunAt: null as string | null,
+    scheduledPublisherRecentlyRan: false,
     fieldEncryptionConfigured: (() => {
       const raw = process.env.FIELD_ENCRYPTION_KEY?.trim();
       if (!raw) return false;
@@ -88,8 +90,14 @@ export async function GET() {
 
     const now = new Date();
 
-    const [vehicles, pricingRules, carPolicies, packagePolicies, legalPages] =
-      await Promise.all([
+    const [
+      vehicles,
+      pricingRules,
+      carPolicies,
+      packagePolicies,
+      legalPages,
+      scheduledPublisherHeartbeat,
+    ] = await Promise.all([
         db.vehicle.count({
           where: {
             status: "ACTIVE",
@@ -120,6 +128,15 @@ export async function GET() {
             publishedAt: { lte: now },
           },
         }),
+        db.auditLog.findFirst({
+          where: {
+            action: "SCHEDULED_PUBLISHER_RUN",
+            entityType: "Scheduler",
+            entityId: "publish-content",
+          },
+          orderBy: { createdAt: "desc" },
+          select: { createdAt: true },
+        }),
       ]);
 
     status.activeVehicles = vehicles;
@@ -127,6 +144,14 @@ export async function GET() {
     status.activeCarBookingPolicies = carPolicies;
     status.activePackageBookingPolicies = packagePolicies;
     status.requiredLegalPagesPublished = legalPages;
+
+    if (scheduledPublisherHeartbeat) {
+      status.scheduledPublisherLastRunAt =
+        scheduledPublisherHeartbeat.createdAt.toISOString();
+      status.scheduledPublisherRecentlyRan =
+        now.getTime() - scheduledPublisherHeartbeat.createdAt.getTime() <=
+        36 * 60 * 60 * 1000;
+    }
 
     status.leadFormsReady =
       status.databaseReachable && status.leadTableReady;
