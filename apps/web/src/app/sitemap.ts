@@ -3,10 +3,15 @@ import type { MetadataRoute } from "next";
 const publicRoutes = [
   "",
   "/cars",
+  "/cars/innova-crysta",
   "/packages",
+  "/packages/kedarnath-badrinath",
   "/destinations",
+  "/destinations/varanasi",
+  "/temples/kedarnath",
   "/offers",
   "/travel-guides",
+  "/travel-guides/spiritual-journey-varanasi",
   "/about",
   "/contact",
   "/faq",
@@ -21,6 +26,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return publicRoutes.map((route) => ({
     url: `${baseUrl}${route}`,
     changeFrequency: route === "" ? "weekly" : "monthly",
-    priority: route === "" ? 1 : 0.7,
+    priority:
+      route === ""
+        ? 1
+        : route === "/cars" || route === "/packages" || route === "/destinations"
+          ? 0.8
+          : 0.7,
   }));
 }
