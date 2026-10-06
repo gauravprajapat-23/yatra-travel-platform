@@ -31,10 +31,12 @@ export default function ContactPage() {
             <strong>Existing Booking</strong>
             <span>Include your booking reference</span>
           </article>
-          <article className="contact-channel">
-            <strong>Email</strong>
-            <span>{supportEmail || "Configured support email will appear here"}</span>
-          </article>
+          {supportEmail ? (
+            <article className="contact-channel">
+              <strong>Email</strong>
+              <span>{supportEmail}</span>
+            </article>
+          ) : null}
           <article className="contact-channel">
             <strong>Custom Trip</strong>
             <span>Create a personalised trip request</span>
