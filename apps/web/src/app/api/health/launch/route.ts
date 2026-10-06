@@ -13,6 +13,7 @@ export async function GET() {
     activePricingRules: 0,
     activeCarBookingPolicies: 0,
     activePackageBookingPolicies: 0,
+    requiredLegalPagesPublished: 0,
     bookingWriteEnabled: process.env.BOOKING_WRITE_ENABLED === "true",
     packageBookingWriteEnabled:
       process.env.PACKAGE_BOOKING_WRITE_ENABLED === "true",
@@ -38,6 +39,7 @@ export async function GET() {
     carBookingReady: false,
     packageBookingReady: false,
     checkoutReady: false,
+    legalReady: false,
     paymentReady: false,
     mediaReady: false,
   };
@@ -62,7 +64,9 @@ export async function GET() {
       status.leadTableReady = false;
     }
 
-    const [vehicles, pricingRules, carPolicies, packagePolicies] =
+    const now = new Date();
+
+    const [vehicles, pricingRules, carPolicies, packagePolicies, legalPages] =
       await Promise.all([
         db.vehicle.count({
           where: {
@@ -85,12 +89,22 @@ export async function GET() {
             status: "ACTIVE",
           },
         }),
+        db.cmsPage.count({
+          where: {
+            slug: {
+              in: ["privacy-policy", "terms", "cancellation-policy"],
+            },
+            status: "PUBLISHED",
+            publishedAt: { lte: now },
+          },
+        }),
       ]);
 
     status.activeVehicles = vehicles;
     status.activePricingRules = pricingRules;
     status.activeCarBookingPolicies = carPolicies;
     status.activePackageBookingPolicies = packagePolicies;
+    status.requiredLegalPagesPublished = legalPages;
 
     status.leadFormsReady =
       status.databaseReachable && status.leadTableReady;
@@ -110,10 +124,13 @@ export async function GET() {
     status.checkoutReady =
       status.carBookingReady || status.packageBookingReady;
 
+    status.legalReady = status.requiredLegalPagesPublished === 3;
+
     status.paymentReady =
       status.checkoutReady &&
       status.paymentWriteEnabled &&
-      status.razorpayConfigured;
+      status.razorpayConfigured &&
+      status.legalReady;
 
     status.mediaReady =
       status.databaseReachable &&
