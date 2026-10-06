@@ -8,6 +8,8 @@ export const metadata: Metadata = {
 };
 
 export default function ContactPage() {
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim();
+
   return (
     <>
       <section className="story-hero story-hero--contact">
@@ -15,34 +17,42 @@ export default function ContactPage() {
         <div className="shell story-hero__content">
           <p className="eyebrow">CONTACT YATRA</p>
           <h1>Get in touch.</h1>
-          <p>Plan your perfect journey, ask about a booking or speak with a travel expert.</p>
+          <p>Plan your perfect journey, ask about a booking or speak with the travel team.</p>
         </div>
       </section>
 
       <section className="reference-section reference-section--cream">
         <div className="shell contact-channels">
-          {[
-            ["Call Us","+91 98765 43210"],
-            ["WhatsApp","+91 98765 43210"],
-            ["Email Us","hello@yatra.com"],
-            ["Plan a Trip","Get a personalised quote"],
-          ].map(([title,value]) => (
-            <article className="contact-channel" key={title}><strong>{title}</strong><span>{value}</span></article>
-          ))}
+          <article className="contact-channel">
+            <strong>Travel Enquiry</strong>
+            <span>Use the secure form below</span>
+          </article>
+          <article className="contact-channel">
+            <strong>Existing Booking</strong>
+            <span>Include your booking reference</span>
+          </article>
+          <article className="contact-channel">
+            <strong>Email</strong>
+            <span>{supportEmail || "Configured support email will appear here"}</span>
+          </article>
+          <article className="contact-channel">
+            <strong>Custom Trip</strong>
+            <span>Create a personalised trip request</span>
+          </article>
         </div>
 
         <div className="shell contact-layout">
           <ContactForm />
 
           <aside className="office-card">
-            <p className="eyebrow">OUR OFFICE</p>
-            <h2>YATRA Head Office</h2>
-            <p>123 Travel Street, City Lines<br />India</p>
+            <p className="eyebrow">TRAVEL SUPPORT</p>
+            <h2>YATRA Support</h2>
+            <p>We serve travellers planning chauffeur-driven journeys and curated tours across India.</p>
             <dl>
-              <div><dt>Hours</dt><dd>Mon–Sat · 9:00 AM–8:00 PM</dd></div>
-              <div><dt>Support</dt><dd>24×7 for active journeys</dd></div>
+              <div><dt>Booking support</dt><dd>Use your booking reference when contacting us</dd></div>
+              <div><dt>Custom trips</dt><dd>Submit your route and preferences through the trip builder</dd></div>
             </dl>
-            <div className="office-map asset-sprite asset-destination--jaipur">YATRA · India</div>
+            <div className="office-map asset-sprite asset-destination--jaipur">Journeys across India</div>
           </aside>
         </div>
       </section>
@@ -51,7 +61,7 @@ export default function ContactPage() {
         <div className="shell reference-journey-cta__inner">
           <div className="reference-journey-cta__panel">
             <h2>Ready to plan your next journey?</h2>
-            <p>Talk to our travel experts and get a customised itinerary.</p>
+            <p>Send your route, dates and traveller details for a personalised itinerary.</p>
             <ButtonLink href="/custom-trip">Plan a Trip Now →</ButtonLink>
           </div>
         </div>
