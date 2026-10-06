@@ -1,3 +1,62 @@
+import { redirect } from "next/navigation";
+import { getDb } from "@yatra/db/client";
+import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
-const rows=[["Home","/","Homepage","Admin","Good",<StatusPill key="1">Published</StatusPill>,"12 Oct 2024","•••"],["About Us","/about-us","Static","Neha Kapoor","Good",<StatusPill key="2">Published</StatusPill>,"10 Oct 2024","•••"],["Tours","/tours","Listing","Rahul Mehta","Good",<StatusPill key="3">Published</StatusPill>,"10 Oct 2024","•••"],["Tour Detail","/tours/[slug]","Dynamic","Rahul Mehta","Good",<StatusPill key="4">Published</StatusPill>,"10 Oct 2024","•••"],["Destinations","/destinations","Listing","Priya Sharma","Fair",<StatusPill key="5">Published</StatusPill>,"09 Oct 2024","•••"],["Cancellation Policy","/cancellation-policy","Legal","Admin","Fair",<StatusPill key="6">Published</StatusPill>,"05 Oct 2024","•••"]];
-export default function Page(){return <AdminTablePage active="CMS Pages" title="CMS Pages" subtitle="Manage website pages, content and SEO settings." buttonLabel="Add Page" metrics={[{label:"All Pages",value:"24",meta:"total",tone:"blue"},{label:"Published",value:"18",meta:"live",tone:"green"},{label:"Drafts",value:"4",meta:"in progress",tone:"orange"},{label:"Archived",value:"2",meta:"historical",tone:"red"}]} filters={["All Pages (24)","Published (18)","Drafts (4)","Archived (2)"]} columns={["Page Title","Slug","Page Type","Author","SEO","Status","Updated","Actions"]} rows={rows}/>;}
+import { requireAdminSession } from "@/lib/auth/session";
+
+export const dynamic = "force-dynamic";
+
+function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
+  if (status === "PUBLISHED") return "green";
+  if (status === "SCHEDULED") return "blue";
+  if (status === "DRAFT" || status === "REVIEW") return "orange";
+  if (status === "ARCHIVED") return "red";
+  return "gray";
+}
+
+export default async function CmsPage() {
+  const session = await requireAdminSession();
+  if (!hasPermission(session.roles, "content.read")) redirect("/admin");
+
+  const db = getDb();
+
+  const [pages, total, published, drafts, scheduled] = await Promise.all([
+    db.cmsPage.findMany({
+      orderBy: { updatedAt: "desc" },
+      take: 100,
+    }),
+    db.cmsPage.count(),
+    db.cmsPage.count({ where: { status: "PUBLISHED" } }),
+    db.cmsPage.count({ where: { status: { in: ["DRAFT", "REVIEW"] } } }),
+    db.cmsPage.count({ where: { status: "SCHEDULED" } }),
+  ]);
+
+  const rows = pages.map((page) => [
+    page.title,
+    page.slug === "/" ? "/" : `/${page.slug.replace(/^\//, "")}`,
+    page.seoTitle ? "SEO ready" : "SEO missing",
+    page.robotsIndex ? "Index" : "Noindex",
+    <StatusPill key={page.id} tone={tone(page.status)}>
+      {page.status.replaceAll("_", " ")}
+    </StatusPill>,
+    page.publishedAt?.toLocaleDateString("en-IN") ?? "—",
+    page.updatedAt.toLocaleDateString("en-IN"),
+  ]);
+
+  return (
+    <AdminTablePage
+      active="CMS Pages"
+      title="CMS Pages"
+      subtitle="Live website pages and publication state from Neon."
+      metrics={[
+        { label: "All Pages", value: total.toString(), meta: "all records", tone: "blue" },
+        { label: "Published", value: published.toString(), meta: "visible publicly", tone: "green" },
+        { label: "Draft / Review", value: drafts.toString(), meta: "work in progress", tone: "orange" },
+        { label: "Scheduled", value: scheduled.toString(), meta: "future publish", tone: "blue" },
+      ]}
+      filters={["Latest 100"]}
+      columns={["Page Title", "Slug", "SEO", "Indexing", "Status", "Published", "Updated"]}
+      rows={rows}
+    />
+  );
+}
