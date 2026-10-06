@@ -12,6 +12,7 @@ type MediaItem = {
   altText: string | null;
   caption: string | null;
   createdAt: string;
+  referenceCount: number;
 };
 
 function humanBytes(value: string | null): string {
@@ -34,6 +35,7 @@ export function AdminMediaManager({
   const [message, setMessage] = useState<string>("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   async function upload(formData: FormData) {
     setUploading(true);
@@ -58,6 +60,39 @@ export function AdminMediaManager({
       setMessage(error instanceof Error ? error.message : "Media upload failed.");
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function updateMetadata(item: MediaItem, formData: FormData) {
+    setBusyId(item.id);
+    setMessage("");
+
+    try {
+      const response = await fetch(`/api/admin/media/${encodeURIComponent(item.id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          altText: String(formData.get("altText") ?? ""),
+          caption: String(formData.get("caption") ?? ""),
+        }),
+      });
+      const result = (await response.json()) as {
+        error?: { message?: string };
+      };
+
+      if (!response.ok) {
+        throw new Error(result.error?.message ?? "Media metadata update failed.");
+      }
+
+      setMessage("Media metadata updated.");
+      setEditingId(null);
+      router.refresh();
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Media metadata update failed.",
+      );
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -150,8 +185,39 @@ export function AdminMediaManager({
                 <small>{humanBytes(asset.byteSize)} · {asset.mimeType}</small>
                 <span>{asset.altText ?? asset.caption ?? "No alt text"}</span>
                 <small>{new Date(asset.createdAt).toLocaleDateString("en-IN")}</small>
+                <small>
+                  {asset.referenceCount > 0
+                    ? `${asset.referenceCount} active reference${asset.referenceCount === 1 ? "" : "s"}`
+                    : "Orphaned / unused"}
+                </small>
+                {canWrite && editingId === asset.id ? (
+                  <form action={(formData) => updateMetadata(asset, formData)}>
+                    <label>
+                      Alt text
+                      <input name="altText" defaultValue={asset.altText ?? ""} maxLength={300}/>
+                    </label>
+                    <label>
+                      Caption
+                      <textarea name="caption" defaultValue={asset.caption ?? ""} maxLength={500}/>
+                    </label>
+                    <button className="admin-primary-button" type="submit" disabled={busyId === asset.id}>
+                      Save Metadata
+                    </button>
+                    <button className="admin-secondary-button" type="button" onClick={() => setEditingId(null)}>
+                      Cancel
+                    </button>
+                  </form>
+                ) : null}
                 {canWrite ? (
-                  <button
+                  <>
+                    <button
+                      className="admin-secondary-button"
+                      type="button"
+                      onClick={() => setEditingId(asset.id)}
+                    >
+                      Edit Metadata
+                    </button>
+                    <button
                     className="admin-danger-button"
                     type="button"
                     onClick={() => remove(asset)}
@@ -159,6 +225,7 @@ export function AdminMediaManager({
                   >
                     {busyId === asset.id ? "Deleting…" : "Delete"}
                   </button>
+                  </>
                 ) : null}
               </article>
             ))}
