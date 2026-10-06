@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
@@ -33,7 +34,9 @@ export default async function BlogPage() {
   ]);
 
   const rows = posts.map((post) => [
-    post.title,
+    <Link key={post.id} href={`/admin/content/blog/${post.id}`}>
+      {post.title}
+    </Link>,
     post.category?.name ?? "Uncategorized",
     post.slug,
     post.seoTitle ? "SEO ready" : "SEO missing",
