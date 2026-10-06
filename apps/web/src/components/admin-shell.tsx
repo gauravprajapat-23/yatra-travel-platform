@@ -1,25 +1,34 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import {
+  hasPermission,
+  type Permission,
+} from "@yatra/domain/auth/permissions";
 import { requireAdminSession } from "@/lib/auth/session";
 
-const nav = [
-  ["/admin","Dashboard"],
-  ["/admin/bookings","Bookings"],
-  ["/admin/packages","Tours & Packages"],
-  ["/admin/vehicles","Fleet Management"],
-  ["/admin/customers","Customers"],
-  ["/admin/leads","Enquiries / Leads"],
-  ["/admin/drivers","Drivers & Staff"],
-  ["/admin/payments","Payments"],
-  ["/admin/destinations","Destinations"],
-  ["/admin/offers","Offers"],
-  ["/admin/cms","CMS Pages"],
-  ["/admin/blog","Blog"],
-  ["/admin/media","Media Library"],
-  ["/admin/seo","SEO Manager"],
-  ["/admin/staff","Staff / Roles"],
-  ["/admin/reports","Reports"],
-  ["/admin/settings","Settings"],
+const nav: Array<{
+  href: string;
+  label: string;
+  permission: Permission;
+}> = [
+  { href: "/admin", label: "Dashboard", permission: "admin.access" },
+  { href: "/admin/bookings", label: "Bookings", permission: "booking.read" },
+  { href: "/admin/packages", label: "Tours & Packages", permission: "package.read" },
+  { href: "/admin/vehicles", label: "Fleet Management", permission: "vehicle.read" },
+  { href: "/admin/customers", label: "Customers", permission: "customer.read" },
+  { href: "/admin/leads", label: "Enquiries / Leads", permission: "lead.read" },
+  { href: "/admin/drivers", label: "Drivers & Staff", permission: "driver.read" },
+  { href: "/admin/payments", label: "Payments", permission: "payment.read" },
+  { href: "/admin/destinations", label: "Destinations", permission: "content.read" },
+  { href: "/admin/offers", label: "Offers", permission: "settings.manage" },
+  { href: "/admin/cms", label: "CMS Pages", permission: "content.read" },
+  { href: "/admin/blog", label: "Blog", permission: "content.read" },
+  { href: "/admin/media", label: "Media Library", permission: "content.read" },
+  { href: "/admin/seo", label: "SEO Manager", permission: "seo.manage" },
+  { href: "/admin/staff", label: "Staff / Roles", permission: "staff.manage" },
+  { href: "/admin/reports", label: "Reports", permission: "report.read" },
+  { href: "/admin/audit", label: "Audit Log", permission: "audit.read" },
+  { href: "/admin/settings", label: "Settings", permission: "settings.manage" },
 ];
 
 export async function AdminShell({
@@ -36,13 +45,16 @@ export async function AdminShell({
   children: ReactNode;
 }) {
   const session = await requireAdminSession();
+  const visibleNav = nav.filter((item) =>
+    hasPermission(session.roles, item.permission),
+  );
 
   return (
     <div className="admin-root">
       <aside className="admin-sidebar">
         <Link className="admin-brand" href="/admin">YATRA</Link>
         <nav>
-          {nav.map(([href,label]) => (
+          {visibleNav.map(({ href, label }) => (
             <Link
               className={active===label ? "admin-nav-link admin-nav-link--active":"admin-nav-link"}
               href={href}
