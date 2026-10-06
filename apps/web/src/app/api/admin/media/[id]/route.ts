@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { JsonBodyError, readJsonBody } from "@/lib/read-json-body";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { getAdminSession } from "@/lib/auth/session";
@@ -116,12 +117,23 @@ export async function PATCH(
 
   let body: unknown;
   try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      { error: { code: "INVALID_JSON", message: "Request body must be valid JSON." } },
-      { status: 400 },
-    );
+    body = await readJsonBody<unknown>(request, 4096);
+  } catch (error) {
+    if (error instanceof JsonBodyError) {
+      return NextResponse.json(
+        {
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        },
+        {
+          status: error.httpStatus,
+          headers: { "Cache-Control": "no-store" },
+        },
+      );
+    }
+    throw error;
   }
 
   const source =
