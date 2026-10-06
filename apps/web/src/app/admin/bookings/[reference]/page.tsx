@@ -80,7 +80,7 @@ export default async function BookingDetailPage({
         include: {
           vehicleClass: { select: { name: true } },
           selectedVehicle: { select: { displayName: true, registrationNumber: true } },
-          assignedDriver: { select: { name: true, phone: true } },
+          assignedDriver: { select: { displayName: true, phoneLast4: true } },
           statusHistory: {
             orderBy: { createdAt: "desc" },
             take: 20,
@@ -139,7 +139,7 @@ export default async function BookingDetailPage({
         history: rawBooking.data.statusHistory,
         paymentIntents: rawBooking.data.paymentIntents,
         assignment: rawBooking.data.assignedDriver
-          ? `${rawBooking.data.assignedDriver.name} · ${rawBooking.data.selectedVehicle?.displayName ?? "Vehicle pending"}`
+          ? `${rawBooking.data.assignedDriver.displayName} · ${rawBooking.data.selectedVehicle?.displayName ?? "Vehicle pending"}`
           : null,
       };
 
