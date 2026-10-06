@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
-import { AdminShell } from "@/components/admin-shell";
+import { AdminMetric, AdminShell } from "@/components/admin-shell";
 import { AdminMediaManager } from "@/components/admin-media-manager";
 import { requireAdminSession } from "@/lib/auth/session";
 
@@ -46,12 +46,24 @@ export default async function MediaPage() {
       asset._count.packageHeroes,
   }));
 
+  const orphaned = serialized.filter((asset) => asset.referenceCount === 0).length;
+  const referenced = serialized.length - orphaned;
+  const missingAlt = serialized.filter(
+    (asset) => asset.mimeType.startsWith("image/") && !asset.altText,
+  ).length;
+
   return (
     <AdminShell
       active="Media Library"
       title="Media Library"
       subtitle="Upload and manage assets stored through the configured S3-compatible provider."
     >
+      <div className="admin-metric-grid">
+        <AdminMetric label="Loaded Assets" value={serialized.length.toString()} meta="latest 100" tone="blue"/>
+        <AdminMetric label="Referenced" value={referenced.toString()} meta="in active content/fleet" tone="green"/>
+        <AdminMetric label="Orphaned" value={orphaned.toString()} meta="safe cleanup candidates" tone="orange"/>
+        <AdminMetric label="Images Missing Alt" value={missingAlt.toString()} meta="accessibility cleanup" tone="red"/>
+      </div>
       {process.env.MEDIA_WRITE_ENABLED !== "true" ? (
         <p className="admin-notice">
           Media writes are disabled. Complete the storage connectivity drill, then enable MEDIA_WRITE_ENABLED.
