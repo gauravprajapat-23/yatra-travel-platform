@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
+import {
+  consumePublicWriteAttempt,
+  rateLimitedResponse,
+} from "@/lib/public-write-rate-limit";
 import { getDb } from "@yatra/db/client";
 
 export const runtime = "nodejs";
@@ -63,6 +67,25 @@ function tripData(value: unknown): Record<string, string | number> | undefined {
 }
 
 export async function POST(request: Request) {
+  const rateLimit = await consumePublicWriteAttempt({
+    request,
+    scope: "lead_create",
+    maxAttempts: 30,
+    windowMs: 60 * 60 * 1000,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      rateLimitedResponse(rateLimit.retryAfterSeconds),
+      {
+        status: 429,
+        headers: {
+          "Cache-Control": "no-store",
+          "Retry-After": String(rateLimit.retryAfterSeconds),
+        },
+      },
+    );
+  }
   const idempotencyKey = request.headers.get("Idempotency-Key")?.trim();
 
   if (!idempotencyKey || idempotencyKey.length < 16 || idempotencyKey.length > 128) {
