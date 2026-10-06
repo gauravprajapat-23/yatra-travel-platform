@@ -14,6 +14,7 @@ import {
   isStaffStatus,
   staffStatuses,
   updateStaffAccess,
+  revokeStaffSessions,
 } from "@/modules/staff/staff-management-service";
 
 export const dynamic = "force-dynamic";
@@ -70,6 +71,22 @@ export default async function StaffDetailPage({
 
   const targetUserId = user.id;
   const isSelf = targetUserId === session.userId;
+
+  async function revokeSessions() {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "staff.manage")) {
+      redirect("/admin");
+    }
+
+    await revokeStaffSessions({
+      targetUserId,
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath(`/admin/staff/${targetUserId}`);
+  }
 
   async function saveAccess(formData: FormData) {
     "use server";
@@ -152,7 +169,13 @@ export default async function StaffDetailPage({
               You are editing your own account. Self-disable is blocked to prevent
               accidental lockout.
             </p>
-          ) : null}
+          ) : (
+            <form action={revokeSessions}>
+              <button className="admin-danger-button" type="submit">
+                Revoke All Active Sessions
+              </button>
+            </form>
+          )}
         </section>
 
         <section className="admin-panel admin-detail-card">
