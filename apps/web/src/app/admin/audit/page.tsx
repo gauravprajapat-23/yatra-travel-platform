@@ -50,9 +50,8 @@ export default async function AuditPage() {
   if (!hasPermission(session.roles, "audit.read")) redirect("/admin");
 
   const db = getDb();
-  const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-  const [events, total, last24h, actors] = await Promise.all([
+  const [events, total, actors] = await Promise.all([
     db.auditLog.findMany({
       orderBy: { createdAt: "desc" },
       take: 200,
@@ -66,9 +65,6 @@ export default async function AuditPage() {
       },
     }),
     db.auditLog.count(),
-    db.auditLog.count({
-      where: { createdAt: { gte: since24h } },
-    }),
     db.auditLog.findMany({
       where: { actorUserId: { not: null } },
       distinct: ["actorUserId"],
@@ -90,12 +86,6 @@ export default async function AuditPage() {
           tone="blue"
         />
         <AdminMetric
-          label="Last 24 Hours"
-          value={last24h.toString()}
-          meta="recent operations"
-          tone="green"
-        />
-        <AdminMetric
           label="Unique Actors"
           value={actors.length.toString()}
           meta="users represented in log"
@@ -106,6 +96,12 @@ export default async function AuditPage() {
           value={events.length.toString()}
           meta="latest records shown"
           tone="blue"
+        />
+        <AdminMetric
+          label="Latest Event"
+          value={events[0]?.createdAt.toLocaleDateString("en-IN") ?? "—"}
+          meta="database timestamp"
+          tone="green"
         />
       </div>
 
