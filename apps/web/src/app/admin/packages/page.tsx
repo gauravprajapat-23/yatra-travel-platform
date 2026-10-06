@@ -1,3 +1,81 @@
+import { redirect } from "next/navigation";
+import { getDb } from "@yatra/db/client";
+import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
-const rows=[["Ujjain Mahakaleshwar Tour","Spiritual","3D / 2N","₹14,000",<StatusPill key="1">Active</StatusPill>,"★ Yes","•••"],["Golden Triangle","Heritage","6D / 5N","₹28,500",<StatusPill key="2">Active</StatusPill>,"★ Yes","•••"],["Rajasthan Heritage","Heritage","7D / 6N","₹32,000",<StatusPill key="3">Active</StatusPill>,"★ Yes","•••"],["Kerala Backwaters","Nature","5D / 4N","₹24,000",<StatusPill key="4">Active</StatusPill>,"No","•••"],["Kedarnath Yatra","Spiritual","4D / 3N","₹18,500",<StatusPill key="5">Active</StatusPill>,"★ Yes","•••"],["Char Dham Yatra","Spiritual","12D / 11N","₹48,000",<StatusPill key="6" tone="orange">Draft</StatusPill>,"No","•••"]];
-export default function Page(){return <AdminTablePage active="Tours & Packages" title="Packages" subtitle="Create, manage and promote your tour packages across India." buttonLabel="Create Package" metrics={[{label:"Total Packages",value:"36",meta:"↑ 20%",tone:"orange"},{label:"Active Packages",value:"28",meta:"77.8% published",tone:"green"},{label:"Draft Packages",value:"5",meta:"in progress",tone:"blue"},{label:"Featured Packages",value:"8",meta:"22.2%",tone:"orange"}]} filters={["All Packages","Active","Draft","Inactive"]} columns={["Package Details","Category","Duration","Price","Status","Featured","Actions"]} rows={rows}/>;}
+import { requireAdminSession } from "@/lib/auth/session";
+
+function money(minor: bigint, currency = "INR") {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(Number(minor) / 100);
+}
+
+function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
+  if (status === "PUBLISHED") return "green";
+  if (status === "DRAFT" || status === "REVIEW") return "orange";
+  if (status === "ARCHIVED") return "red";
+  if (status === "SCHEDULED") return "blue";
+  return "gray";
+}
+
+export default async function PackagesPage() {
+  const session = await requireAdminSession();
+  if (!hasPermission(session.roles, "package.read")) redirect("/admin");
+
+  const db = getDb();
+
+  const [packages, total, published, drafts, scheduled] = await Promise.all([
+    db.tourPackage.findMany({
+      orderBy: { updatedAt: "desc" },
+      include: {
+        priceOptions: {
+          where: { isActive: true },
+          orderBy: { amountMinor: "asc" },
+        },
+        destinations: {
+          include: { destination: { select: { name: true } } },
+          orderBy: { sortOrder: "asc" },
+        },
+      },
+      take: 100,
+    }),
+    db.tourPackage.count(),
+    db.tourPackage.count({ where: { status: "PUBLISHED" } }),
+    db.tourPackage.count({ where: { status: { in: ["DRAFT", "REVIEW"] } } }),
+    db.tourPackage.count({ where: { status: "SCHEDULED" } }),
+  ]);
+
+  const rows = packages.map((pkg) => {
+    const firstPrice = pkg.priceOptions[0];
+    return [
+      pkg.title,
+      pkg.destinations.map((item) => item.destination.name).join(", ") || "—",
+      `${pkg.durationDays}D / ${pkg.durationNights}N`,
+      firstPrice ? `From ${money(firstPrice.amountMinor, firstPrice.currency)}` : "Quote only",
+      <StatusPill key={pkg.id} tone={tone(pkg.status)}>
+        {pkg.status.replaceAll("_", " ")}
+      </StatusPill>,
+      pkg.publishedAt?.toLocaleDateString("en-IN") ?? "—",
+      pkg.slug,
+    ];
+  });
+
+  return (
+    <AdminTablePage
+      active="Tours & Packages"
+      title="Packages"
+      subtitle="Live tour package catalog, pricing and publication state."
+      metrics={[
+        { label: "Total Packages", value: total.toString(), meta: "all records", tone: "orange" },
+        { label: "Published", value: published.toString(), meta: "visible publicly", tone: "green" },
+        { label: "Draft / Review", value: drafts.toString(), meta: "not public", tone: "blue" },
+        { label: "Scheduled", value: scheduled.toString(), meta: "future publication", tone: "orange" },
+      ]}
+      filters={["Latest 100"]}
+      columns={["Package", "Destinations", "Duration", "Price", "Status", "Published", "Slug"]}
+      rows={rows}
+    />
+  );
+}
