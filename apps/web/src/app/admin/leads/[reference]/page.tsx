@@ -6,6 +6,8 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { requireAdminSession } from "@/lib/auth/session";
 
+export const dynamic = "force-dynamic";
+
 const leadStatuses = ["NEW", "IN_PROGRESS", "QUALIFIED", "CLOSED", "SPAM"] as const;
 type LeadStatusValue = (typeof leadStatuses)[number];
 
