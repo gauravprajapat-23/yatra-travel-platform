@@ -87,7 +87,7 @@ export async function getPublicBlogPosts(): Promise<PublicBlogCard[]> {
     const rows = await db.blogPost.findMany({
       where: {
         status: "PUBLISHED",
-        OR: [{ publishedAt: null }, { publishedAt: { lte: now } }],
+        publishedAt: { lte: now },
       },
       select: {
         slug: true,
@@ -131,7 +131,7 @@ export async function getPublicBlogPostBySlug(
       where: {
         slug,
         status: "PUBLISHED",
-        OR: [{ publishedAt: null }, { publishedAt: { lte: now } }],
+        publishedAt: { lte: now },
       },
       select: {
         slug: true,
