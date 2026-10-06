@@ -5,7 +5,7 @@ import {
   putStorageObject,
 } from "@yatra/providers/storage/s3-client";
 
-const MAX_MEDIA_BYTES = 10 * 1024 * 1024;
+export const MAX_MEDIA_BYTES = 10 * 1024 * 1024;
 
 type SupportedMedia = {
   mimeType: string;
