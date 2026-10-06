@@ -31,12 +31,14 @@ export function BookingLookup() {
   const [pending,setPending]=useState(false);
   const [error,setError]=useState("");
   const [booking,setBooking]=useState<Booking|null>(null);
+  const [resumePayment,setResumePayment]=useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
     setError("");
     setBooking(null);
+    setResumePayment(false);
 
     try {
       const response=await fetch("/api/bookings/lookup",{
@@ -44,11 +46,16 @@ export function BookingLookup() {
         headers:{"content-type":"application/json"},
         body:JSON.stringify({reference,email}),
       });
-      const result=await response.json() as {booking?:Booking;error?:{message?:string}};
+      const result=await response.json() as {
+        booking?:Booking;
+        resumePayment?:boolean;
+        error?:{message?:string}
+      };
       if(!response.ok || !result.booking) {
         throw new Error(result.error?.message ?? "Booking not found.");
       }
       setBooking(result.booking);
+      setResumePayment(Boolean(result.resumePayment));
     } catch(caught) {
       setError(caught instanceof Error?caught.message:"Unable to look up booking.");
     } finally {
@@ -93,6 +100,9 @@ export function BookingLookup() {
               <p>Amount <strong>{money(booking.totalMinor,booking.currency)}</strong></p>
               <p>Payment/booking status <span className="status-pill status-pill--green">{booking.status.replaceAll("_"," ")}</span></p>
               <div className="trip-actions">
+                {resumePayment ? (
+                  <Link href="/payment">Resume Secure Payment</Link>
+                ) : null}
                 <Link href="/contact">Contact Support</Link>
               </div>
             </div>
