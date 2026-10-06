@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import {
+
+export const dynamic = "force-dynamic";
   bookingStatuses,
   canTransitionBooking,
   type BookingStatus,
