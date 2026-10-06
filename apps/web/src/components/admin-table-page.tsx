@@ -4,9 +4,9 @@ import { AdminMetric, AdminShell, StatusPill } from "@/components/admin-shell";
 type Row = Array<string | ReactNode>;
 
 export function AdminTablePage({
-  active,title,subtitle,buttonLabel,metrics,filters,columns,rows
+  active,title,subtitle,buttonLabel,actions,metrics,filters,columns,rows
 }:{
-  active:string;title:string;subtitle:string;buttonLabel?:string;
+  active:string;title:string;subtitle:string;buttonLabel?:string;actions?:ReactNode;
   metrics:Array<{label:string;value:string;meta?:string;tone?:"green"|"orange"|"red"|"blue"}>;
   filters:string[];columns:string[];rows:Row[];
 }) {
@@ -15,7 +15,12 @@ export function AdminTablePage({
       active={active}
       title={title}
       subtitle={subtitle}
-      actions={buttonLabel ? <button className="admin-primary-button">＋ {buttonLabel}</button> : null}
+      actions={
+        actions ??
+        (buttonLabel ? (
+          <button className="admin-primary-button">＋ {buttonLabel}</button>
+        ) : null)
+      }
     >
       <div className="admin-metric-grid">
         {metrics.map(m=><AdminMetric {...m} key={m.label}/>)}
