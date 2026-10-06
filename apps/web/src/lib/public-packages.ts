@@ -8,6 +8,7 @@ export type PublicPackageCard = {
   durationDays: number;
   durationNights: number;
   heroUrl: string | null;
+  robotsIndex: boolean;
   price: {
     amountMinor: string;
     currency: string;
@@ -34,6 +35,7 @@ export async function getPublicPackages(): Promise<PublicPackageCard[]> {
         summary: true,
         durationDays: true,
         durationNights: true,
+        robotsIndex: true,
         heroMedia: {
           select: { publicUrl: true },
         },
@@ -62,6 +64,7 @@ export async function getPublicPackages(): Promise<PublicPackageCard[]> {
       durationDays: pkg.durationDays,
       durationNights: pkg.durationNights,
       heroUrl: pkg.heroMedia?.publicUrl ?? null,
+      robotsIndex: pkg.robotsIndex,
       price: pkg.priceOptions[0]
         ? {
             amountMinor: pkg.priceOptions[0].amountMinor.toString(),
@@ -82,6 +85,10 @@ export async function getPublicPackages(): Promise<PublicPackageCard[]> {
 
 export type PublicPackageDetail = PublicPackageCard & {
   body: unknown;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  canonicalUrl: string | null;
+  robotsFollow: boolean;
   destinations: Array<{ slug: string; name: string; kind: string }>;
   itinerary: Array<{ dayNumber: number; title: string; description: string | null }>;
   priceOptions: Array<{
@@ -116,6 +123,11 @@ export async function getPublicPackageBySlug(
         title: true,
         summary: true,
         body: true,
+        seoTitle: true,
+        seoDescription: true,
+        canonicalUrl: true,
+        robotsIndex: true,
+        robotsFollow: true,
         durationDays: true,
         durationNights: true,
         heroMedia: { select: { publicUrl: true } },
@@ -165,6 +177,11 @@ export async function getPublicPackageBySlug(
       title: pkg.title,
       summary: pkg.summary,
       body: pkg.body,
+      seoTitle: pkg.seoTitle,
+      seoDescription: pkg.seoDescription,
+      canonicalUrl: pkg.canonicalUrl,
+      robotsIndex: pkg.robotsIndex,
+      robotsFollow: pkg.robotsFollow,
       durationDays: pkg.durationDays,
       durationNights: pkg.durationNights,
       heroUrl: pkg.heroMedia?.publicUrl ?? null,
