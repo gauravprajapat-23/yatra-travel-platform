@@ -29,6 +29,11 @@ export default async function SettingsPage() {
     activePricingRules,
     activeVehicles,
     staffCount,
+    dueCms,
+    dueBlog,
+    dueDestinations,
+    duePackages,
+    dueFaqs,
   ] = await Promise.all([
     db.bookingPolicyVersion.count({
       where: { code: "CAR_BOOKING", status: "ACTIVE" },
@@ -59,6 +64,21 @@ export default async function SettingsPage() {
         },
       },
     }),
+    db.cmsPage.count({
+      where: { status: "SCHEDULED", scheduledFor: { lte: now } },
+    }),
+    db.blogPost.count({
+      where: { status: "SCHEDULED", scheduledFor: { lte: now } },
+    }),
+    db.destination.count({
+      where: { status: "SCHEDULED", scheduledFor: { lte: now } },
+    }),
+    db.tourPackage.count({
+      where: { status: "SCHEDULED", scheduledFor: { lte: now } },
+    }),
+    db.faq.count({
+      where: { status: "SCHEDULED", scheduledFor: { lte: now } },
+    }),
   ]);
 
   const razorpayConfigured = Boolean(
@@ -76,6 +96,11 @@ export default async function SettingsPage() {
       process.env.STORAGE_PUBLIC_BASE_URL,
   );
   const appUrlConfigured = Boolean(process.env.NEXT_PUBLIC_APP_URL);
+  const schedulerConfigured = Boolean(
+    process.env.CRON_SECRET && process.env.CRON_SECRET.trim().length >= 16,
+  );
+  const overdueScheduledContent =
+    dueCms + dueBlog + dueDestinations + duePackages + dueFaqs;
   const fieldEncryptionConfigured = (() => {
     const raw = process.env.FIELD_ENCRYPTION_KEY?.trim();
     if (!raw) return false;
@@ -113,6 +138,7 @@ export default async function SettingsPage() {
     ["Razorpay", yesNo(razorpayConfigured), "Key ID + secret + webhook secret"],
     ["S3 Storage", yesNo(storageConfigured), "Bucket, endpoint, credentials, public base URL"],
     ["Field Encryption", yesNo(fieldEncryptionConfigured), "32-byte AES-256-GCM key for driver phone/license fields"],
+    ["Scheduled Publisher", yesNo(schedulerConfigured), `${overdueScheduledContent} due scheduled item${overdueScheduledContent === 1 ? "" : "s"}`],
     ["Required Legal Pages", legalReady ? "Ready" : `${legalPages}/3 published`, "Privacy, Terms, Cancellation"],
     ["Car Booking Policy", carPolicies > 0 ? "Ready" : "Missing", `${carPolicies} active`],
     ["Package Booking Policy", packagePolicies > 0 ? "Ready" : "Missing", `${packagePolicies} active`],
