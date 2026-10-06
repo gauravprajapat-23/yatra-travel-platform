@@ -19,9 +19,9 @@ export function isDestinationKind(
 function parseOptionalJson(
   raw: string,
   label: string,
-): Prisma.InputJsonValue | null {
+): Prisma.InputJsonValue | typeof Prisma.DbNull {
   const text = raw.trim();
-  if (!text) return null;
+  if (!text) return Prisma.DbNull;
 
   let value: unknown;
   try {
