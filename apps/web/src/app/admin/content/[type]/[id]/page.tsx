@@ -16,6 +16,14 @@ import {
   stringifyStructuredBody,
   updateStructuredContentBody,
 } from "@/modules/content/admin-structured-content-service";
+import {
+  destinationKinds,
+  isDestinationKind,
+  removeTempleProfile,
+  saveTempleProfile,
+  stringifyOptionalJson,
+  updateDestinationDetails,
+} from "@/modules/content/destination-management-service";
 
 export const dynamic = "force-dynamic";
 
@@ -134,6 +142,30 @@ export default async function AdminContentEditorPage({
 
   if (!content) notFound();
 
+  const destinationDetails =
+    type === "destination"
+      ? await db.destination.findUnique({
+          where: { id },
+          select: {
+            kind: true,
+            summary: true,
+            isFeatured: true,
+            templeProfile: {
+              select: {
+                id: true,
+                templeName: true,
+                deity: true,
+                darshanNotes: true,
+                dressCode: true,
+                openingHours: true,
+                nearbyPlaces: true,
+                practicalNotes: true,
+              },
+            },
+          },
+        })
+      : null;
+
   const heroOptions = await db.mediaAsset.findMany({
     where: {
       mimeType: { startsWith: "image/" },
@@ -156,6 +188,86 @@ export default async function AdminContentEditorPage({
   const contentId = content.id;
   const contentSlug = content.slug;
   const contentType = type;
+
+  async function saveDestinationSpecifics(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "content.write")) {
+      redirect(backPath(contentType));
+    }
+
+    if (contentType !== "destination") {
+      throw new Error("Destination details can only be edited for destinations.");
+    }
+
+    const kind = String(formData.get("kind") ?? "");
+    if (!isDestinationKind(kind)) {
+      throw new Error("Invalid destination kind.");
+    }
+
+    await updateDestinationDetails({
+      destinationId: contentId,
+      kind,
+      summary: String(formData.get("summary") ?? ""),
+      isFeatured: formData.get("isFeatured") === "on",
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath("/admin/destinations");
+    revalidatePath(`/admin/content/destination/${contentId}`);
+    revalidatePath(`/destinations/${contentSlug}`);
+  }
+
+  async function saveTemple(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "content.write")) {
+      redirect(backPath(contentType));
+    }
+
+    if (contentType !== "destination") {
+      throw new Error("Temple Profile can only be edited for destinations.");
+    }
+
+    await saveTempleProfile({
+      destinationId: contentId,
+      templeName: String(formData.get("templeName") ?? ""),
+      deity: String(formData.get("deity") ?? ""),
+      darshanNotes: String(formData.get("darshanNotes") ?? ""),
+      dressCode: String(formData.get("dressCode") ?? ""),
+      openingHoursJson: String(formData.get("openingHours") ?? ""),
+      nearbyPlacesJson: String(formData.get("nearbyPlaces") ?? ""),
+      practicalNotesJson: String(formData.get("practicalNotes") ?? ""),
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath(`/admin/content/destination/${contentId}`);
+    revalidatePath(`/destinations/${contentSlug}`);
+  }
+
+  async function removeTemple(formData: FormData) {
+    "use server";
+    void formData;
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "content.write")) {
+      redirect(backPath(contentType));
+    }
+
+    if (contentType !== "destination") {
+      throw new Error("Temple Profile can only be removed from destinations.");
+    }
+
+    await removeTempleProfile({
+      destinationId: contentId,
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath(`/admin/content/destination/${contentId}`);
+    revalidatePath(`/destinations/${contentSlug}`);
+  }
 
   async function saveBody(formData: FormData) {
     "use server";
@@ -256,6 +368,171 @@ export default async function AdminContentEditorPage({
             <div><dt>Updated</dt><dd>{content.updatedAt.toLocaleString("en-IN")}</dd></div>
           </dl>
         </section>
+
+        {type === "destination" && destinationDetails ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Destination Details</h2>
+            {hasPermission(session.roles, "content.write") ? (
+              <form action={saveDestinationSpecifics}>
+                <label>
+                  Kind
+                  <select name="kind" defaultValue={destinationDetails.kind}>
+                    {destinationKinds.map((kind) => (
+                      <option key={kind} value={kind}>
+                        {kind.replaceAll("_", " ")}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  Summary
+                  <textarea
+                    name="summary"
+                    defaultValue={destinationDetails.summary ?? ""}
+                    maxLength={700}
+                  />
+                </label>
+
+                <label>
+                  <input
+                    type="checkbox"
+                    name="isFeatured"
+                    defaultChecked={destinationDetails.isFeatured}
+                  />
+                  Featured destination
+                </label>
+
+                <p>
+                  A destination with an existing Temple Profile must have that
+                  profile removed before changing to a non-temple kind.
+                </p>
+
+                <button className="admin-secondary-button" type="submit">
+                  Save Destination Details
+                </button>
+              </form>
+            ) : (
+              <dl>
+                <div><dt>Kind</dt><dd>{destinationDetails.kind}</dd></div>
+                <div><dt>Summary</dt><dd>{destinationDetails.summary ?? "—"}</dd></div>
+                <div><dt>Featured</dt><dd>{destinationDetails.isFeatured ? "Yes" : "No"}</dd></div>
+              </dl>
+            )}
+          </section>
+        ) : null}
+
+        {type === "destination" &&
+        destinationDetails?.kind === "TEMPLE" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Temple Profile</h2>
+
+            {hasPermission(session.roles, "content.write") ? (
+              <>
+                <form action={saveTemple}>
+                  <label>
+                    Temple name
+                    <input
+                      name="templeName"
+                      required
+                      minLength={2}
+                      maxLength={180}
+                      defaultValue={
+                        destinationDetails.templeProfile?.templeName ?? content.title
+                      }
+                    />
+                  </label>
+
+                  <label>
+                    Deity
+                    <input
+                      name="deity"
+                      maxLength={180}
+                      defaultValue={destinationDetails.templeProfile?.deity ?? ""}
+                    />
+                  </label>
+
+                  <label>
+                    Darshan notes
+                    <textarea
+                      name="darshanNotes"
+                      maxLength={3000}
+                      defaultValue={
+                        destinationDetails.templeProfile?.darshanNotes ?? ""
+                      }
+                    />
+                  </label>
+
+                  <label>
+                    Dress code
+                    <textarea
+                      name="dressCode"
+                      maxLength={1000}
+                      defaultValue={
+                        destinationDetails.templeProfile?.dressCode ?? ""
+                      }
+                    />
+                  </label>
+
+                  <label>
+                    Opening hours JSON
+                    <textarea
+                      name="openingHours"
+                      rows={8}
+                      spellCheck={false}
+                      defaultValue={stringifyOptionalJson(
+                        destinationDetails.templeProfile?.openingHours,
+                      )}
+                    />
+                  </label>
+
+                  <label>
+                    Nearby places JSON
+                    <textarea
+                      name="nearbyPlaces"
+                      rows={8}
+                      spellCheck={false}
+                      defaultValue={stringifyOptionalJson(
+                        destinationDetails.templeProfile?.nearbyPlaces,
+                      )}
+                    />
+                  </label>
+
+                  <label>
+                    Practical notes JSON
+                    <textarea
+                      name="practicalNotes"
+                      rows={8}
+                      spellCheck={false}
+                      defaultValue={stringifyOptionalJson(
+                        destinationDetails.templeProfile?.practicalNotes,
+                      )}
+                    />
+                  </label>
+
+                  <button className="admin-primary-button" type="submit">
+                    Save Temple Profile
+                  </button>
+                </form>
+
+                {destinationDetails.templeProfile ? (
+                  <form action={removeTemple}>
+                    <button className="admin-danger-button" type="submit">
+                      Remove Temple Profile
+                    </button>
+                  </form>
+                ) : null}
+              </>
+            ) : destinationDetails.templeProfile ? (
+              <dl>
+                <div><dt>Temple</dt><dd>{destinationDetails.templeProfile.templeName}</dd></div>
+                <div><dt>Deity</dt><dd>{destinationDetails.templeProfile.deity ?? "—"}</dd></div>
+              </dl>
+            ) : (
+              <p>No Temple Profile configured.</p>
+            )}
+          </section>
+        ) : null}
 
         <section className="admin-panel admin-detail-card">
           <h2>Hero Media</h2>
