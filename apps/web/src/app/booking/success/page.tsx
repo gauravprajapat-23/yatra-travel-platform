@@ -8,6 +8,19 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+type SuccessBooking = {
+  type: "CAR" | "PACKAGE";
+  reference: string;
+  status: string;
+  title: string;
+  route: string;
+  startsAt: Date;
+  endsAt: Date | null;
+  travellers: number;
+  currency: string;
+  totalMinor: bigint;
+};
+
 function money(minor: bigint, currency: string): string {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -16,43 +29,79 @@ function money(minor: bigint, currency: string): string {
   }).format(Number(minor) / 100);
 }
 
-export default async function BookingSuccessPage() {
-  const jar = await cookies();
-  const reference = jar.get("yatra_checkout_booking")?.value;
+async function loadBooking(reference: string): Promise<SuccessBooking | null> {
+  const db = getDb();
 
-  let booking:
-    | {
-        reference: string;
-        status: string;
-        originText: string;
-        destinationText: string;
-        startsAt: Date;
-        endsAt: Date | null;
-        travellers: number;
-        currency: string;
-        totalMinor: bigint;
-        vehicleClass: { name: string };
-      }
-    | null = null;
-
-  if (reference && process.env.DATABASE_URL) {
-    const db = getDb();
-    booking = await db.carBooking.findUnique({
+  if (reference.startsWith("YPK-")) {
+    const booking = await db.packageBooking.findUnique({
       where: { reference },
       select: {
         reference: true,
         status: true,
-        originText: true,
-        destinationText: true,
-        startsAt: true,
-        endsAt: true,
+        travelStartAt: true,
         travellers: true,
         currency: true,
         totalMinor: true,
-        vehicleClass: { select: { name: true } },
+        package: { select: { title: true } },
       },
     });
+
+    if (!booking) return null;
+
+    return {
+      type: "PACKAGE",
+      reference: booking.reference,
+      status: booking.status,
+      title: booking.package.title,
+      route: "Tour package",
+      startsAt: booking.travelStartAt,
+      endsAt: null,
+      travellers: booking.travellers,
+      currency: booking.currency,
+      totalMinor: booking.totalMinor,
+    };
   }
+
+  const booking = await db.carBooking.findUnique({
+    where: { reference },
+    select: {
+      reference: true,
+      status: true,
+      originText: true,
+      destinationText: true,
+      startsAt: true,
+      endsAt: true,
+      travellers: true,
+      currency: true,
+      totalMinor: true,
+      vehicleClass: { select: { name: true } },
+    },
+  });
+
+  if (!booking) return null;
+
+  return {
+    type: "CAR",
+    reference: booking.reference,
+    status: booking.status,
+    title: booking.vehicleClass.name,
+    route: `${booking.originText} → ${booking.destinationText}`,
+    startsAt: booking.startsAt,
+    endsAt: booking.endsAt,
+    travellers: booking.travellers,
+    currency: booking.currency,
+    totalMinor: booking.totalMinor,
+  };
+}
+
+export default async function BookingSuccessPage() {
+  const jar = await cookies();
+  const reference = jar.get("yatra_checkout_booking")?.value;
+
+  const booking =
+    reference && process.env.DATABASE_URL
+      ? await loadBooking(reference)
+      : null;
 
   if (!booking) {
     return (
@@ -99,15 +148,17 @@ export default async function BookingSuccessPage() {
           <article className="booking-card">
             <h2>Trip Summary</h2>
             <div className="selected-vehicle">
-              <div className="selected-vehicle__visual">
-                <img src="/assets/car-innova.webp" alt="Booked chauffeur-driven vehicle"/>
-              </div>
+              {booking.type === "CAR" ? (
+                <div className="selected-vehicle__visual">
+                  <img src="/assets/car-innova.webp" alt="Booked chauffeur-driven vehicle"/>
+                </div>
+              ) : null}
               <div>
-                <h3>{booking.vehicleClass.name}</h3>
-                <p>{booking.originText} → {booking.destinationText}</p>
+                <h3>{booking.title}</h3>
+                <p>{booking.route}</p>
                 <dl>
                   <div><dt>Departure</dt><dd>{booking.startsAt.toLocaleDateString("en-IN")}</dd></div>
-                  <div><dt>Return</dt><dd>{booking.endsAt?.toLocaleDateString("en-IN") ?? "One way"}</dd></div>
+                  <div><dt>Return</dt><dd>{booking.endsAt?.toLocaleDateString("en-IN") ?? (booking.type === "CAR" ? "One way" : "As per itinerary")}</dd></div>
                   <div><dt>Travellers</dt><dd>{booking.travellers}</dd></div>
                   <div><dt>Status</dt><dd>{booking.status.replaceAll("_"," ")}</dd></div>
                 </dl>
