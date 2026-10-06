@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import { getDb, Prisma } from "@yatra/db/client";
+import { getDb } from "@yatra/db/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,7 +35,7 @@ function leadReference(): string {
   return `LD-${randomUUID().replaceAll("-", "").slice(0, 10).toUpperCase()}`;
 }
 
-function tripData(value: unknown): Prisma.InputJsonValue | undefined {
+function tripData(value: unknown): Record<string, string | number> | undefined {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return undefined;
 
   const source = value as Record<string, unknown>;
@@ -59,7 +59,7 @@ function tripData(value: unknown): Prisma.InputJsonValue | undefined {
     }
   }
 
-  return Object.keys(safe).length ? (safe as Prisma.InputJsonValue) : undefined;
+  return Object.keys(safe).length ? safe : undefined;
 }
 
 export async function POST(request: Request) {
