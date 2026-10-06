@@ -12,6 +12,11 @@ export type PublicDestinationCard = {
 
 export type PublicDestinationDetail = PublicDestinationCard & {
   body: unknown;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  canonicalUrl: string | null;
+  robotsIndex: boolean;
+  robotsFollow: boolean;
   templeProfile: {
     templeName: string;
     deity: string | null;
@@ -90,6 +95,11 @@ export async function getPublicDestinationBySlug(
         kind: true,
         summary: true,
         body: true,
+        seoTitle: true,
+        seoDescription: true,
+        canonicalUrl: true,
+        robotsIndex: true,
+        robotsFollow: true,
         isFeatured: true,
         heroMedia: { select: { publicUrl: true } },
         templeProfile: {
@@ -115,6 +125,11 @@ export async function getPublicDestinationBySlug(
       kind: row.kind,
       summary: row.summary,
       body: row.body,
+      seoTitle: row.seoTitle,
+      seoDescription: row.seoDescription,
+      canonicalUrl: row.canonicalUrl,
+      robotsIndex: row.robotsIndex,
+      robotsFollow: row.robotsFollow,
       heroUrl: row.heroMedia?.publicUrl ?? null,
       isFeatured: row.isFeatured,
       templeProfile: row.templeProfile,
