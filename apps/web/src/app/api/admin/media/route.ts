@@ -20,6 +20,13 @@ function sameOrigin(request: Request): boolean {
 }
 
 export async function POST(request: Request) {
+  if (process.env.MEDIA_WRITE_ENABLED !== "true") {
+    return NextResponse.json(
+      { error: { code: "MEDIA_WRITES_DISABLED", message: "Media uploads are temporarily disabled." } },
+      { status: 503 },
+    );
+  }
+
   if (!sameOrigin(request)) {
     return NextResponse.json(
       { error: { code: "INVALID_ORIGIN", message: "Invalid request origin." } },
