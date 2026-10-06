@@ -33,6 +33,29 @@ function money(minor: bigint, currency = "INR") {
   }).format(Number(minor) / 100);
 }
 
+function parseAmountMinor(value: string): bigint {
+  const normalized = value.trim();
+  if (!/^\d{1,9}(?:\.\d{1,2})?$/.test(normalized)) {
+    throw new Error("Price must be a positive amount with up to two decimals.");
+  }
+
+  const [whole, fraction = ""] = normalized.split(".");
+  const minor = BigInt(whole) * 100n + BigInt((fraction + "00").slice(0, 2));
+
+  if (minor <= 0n) throw new Error("Price must be greater than zero.");
+  return minor;
+}
+
+function optionalPositiveInt(value: FormDataEntryValue | null): number | null {
+  const text = String(value ?? "").trim();
+  if (!text) return null;
+  const parsed = Number(text);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error("Traveller limits must be positive integers.");
+  }
+  return parsed;
+}
+
 export default async function PackageDetailPage({
   params,
 }: {
@@ -95,6 +118,272 @@ export default async function PackageDetailPage({
   if (!pkg) notFound();
 
   const packageId = pkg.id;
+
+  async function saveItineraryDay(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "package.write")) {
+      redirect("/admin/packages");
+    }
+
+    const dayNumber = Number(formData.get("dayNumber"));
+    const title = String(formData.get("title") ?? "").trim();
+    const description = String(formData.get("description") ?? "").trim();
+
+    if (
+      !Number.isInteger(dayNumber) ||
+      dayNumber < 1 ||
+      dayNumber > pkg.durationDays
+    ) {
+      throw new Error(`Day number must be between 1 and ${pkg.durationDays}.`);
+    }
+
+    if (title.length < 2 || title.length > 180) {
+      throw new Error("Itinerary title must be between 2 and 180 characters.");
+    }
+
+    if (description.length > 3000) {
+      throw new Error("Itinerary description is too long.");
+    }
+
+    const saved = await db.packageItineraryDay.upsert({
+      where: {
+        packageId_dayNumber: {
+          packageId,
+          dayNumber,
+        },
+      },
+      update: {
+        title,
+        description: description || null,
+      },
+      create: {
+        packageId,
+        dayNumber,
+        title,
+        description: description || null,
+      },
+    });
+
+    await db.auditLog.create({
+      data: {
+        actorUserId: currentSession.userId,
+        action: "PACKAGE_ITINERARY_SAVED",
+        entityType: "PackageItineraryDay",
+        entityId: saved.id,
+        metadata: {
+          packageId,
+          dayNumber,
+          title,
+        },
+      },
+    });
+
+    revalidatePath(`/admin/packages/${packageId}`);
+    revalidatePath(`/packages/${pkg.slug}`);
+  }
+
+  async function deleteItineraryDay(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "package.write")) {
+      redirect("/admin/packages");
+    }
+
+    const itineraryId = String(formData.get("itineraryId") ?? "");
+    const day = await db.packageItineraryDay.findFirst({
+      where: {
+        id: itineraryId,
+        packageId,
+      },
+      select: {
+        id: true,
+        dayNumber: true,
+        title: true,
+      },
+    });
+
+    if (!day) throw new Error("Itinerary day not found.");
+
+    await db.$transaction([
+      db.packageItineraryDay.delete({ where: { id: day.id } }),
+      db.auditLog.create({
+        data: {
+          actorUserId: currentSession.userId,
+          action: "PACKAGE_ITINERARY_DELETED",
+          entityType: "PackageItineraryDay",
+          entityId: day.id,
+          metadata: {
+            packageId,
+            dayNumber: day.dayNumber,
+            title: day.title,
+          },
+        },
+      }),
+    ]);
+
+    revalidatePath(`/admin/packages/${packageId}`);
+    revalidatePath(`/packages/${pkg.slug}`);
+  }
+
+  async function savePriceOption(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "package.write")) {
+      redirect("/admin/packages");
+    }
+
+    const optionId = String(formData.get("optionId") ?? "").trim();
+    const modeValue = String(formData.get("mode") ?? "");
+    const currency = String(formData.get("currency") ?? "INR").trim().toUpperCase();
+    const amountMinor = parseAmountMinor(String(formData.get("amount") ?? ""));
+    const minTravellers = optionalPositiveInt(formData.get("minTravellers"));
+    const maxTravellers = optionalPositiveInt(formData.get("maxTravellers"));
+    const vehicleClassId = String(formData.get("vehicleClassId") ?? "").trim() || null;
+    const sortOrderRaw = Number(formData.get("sortOrder") ?? 0);
+    const sortOrder = Number.isInteger(sortOrderRaw) ? sortOrderRaw : 0;
+
+    if (!(packagePriceModes as readonly string[]).includes(modeValue)) {
+      throw new Error("Invalid package price mode.");
+    }
+    const mode = modeValue as PackagePriceMode;
+
+    if (!/^[A-Z]{3}$/.test(currency)) {
+      throw new Error("Currency must be a three-letter uppercase code.");
+    }
+
+    if (
+      minTravellers !== null &&
+      maxTravellers !== null &&
+      minTravellers > maxTravellers
+    ) {
+      throw new Error("Minimum travellers cannot exceed maximum travellers.");
+    }
+
+    if (mode === "PER_VEHICLE" && !vehicleClassId) {
+      throw new Error("Per-vehicle pricing requires a vehicle class.");
+    }
+
+    if (vehicleClassId) {
+      const vehicleClass = await db.vehicleClass.findFirst({
+        where: {
+          id: vehicleClassId,
+          isActive: true,
+        },
+        select: { id: true },
+      });
+      if (!vehicleClass) throw new Error("Vehicle class is not active.");
+    }
+
+    let savedId: string;
+
+    if (optionId) {
+      const existing = await db.packagePriceOption.findFirst({
+        where: {
+          id: optionId,
+          packageId,
+        },
+        select: { id: true },
+      });
+      if (!existing) throw new Error("Price option not found.");
+
+      const updated = await db.packagePriceOption.update({
+        where: { id: existing.id },
+        data: {
+          mode,
+          currency,
+          amountMinor,
+          vehicleClassId: mode === "PER_VEHICLE" ? vehicleClassId : null,
+          minTravellers,
+          maxTravellers,
+          sortOrder,
+        },
+      });
+      savedId = updated.id;
+    } else {
+      const created = await db.packagePriceOption.create({
+        data: {
+          packageId,
+          mode,
+          currency,
+          amountMinor,
+          vehicleClassId: mode === "PER_VEHICLE" ? vehicleClassId : null,
+          minTravellers,
+          maxTravellers,
+          sortOrder,
+          isActive: true,
+        },
+      });
+      savedId = created.id;
+    }
+
+    await db.auditLog.create({
+      data: {
+        actorUserId: currentSession.userId,
+        action: optionId ? "PACKAGE_PRICE_UPDATED" : "PACKAGE_PRICE_CREATED",
+        entityType: "PackagePriceOption",
+        entityId: savedId,
+        metadata: {
+          packageId,
+          mode,
+          currency,
+          amountMinor: amountMinor.toString(),
+          minTravellers,
+          maxTravellers,
+          vehicleClassId: mode === "PER_VEHICLE" ? vehicleClassId : null,
+        },
+      },
+    });
+
+    revalidatePath(`/admin/packages/${packageId}`);
+    revalidatePath(`/packages/${pkg.slug}`);
+  }
+
+  async function togglePriceOption(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "package.write")) {
+      redirect("/admin/packages");
+    }
+
+    const optionId = String(formData.get("optionId") ?? "");
+    const option = await db.packagePriceOption.findFirst({
+      where: {
+        id: optionId,
+        packageId,
+      },
+      select: {
+        id: true,
+        isActive: true,
+      },
+    });
+
+    if (!option) throw new Error("Price option not found.");
+
+    const updated = await db.packagePriceOption.update({
+      where: { id: option.id },
+      data: { isActive: !option.isActive },
+    });
+
+    await db.auditLog.create({
+      data: {
+        actorUserId: currentSession.userId,
+        action: updated.isActive
+          ? "PACKAGE_PRICE_ACTIVATED"
+          : "PACKAGE_PRICE_DEACTIVATED",
+        entityType: "PackagePriceOption",
+        entityId: updated.id,
+        metadata: { packageId },
+      },
+    });
+
+    revalidatePath(`/admin/packages/${packageId}`);
+    revalidatePath(`/packages/${pkg.slug}`);
+  }
 
   async function saveMetadata(formData: FormData) {
     "use server";
