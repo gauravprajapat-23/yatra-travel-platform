@@ -25,10 +25,7 @@ export async function getPublicPackages(): Promise<PublicPackageCard[]> {
     const packages = await db.tourPackage.findMany({
       where: {
         status: "PUBLISHED",
-        OR: [
-          { publishedAt: null },
-          { publishedAt: { lte: now } },
-        ],
+        publishedAt: { lte: now },
       },
       select: {
         id: true,
@@ -111,10 +108,7 @@ export async function getPublicPackageBySlug(
       where: {
         slug,
         status: "PUBLISHED",
-        OR: [
-          { publishedAt: null },
-          { publishedAt: { lte: now } },
-        ],
+        publishedAt: { lte: now },
       },
       select: {
         id: true,
