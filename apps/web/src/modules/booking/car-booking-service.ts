@@ -217,13 +217,18 @@ export async function createGuestCarBooking(
 
         const policySnapshot = createPolicySnapshot(policy);
 
+        const initialStatus =
+          process.env.PAYMENT_WRITE_ENABLED === "true" && quote.totalMinor > 0n
+            ? "PENDING_PAYMENT"
+            : "PENDING_REVIEW";
+
         const booking = await tx.carBooking.create({
           data: {
             reference: createBookingReference(),
             quoteId: quote.id,
             idempotencyKey: input.idempotencyKey,
             requestFingerprint: fingerprint,
-            status: "PENDING_REVIEW",
+            status: initialStatus,
             tripType: quote.tripType,
             originText: quote.originText,
             destinationText: quote.destinationText,
@@ -245,8 +250,11 @@ export async function createGuestCarBooking(
             statusHistory: {
               create: {
                 fromStatus: null,
-                toStatus: "PENDING_REVIEW",
-                reason: "Booking created from server quote.",
+                toStatus: initialStatus,
+                reason:
+                  initialStatus === "PENDING_PAYMENT"
+                    ? "Booking created from server quote and is ready for payment."
+                    : "Booking created from server quote and is pending review.",
               },
             },
           },
