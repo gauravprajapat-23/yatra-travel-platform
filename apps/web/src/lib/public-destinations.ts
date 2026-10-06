@@ -8,6 +8,7 @@ export type PublicDestinationCard = {
   summary: string | null;
   heroUrl: string | null;
   isFeatured: boolean;
+  robotsIndex: boolean;
 };
 
 export type PublicDestinationDetail = PublicDestinationCard & {
@@ -47,6 +48,7 @@ export async function getPublicDestinations(): Promise<PublicDestinationCard[]> 
         kind: true,
         summary: true,
         isFeatured: true,
+        robotsIndex: true,
         heroMedia: { select: { publicUrl: true } },
       },
       orderBy: [
@@ -63,6 +65,7 @@ export async function getPublicDestinations(): Promise<PublicDestinationCard[]> 
       summary: row.summary,
       heroUrl: row.heroMedia?.publicUrl ?? null,
       isFeatured: row.isFeatured,
+      robotsIndex: row.robotsIndex,
     }));
   } catch (error) {
     console.error(
@@ -132,6 +135,7 @@ export async function getPublicDestinationBySlug(
       robotsFollow: row.robotsFollow,
       heroUrl: row.heroMedia?.publicUrl ?? null,
       isFeatured: row.isFeatured,
+      robotsIndex: row.robotsIndex,
       templeProfile: row.templeProfile,
     };
   } catch (error) {
