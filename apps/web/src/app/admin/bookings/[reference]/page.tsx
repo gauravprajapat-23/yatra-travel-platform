@@ -15,6 +15,7 @@ import {
   transitionPackageBookingStatus,
 } from "@/modules/booking/booking-status-service";
 import { assignCarBookingResources } from "@/modules/booking/car-assignment-service";
+import { createRefundRequest } from "@/modules/payments/refund-service";
 
 export const dynamic = "force-dynamic";
 
@@ -148,8 +149,10 @@ export default async function BookingDetailPage({
         vehicleClassId: rawBooking.data.vehicleClassId,
       };
 
-  const nextStatuses = bookingStatuses.filter((status) =>
-    canTransitionBooking(booking.status, status),
+  const nextStatuses = bookingStatuses.filter(
+    (status) =>
+      canTransitionBooking(booking.status, status) &&
+      !["REFUND_PENDING", "REFUNDED"].includes(status),
   );
 
   const [assignableVehicles, assignableDrivers] =
@@ -233,6 +236,114 @@ export default async function BookingDetailPage({
 
     revalidatePath(`/admin/bookings/${bookingReference}`);
     revalidatePath("/admin/bookings");
+  }
+
+  async function refundRemainingPayment(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "refund.manage")) {
+      redirect(`/admin/bookings/${bookingReference}`);
+    }
+
+    const paymentIntentId = String(formData.get("paymentIntentId") ?? "");
+    if (!paymentIntentId) {
+      throw new Error("Payment intent is required.");
+    }
+
+    const paymentIntent = await db.paymentIntent.findUnique({
+      where: { id: paymentIntentId },
+      include: {
+        refunds: {
+          where: { status: { in: ["PENDING", "PROCESSED"] } },
+          select: { amountMinor: true },
+        },
+      },
+    });
+
+    if (!paymentIntent) {
+      throw new Error("Payment intent not found.");
+    }
+
+    const belongsToBooking =
+      (bookingType === "CAR" &&
+        paymentIntent.carBookingId === bookingId &&
+        paymentIntent.packageBookingId === null) ||
+      (bookingType === "PACKAGE" &&
+        paymentIntent.packageBookingId === bookingId &&
+        paymentIntent.carBookingId === null);
+
+    if (!belongsToBooking) {
+      throw new Error("Payment intent does not belong to this booking.");
+    }
+
+    if (!["CAPTURED", "PARTIALLY_REFUNDED"].includes(paymentIntent.status)) {
+      throw new Error("Payment is not refundable.");
+    }
+
+    const reservedMinor = paymentIntent.refunds.reduce(
+      (sum, refund) => sum + refund.amountMinor,
+      0n,
+    );
+    const remainingMinor = paymentIntent.amountPaidMinor - reservedMinor;
+
+    if (remainingMinor <= 0n) {
+      throw new Error("No refundable balance remains.");
+    }
+
+    const refundableBookingStates: BookingStatus[] = [
+      "CONFIRMED",
+      "DRIVER_ASSIGNED",
+      "COMPLETED",
+      "CANCELLED",
+    ];
+
+    if (!refundableBookingStates.includes(booking.status)) {
+      throw new Error("Booking is not in a refundable operational state.");
+    }
+
+    const result = await createRefundRequest({
+      paymentIntentId: paymentIntent.id,
+      amountMinor: remainingMinor,
+      idempotencyKey: `admin-refund-${paymentIntent.id}-${remainingMinor.toString()}`,
+      reason: `Full remaining refund requested by admin for booking ${bookingReference}.`,
+    });
+
+    if (bookingType === "CAR") {
+      await transitionCarBookingStatus({
+        bookingId,
+        toStatus: "REFUND_PENDING",
+        actorUserId: currentSession.userId,
+        reason: "Full remaining payment refund requested.",
+      });
+    } else {
+      await transitionPackageBookingStatus({
+        bookingId,
+        toStatus: "REFUND_PENDING",
+        actorUserId: currentSession.userId,
+        reason: "Full remaining payment refund requested.",
+      });
+    }
+
+    await db.auditLog.create({
+      data: {
+        actorUserId: currentSession.userId,
+        action: "BOOKING_REFUND_REQUESTED",
+        entityType: bookingType === "CAR" ? "CarBooking" : "PackageBooking",
+        entityId: bookingId,
+        metadata: {
+          reference: bookingReference,
+          paymentIntentId: paymentIntent.id,
+          refundId: result.refundId,
+          amountMinor: remainingMinor.toString(),
+          currency: paymentIntent.currency,
+        },
+      },
+    });
+
+    revalidatePath(`/admin/bookings/${bookingReference}`);
+    revalidatePath("/admin/bookings");
+    revalidatePath("/admin/payments");
   }
 
   async function updateStatus(formData: FormData) {
@@ -325,17 +436,41 @@ export default async function BookingDetailPage({
             <h2>Payment Activity</h2>
             {booking.paymentIntents.length === 0 ? (
               <p>No payment intent has been created yet.</p>
-            ) : booking.paymentIntents.map((intent) => (
-              <div key={intent.id}>
-                <strong>{intent.status.replaceAll("_", " ")}</strong>
-                <p>{money(intent.amountMinor, intent.currency)} · {intent.providerOrderId ?? "No provider order"}</p>
-                {intent.refunds.map((refund) => (
-                  <small key={refund.id}>
-                    Refund {refund.status}: {money(refund.amountMinor, refund.currency)}
-                  </small>
-                ))}
-              </div>
-            ))}
+            ) : booking.paymentIntents.map((intent) => {
+              const reservedMinor = intent.refunds
+                .filter((refund) => ["PENDING", "PROCESSED"].includes(refund.status))
+                .reduce((sum, refund) => sum + refund.amountMinor, 0n);
+              const remainingMinor = intent.amountPaidMinor - reservedMinor;
+              const canRefund =
+                hasPermission(session.roles, "refund.manage") &&
+                ["CAPTURED", "PARTIALLY_REFUNDED"].includes(intent.status) &&
+                remainingMinor > 0n &&
+                ["CONFIRMED", "DRIVER_ASSIGNED", "COMPLETED", "CANCELLED"].includes(booking.status);
+
+              return (
+                <div key={intent.id}>
+                  <strong>{intent.status.replaceAll("_", " ")}</strong>
+                  <p>
+                    {money(intent.amountPaidMinor > 0n ? intent.amountPaidMinor : intent.amountMinor, intent.currency)}
+                    {" · "}
+                    {intent.providerOrderId ?? "No provider order"}
+                  </p>
+                  {intent.refunds.map((refund) => (
+                    <small key={refund.id}>
+                      Refund {refund.status}: {money(refund.amountMinor, refund.currency)}
+                    </small>
+                  ))}
+                  {canRefund ? (
+                    <form action={refundRemainingPayment}>
+                      <input type="hidden" name="paymentIntentId" value={intent.id} />
+                      <button className="admin-danger-button" type="submit">
+                        Refund Remaining {money(remainingMinor, intent.currency)}
+                      </button>
+                    </form>
+                  ) : null}
+                </div>
+              );
+            })}
           </article>
         </section>
 
