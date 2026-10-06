@@ -1,3 +1,74 @@
+import { redirect } from "next/navigation";
+import { getDb } from "@yatra/db/client";
+import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
-const rows=[["Rahul Mehta","rahul.mehta@yatra.com","Admin","Management",<StatusPill key="1">Active</StatusPill>,"•••"],["Priya Sharma","priya.sharma@yatra.com","Operations Manager","Operations",<StatusPill key="2">Active</StatusPill>,"•••"],["Amit Verma","amit.verma@yatra.com","Booking Executive","Bookings",<StatusPill key="3">Active</StatusPill>,"•••"],["Neha Kapoor","neha.kapoor@yatra.com","Customer Support","Support",<StatusPill key="4">Active</StatusPill>,"•••"],["Ramesh Yadav","ramesh.yadav@yatra.com","Fleet Manager","Fleet",<StatusPill key="5">Active</StatusPill>,"•••"],["Kavita Rao","kavita.rao@yatra.com","Finance Executive","Finance",<StatusPill key="6" tone="orange">Pending</StatusPill>,"•••"]];
-export default function Page(){return <AdminTablePage active="Staff / Roles" title="Staff / Roles" subtitle="Add team members, assign roles and manage access permissions." buttonLabel="Add Staff" metrics={[{label:"Total Staff",value:"28",meta:"↑ 12%",tone:"blue"},{label:"Active Staff",value:"24",meta:"86% of total",tone:"green"},{label:"Pending Invites",value:"3",meta:"awaiting join",tone:"orange"},{label:"Inactive Staff",value:"1",meta:"4%",tone:"red"}]} filters={["Team Members","Roles & Permissions","Access Control","Activity Logs"]} columns={["Name","Email","Role","Department","Status","Actions"]} rows={rows}/>;}
+import { requireAdminSession } from "@/lib/auth/session";
+
+export const dynamic = "force-dynamic";
+
+function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
+  if (status === "ACTIVE") return "green";
+  if (status === "INVITED") return "orange";
+  if (status === "SUSPENDED" || status === "DISABLED") return "red";
+  return "gray";
+}
+
+export default async function StaffPage() {
+  const session = await requireAdminSession();
+  if (!hasPermission(session.roles, "staff.manage")) redirect("/admin");
+
+  const db = getDb();
+
+  const staff = await db.user.findMany({
+    where: {
+      roles: {
+        some: {
+          role: {
+            key: { not: "CUSTOMER" },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    include: {
+      roles: {
+        include: { role: true },
+      },
+    },
+    take: 100,
+  });
+
+  const active = staff.filter((user) => user.status === "ACTIVE").length;
+  const invited = staff.filter((user) => user.status === "INVITED").length;
+  const inactive = staff.filter((user) =>
+    ["SUSPENDED", "DISABLED"].includes(user.status),
+  ).length;
+
+  const rows = staff.map((user) => [
+    user.name ?? "Unnamed staff",
+    user.email,
+    user.roles.map((entry) => entry.role.label).join(", "),
+    user.lastLoginAt?.toLocaleString("en-IN") ?? "Never",
+    <StatusPill key={user.id} tone={tone(user.status)}>
+      {user.status.replaceAll("_", " ")}
+    </StatusPill>,
+    user.createdAt.toLocaleDateString("en-IN"),
+  ]);
+
+  return (
+    <AdminTablePage
+      active="Staff / Roles"
+      title="Staff / Roles"
+      subtitle="Live admin users and their assigned RBAC roles."
+      metrics={[
+        { label: "Total Staff", value: staff.length.toString(), meta: "loaded accounts", tone: "blue" },
+        { label: "Active Staff", value: active.toString(), meta: "can sign in", tone: "green" },
+        { label: "Pending Invites", value: invited.toString(), meta: "not activated", tone: "orange" },
+        { label: "Suspended / Disabled", value: inactive.toString(), meta: "access blocked", tone: "red" },
+      ]}
+      filters={["Latest 100"]}
+      columns={["Name", "Email", "Roles", "Last Login", "Status", "Created"]}
+      rows={rows}
+    />
+  );
+}
