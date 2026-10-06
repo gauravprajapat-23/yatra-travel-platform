@@ -71,7 +71,7 @@ export default async function PackageDetailPage({
   const { id } = await params;
   const db = getDb();
 
-  const [pkg, heroOptions, vehicleClasses] = await Promise.all([
+  const [pkg, heroOptions, vehicleClasses, allDestinations] = await Promise.all([
     db.tourPackage.findUnique({
       where: { id },
       include: {
@@ -117,6 +117,14 @@ export default async function PackageDetailPage({
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
       select: { id: true, name: true },
     }),
+    db.destination.findMany({
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+      },
+    }),
   ]);
 
   if (!pkg) notFound();
@@ -124,6 +132,64 @@ export default async function PackageDetailPage({
   const packageId = pkg.id;
   const packageSlug = pkg.slug;
   const packageDurationDays = pkg.durationDays;
+
+  async function saveDestinations(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "package.write")) {
+      redirect("/admin/packages");
+    }
+
+    const selectedIds = [
+      ...new Set(formData.getAll("destinationIds").map((value) => String(value))),
+    ];
+
+    if (selectedIds.length > 20) {
+      throw new Error("A package cannot contain more than 20 destinations.");
+    }
+
+    if (selectedIds.length > 0) {
+      const existing = await db.destination.count({
+        where: { id: { in: selectedIds } },
+      });
+      if (existing !== selectedIds.length) {
+        throw new Error("One or more selected destinations do not exist.");
+      }
+    }
+
+    await db.$transaction(async (tx) => {
+      await tx.packageDestination.deleteMany({
+        where: { packageId },
+      });
+
+      if (selectedIds.length > 0) {
+        await tx.packageDestination.createMany({
+          data: selectedIds.map((destinationId, index) => ({
+            packageId,
+            destinationId,
+            sortOrder: index,
+          })),
+        });
+      }
+
+      await tx.auditLog.create({
+        data: {
+          actorUserId: currentSession.userId,
+          action: "PACKAGE_DESTINATIONS_UPDATED",
+          entityType: "TourPackage",
+          entityId: packageId,
+          metadata: {
+            destinationIds: selectedIds,
+          },
+        },
+      });
+    });
+
+    revalidatePath(`/admin/packages/${packageId}`);
+    revalidatePath("/admin/packages");
+    revalidatePath(`/packages/${packageSlug}`);
+  }
 
   async function saveBody(formData: FormData) {
     "use server";
@@ -568,6 +634,42 @@ export default async function PackageDetailPage({
             <div><dt>Published</dt><dd>{pkg.publishedAt?.toLocaleString("en-IN") ?? "Not published"}</dd></div>
             <div><dt>Updated</dt><dd>{pkg.updatedAt.toLocaleString("en-IN")}</dd></div>
           </dl>
+        </section>
+
+        <section className="admin-panel admin-detail-card">
+          <h2>Destinations</h2>
+          {hasPermission(session.roles, "package.write") ? (
+            <form action={saveDestinations}>
+              <fieldset>
+                <legend>Package destinations</legend>
+                {allDestinations.length === 0 ? (
+                  <p>No destinations exist yet. Create destinations first.</p>
+                ) : allDestinations.map((destination) => (
+                  <label key={destination.id}>
+                    <input
+                      type="checkbox"
+                      name="destinationIds"
+                      value={destination.id}
+                      defaultChecked={pkg.destinations.some(
+                        (item) => item.destinationId === destination.id,
+                      )}
+                    />
+                    {destination.name} · {destination.status.replaceAll("_", " ")}
+                  </label>
+                ))}
+              </fieldset>
+              <p>
+                Selected destinations are stored in the order shown here.
+              </p>
+              <button className="admin-secondary-button" type="submit">
+                Save Destinations
+              </button>
+            </form>
+          ) : (
+            <p>
+              {pkg.destinations.map((item) => item.destination.name).join(", ") || "No destinations assigned."}
+            </p>
+          )}
         </section>
 
         <section className="admin-panel admin-detail-card">
