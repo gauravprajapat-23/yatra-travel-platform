@@ -200,11 +200,27 @@ export async function reconcileVerifiedRazorpayPayment(input: {
         );
       }
 
+      if (freshIntent.status === "CAPTURED") {
+        if (freshIntent.providerPaymentId === payment.id) {
+          return freshIntent;
+        }
+
+        throw new PaymentReconciliationError(
+          "Payment intent was already captured by a different provider payment.",
+          "PROVIDER_PAYMENT_MISMATCH",
+          409,
+        );
+      }
+
       if (
-        freshIntent.status === "CAPTURED" &&
-        freshIntent.providerPaymentId === payment.id
+        freshIntent.status === "REFUNDED" ||
+        freshIntent.status === "PARTIALLY_REFUNDED"
       ) {
-        return freshIntent;
+        throw new PaymentReconciliationError(
+          "Payment intent has already moved beyond capture.",
+          "PAYMENT_INTENT_NOT_READY",
+          409,
+        );
       }
 
       const updated = await tx.paymentIntent.update({
