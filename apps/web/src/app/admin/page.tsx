@@ -1,20 +1,172 @@
+import Link from "next/link";
+import { getDb } from "@yatra/db/client";
 import { AdminMetric, AdminShell, StatusPill } from "@/components/admin-shell";
 
-export default function AdminDashboardPage(){
- return <AdminShell active="Dashboard" title="Dashboard" subtitle="Welcome back! Here’s what’s happening with your business today.">
-   <div className="admin-metric-grid">
-     <AdminMetric label="Total Bookings" value="128" meta="↑ 12% vs last week" tone="green"/>
-     <AdminMetric label="Total Revenue" value="₹ 12,48,000" meta="↑ 18% vs last week" tone="orange"/>
-     <AdminMetric label="Active Trips" value="24" meta="↑ 9% on road" tone="green"/>
-     <AdminMetric label="Pending Leads" value="38" meta="↓ 5% need follow-up" tone="red"/>
-   </div>
-   <div className="admin-dashboard-grid">
-     <section className="admin-panel admin-chart-panel"><div className="admin-panel-heading"><h2>Bookings Trend</h2><span>Last 7 Days⌄</span></div><div className="admin-chart"><div className="admin-bars">{[36,58,42,66,51,78,83].map((h,i)=><span key={i} style={{height:`${h}%`}}/>)}</div><svg viewBox="0 0 700 180" preserveAspectRatio="none" aria-hidden><polyline points="0,145 115,95 230,120 345,70 460,91 575,42 700,32" fill="none" stroke="#f26b1d" strokeWidth="5"/></svg></div></section>
-     <section className="admin-panel"><div className="admin-panel-heading"><h2>Bookings by Type</h2><span>This Month⌄</span></div><div className="admin-donut"><div>128<small>Bookings</small></div></div><ul className="admin-legend"><li>SUV <b>42%</b></li><li>Tempo Traveller <b>28%</b></li><li>Sedan <b>18%</b></li><li>Luxury <b>8%</b></li></ul></section>
-   </div>
-   <div className="admin-dashboard-grid admin-dashboard-grid--tables">
-     <section className="admin-panel"><div className="admin-panel-heading"><h2>Upcoming Departures</h2><a href="/admin/bookings">View All →</a></div><table className="admin-table"><thead><tr><th>Date</th><th>Package / Route</th><th>Vehicle</th><th>Travellers</th><th>Status</th></tr></thead><tbody>{[["12 Oct","Mahakaleshwar Tour","Innova Crysta","6","Boarding"],["13 Oct","Char Dham Yatra","Tempo Traveller","12","Confirmed"],["15 Oct","Rajasthan Heritage","Toyota Fortuner","4","Confirmed"],["16 Oct","Kashi – Prayagraj","Innova Hycross","5","Preparing"]].map((r,i)=><tr key={i}>{r.map((c,j)=><td key={j}>{j===4?<StatusPill tone={c==="Boarding"?"green":c==="Preparing"?"orange":"blue"}>{c}</StatusPill>:c}</td>)}</tr>)}</tbody></table></section>
-     <section className="admin-panel"><div className="admin-panel-heading"><h2>Recent Bookings</h2><a href="/admin/bookings">View All →</a></div><table className="admin-table"><thead><tr><th>ID</th><th>Customer</th><th>Route</th><th>Amount</th><th>Status</th></tr></thead><tbody>{[["YT1234","Rahul Mehta","Ujjain Tour","₹14,000","Confirmed"],["YT1233","Priya Sharma","Jaipur Heritage","₹26,000","Pending"],["YT1232","Amit Verma","Varanasi","₹18,500","Confirmed"],["YT1231","Neha Kapoor","Rameshwaram","₹32,000","On Hold"]].map((r,i)=><tr key={i}>{r.map((c,j)=><td key={j}>{j===4?<StatusPill tone={c==="Confirmed"?"green":c==="Pending"?"orange":"red"}>{c}</StatusPill>:c}</td>)}</tr>)}</tbody></table></section>
-   </div>
- </AdminShell>;
+function money(minor: bigint, currency = "INR") {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(Number(minor) / 100);
+}
+
+function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
+  if (["CONFIRMED", "COMPLETED"].includes(status)) return "green";
+  if (["PENDING_PAYMENT", "PENDING_REVIEW", "REFUND_PENDING"].includes(status)) return "orange";
+  if (["CANCELLED", "FAILED", "REFUNDED", "EXPIRED"].includes(status)) return "red";
+  if (["DRIVER_ASSIGNED", "IN_PROGRESS"].includes(status)) return "blue";
+  return "gray";
+}
+
+export default async function AdminDashboardPage() {
+  const db = getDb();
+  const now = new Date();
+
+  const [
+    carCount,
+    packageCount,
+    activeCars,
+    activePackages,
+    pendingLeads,
+    capturedPayments,
+    recentCars,
+    recentPackages,
+  ] = await Promise.all([
+    db.carBooking.count(),
+    db.packageBooking.count(),
+    db.carBooking.count({
+      where: { status: { in: ["CONFIRMED", "DRIVER_ASSIGNED", "IN_PROGRESS"] } },
+    }),
+    db.packageBooking.count({
+      where: { status: { in: ["CONFIRMED", "DRIVER_ASSIGNED", "IN_PROGRESS"] } },
+    }),
+    db.lead.count({ where: { status: { in: ["NEW", "IN_PROGRESS"] } } }),
+    db.paymentIntent.aggregate({
+      where: { status: { in: ["CAPTURED", "PARTIALLY_REFUNDED", "REFUNDED"] } },
+      _sum: { amountPaidMinor: true },
+    }),
+    db.carBooking.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      select: {
+        reference: true,
+        guestName: true,
+        originText: true,
+        destinationText: true,
+        totalMinor: true,
+        currency: true,
+        status: true,
+        createdAt: true,
+      },
+    }),
+    db.packageBooking.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      select: {
+        reference: true,
+        guestName: true,
+        totalMinor: true,
+        currency: true,
+        status: true,
+        createdAt: true,
+        package: { select: { title: true } },
+      },
+    }),
+  ]);
+
+  const recent = [
+    ...recentCars.map((booking) => ({
+      reference: booking.reference,
+      customer: booking.guestName ?? "Guest",
+      route: `${booking.originText} → ${booking.destinationText}`,
+      amount: money(booking.totalMinor, booking.currency),
+      status: booking.status,
+      createdAt: booking.createdAt,
+    })),
+    ...recentPackages.map((booking) => ({
+      reference: booking.reference,
+      customer: booking.guestName ?? "Guest",
+      route: booking.package.title,
+      amount: money(booking.totalMinor, booking.currency),
+      status: booking.status,
+      createdAt: booking.createdAt,
+    })),
+  ]
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, 8);
+
+  const totalBookings = carCount + packageCount;
+  const activeTrips = activeCars + activePackages;
+  const revenueMinor = capturedPayments._sum.amountPaidMinor ?? 0n;
+
+  return (
+    <AdminShell
+      active="Dashboard"
+      title="Dashboard"
+      subtitle={`Live operations snapshot · ${now.toLocaleDateString("en-IN")}`}
+    >
+      <div className="admin-metric-grid">
+        <AdminMetric label="Total Bookings" value={totalBookings.toString()} meta="car + package" tone="green"/>
+        <AdminMetric label="Captured Revenue" value={money(revenueMinor)} meta="verified payments" tone="orange"/>
+        <AdminMetric label="Active Trips" value={activeTrips.toString()} meta="confirmed / assigned / in progress" tone="green"/>
+        <AdminMetric label="Pending Leads" value={pendingLeads.toString()} meta="new + in progress" tone="red"/>
+      </div>
+
+      <div className="admin-dashboard-grid admin-dashboard-grid--tables">
+        <section className="admin-panel">
+          <div className="admin-panel-heading">
+            <h2>Recent Bookings</h2>
+            <Link href="/admin/bookings">View All →</Link>
+          </div>
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Route / Package</th>
+                <th>Amount</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recent.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>No bookings yet.</td>
+                </tr>
+              ) : recent.map((booking) => (
+                <tr key={booking.reference}>
+                  <td>
+                    <Link href={`/admin/bookings/${booking.reference}`}>
+                      {booking.reference}
+                    </Link>
+                  </td>
+                  <td>{booking.customer}</td>
+                  <td>{booking.route}</td>
+                  <td>{booking.amount}</td>
+                  <td>
+                    <StatusPill tone={tone(booking.status)}>
+                      {booking.status.replaceAll("_", " ")}
+                    </StatusPill>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        <section className="admin-panel">
+          <div className="admin-panel-heading">
+            <h2>Operations</h2>
+          </div>
+          <div className="admin-detail-card">
+            <p>Use the live operational views to review customer activity and financial state.</p>
+            <p><Link href="/admin/bookings">Bookings →</Link></p>
+            <p><Link href="/admin/payments">Payments & refunds →</Link></p>
+            <p><Link href="/admin/leads">Leads & enquiries →</Link></p>
+            <p><Link href="/admin/customers">Customers →</Link></p>
+          </div>
+        </section>
+      </div>
+    </AdminShell>
+  );
 }
