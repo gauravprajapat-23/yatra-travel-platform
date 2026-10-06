@@ -4,6 +4,8 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
 import { requireAdminSession } from "@/lib/auth/session";
 
+export const dynamic = "force-dynamic";
+
 function money(minor: bigint, currency = "INR") {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
