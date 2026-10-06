@@ -7,8 +7,11 @@ import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   addVehicleAvailabilityBlock,
+  attachVehicleMedia,
   deleteVehicleAvailabilityBlock,
+  detachVehicleMedia,
   isVehicleStatus,
+  setPrimaryVehicleMedia,
   updateVehicle,
   vehicleStatuses,
 } from "@/modules/fleet/fleet-management-service";
@@ -41,7 +44,7 @@ export default async function VehicleDetailPage({
   const { id } = await params;
   const db = getDb();
 
-  const [vehicle, classes] = await Promise.all([
+  const [vehicle, classes, mediaOptions] = await Promise.all([
     db.vehicle.findUnique({
       where: { id },
       include: {
@@ -68,6 +71,19 @@ export default async function VehicleDetailPage({
     db.vehicleClass.findMany({
       where: { isActive: true },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    }),
+    db.mediaAsset.findMany({
+      where: {
+        mimeType: { startsWith: "image/" },
+        publicUrl: { not: null },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      select: {
+        id: true,
+        objectKey: true,
+        altText: true,
+      },
     }),
   ]);
 
@@ -120,6 +136,64 @@ export default async function VehicleDetailPage({
     });
 
     revalidatePath(`/admin/vehicles/${vehicleId}`);
+  }
+
+  async function attachMedia(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "vehicle.write")) {
+      redirect("/admin/vehicles");
+    }
+
+    const mediaId = String(formData.get("mediaId") ?? "");
+    if (!mediaId) throw new Error("Media asset is required.");
+
+    await attachVehicleMedia({
+      vehicleId,
+      mediaId,
+      isPrimary: formData.get("isPrimary") === "on",
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath(`/admin/vehicles/${vehicleId}`);
+    revalidatePath("/cars");
+  }
+
+  async function makePrimary(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "vehicle.write")) {
+      redirect("/admin/vehicles");
+    }
+
+    await setPrimaryVehicleMedia({
+      vehicleId,
+      mediaId: String(formData.get("mediaId") ?? ""),
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath(`/admin/vehicles/${vehicleId}`);
+    revalidatePath("/cars");
+  }
+
+  async function detachMedia(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "vehicle.write")) {
+      redirect("/admin/vehicles");
+    }
+
+    await detachVehicleMedia({
+      vehicleId,
+      mediaId: String(formData.get("mediaId") ?? ""),
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath(`/admin/vehicles/${vehicleId}`);
+    revalidatePath("/cars");
   }
 
   async function removeBlock(formData: FormData) {
@@ -285,10 +359,52 @@ export default async function VehicleDetailPage({
                   ) : null}
                   <strong>{item.media.altText ?? item.media.objectKey}</strong>
                   <small>{item.isPrimary ? "Primary" : "Gallery"}</small>
+                  {hasPermission(session.roles, "vehicle.write") ? (
+                    <>
+                      {!item.isPrimary ? (
+                        <form action={makePrimary}>
+                          <input type="hidden" name="mediaId" value={item.mediaId}/>
+                          <button className="admin-secondary-button" type="submit">
+                            Make Primary
+                          </button>
+                        </form>
+                      ) : null}
+                      <form action={detachMedia}>
+                        <input type="hidden" name="mediaId" value={item.mediaId}/>
+                        <button className="admin-danger-button" type="submit">
+                          Detach
+                        </button>
+                      </form>
+                    </>
+                  ) : null}
                 </article>
               ))}
             </div>
           )}
+
+          {hasPermission(session.roles, "vehicle.write") ? (
+            <form action={attachMedia}>
+              <h3>Attach Media</h3>
+              <label>
+                Image
+                <select name="mediaId" required defaultValue="">
+                  <option value="" disabled>Select media asset</option>
+                  {mediaOptions.map((asset) => (
+                    <option key={asset.id} value={asset.id}>
+                      {asset.altText ?? asset.objectKey.split("/").pop() ?? asset.objectKey}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <input type="checkbox" name="isPrimary"/>
+                Use as primary fleet image
+              </label>
+              <button className="admin-secondary-button" type="submit">
+                Attach Image
+              </button>
+            </form>
+          ) : null}
         </section>
       </div>
     </AdminShell>
