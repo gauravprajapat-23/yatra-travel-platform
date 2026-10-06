@@ -36,6 +36,8 @@ export default async function NewDriverPage() {
 
     const driver = await createDriver({
       displayName: String(formData.get("displayName") ?? ""),
+      phoneNumber: String(formData.get("phoneNumber") ?? ""),
+      licenseNumber: String(formData.get("licenseNumber") ?? ""),
       licenseExpiry,
       internalNotes: String(formData.get("internalNotes") ?? ""),
       qualificationIds: formData
@@ -66,6 +68,26 @@ export default async function NewDriverPage() {
           </label>
 
           <label>
+            Phone number
+            <input
+              name="phoneNumber"
+              inputMode="tel"
+              autoComplete="off"
+              placeholder="+91 98765 43210"
+              maxLength={40}
+            />
+          </label>
+
+          <label>
+            License number
+            <input
+              name="licenseNumber"
+              autoComplete="off"
+              maxLength={80}
+            />
+          </label>
+
+          <label>
             License expiry
             <input type="date" name="licenseExpiry"/>
           </label>
@@ -90,9 +112,9 @@ export default async function NewDriverPage() {
           </label>
 
           <p>
-            Phone numbers and license numbers are intentionally not editable
-            here until the platform has a dedicated encryption-at-rest service
-            for those sensitive fields.
+            Phone and license numbers are encrypted with AES-256-GCM before
+            they are written to the database. They are never written to audit
+            metadata.
           </p>
 
           <button className="admin-primary-button" type="submit">
