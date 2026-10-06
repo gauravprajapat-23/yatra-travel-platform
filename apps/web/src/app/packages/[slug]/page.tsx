@@ -24,10 +24,18 @@ export async function generateMetadata({
   if (!pkg) return {};
 
   return {
-    title: pkg.title,
+    title: pkg.seoTitle ?? pkg.title,
     description:
+      pkg.seoDescription ??
       pkg.summary ??
       `${pkg.durationDays}-day chauffeur-driven YATRA tour package.`,
+    alternates: pkg.canonicalUrl
+      ? { canonical: pkg.canonicalUrl }
+      : undefined,
+    robots: {
+      index: pkg.robotsIndex,
+      follow: pkg.robotsFollow,
+    },
   };
 }
 
