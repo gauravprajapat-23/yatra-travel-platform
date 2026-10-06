@@ -1,3 +1,115 @@
+import { redirect } from "next/navigation";
+import { getDb } from "@yatra/db/client";
+import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
-const rows=[["Rahul Mehta","rahul.mehta@gmail.com","+91 98765 43210","6","₹1,20,000","Repeat",<StatusPill key="1">Active</StatusPill>,"•••"],["Sneha Kapoor","sneha@example.com","+91 98290 11223","3","₹58,400","Regular",<StatusPill key="2">Active</StatusPill>,"•••"],["Vikram Singh","vikram@example.com","+91 90123 44556","2","₹42,000","Regular",<StatusPill key="3">Active</StatusPill>,"•••"],["Anjali Desai","anjali@example.com","+91 98765 64210","8","₹1,85,000","VIP",<StatusPill key="4">Active</StatusPill>,"•••"],["Karan Soni","karan@example.com","+91 95678 32411","1","₹18,500","Regular",<StatusPill key="5" tone="red">Inactive</StatusPill>,"•••"]];
-export default function Page(){return <AdminTablePage active="Customers" title="Customers" subtitle="Manage customer profiles, view booking history and track lifetime value." buttonLabel="Add Customer" metrics={[{label:"Total Customers",value:"1,842",meta:"all time",tone:"blue"},{label:"Active Customers",value:"1,276",meta:"booked in last year",tone:"green"},{label:"Repeat Customers",value:"368",meta:"booked 2+ times",tone:"orange"},{label:"Total Revenue",value:"₹ 2,48,00,000",meta:"from customers",tone:"green"}]} filters={["All Customers","Active","Repeat","VIP"]} columns={["Customer","Email","Contact","Bookings","Lifetime Value","Segment","Status","Actions"]} rows={rows}/>;}
+import { requireAdminSession } from "@/lib/auth/session";
+
+function money(minor: bigint, currency = "INR") {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(Number(minor) / 100);
+}
+
+export default async function CustomersPage() {
+  const session = await requireAdminSession();
+  if (!hasPermission(session.roles, "customer.read")) redirect("/admin");
+
+  const db = getDb();
+
+  const [carGroups, packageGroups] = await Promise.all([
+    db.carBooking.groupBy({
+      by: ["guestEmail", "guestName", "currency"],
+      where: { guestEmail: { not: null } },
+      _count: { _all: true },
+      _sum: { totalMinor: true },
+      _max: { createdAt: true },
+    }),
+    db.packageBooking.groupBy({
+      by: ["guestEmail", "guestName", "currency"],
+      where: { guestEmail: { not: null } },
+      _count: { _all: true },
+      _sum: { totalMinor: true },
+      _max: { createdAt: true },
+    }),
+  ]);
+
+  const merged = new Map<string, {
+    email: string;
+    name: string;
+    currency: string;
+    bookings: number;
+    lifetimeMinor: bigint;
+    lastBookingAt: Date | null;
+  }>();
+
+  for (const group of [...carGroups, ...packageGroups]) {
+    if (!group.guestEmail) continue;
+    const key = group.guestEmail.toLowerCase();
+    const current = merged.get(key);
+
+    if (!current) {
+      merged.set(key, {
+        email: key,
+        name: group.guestName ?? "Guest customer",
+        currency: group.currency,
+        bookings: group._count._all,
+        lifetimeMinor: group._sum.totalMinor ?? 0n,
+        lastBookingAt: group._max.createdAt,
+      });
+      continue;
+    }
+
+    current.bookings += group._count._all;
+    current.lifetimeMinor += group._sum.totalMinor ?? 0n;
+
+    if (
+      group._max.createdAt &&
+      (!current.lastBookingAt || group._max.createdAt > current.lastBookingAt)
+    ) {
+      current.lastBookingAt = group._max.createdAt;
+    }
+  }
+
+  const customers = [...merged.values()].sort((a, b) => {
+    const aTime = a.lastBookingAt?.getTime() ?? 0;
+    const bTime = b.lastBookingAt?.getTime() ?? 0;
+    return bTime - aTime;
+  });
+
+  const totalCustomers = customers.length;
+  const repeatCustomers = customers.filter((customer) => customer.bookings >= 2).length;
+  const totalRevenueMinor = customers.reduce(
+    (sum, customer) => sum + customer.lifetimeMinor,
+    0n,
+  );
+
+  const rows = customers.slice(0, 100).map((customer) => [
+    customer.name,
+    customer.email,
+    customer.lastBookingAt?.toLocaleDateString("en-IN") ?? "—",
+    customer.bookings.toString(),
+    money(customer.lifetimeMinor, customer.currency),
+    customer.bookings >= 5 ? "VIP" : customer.bookings >= 2 ? "Repeat" : "New",
+    <StatusPill key={customer.email} tone="green">Active</StatusPill>,
+    "—",
+  ]);
+
+  return (
+    <AdminTablePage
+      active="Customers"
+      title="Customers"
+      subtitle="Live guest-customer rollup from car and package bookings."
+      metrics={[
+        { label: "Total Customers", value: totalCustomers.toString(), meta: "unique booking emails", tone: "blue" },
+        { label: "Repeat Customers", value: repeatCustomers.toString(), meta: "2+ bookings", tone: "orange" },
+        { label: "Total Revenue", value: money(totalRevenueMinor), meta: "booked value", tone: "green" },
+        { label: "Latest Loaded", value: Math.min(customers.length, 100).toString(), meta: "shown below", tone: "blue" },
+      ]}
+      filters={["Latest customers"]}
+      columns={["Customer", "Email", "Last Booking", "Bookings", "Lifetime Value", "Segment", "Status", "Actions"]}
+      rows={rows}
+    />
+  );
+}
