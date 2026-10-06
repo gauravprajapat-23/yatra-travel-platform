@@ -13,6 +13,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: neon-production-migration
+  cancel-in-progress: false
+
 jobs:
   migrate-and-verify:
     runs-on: ubuntu-latest
@@ -42,7 +46,7 @@ jobs:
           node-version: "22"
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Generate Prisma Client
         run: npm run db:generate
