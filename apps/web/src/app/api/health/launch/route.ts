@@ -23,12 +23,23 @@ export async function GET() {
         process.env.RAZORPAY_KEY_SECRET &&
         process.env.RAZORPAY_WEBHOOK_SECRET,
     ),
+    mediaWriteEnabled: process.env.MEDIA_WRITE_ENABLED === "true",
+    storageConfigured: Boolean(
+      process.env.STORAGE_PROVIDER === "s3" &&
+        process.env.STORAGE_BUCKET &&
+        process.env.STORAGE_REGION &&
+        process.env.STORAGE_ENDPOINT &&
+        process.env.STORAGE_ACCESS_KEY_ID &&
+        process.env.STORAGE_SECRET_ACCESS_KEY &&
+        process.env.STORAGE_PUBLIC_BASE_URL,
+    ),
     appUrlConfigured: Boolean(process.env.NEXT_PUBLIC_APP_URL),
     leadFormsReady: false,
     carBookingReady: false,
     packageBookingReady: false,
     checkoutReady: false,
     paymentReady: false,
+    mediaReady: false,
   };
 
   if (!process.env.DATABASE_URL) {
@@ -103,6 +114,11 @@ export async function GET() {
       status.checkoutReady &&
       status.paymentWriteEnabled &&
       status.razorpayConfigured;
+
+    status.mediaReady =
+      status.databaseReachable &&
+      status.storageConfigured &&
+      status.mediaWriteEnabled;
 
     return NextResponse.json(status, {
       status: 200,
