@@ -14,6 +14,10 @@ import {
   type PackagePriceMode,
 } from "@yatra/domain/package/pricing";
 import { assignHeroMedia } from "@/modules/media/media-assignment-service";
+import {
+  stringifyStructuredBody,
+  updatePackageStructuredContentBody,
+} from "@/modules/content/admin-structured-content-service";
 
 export const dynamic = "force-dynamic";
 
@@ -118,6 +122,24 @@ export default async function PackageDetailPage({
   if (!pkg) notFound();
 
   const packageId = pkg.id;
+
+  async function saveBody(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "package.write")) {
+      redirect("/admin/packages");
+    }
+
+    await updatePackageStructuredContentBody({
+      packageId,
+      actorUserId: currentSession.userId,
+      rawBody: String(formData.get("body") ?? "[]"),
+    });
+
+    revalidatePath(`/admin/packages/${packageId}`);
+    revalidatePath(`/packages/${pkg.slug}`);
+  }
 
   async function saveItineraryDay(formData: FormData) {
     "use server";
@@ -575,6 +597,31 @@ export default async function PackageDetailPage({
               </button>
             </form>
           ) : null}
+        </section>
+
+        <section className="admin-panel admin-detail-card">
+          <h2>Structured Body</h2>
+          <p>
+            Long-form package content is stored as safe structured blocks. Raw HTML/script is rejected.
+          </p>
+          {hasPermission(session.roles, "package.write") ? (
+            <form action={saveBody}>
+              <label>
+                Structured JSON
+                <textarea
+                  name="body"
+                  defaultValue={stringifyStructuredBody(pkg.body)}
+                  rows={18}
+                  spellCheck={false}
+                />
+              </label>
+              <button className="admin-primary-button" type="submit">
+                Save Package Body
+              </button>
+            </form>
+          ) : (
+            <pre>{stringifyStructuredBody(pkg.body)}</pre>
+          )}
         </section>
 
         <section className="admin-panel admin-detail-card">
