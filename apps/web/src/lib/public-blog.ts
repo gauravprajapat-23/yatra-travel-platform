@@ -17,7 +17,6 @@ export type PublicBlogDetail = PublicBlogCard & {
   seoTitle: string | null;
   seoDescription: string | null;
   canonicalUrl: string | null;
-  robotsIndex: boolean;
   robotsFollow: boolean;
 };
 
@@ -75,7 +74,6 @@ function fallbackDetail(slug: string): PublicBlogDetail | null {
     seoTitle: null,
     seoDescription: null,
     canonicalUrl: null,
-    robotsIndex: true,
     robotsFollow: true,
   };
 }
@@ -169,7 +167,6 @@ export async function getPublicBlogPostBySlug(
       seoTitle: row.seoTitle,
       seoDescription: row.seoDescription,
       canonicalUrl: row.canonicalUrl,
-      robotsIndex: row.robotsIndex,
       robotsFollow: row.robotsFollow,
     };
   } catch (error) {
