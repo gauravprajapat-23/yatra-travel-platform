@@ -44,6 +44,10 @@ export default async function LeadDetailPage({
   const lead = await db.lead.findUnique({ where: { reference } });
   if (!lead) notFound();
 
+  const leadId = leadId;
+  const leadReference = leadReference;
+  const leadStatus = lead.status;
+
   async function updateLeadStatus(formData: FormData) {
     "use server";
 
@@ -57,11 +61,11 @@ export default async function LeadDetailPage({
       throw new Error("Invalid lead status.");
     }
 
-    const previousStatus = lead.status;
+    const previousStatus = leadStatus;
 
     await db.$transaction([
       db.lead.update({
-        where: { id: lead.id },
+        where: { id: leadId },
         data: { status },
       }),
       db.auditLog.create({
@@ -69,9 +73,9 @@ export default async function LeadDetailPage({
           actorUserId: currentSession.userId,
           action: "LEAD_STATUS_CHANGED",
           entityType: "Lead",
-          entityId: lead.id,
+          entityId: leadId,
           metadata: {
-            reference: lead.reference,
+            reference: leadReference,
             fromStatus: previousStatus,
             toStatus: status,
           },
@@ -79,7 +83,7 @@ export default async function LeadDetailPage({
       }),
     ]);
 
-    revalidatePath(`/admin/leads/${lead.reference}`);
+    revalidatePath(`/admin/leads/${leadReference}`);
     revalidatePath("/admin/leads");
   }
 
@@ -88,7 +92,7 @@ export default async function LeadDetailPage({
   return (
     <AdminShell
       active="Enquiries / Leads"
-      title={`Lead ${lead.reference}`}
+      title={`Lead ${leadReference}`}
       subtitle={`${lead.type.replaceAll("_", " ")} enquiry · created ${lead.createdAt.toLocaleString("en-IN")}`}
       actions={<Link className="admin-secondary-button" href="/admin/leads">← All Leads</Link>}
     >
