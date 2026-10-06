@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { getDb } from "@yatra/db/client";
+import {
+  CHECKOUT_SESSION_COOKIE,
+  verifyCheckoutSessionToken,
+  type CheckoutBookingType,
+} from "@/lib/checkout-session";
 import { RazorpayPayment } from "@/components/razorpay-payment";
 
 export const metadata: Metadata = {
@@ -30,10 +35,13 @@ function money(minor: bigint, currency: string): string {
   }).format(Number(minor) / 100);
 }
 
-async function loadCheckoutBooking(reference: string): Promise<CheckoutBooking | null> {
+async function loadCheckoutBooking(
+  bookingType: CheckoutBookingType,
+  reference: string,
+): Promise<CheckoutBooking | null> {
   const db = getDb();
 
-  if (reference.startsWith("YPK-")) {
+  if (bookingType === "PACKAGE") {
     const booking = await db.packageBooking.findUnique({
       where: { reference },
       select: {
@@ -97,9 +105,11 @@ async function loadCheckoutBooking(reference: string): Promise<CheckoutBooking |
 
 export default async function PaymentPage() {
   const jar = await cookies();
-  const reference = jar.get("yatra_checkout_booking")?.value;
+  const checkoutSession = verifyCheckoutSessionToken(
+    jar.get(CHECKOUT_SESSION_COOKIE)?.value,
+  );
 
-  if (!reference || !process.env.DATABASE_URL) {
+  if (!checkoutSession || !process.env.DATABASE_URL) {
     return (
       <section className="reference-section reference-section--cream">
         <div className="shell payment-state-card">
@@ -111,7 +121,10 @@ export default async function PaymentPage() {
     );
   }
 
-  const booking = await loadCheckoutBooking(reference);
+  const booking = await loadCheckoutBooking(
+    checkoutSession.t,
+    checkoutSession.r,
+  );
 
   if (!booking) {
     return (
