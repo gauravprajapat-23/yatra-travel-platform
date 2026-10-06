@@ -11,6 +11,7 @@ import {
   isContentStatus,
   updateAdminContent,
 } from "@/modules/content/admin-content-service";
+import { assignHeroMedia } from "@/modules/media/media-assignment-service";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,7 @@ export default async function AdminContentEditorPage({
         scheduledFor: Date | null;
         publishedAt: Date | null;
         updatedAt: Date;
+        heroMediaId: string | null;
       }
     | null = null;
 
@@ -75,6 +77,7 @@ export default async function AdminContentEditorPage({
         scheduledFor: true,
         publishedAt: true,
         updatedAt: true,
+        heroMediaId: true,
       },
     });
   } else if (type === "blog") {
@@ -93,6 +96,7 @@ export default async function AdminContentEditorPage({
         scheduledFor: true,
         publishedAt: true,
         updatedAt: true,
+        heroMediaId: true,
       },
     });
   } else {
@@ -111,6 +115,7 @@ export default async function AdminContentEditorPage({
         scheduledFor: true,
         publishedAt: true,
         updatedAt: true,
+        heroMediaId: true,
       },
     });
 
@@ -121,8 +126,44 @@ export default async function AdminContentEditorPage({
 
   if (!content) notFound();
 
+  const heroOptions = await db.mediaAsset.findMany({
+    where: {
+      mimeType: { startsWith: "image/" },
+      publicUrl: { not: null },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 200,
+    select: {
+      id: true,
+      objectKey: true,
+      publicUrl: true,
+      altText: true,
+    },
+  });
+
   const contentId = content.id;
   const contentType = type;
+
+  async function saveHero(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "content.write")) {
+      redirect(backPath(contentType));
+    }
+
+    const value = String(formData.get("heroMediaId") ?? "").trim();
+
+    await assignHeroMedia({
+      type: contentType,
+      entityId: contentId,
+      mediaId: value || null,
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath(backPath(contentType));
+    revalidatePath(`/admin/content/${contentType}/${contentId}`);
+  }
 
   async function save(formData: FormData) {
     "use server";
@@ -179,6 +220,33 @@ export default async function AdminContentEditorPage({
             <div><dt>Published</dt><dd>{content.publishedAt?.toLocaleString("en-IN") ?? "Not published"}</dd></div>
             <div><dt>Updated</dt><dd>{content.updatedAt.toLocaleString("en-IN")}</dd></div>
           </dl>
+        </section>
+
+        <section className="admin-panel admin-detail-card">
+          <h2>Hero Media</h2>
+          {content.heroMediaId ? (
+            <p>Current hero asset: {content.heroMediaId}</p>
+          ) : (
+            <p>No hero media assigned.</p>
+          )}
+          {hasPermission(session.roles, "content.write") ? (
+            <form action={saveHero}>
+              <label>
+                Hero image
+                <select name="heroMediaId" defaultValue={content.heroMediaId ?? ""}>
+                  <option value="">No hero image</option>
+                  {heroOptions.map((asset) => (
+                    <option key={asset.id} value={asset.id}>
+                      {asset.altText ?? asset.objectKey.split("/").pop() ?? asset.objectKey}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button className="admin-secondary-button" type="submit">
+                Save Hero Image
+              </button>
+            </form>
+          ) : null}
         </section>
 
         <section className="admin-panel admin-detail-card">
