@@ -1,12 +1,39 @@
 import type { Metadata } from "next";
 import { ButtonLink } from "@/components/button-link";
+import { CmsPublicDocument } from "@/components/cms-public-document";
+import { getPublicCmsPageBySlug } from "@/lib/public-cms";
 
-export const metadata: Metadata = {
-  title: "About YATRA",
-  description: "Learn about YATRA, our values and our approach to premium road journeys across India.",
-};
+export const dynamic = "force-dynamic";
 
-export default function AboutPage() {
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getPublicCmsPageBySlug("about");
+
+  if (!page) {
+    return {
+      title: "About YATRA",
+      description:
+        "Learn about YATRA, our values and our approach to premium road journeys across India.",
+    };
+  }
+
+  return {
+    title: page.seoTitle ?? page.title,
+    description: page.seoDescription ?? page.excerpt ?? undefined,
+    alternates: page.canonicalUrl ? { canonical: page.canonicalUrl } : undefined,
+    robots: {
+      index: page.robotsIndex,
+      follow: page.robotsFollow,
+    },
+  };
+}
+
+export default async function AboutPage() {
+  const page = await getPublicCmsPageBySlug("about");
+
+  if (page) {
+    return <CmsPublicDocument page={page} eyebrow="ABOUT YATRA" />;
+  }
+
   return (
     <>
       <section className="story-hero story-hero--about">
