@@ -6,7 +6,9 @@
   "exports": {
     "./payments/razorpay-client": "./src/payments/razorpay-client.ts",
     "./payments/razorpay-config": "./src/payments/razorpay-config.ts",
-    "./payments/razorpay-signature": "./src/payments/razorpay-signature.ts"
+    "./payments/razorpay-signature": "./src/payments/razorpay-signature.ts",
+    "./storage/s3-config": "./src/storage/s3-config.ts",
+    "./storage/s3-client": "./src/storage/s3-client.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
