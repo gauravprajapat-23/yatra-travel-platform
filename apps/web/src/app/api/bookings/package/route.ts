@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import {
+  consumePublicWriteAttempt,
+  rateLimitedResponse,
+} from "@/lib/public-write-rate-limit";
+import {
   CHECKOUT_SESSION_COOKIE,
   checkoutSessionCookieOptions,
   checkoutSessionSigningConfigured,
@@ -34,6 +38,25 @@ function isEmail(value: string): boolean {
 }
 
 export async function POST(request: Request) {
+  const rateLimit = await consumePublicWriteAttempt({
+    request,
+    scope: "booking_package",
+    maxAttempts: 20,
+    windowMs: 15 * 60 * 1000,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      rateLimitedResponse(rateLimit.retryAfterSeconds),
+      {
+        status: 429,
+        headers: {
+          "Cache-Control": "no-store",
+          "Retry-After": String(rateLimit.retryAfterSeconds),
+        },
+      },
+    );
+  }
   if (!checkoutSessionSigningConfigured()) {
     return NextResponse.json(
       {
