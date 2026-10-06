@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { getDb } from "@yatra/db/client";
+import {
+  CHECKOUT_SESSION_COOKIE,
+  verifyCheckoutSessionToken,
+} from "@/lib/checkout-session";
 
 export const metadata: Metadata = {
   title: "Booking Checkout",
@@ -66,12 +70,14 @@ export default async function CheckoutPage({
 
   if (!isCustomTrip && process.env.DATABASE_URL) {
     const jar = await cookies();
-    const reference = jar.get("yatra_checkout_booking")?.value;
+    const checkoutSession = verifyCheckoutSessionToken(
+      jar.get(CHECKOUT_SESSION_COOKIE)?.value,
+    );
 
-    if (reference) {
+    if (checkoutSession?.t === "CAR") {
       const db = getDb();
       booking = await db.carBooking.findUnique({
-        where: { reference },
+        where: { reference: checkoutSession.r },
         select: {
           reference: true,
           status: true,
