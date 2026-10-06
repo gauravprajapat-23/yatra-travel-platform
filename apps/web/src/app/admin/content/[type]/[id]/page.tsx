@@ -12,6 +12,10 @@ import {
   updateAdminContent,
 } from "@/modules/content/admin-content-service";
 import { assignHeroMedia } from "@/modules/media/media-assignment-service";
+import {
+  stringifyStructuredBody,
+  updateStructuredContentBody,
+} from "@/modules/content/admin-structured-content-service";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +62,7 @@ export default async function AdminContentEditorPage({
         publishedAt: Date | null;
         updatedAt: Date;
         heroMediaId: string | null;
+        body: unknown;
       }
     | null = null;
 
@@ -78,6 +83,7 @@ export default async function AdminContentEditorPage({
         publishedAt: true,
         updatedAt: true,
         heroMediaId: true,
+        body: true,
       },
     });
   } else if (type === "blog") {
@@ -97,6 +103,7 @@ export default async function AdminContentEditorPage({
         publishedAt: true,
         updatedAt: true,
         heroMediaId: true,
+        body: true,
       },
     });
   } else {
@@ -116,6 +123,7 @@ export default async function AdminContentEditorPage({
         publishedAt: true,
         updatedAt: true,
         heroMediaId: true,
+        body: true,
       },
     });
 
@@ -147,6 +155,28 @@ export default async function AdminContentEditorPage({
 
   const contentId = content.id;
   const contentType = type;
+
+  async function saveBody(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "content.write")) {
+      redirect(backPath(contentType));
+    }
+
+    await updateStructuredContentBody({
+      type: contentType,
+      id: contentId,
+      actorUserId: currentSession.userId,
+      rawBody: String(formData.get("body") ?? "[]"),
+    });
+
+    revalidatePath(backPath(contentType));
+    revalidatePath(`/admin/content/${contentType}/${contentId}`);
+    if (contentType === "destination") {
+      revalidatePath(`/destinations/${content.slug}`);
+    }
+  }
 
   async function saveHero(formData: FormData) {
     "use server";
@@ -258,6 +288,34 @@ export default async function AdminContentEditorPage({
               </button>
             </form>
           ) : null}
+        </section>
+
+        <section className="admin-panel admin-detail-card">
+          <h2>Structured Body</h2>
+          <p>
+            Body content is stored as safe structured blocks. Raw HTML/script is not accepted.
+          </p>
+          {hasPermission(session.roles, "content.write") ? (
+            <form action={saveBody}>
+              <label>
+                Structured JSON
+                <textarea
+                  name="body"
+                  defaultValue={stringifyStructuredBody(content.body)}
+                  rows={18}
+                  spellCheck={false}
+                />
+              </label>
+              <small>
+                Supported block types: paragraph, heading, image, gallery, quote, callout, cta, list, routeHighlights, itinerarySummary, faqGroup.
+              </small>
+              <button className="admin-primary-button" type="submit">
+                Save Structured Body
+              </button>
+            </form>
+          ) : (
+            <pre>{stringifyStructuredBody(content.body)}</pre>
+          )}
         </section>
 
         <section className="admin-panel admin-detail-card">
