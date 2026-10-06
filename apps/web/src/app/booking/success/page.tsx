@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { getDb } from "@yatra/db/client";
 
@@ -59,7 +60,7 @@ export default async function BookingSuccessPage() {
         <div className="shell payment-state-card">
           <h1>Booking details unavailable</h1>
           <p>Please use your booking reference to contact YATRA support.</p>
-          <a className="button-link button-link--primary" href="/contact">Contact Support →</a>
+          <Link className="button-link button-link--primary" href="/contact">Contact Support →</Link>
         </div>
       </section>
     );
@@ -118,7 +119,7 @@ export default async function BookingSuccessPage() {
           <aside className="booking-card">
             <h2>Need Help?</h2>
             <p>Our travel experts can assist with this booking using reference <strong>{booking.reference}</strong>.</p>
-            <a className="button-link button-link--primary" href="/contact">Contact Support →</a>
+            <Link className="button-link button-link--primary" href="/contact">Contact Support →</Link>
           </aside>
         </div>
       </section>
