@@ -1,9 +1,73 @@
+import { redirect } from "next/navigation";
+import { getDb } from "@yatra/db/client";
+import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
-const rows=[
- ["Rahul Mehta","+91 98765 43210","DL1420167890","8 yrs","★ 4.8",<StatusPill key="1">Available</StatusPill>,<StatusPill key="2">Valid</StatusPill>,"•••"],
- ["Suresh Yadav","+91 98765 67890","UP3220154321","6 yrs","★ 4.6",<StatusPill key="3" tone="orange">On Trip</StatusPill>,<StatusPill key="4">Valid</StatusPill>,"•••"],
- ["Amit Verma","+91 98290 12345","RJ1420176543","10 yrs","★ 4.9",<StatusPill key="5">Available</StatusPill>,<StatusPill key="6">Valid</StatusPill>,"•••"],
- ["Ramesh Kumar","+91 94132 56789","RJ2720149876","12 yrs","★ 4.7",<StatusPill key="7" tone="orange">On Trip</StatusPill>,<StatusPill key="8">Valid</StatusPill>,"•••"],
- ["Vikram Singh","+91 98710 34567","HR2620161234","7 yrs","★ 4.5",<StatusPill key="9" tone="red">Maintenance</StatusPill>,<StatusPill key="10" tone="orange">Expiring</StatusPill>,"•••"],
-];
-export default function AdminDriversPage(){return <AdminTablePage active="Drivers & Staff" title="Drivers" subtitle="View, manage and assign drivers to trips. Track documents, ratings and availability." buttonLabel="Add Driver" metrics={[{label:"Total Drivers",value:"28",meta:"↑ 7%",tone:"blue"},{label:"Active Drivers",value:"24",meta:"85.7% available",tone:"green"},{label:"On Trip",value:"12",meta:"42.9% assigned",tone:"orange"},{label:"Documents Due",value:"3",meta:"expiring soon",tone:"red"}]} filters={["All Drivers","Available","On Trip","Maintenance"]} columns={["Driver","Contact","License No.","Experience","Rating","Status","Documents","Actions"]} rows={rows}/>;}
+import { requireAdminSession } from "@/lib/auth/session";
+
+function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
+  if (status === "ACTIVE") return "green";
+  if (status === "ON_LEAVE") return "orange";
+  if (status === "SUSPENDED" || status === "INACTIVE") return "red";
+  return "gray";
+}
+
+export default async function AdminDriversPage() {
+  const session = await requireAdminSession();
+  if (!hasPermission(session.roles, "driver.read")) redirect("/admin");
+
+  const db = getDb();
+  const now = new Date();
+  const soon = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+  const [drivers, total, active, onLeave, docsDue] = await Promise.all([
+    db.driver.findMany({
+      orderBy: [{ status: "asc" }, { displayName: "asc" }],
+      include: {
+        qualifications: {
+          include: { vehicleClass: { select: { name: true } } },
+        },
+      },
+      take: 100,
+    }),
+    db.driver.count(),
+    db.driver.count({ where: { status: "ACTIVE" } }),
+    db.driver.count({ where: { status: "ON_LEAVE" } }),
+    db.driver.count({
+      where: {
+        licenseExpiry: {
+          not: null,
+          lte: soon,
+        },
+      },
+    }),
+  ]);
+
+  const rows = drivers.map((driver) => [
+    driver.displayName,
+    driver.phoneLast4 ? `•••• ${driver.phoneLast4}` : "Protected",
+    driver.qualifications.map((item) => item.vehicleClass.name).join(", ") || "Unqualified",
+    driver.licenseExpiry?.toLocaleDateString("en-IN") ?? "Not recorded",
+    <StatusPill key={driver.id} tone={tone(driver.status)}>
+      {driver.status.replaceAll("_", " ")}
+    </StatusPill>,
+    driver.licenseExpiry && driver.licenseExpiry <= soon ? "Due soon" : "OK",
+    driver.internalNotes ?? "—",
+  ]);
+
+  return (
+    <AdminTablePage
+      active="Drivers & Staff"
+      title="Drivers"
+      subtitle="Live driver roster with qualifications and document status."
+      metrics={[
+        { label: "Total Drivers", value: total.toString(), meta: "all records", tone: "blue" },
+        { label: "Active Drivers", value: active.toString(), meta: "eligible for assignment", tone: "green" },
+        { label: "On Leave", value: onLeave.toString(), meta: "temporarily unavailable", tone: "orange" },
+        { label: "Documents Due", value: docsDue.toString(), meta: "license due within 30 days", tone: "red" },
+      ]}
+      filters={["Latest 100"]}
+      columns={["Driver", "Contact", "Qualified Classes", "License Expiry", "Status", "Documents", "Notes"]}
+      rows={rows}
+    />
+  );
+}
