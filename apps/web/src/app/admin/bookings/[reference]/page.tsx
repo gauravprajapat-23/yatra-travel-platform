@@ -4,8 +4,6 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import {
-
-export const dynamic = "force-dynamic";
   bookingStatuses,
   canTransitionBooking,
   type BookingStatus,
@@ -17,6 +15,8 @@ import {
   transitionPackageBookingStatus,
 } from "@/modules/booking/booking-status-service";
 import { assignCarBookingResources } from "@/modules/booking/car-assignment-service";
+
+export const dynamic = "force-dynamic";
 
 function money(minor: bigint, currency: string) {
   return new Intl.NumberFormat("en-IN", {
