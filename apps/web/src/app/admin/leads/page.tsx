@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
@@ -51,7 +52,9 @@ export default async function LeadsPage() {
       {lead.status.replaceAll("_", " ")}
     </StatusPill>,
     lead.createdAt.toLocaleDateString("en-IN"),
-    lead.reference,
+    <Link key={lead.reference} href={`/admin/leads/${lead.reference}`}>
+      {lead.reference}
+    </Link>,
   ]);
 
   return (
