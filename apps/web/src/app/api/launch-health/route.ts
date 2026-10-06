@@ -40,7 +40,7 @@ export async function GET() {
           where: { status: "ACTIVE", vehicleClass: { isActive: true } },
         }),
         db.pricingRule.count({ where: { status: "ACTIVE" } }),
-        db.bookingPolicy.count(),
+        db.bookingPolicyVersion.count({ where: { status: "ACTIVE" } }),
       ]);
 
     result.leadStorageReady = leadCount >= 0;
