@@ -36,7 +36,11 @@ export default async function CarsPage() {
               {vehicles.map((vehicle) => (
                 <article className="vehicle-list-card vehicle-list-card--reference" key={vehicle.id}>
                   <div className="vehicle-list-card__image">
-                    <img src="/assets/car-innova.webp" alt={vehicle.displayName} loading="lazy" />
+                    <img
+                      src={vehicle.primaryImageUrl ?? "/assets/car-innova.webp"}
+                      alt={vehicle.displayName}
+                      loading="lazy"
+                    />
                     {vehicle.isFeatured ? <span className="vehicle-card-badge">Featured</span> : null}
                   </div>
                   <h2>{vehicle.displayName}</h2>
