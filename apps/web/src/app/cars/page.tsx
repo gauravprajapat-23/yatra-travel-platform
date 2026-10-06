@@ -52,11 +52,9 @@ export default async function CarsPage() {
                   </div>
                   <strong>Server quote</strong>
                   <small className="vehicle-list-card__included">Final price depends on route and active pricing rules</small>
-                  {vehicle.slug === "innova-crysta" ? (
-                    <ButtonLink href="/cars/innova-crysta">View Details →</ButtonLink>
-                  ) : (
-                    <ButtonLink href="/custom-trip">Request This Vehicle →</ButtonLink>
-                  )}
+                  <ButtonLink href={`/cars/${vehicle.slug}`}>
+                    View Details →
+                  </ButtonLink>
                 </article>
               ))}
             </div>
