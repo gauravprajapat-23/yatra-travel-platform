@@ -525,3 +525,188 @@ export async function deleteDriverAvailabilityBlock(input: {
     });
   });
 }
+
+
+export async function attachVehicleMedia(input: {
+  vehicleId: string;
+  mediaId: string;
+  isPrimary: boolean;
+  actorUserId: string;
+}) {
+  const db = getDb();
+
+  return db.$transaction(
+    async (tx) => {
+      const [vehicle, media] = await Promise.all([
+        tx.vehicle.findUnique({
+          where: { id: input.vehicleId },
+          select: { id: true, displayName: true },
+        }),
+        tx.mediaAsset.findUnique({
+          where: { id: input.mediaId },
+          select: { id: true, mimeType: true, publicUrl: true },
+        }),
+      ]);
+
+      if (!vehicle) throw new Error("Vehicle not found.");
+      if (!media) throw new Error("Media asset not found.");
+      if (!media.mimeType.startsWith("image/") || !media.publicUrl) {
+        throw new Error("Vehicle media must be a public image asset.");
+      }
+
+      if (input.isPrimary) {
+        await tx.vehicleMedia.updateMany({
+          where: { vehicleId: input.vehicleId },
+          data: { isPrimary: false },
+        });
+      }
+
+      const existingCount = await tx.vehicleMedia.count({
+        where: { vehicleId: input.vehicleId },
+      });
+
+      const link = await tx.vehicleMedia.upsert({
+        where: {
+          vehicleId_mediaId: {
+            vehicleId: input.vehicleId,
+            mediaId: input.mediaId,
+          },
+        },
+        update: {
+          isPrimary: input.isPrimary,
+        },
+        create: {
+          vehicleId: input.vehicleId,
+          mediaId: input.mediaId,
+          sortOrder: existingCount,
+          isPrimary: input.isPrimary || existingCount === 0,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorUserId: input.actorUserId,
+          action: "VEHICLE_MEDIA_ATTACHED",
+          entityType: "Vehicle",
+          entityId: input.vehicleId,
+          metadata: {
+            mediaId: input.mediaId,
+            isPrimary: link.isPrimary,
+          },
+        },
+      });
+
+      return link;
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
+}
+
+export async function setPrimaryVehicleMedia(input: {
+  vehicleId: string;
+  mediaId: string;
+  actorUserId: string;
+}) {
+  const db = getDb();
+
+  return db.$transaction(async (tx) => {
+    const link = await tx.vehicleMedia.findUnique({
+      where: {
+        vehicleId_mediaId: {
+          vehicleId: input.vehicleId,
+          mediaId: input.mediaId,
+        },
+      },
+      select: { vehicleId: true, mediaId: true },
+    });
+
+    if (!link) throw new Error("Vehicle media link not found.");
+
+    await tx.vehicleMedia.updateMany({
+      where: { vehicleId: input.vehicleId },
+      data: { isPrimary: false },
+    });
+
+    await tx.vehicleMedia.update({
+      where: {
+        vehicleId_mediaId: {
+          vehicleId: input.vehicleId,
+          mediaId: input.mediaId,
+        },
+      },
+      data: { isPrimary: true },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        actorUserId: input.actorUserId,
+        action: "VEHICLE_PRIMARY_MEDIA_CHANGED",
+        entityType: "Vehicle",
+        entityId: input.vehicleId,
+        metadata: { mediaId: input.mediaId },
+      },
+    });
+  });
+}
+
+export async function detachVehicleMedia(input: {
+  vehicleId: string;
+  mediaId: string;
+  actorUserId: string;
+}) {
+  const db = getDb();
+
+  return db.$transaction(async (tx) => {
+    const link = await tx.vehicleMedia.findUnique({
+      where: {
+        vehicleId_mediaId: {
+          vehicleId: input.vehicleId,
+          mediaId: input.mediaId,
+        },
+      },
+    });
+
+    if (!link) throw new Error("Vehicle media link not found.");
+
+    await tx.vehicleMedia.delete({
+      where: {
+        vehicleId_mediaId: {
+          vehicleId: input.vehicleId,
+          mediaId: input.mediaId,
+        },
+      },
+    });
+
+    if (link.isPrimary) {
+      const next = await tx.vehicleMedia.findFirst({
+        where: { vehicleId: input.vehicleId },
+        orderBy: [{ sortOrder: "asc" }, { mediaId: "asc" }],
+      });
+
+      if (next) {
+        await tx.vehicleMedia.update({
+          where: {
+            vehicleId_mediaId: {
+              vehicleId: next.vehicleId,
+              mediaId: next.mediaId,
+            },
+          },
+          data: { isPrimary: true },
+        });
+      }
+    }
+
+    await tx.auditLog.create({
+      data: {
+        actorUserId: input.actorUserId,
+        action: "VEHICLE_MEDIA_DETACHED",
+        entityType: "Vehicle",
+        entityId: input.vehicleId,
+        metadata: {
+          mediaId: input.mediaId,
+          wasPrimary: link.isPrimary,
+        },
+      },
+    });
+  });
+}
