@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import {
+  consumePublicWriteAttempt,
+  rateLimitedResponse,
+} from "@/lib/public-write-rate-limit";
 import { getDb } from "@yatra/db/client";
 import { selectPricingRule } from "@yatra/domain/pricing/rule-selection";
 
@@ -41,6 +45,25 @@ function ttlMinutes(): number {
 }
 
 export async function POST(request: Request) {
+  const rateLimit = await consumePublicWriteAttempt({
+    request,
+    scope: "quote_car",
+    maxAttempts: 60,
+    windowMs: 15 * 60 * 1000,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      rateLimitedResponse(rateLimit.retryAfterSeconds),
+      {
+        status: 429,
+        headers: {
+          "Cache-Control": "no-store",
+          "Retry-After": String(rateLimit.retryAfterSeconds),
+        },
+      },
+    );
+  }
   if (!process.env.DATABASE_URL) {
     return NextResponse.json(
       { error: { code: "DATABASE_NOT_CONFIGURED", message: "Quote service is unavailable." } },
