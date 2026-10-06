@@ -124,7 +124,7 @@ export function StructuredContentRenderer({ body }: { body: unknown }) {
 
         if (block.type === "faqGroup") {
           if (!Array.isArray(data.items)) return null;
-          const items = data.items.flatMap((item) => {
+          const items = data.items.flatMap((item: unknown) => {
             if (typeof item !== "object" || item === null || Array.isArray(item)) return [];
             const source = item as Record<string, unknown>;
             const question = text(source.question);
@@ -134,7 +134,7 @@ export function StructuredContentRenderer({ body }: { body: unknown }) {
           if (!items.length) return null;
           return (
             <div className="structured-faq" key={block.id}>
-              {items.map((item, index) => (
+              {items.map((item: { question: string; answer: string }, index: number) => (
                 <details key={`${block.id}-${index}`}>
                   <summary>{item.question}</summary>
                   <p>{item.answer}</p>
@@ -146,7 +146,7 @@ export function StructuredContentRenderer({ body }: { body: unknown }) {
 
         if (block.type === "gallery") {
           if (!Array.isArray(data.items)) return null;
-          const items = data.items.flatMap((item) => {
+          const items = data.items.flatMap((item: unknown) => {
             if (typeof item !== "object" || item === null || Array.isArray(item)) return [];
             const source = item as Record<string, unknown>;
             const url = text(source.url);
@@ -158,7 +158,7 @@ export function StructuredContentRenderer({ body }: { body: unknown }) {
           if (!items.length) return null;
           return (
             <div className="structured-gallery" key={block.id}>
-              {items.map((item, index) => (
+              {items.map((item: { url: string; alt: string }, index: number) => (
                 <img key={`${block.id}-${index}`} src={item.url} alt={item.alt} loading="lazy"/>
               ))}
             </div>
