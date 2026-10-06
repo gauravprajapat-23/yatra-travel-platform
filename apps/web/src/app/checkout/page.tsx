@@ -182,9 +182,9 @@ export default async function CheckoutPage({
               <p>Your request needs review before payment can be enabled.</p>
             </div>
           ) : canPay && booking ? (
-            <a className="button-link button-link--primary" href="/payment">
+            <Link className="button-link button-link--primary" href="/payment">
               Continue to Secure Payment →
-            </a>
+            </Link>
           ) : (
             <div className="custom-trip-checkout-notice">
               <strong>Payment not required yet</strong>
