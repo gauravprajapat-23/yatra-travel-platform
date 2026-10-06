@@ -23,10 +23,7 @@ export async function getPublicFaqs(): Promise<PublicFaq[]> {
     const rows = await db.faq.findMany({
       where: {
         status: "PUBLISHED",
-        OR: [
-          { publishedAt: null },
-          { publishedAt: { lte: now } },
-        ],
+        publishedAt: { lte: now },
       },
       select: {
         id: true,
