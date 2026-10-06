@@ -1,0 +1,296 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { getDb } from "@yatra/db/client";
+import { hasPermission } from "@yatra/domain/auth/permissions";
+import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { requireAdminSession } from "@/lib/auth/session";
+import {
+  addVehicleAvailabilityBlock,
+  deleteVehicleAvailabilityBlock,
+  isVehicleStatus,
+  updateVehicle,
+  vehicleStatuses,
+} from "@/modules/fleet/fleet-management-service";
+
+export const dynamic = "force-dynamic";
+
+function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
+  if (status === "ACTIVE") return "green";
+  if (status === "MAINTENANCE") return "orange";
+  if (status === "INACTIVE" || status === "RETIRED") return "red";
+  return "gray";
+}
+
+function optionalInt(value: FormDataEntryValue | null): number | null {
+  const text = String(value ?? "").trim();
+  if (!text) return null;
+  const parsed = Number(text);
+  if (!Number.isInteger(parsed)) throw new Error("Expected a whole number.");
+  return parsed;
+}
+
+export default async function VehicleDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const session = await requireAdminSession();
+  if (!hasPermission(session.roles, "vehicle.read")) redirect("/admin");
+
+  const { id } = await params;
+  const db = getDb();
+
+  const [vehicle, classes] = await Promise.all([
+    db.vehicle.findUnique({
+      where: { id },
+      include: {
+        vehicleClass: true,
+        availability: {
+          orderBy: { startsAt: "desc" },
+          take: 50,
+        },
+        media: {
+          include: {
+            media: {
+              select: {
+                id: true,
+                publicUrl: true,
+                altText: true,
+                objectKey: true,
+              },
+            },
+          },
+          orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
+        },
+      },
+    }),
+    db.vehicleClass.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    }),
+  ]);
+
+  if (!vehicle) notFound();
+
+  const vehicleId = vehicle.id;
+
+  async function save(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "vehicle.write")) {
+      redirect("/admin/vehicles");
+    }
+
+    const status = String(formData.get("status") ?? "");
+    if (!isVehicleStatus(status)) throw new Error("Invalid vehicle status.");
+
+    await updateVehicle({
+      vehicleId,
+      displayName: String(formData.get("displayName") ?? ""),
+      vehicleClassId: String(formData.get("vehicleClassId") ?? ""),
+      status,
+      seats: Number(formData.get("seats")),
+      luggage: optionalInt(formData.get("luggage")),
+      airConditioned: formData.get("airConditioned") === "on",
+      description: String(formData.get("description") ?? ""),
+      isFeatured: formData.get("isFeatured") === "on",
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath("/admin/vehicles");
+    revalidatePath(`/admin/vehicles/${vehicleId}`);
+  }
+
+  async function addBlock(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "vehicle.write")) {
+      redirect("/admin/vehicles");
+    }
+
+    await addVehicleAvailabilityBlock({
+      vehicleId,
+      startsAt: new Date(String(formData.get("startsAt") ?? "")),
+      endsAt: new Date(String(formData.get("endsAt") ?? "")),
+      reason: String(formData.get("reason") ?? ""),
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath(`/admin/vehicles/${vehicleId}`);
+  }
+
+  async function removeBlock(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "vehicle.write")) {
+      redirect("/admin/vehicles");
+    }
+
+    await deleteVehicleAvailabilityBlock({
+      vehicleId,
+      blockId: String(formData.get("blockId") ?? ""),
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath(`/admin/vehicles/${vehicleId}`);
+  }
+
+  return (
+    <AdminShell
+      active="Fleet Management"
+      title={vehicle.displayName}
+      subtitle={vehicle.registrationNumber}
+      actions={
+        <Link className="admin-secondary-button" href="/admin/vehicles">
+          ← Vehicles
+        </Link>
+      }
+    >
+      <div className="admin-detail-grid">
+        <section className="admin-panel admin-detail-card">
+          <div className="admin-panel-heading">
+            <h2>Vehicle Overview</h2>
+            <StatusPill tone={tone(vehicle.status)}>
+              {vehicle.status.replaceAll("_", " ")}
+            </StatusPill>
+          </div>
+          <dl>
+            <div><dt>Class</dt><dd>{vehicle.vehicleClass.name}</dd></div>
+            <div><dt>Seats</dt><dd>{vehicle.seats}</dd></div>
+            <div><dt>Luggage</dt><dd>{vehicle.luggage ?? "—"}</dd></div>
+            <div><dt>Comfort</dt><dd>{vehicle.airConditioned ? "Air conditioned" : "Non-AC"}</dd></div>
+            <div><dt>Featured</dt><dd>{vehicle.isFeatured ? "Yes" : "No"}</dd></div>
+          </dl>
+          {vehicle.description ? <p>{vehicle.description}</p> : null}
+        </section>
+
+        <section className="admin-panel admin-detail-card">
+          <h2>Edit Vehicle</h2>
+          {hasPermission(session.roles, "vehicle.write") ? (
+            <form action={save}>
+              <label>
+                Vehicle name
+                <input name="displayName" defaultValue={vehicle.displayName} required minLength={2} maxLength={120}/>
+              </label>
+              <label>
+                Vehicle class
+                <select name="vehicleClassId" defaultValue={vehicle.vehicleClassId}>
+                  {classes.map((item) => (
+                    <option key={item.id} value={item.id}>{item.name}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Status
+                <select name="status" defaultValue={vehicle.status}>
+                  {vehicleStatuses.map((status) => (
+                    <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Seats
+                <input type="number" name="seats" min={1} max={80} defaultValue={vehicle.seats} required/>
+              </label>
+              <label>
+                Luggage capacity
+                <input type="number" name="luggage" min={0} max={100} defaultValue={vehicle.luggage ?? ""}/>
+              </label>
+              <label>
+                Description
+                <textarea name="description" defaultValue={vehicle.description ?? ""} maxLength={2000}/>
+              </label>
+              <label>
+                <input type="checkbox" name="airConditioned" defaultChecked={vehicle.airConditioned}/>
+                Air conditioned
+              </label>
+              <label>
+                <input type="checkbox" name="isFeatured" defaultChecked={vehicle.isFeatured}/>
+                Featured
+              </label>
+              <button className="admin-primary-button" type="submit">Save Vehicle</button>
+            </form>
+          ) : (
+            <p>Your role has read-only fleet access.</p>
+          )}
+        </section>
+
+        <section className="admin-panel admin-detail-card">
+          <h2>Availability Blocks</h2>
+          {vehicle.availability.length === 0 ? (
+            <p>No availability blocks recorded.</p>
+          ) : (
+            <table className="admin-table">
+              <thead>
+                <tr><th>Starts</th><th>Ends</th><th>Reason</th><th>Action</th></tr>
+              </thead>
+              <tbody>
+                {vehicle.availability.map((block) => (
+                  <tr key={block.id}>
+                    <td>{block.startsAt.toLocaleString("en-IN")}</td>
+                    <td>{block.endsAt.toLocaleString("en-IN")}</td>
+                    <td>{block.reason ?? "—"}</td>
+                    <td>
+                      {hasPermission(session.roles, "vehicle.write") ? (
+                        <form action={removeBlock}>
+                          <input type="hidden" name="blockId" value={block.id}/>
+                          <button className="admin-danger-button" type="submit">Delete</button>
+                        </form>
+                      ) : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          {hasPermission(session.roles, "vehicle.write") ? (
+            <form action={addBlock}>
+              <h3>Add Availability Block</h3>
+              <label>
+                Starts
+                <input type="datetime-local" name="startsAt" required/>
+              </label>
+              <label>
+                Ends
+                <input type="datetime-local" name="endsAt" required/>
+              </label>
+              <label>
+                Reason
+                <textarea name="reason" maxLength={500}/>
+              </label>
+              <button className="admin-secondary-button" type="submit">Add Block</button>
+            </form>
+          ) : null}
+        </section>
+
+        <section className="admin-panel admin-detail-card">
+          <h2>Vehicle Media</h2>
+          {vehicle.media.length === 0 ? (
+            <p>No media attached to this vehicle yet.</p>
+          ) : (
+            <div className="admin-media-grid">
+              {vehicle.media.map((item) => (
+                <article className="admin-media-card" key={item.mediaId}>
+                  {item.media.publicUrl ? (
+                    <img
+                      src={item.media.publicUrl}
+                      alt={item.media.altText ?? vehicle.displayName}
+                      loading="lazy"
+                    />
+                  ) : null}
+                  <strong>{item.media.altText ?? item.media.objectKey}</strong>
+                  <small>{item.isPrimary ? "Primary" : "Gallery"}</small>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+    </AdminShell>
+  );
+}
