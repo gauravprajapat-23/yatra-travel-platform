@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@yatra/db/client";
+import {
+  CHECKOUT_SESSION_COOKIE,
+  checkoutSessionCookieOptions,
+  checkoutSessionSigningConfigured,
+  createCheckoutSessionToken,
+  type CheckoutBookingType,
+} from "@/lib/checkout-session";
+import { consumeBookingLookupAttempt } from "@/modules/booking/booking-lookup-rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +25,41 @@ function str(value: unknown, max: number): string | null {
 
 function money(value: bigint): string {
   return value.toString();
+}
+
+function bookingResponse(input: {
+  bookingType: CheckoutBookingType;
+  reference: string;
+  status: string;
+  booking: Record<string, unknown>;
+}) {
+  const resumePayment =
+    input.status === "PENDING_PAYMENT" &&
+    checkoutSessionSigningConfigured();
+
+  const response = NextResponse.json(
+    {
+      booking: input.booking,
+      resumePayment,
+    },
+    { headers: { "Cache-Control": "no-store" } },
+  );
+
+  if (resumePayment) {
+    const token = createCheckoutSessionToken({
+      bookingType: input.bookingType,
+      bookingReference: input.reference,
+    });
+
+    response.cookies.set(
+      CHECKOUT_SESSION_COOKIE,
+      token,
+      checkoutSessionCookieOptions(),
+    );
+    response.cookies.delete("yatra_checkout_booking");
+  }
+
+  return response;
 }
 
 export async function POST(request: Request) {
@@ -41,6 +84,26 @@ export async function POST(request: Request) {
   }
 
   try {
+    const limit = await consumeBookingLookupAttempt(request);
+
+    if (!limit.allowed) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "LOOKUP_RATE_LIMITED",
+            message: "Too many booking lookup attempts. Please try again later.",
+          },
+        },
+        {
+          status: 429,
+          headers: {
+            "Cache-Control": "no-store",
+            "Retry-After": String(limit.retryAfterSeconds),
+          },
+        },
+      );
+    }
+
     const db = getDb();
 
     const car = await db.carBooking.findFirst({
@@ -62,25 +125,25 @@ export async function POST(request: Request) {
     });
 
     if (car) {
-      return NextResponse.json(
-        {
-          booking: {
-            type: "CAR",
-            reference: car.reference,
-            status: car.status,
-            title: car.vehicleClass.name,
-            route: `${car.originText} → ${car.destinationText}`,
-            startsAt: car.startsAt.toISOString(),
-            endsAt: car.endsAt?.toISOString() ?? null,
-            travellers: car.travellers,
-            currency: car.currency,
-            totalMinor: money(car.totalMinor),
-            confirmedAt: car.confirmedAt?.toISOString() ?? null,
-            createdAt: car.createdAt.toISOString(),
-          },
+      return bookingResponse({
+        bookingType: "CAR",
+        reference: car.reference,
+        status: car.status,
+        booking: {
+          type: "CAR",
+          reference: car.reference,
+          status: car.status,
+          title: car.vehicleClass.name,
+          route: `${car.originText} → ${car.destinationText}`,
+          startsAt: car.startsAt.toISOString(),
+          endsAt: car.endsAt?.toISOString() ?? null,
+          travellers: car.travellers,
+          currency: car.currency,
+          totalMinor: money(car.totalMinor),
+          confirmedAt: car.confirmedAt?.toISOString() ?? null,
+          createdAt: car.createdAt.toISOString(),
         },
-        { headers: { "Cache-Control": "no-store" } },
-      );
+      });
     }
 
     const pkg = await db.packageBooking.findFirst({
@@ -99,25 +162,25 @@ export async function POST(request: Request) {
     });
 
     if (pkg) {
-      return NextResponse.json(
-        {
-          booking: {
-            type: "PACKAGE",
-            reference: pkg.reference,
-            status: pkg.status,
-            title: pkg.package.title,
-            route: "Tour package",
-            startsAt: pkg.travelStartAt.toISOString(),
-            endsAt: null,
-            travellers: pkg.travellers,
-            currency: pkg.currency,
-            totalMinor: money(pkg.totalMinor),
-            confirmedAt: pkg.confirmedAt?.toISOString() ?? null,
-            createdAt: pkg.createdAt.toISOString(),
-          },
+      return bookingResponse({
+        bookingType: "PACKAGE",
+        reference: pkg.reference,
+        status: pkg.status,
+        booking: {
+          type: "PACKAGE",
+          reference: pkg.reference,
+          status: pkg.status,
+          title: pkg.package.title,
+          route: "Tour package",
+          startsAt: pkg.travelStartAt.toISOString(),
+          endsAt: null,
+          travellers: pkg.travellers,
+          currency: pkg.currency,
+          totalMinor: money(pkg.totalMinor),
+          confirmedAt: pkg.confirmedAt?.toISOString() ?? null,
+          createdAt: pkg.createdAt.toISOString(),
         },
-        { headers: { "Cache-Control": "no-store" } },
-      );
+      });
     }
 
     return NextResponse.json(
