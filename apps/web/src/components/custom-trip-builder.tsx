@@ -4,6 +4,9 @@ import { FormEvent, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 type TripFormState = {
+  name: string;
+  email: string;
+  phone: string;
   from: string;
   to: string;
   duration: string;
@@ -11,9 +14,13 @@ type TripFormState = {
   travellers: string;
   vehicle: string;
   requests: string;
+  website: string;
 };
 
 const initialState: TripFormState = {
+  name: "",
+  email: "",
+  phone: "",
   from: "Delhi",
   to: "Kedarnath",
   duration: "6",
@@ -21,7 +28,15 @@ const initialState: TripFormState = {
   travellers: "4",
   vehicle: "SUV · 6 Seats",
   requests: "",
+  website: "",
 };
+
+function key(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `lead-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
 
 export function CustomTripBuilder() {
   const router = useRouter();
@@ -39,13 +54,26 @@ export function CustomTripBuilder() {
     if (error) setError("");
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    const name = form.name.trim();
+    const email = form.email.trim().toLowerCase();
+    const phone = form.phone.trim();
     const from = form.from.trim();
     const to = form.to.trim();
     const travellers = Number(form.travellers);
     const duration = Number(form.duration);
+
+    if (!name) {
+      setError("Please enter your name.");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
 
     if (!from || !to) {
       setError("Please enter both the starting city and destination.");
@@ -67,23 +95,70 @@ export function CustomTripBuilder() {
       return;
     }
 
-    const params = new URLSearchParams({
-      source: "custom-trip",
-      from,
-      to,
-      duration: String(duration),
-      travelDate: form.travelDate,
-      travellers: String(travellers),
-      vehicle: form.vehicle,
-    });
+    setError("");
 
-    if (form.requests.trim()) {
-      params.set("requests", form.requests.trim());
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "Idempotency-Key": key(),
+        },
+        body: JSON.stringify({
+          type: "CUSTOM_TRIP",
+          name,
+          email,
+          phone,
+          message: form.requests.trim() || undefined,
+          sourcePath: "/custom-trip",
+          website: form.website,
+          trip: {
+            from,
+            to,
+            duration,
+            travelDate: form.travelDate,
+            travellers,
+            vehicle: form.vehicle,
+          },
+        }),
+      });
+
+      const result = (await response.json()) as {
+        reference?: string;
+        error?: { message?: string };
+      };
+
+      if (!response.ok || !result.reference) {
+        throw new Error(
+          result.error?.message ?? "Unable to save your custom trip request.",
+        );
+      }
+
+      const params = new URLSearchParams({
+        source: "custom-trip",
+        leadReference: result.reference,
+        from,
+        to,
+        duration: String(duration),
+        travelDate: form.travelDate,
+        travellers: String(travellers),
+        vehicle: form.vehicle,
+      });
+
+      if (form.requests.trim()) {
+        params.set("requests", form.requests.trim());
+      }
+
+      startTransition(() => {
+        router.push(`/checkout?${params.toString()}`);
+      });
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Unable to create your trip request.",
+      );
     }
-
-    startTransition(() => {
-      router.push(`/checkout?${params.toString()}`);
-    });
   }
 
   return (
@@ -92,6 +167,40 @@ export function CustomTripBuilder() {
         <h2>Trip Details</h2>
 
         <div className="trip-builder__grid">
+          <label>
+            Full Name
+            <input
+              name="name"
+              value={form.name}
+              onChange={(event) => update("name", event.target.value)}
+              autoComplete="name"
+              required
+            />
+          </label>
+
+          <label>
+            Email
+            <input
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={(event) => update("email", event.target.value)}
+              autoComplete="email"
+              required
+            />
+          </label>
+
+          <label>
+            Mobile Number
+            <input
+              name="phone"
+              value={form.phone}
+              onChange={(event) => update("phone", event.target.value)}
+              autoComplete="tel"
+              placeholder="+91"
+            />
+          </label>
+
           <label>
             From
             <input
@@ -166,6 +275,16 @@ export function CustomTripBuilder() {
           </label>
         </div>
 
+        <label className="lead-honeypot" aria-hidden="true">
+          Website
+          <input
+            tabIndex={-1}
+            autoComplete="off"
+            value={form.website}
+            onChange={(event) => update("website", event.target.value)}
+          />
+        </label>
+
         <label>
           Special Requests
           <textarea
@@ -204,8 +323,8 @@ export function CustomTripBuilder() {
         </div>
 
         <small>
-          Your request is carried securely to checkout. Final itinerary and
-          price remain server-authoritative.
+          Your request is saved before checkout. Final itinerary and price
+          remain server-authoritative.
         </small>
       </aside>
     </div>
