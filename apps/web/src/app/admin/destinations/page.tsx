@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
@@ -32,7 +33,9 @@ export default async function DestinationsPage() {
   ]);
 
   const rows = destinations.map((destination) => [
-    destination.name,
+    <Link key={destination.id} href={`/admin/content/destination/${destination.id}`}>
+      {destination.name}
+    </Link>,
     destination.slug,
     destination.kind.replaceAll("_", " "),
     destination.isFeatured ? "Featured" : "—",
