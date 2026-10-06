@@ -81,6 +81,28 @@ The GitHub Actions verification workflow must pass:
 
 Do not treat a Vercel deployment failure caused by account/build-rate limits as a source-code CI failure.
 
+## Live database certification
+
+Neon Migration Verify has successfully completed against the configured production database with:
+
+- deterministic `npm ci` install from committed `package-lock.json`
+- Prisma client generation
+- Prisma schema validation
+- all pending migrations deployed
+- canonical role seed
+- non-destructive super-admin bootstrap
+- auth foundation verification
+- CMS/SEO foundation verification
+- fleet/driver/pricing foundation verification
+- car booking foundation verification
+- booking-policy foundation verification
+- booking database invariant verification
+- package booking foundation verification
+- payment foundation verification, including one-active-payment-intent indexes
+- Prisma migration status clean
+
+This confirms the current production database schema is aligned with the repository migrations at the successful verification run.
+
 ## Runtime launch gates
 
 Before enabling paid production traffic, verify the deployed `/api/health/launch` result and confirm:
@@ -123,6 +145,12 @@ Enable one capability at a time and re-check launch health after each change.
 - storage provider credentials when MEDIA_WRITE_ENABLED=true
 
 Never expose these values in public runtime output, client bundles, documentation screenshots or audit metadata.
+
+## Dependency reproducibility
+
+A workspace-aware `package-lock.json` is committed and both Application CI and Neon Migration Verify use `npm ci`.
+
+The lockfile generation workflow remains available as a manual maintenance tool only.
 
 ## Remaining deployment blockers
 
