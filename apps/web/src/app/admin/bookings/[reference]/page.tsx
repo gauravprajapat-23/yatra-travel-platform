@@ -14,6 +14,7 @@ import {
   transitionCarBookingStatus,
   transitionPackageBookingStatus,
 } from "@/modules/booking/booking-status-service";
+import { assignCarBookingResources } from "@/modules/booking/car-assignment-service";
 
 function money(minor: bigint, currency: string) {
   return new Intl.NumberFormat("en-IN", {
@@ -120,6 +121,7 @@ export default async function BookingDetailPage({
         history: rawBooking.data.statusHistory,
         paymentIntents: rawBooking.data.paymentIntents,
         assignment: null as string | null,
+        vehicleClassId: null as string | null,
       }
     : {
         id: rawBooking.data.id,
@@ -141,11 +143,95 @@ export default async function BookingDetailPage({
         assignment: rawBooking.data.assignedDriver
           ? `${rawBooking.data.assignedDriver.displayName} · ${rawBooking.data.selectedVehicle?.displayName ?? "Vehicle pending"}`
           : null,
+        vehicleClassId: rawBooking.data.vehicleClassId,
       };
 
   const nextStatuses = bookingStatuses.filter((status) =>
     canTransitionBooking(booking.status, status),
   );
+
+  const [assignableVehicles, assignableDrivers] =
+    booking.type === "CAR" &&
+    booking.vehicleClassId &&
+    ["CONFIRMED", "DRIVER_ASSIGNED"].includes(booking.status)
+      ? await Promise.all([
+          db.vehicle.findMany({
+            where: {
+              status: "ACTIVE",
+              vehicleClassId: booking.vehicleClassId,
+            },
+            orderBy: { displayName: "asc" },
+            select: {
+              id: true,
+              displayName: true,
+              registrationNumber: true,
+            },
+          }),
+          db.driver.findMany({
+            where: {
+              status: "ACTIVE",
+              qualifications: {
+                some: { vehicleClassId: booking.vehicleClassId },
+              },
+            },
+            orderBy: { displayName: "asc" },
+            select: {
+              id: true,
+              displayName: true,
+              phoneLast4: true,
+              licenseExpiry: true,
+            },
+          }),
+        ])
+      : [[], []];
+
+  const bookingId = booking.id;
+  const bookingReference = booking.reference;
+  const bookingType = booking.type;
+
+  async function assignResources(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "booking.assign")) {
+      redirect(`/admin/bookings/${bookingReference}`);
+    }
+
+    if (bookingType !== "CAR") {
+      throw new Error("Vehicle and driver assignment is only available for car bookings.");
+    }
+
+    const vehicleId = String(formData.get("vehicleId") ?? "");
+    const driverId = String(formData.get("driverId") ?? "");
+
+    if (!vehicleId || !driverId) {
+      throw new Error("Vehicle and driver are required.");
+    }
+
+    const result = await assignCarBookingResources({
+      bookingId,
+      vehicleId,
+      driverId,
+      actorUserId: currentSession.userId,
+    });
+
+    await db.auditLog.create({
+      data: {
+        actorUserId: currentSession.userId,
+        action: "BOOKING_RESOURCES_ASSIGNED",
+        entityType: "CarBooking",
+        entityId: bookingId,
+        metadata: {
+          reference: bookingReference,
+          vehicleName: result.vehicleName,
+          driverName: result.driverName,
+        },
+      },
+    });
+
+    revalidatePath(`/admin/bookings/${bookingReference}`);
+    revalidatePath("/admin/bookings");
+  }
 
   async function updateStatus(formData: FormData) {
     "use server";
@@ -275,6 +361,45 @@ export default async function BookingDetailPage({
               <p>No manual status transition is available for your role or the current state.</p>
             )}
           </article>
+
+          {booking.type === "CAR" ? (
+            <article className="admin-panel admin-detail-card">
+              <h2>Vehicle & Driver Assignment</h2>
+              {hasPermission(session.roles, "booking.assign") &&
+              assignableVehicles.length > 0 &&
+              assignableDrivers.length > 0 ? (
+                <form action={assignResources}>
+                  <label>
+                    Vehicle
+                    <select name="vehicleId" required defaultValue="">
+                      <option value="" disabled>Select active vehicle</option>
+                      {assignableVehicles.map((vehicle) => (
+                        <option key={vehicle.id} value={vehicle.id}>
+                          {vehicle.displayName} · {vehicle.registrationNumber}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Driver
+                    <select name="driverId" required defaultValue="">
+                      <option value="" disabled>Select qualified driver</option>
+                      {assignableDrivers.map((driver) => (
+                        <option key={driver.id} value={driver.id}>
+                          {driver.displayName}{driver.phoneLast4 ? ` · •••• ${driver.phoneLast4}` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button className="admin-primary-button" type="submit">
+                    Assign Resources
+                  </button>
+                </form>
+              ) : (
+                <p>No assignable resources are available, or your role cannot assign bookings.</p>
+              )}
+            </article>
+          ) : null}
 
           <article className="admin-panel admin-detail-card">
             <h2>Booking Timeline</h2>
