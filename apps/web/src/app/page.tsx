@@ -2,6 +2,8 @@ import { ButtonLink } from "@/components/button-link";
 import { HeroJourney } from "@/components/hero-journey";
 import { getPublicFleet } from "@/lib/public-fleet";
 
+export const dynamic = "force-dynamic";
+
 const sacredJourneys = [
   { title: "Mahakaleshwar", place: "Ujjain", objectPosition: "22% center" },
   { title: "Omkareshwar", place: "Narmada", objectPosition: "52% center" },
