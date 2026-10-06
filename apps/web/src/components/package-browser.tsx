@@ -23,6 +23,7 @@ const packages: PackageCard[] = [
 ];
 
 export function PackageBrowser(){
+  const [draftQuery,setDraftQuery]=useState("");
   const [query,setQuery]=useState("");
   const [category,setCategory]=useState("All");
 
@@ -39,14 +40,14 @@ export function PackageBrowser(){
     <>
       <section className="package-search-strip">
         <div className="shell package-search-strip__inner">
-          <input value={query} onChange={e=>setQuery(e.target.value)} aria-label="Where do you want to go?" placeholder="Search destinations, e.g. Varanasi, Kerala..." />
+          <input value={draftQuery} onChange={e=>setDraftQuery(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();setQuery(draftQuery.trim());}}} aria-label="Where do you want to go?" placeholder="Search destinations, e.g. Varanasi, Kerala..." />
           <select value={category} onChange={e=>setCategory(e.target.value)} aria-label="Trip type">
             <option value="All">All trip types</option>
             <option value="Temple">Temple</option>
             <option value="Heritage">Heritage</option>
             <option value="Nature">Nature</option>
           </select>
-          <button className="button-link button-link--primary" type="button" onClick={()=>undefined}>Search Packages →</button>
+          <button className="button-link button-link--primary" type="button" onClick={()=>setQuery(draftQuery.trim())}>Search Packages →</button>
         </div>
       </section>
 
