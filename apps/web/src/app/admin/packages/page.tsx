@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
@@ -52,7 +53,9 @@ export default async function PackagesPage() {
   const rows = packages.map((pkg) => {
     const firstPrice = pkg.priceOptions[0];
     return [
-      pkg.title,
+      <Link key={pkg.id} href={`/admin/packages/${pkg.id}`}>
+        {pkg.title}
+      </Link>,
       pkg.destinations.map((item) => item.destination.name).join(", ") || "—",
       `${pkg.durationDays}D / ${pkg.durationNights}N`,
       firstPrice ? `From ${money(firstPrice.amountMinor, firstPrice.currency)}` : "Quote only",
