@@ -34,6 +34,7 @@ export default async function SettingsPage() {
     dueDestinations,
     duePackages,
     dueFaqs,
+    schedulerHeartbeat,
   ] = await Promise.all([
     db.bookingPolicyVersion.count({
       where: { code: "CAR_BOOKING", status: "ACTIVE" },
@@ -79,6 +80,15 @@ export default async function SettingsPage() {
     db.faq.count({
       where: { status: "SCHEDULED", scheduledFor: { lte: now } },
     }),
+    db.auditLog.findFirst({
+      where: {
+        action: "SCHEDULED_PUBLISHER_RUN",
+        entityType: "Scheduler",
+        entityId: "publish-content",
+      },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    }),
   ]);
 
   const razorpayConfigured = Boolean(
@@ -101,6 +111,15 @@ export default async function SettingsPage() {
   );
   const overdueScheduledContent =
     dueCms + dueBlog + dueDestinations + duePackages + dueFaqs;
+  const schedulerRecentlyRan = Boolean(
+    schedulerHeartbeat &&
+      now.getTime() - schedulerHeartbeat.createdAt.getTime() <=
+        36 * 60 * 60 * 1000,
+  );
+  const schedulerReady = schedulerConfigured && schedulerRecentlyRan;
+  const schedulerDetail = schedulerHeartbeat
+    ? `last run ${schedulerHeartbeat.createdAt.toLocaleString("en-IN")} · ${overdueScheduledContent} due`
+    : `never ran · ${overdueScheduledContent} due`;
   const fieldEncryptionConfigured = (() => {
     const raw = process.env.FIELD_ENCRYPTION_KEY?.trim();
     if (!raw) return false;
@@ -138,7 +157,15 @@ export default async function SettingsPage() {
     ["Razorpay", yesNo(razorpayConfigured), "Key ID + secret + webhook secret"],
     ["S3 Storage", yesNo(storageConfigured), "Bucket, endpoint, credentials, public base URL"],
     ["Field Encryption", yesNo(fieldEncryptionConfigured), "32-byte AES-256-GCM key for driver phone/license fields"],
-    ["Scheduled Publisher", yesNo(schedulerConfigured), `${overdueScheduledContent} due scheduled item${overdueScheduledContent === 1 ? "" : "s"}`],
+    [
+      "Scheduled Publisher",
+      schedulerReady
+        ? "Ready"
+        : schedulerConfigured
+          ? "Configured · not running"
+          : "Missing",
+      schedulerDetail,
+    ],
     ["Required Legal Pages", legalReady ? "Ready" : `${legalPages}/3 published`, "Privacy, Terms, Cancellation"],
     ["Car Booking Policy", carPolicies > 0 ? "Ready" : "Missing", `${carPolicies} active`],
     ["Package Booking Policy", packagePolicies > 0 ? "Ready" : "Missing", `${packagePolicies} active`],
