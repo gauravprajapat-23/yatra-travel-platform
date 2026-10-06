@@ -14,9 +14,7 @@ export type PublicFleetVehicle = {
 };
 
 export async function getPublicFleet(): Promise<PublicFleetVehicle[]> {
-  if (!process.env.DATABASE_URL) {
-    return [];
-  }
+  if (!process.env.DATABASE_URL) return [];
 
   try {
     const db = getDb();
@@ -60,13 +58,9 @@ export async function getPublicFleet(): Promise<PublicFleetVehicle[]> {
     }));
   } catch (error) {
     console.error(
-      "[public-fleet] Unable to load active fleet:",
+      "[public-fleet] unable to read active fleet:",
       error instanceof Error ? error.message : "Unknown database error",
     );
-
-    // Public browse pages must not make deployment/prerender availability
-    // depend on a transient database connection. Transactional APIs still
-    // fail closed and never create quotes/bookings without the database.
     return [];
   }
 }
