@@ -3,6 +3,11 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
+type LoginResponse = {
+  error?: string;
+  code?: string;
+};
+
 export function AdminLoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState("admin@yatra.com");
@@ -22,17 +27,30 @@ export function AdminLoginForm() {
         body: JSON.stringify({ email, password }),
       });
 
-      const result = (await response.json()) as { error?: string };
+      const contentType = response.headers.get("content-type") ?? "";
+      let result: LoginResponse = {};
+
+      if (contentType.includes("application/json")) {
+        result = (await response.json()) as LoginResponse;
+      } else {
+        await response.text();
+      }
 
       if (!response.ok) {
-        setError(result.error ?? "Unable to sign in.");
+        if (result.code === "AUTH_DATABASE_URL_MISSING") {
+          setError("Admin database is not configured in Vercel. Add DATABASE_URL to the Vercel Production environment and redeploy.");
+        } else if (result.code === "AUTH_DATABASE_UNAVAILABLE") {
+          setError("Admin database is unavailable. Check the Vercel DATABASE_URL value and Neon connection, then redeploy.");
+        } else {
+          setError(result.error ?? `Sign in failed (HTTP ${response.status}).`);
+        }
         return;
       }
 
       router.replace("/admin");
       router.refresh();
     } catch {
-      setError("Unable to reach the server. Please try again.");
+      setError("Unable to reach the login service. Please check your connection and try again.");
     } finally {
       setPending(false);
     }
