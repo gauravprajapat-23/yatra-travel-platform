@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
@@ -45,7 +46,9 @@ export default async function StaffPage() {
   ).length;
 
   const rows = staff.map((user) => [
-    user.name ?? "Unnamed staff",
+    <Link key={user.id} href={`/admin/staff/${user.id}`}>
+      {user.name ?? "Unnamed staff"}
+    </Link>,
     user.email,
     user.roles.map((entry) => entry.role.label).join(", "),
     user.lastLoginAt?.toLocaleString("en-IN") ?? "Never",
