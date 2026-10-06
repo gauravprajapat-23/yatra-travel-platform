@@ -34,6 +34,9 @@ export async function GET() {
         process.env.STORAGE_SECRET_ACCESS_KEY &&
         process.env.STORAGE_PUBLIC_BASE_URL,
     ),
+    scheduledPublisherConfigured: Boolean(
+      process.env.CRON_SECRET && process.env.CRON_SECRET.trim().length >= 16,
+    ),
     fieldEncryptionConfigured: (() => {
       const raw = process.env.FIELD_ENCRYPTION_KEY?.trim();
       if (!raw) return false;
