@@ -14,7 +14,8 @@
     "./package/pricing": "./src/package/pricing.ts",
     "./pricing/rule-selection": "./src/pricing/rule-selection.ts",
     "./auth/permissions": "./src/auth/permissions.ts",
-    "./auth/session-policy": "./src/auth/session-policy.ts"
+    "./auth/session-policy": "./src/auth/session-policy.ts",
+    "./content/structured-content": "./src/content/structured-content.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
