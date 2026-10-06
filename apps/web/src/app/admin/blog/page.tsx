@@ -52,6 +52,13 @@ export default async function BlogPage() {
       active="Blog"
       title="Blog Posts"
       subtitle="Live travel stories and editorial content from Neon."
+      actions={
+        hasPermission(session.roles, "content.write") ? (
+          <Link className="admin-primary-button" href="/admin/blog/new">
+            ＋ New Blog Post
+          </Link>
+        ) : null
+      }
       metrics={[
         { label: "All Posts", value: total.toString(), meta: "all records", tone: "orange" },
         { label: "Published", value: published.toString(), meta: "live articles", tone: "green" },
