@@ -9,6 +9,10 @@ import {
   contentStatuses,
   isContentStatus,
 } from "@/modules/content/admin-content-service";
+import {
+  packagePriceModes,
+  type PackagePriceMode,
+} from "@yatra/domain/package/pricing";
 import { assignHeroMedia } from "@/modules/media/media-assignment-service";
 
 export const dynamic = "force-dynamic";
@@ -40,7 +44,7 @@ export default async function PackageDetailPage({
   const { id } = await params;
   const db = getDb();
 
-  const [pkg, heroOptions] = await Promise.all([
+  const [pkg, heroOptions, vehicleClasses] = await Promise.all([
     db.tourPackage.findUnique({
       where: { id },
       include: {
@@ -63,6 +67,9 @@ export default async function PackageDetailPage({
         priceOptions: {
           orderBy: [{ isActive: "desc" }, { sortOrder: "asc" }],
         },
+        itinerary: {
+          orderBy: { dayNumber: "asc" },
+        },
       },
     }),
     db.mediaAsset.findMany({
@@ -77,6 +84,11 @@ export default async function PackageDetailPage({
         objectKey: true,
         altText: true,
       },
+    }),
+    db.vehicleClass.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      select: { id: true, name: true },
     }),
   ]);
 
