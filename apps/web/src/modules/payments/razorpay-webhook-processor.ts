@@ -186,9 +186,25 @@ async function processPaymentEvent(
 
   await db.$transaction(
     async (tx) => {
+      const freshIntent = await tx.paymentIntent.findUnique({
+        where: { id: intent.id },
+      });
+
+      if (!freshIntent) {
+        throw new Error("payment intent disappeared during webhook processing");
+      }
+
       if (eventType === "payment.authorized") {
+        if (
+          freshIntent.status === "CAPTURED" ||
+          freshIntent.status === "PARTIALLY_REFUNDED" ||
+          freshIntent.status === "REFUNDED"
+        ) {
+          return;
+        }
+
         await tx.paymentIntent.update({
-          where: { id: intent.id },
+          where: { id: freshIntent.id },
           data: {
             status: "AUTHORIZED",
             providerPaymentId: paymentId,
@@ -199,8 +215,16 @@ async function processPaymentEvent(
       }
 
       if (eventType === "payment.failed") {
+        if (
+          freshIntent.status === "CAPTURED" ||
+          freshIntent.status === "PARTIALLY_REFUNDED" ||
+          freshIntent.status === "REFUNDED"
+        ) {
+          return;
+        }
+
         await tx.paymentIntent.update({
-          where: { id: intent.id },
+          where: { id: freshIntent.id },
           data: {
             status: "FAILED",
             providerPaymentId: paymentId,
@@ -215,8 +239,25 @@ async function processPaymentEvent(
           throw new Error("payment.captured event did not contain captured=true");
         }
 
+        if (
+          freshIntent.status === "CAPTURED" &&
+          freshIntent.providerPaymentId === paymentId
+        ) {
+          return;
+        }
+
+        if (
+          freshIntent.status === "CAPTURED" ||
+          freshIntent.status === "PARTIALLY_REFUNDED" ||
+          freshIntent.status === "REFUNDED"
+        ) {
+          throw new Error(
+            "payment intent already captured by a different payment or moved beyond capture",
+          );
+        }
+
         const updated = await tx.paymentIntent.update({
-          where: { id: intent.id },
+          where: { id: freshIntent.id },
           data: {
             status: "CAPTURED",
             providerPaymentId: paymentId,
@@ -316,10 +357,12 @@ async function processRefundEvent(
       }
     });
   } else if (eventType === "refund.failed") {
-    await db.refund.update({
-      where: { id: refund.id },
-      data: { status: "FAILED" },
-    });
+    if (refund.status !== "PROCESSED") {
+      await db.refund.update({
+        where: { id: refund.id },
+        data: { status: "FAILED" },
+      });
+    }
   }
 
   return null;
