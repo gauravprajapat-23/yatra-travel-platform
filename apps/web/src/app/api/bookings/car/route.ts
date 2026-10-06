@@ -116,12 +116,22 @@ export async function POST(request: Request) {
       idempotencyKey,
     });
 
-    return NextResponse.json(result, {
+    const response = NextResponse.json(result, {
       status: result.replayed ? 200 : 201,
       headers: {
         "Cache-Control": "no-store",
       },
     });
+
+    response.cookies.set("yatra_checkout_booking", result.booking.reference, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 30 * 60,
+    });
+
+    return response;
   } catch (error) {
     if (error instanceof BookingServiceError) {
       return NextResponse.json(
