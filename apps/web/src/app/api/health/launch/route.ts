@@ -17,6 +17,7 @@ export async function GET() {
     packageBookingWriteEnabled:
       process.env.PACKAGE_BOOKING_WRITE_ENABLED === "true",
     paymentWriteEnabled: process.env.PAYMENT_WRITE_ENABLED === "true",
+    refundWriteEnabled: process.env.REFUND_WRITE_ENABLED === "true",
     razorpayConfigured: Boolean(
       process.env.RAZORPAY_KEY_ID &&
         process.env.RAZORPAY_KEY_SECRET &&
@@ -25,6 +26,8 @@ export async function GET() {
     appUrlConfigured: Boolean(process.env.NEXT_PUBLIC_APP_URL),
     leadFormsReady: false,
     carBookingReady: false,
+    packageBookingReady: false,
+    checkoutReady: false,
     paymentReady: false,
   };
 
@@ -88,8 +91,16 @@ export async function GET() {
       status.activeCarBookingPolicies > 0 &&
       status.bookingWriteEnabled;
 
+    status.packageBookingReady =
+      status.databaseReachable &&
+      status.activePackageBookingPolicies > 0 &&
+      status.packageBookingWriteEnabled;
+
+    status.checkoutReady =
+      status.carBookingReady || status.packageBookingReady;
+
     status.paymentReady =
-      status.carBookingReady &&
+      status.checkoutReady &&
       status.paymentWriteEnabled &&
       status.razorpayConfigured;
 
