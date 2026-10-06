@@ -1,3 +1,156 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getDb } from "@yatra/db/client";
+import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
-const rows=[["14 Oct 2024","TRX124568","YT1234","Rahul Mehta","Payment","UPI","₹14,000",<StatusPill key="1">Completed</StatusPill>,"✓"],["14 Oct 2024","TRX124567","YT1233","Priya Sharma","Payment","Card","₹22,000",<StatusPill key="2">Completed</StatusPill>,"✓"],["13 Oct 2024","TRX124566","YT1232","Amit Verma","Refund","Wallet","₹6,000",<StatusPill key="3" tone="red">Refunded</StatusPill>,"✓"],["12 Oct 2024","TRX124565","YT1231","Neha Kapoor","Payment","Net Banking","₹18,500",<StatusPill key="4">Completed</StatusPill>,"✓"],["12 Oct 2024","TRX124564","YT1229","Karan Soni","Payout","Bank Transfer","₹25,000",<StatusPill key="5" tone="blue">Processed</StatusPill>,"—"]];
-export default function Page(){return <AdminTablePage active="Payments" title="Payments" subtitle="View and manage all payment transactions, payouts and refunds." buttonLabel="Export Report" metrics={[{label:"Total Payments",value:"₹ 24,85,000",meta:"↑ 12%",tone:"green"},{label:"Total Payouts",value:"₹ 8,40,000",meta:"↑ 8%",tone:"green"},{label:"Total Refunds",value:"₹ 1,26,000",meta:"↓ 5%",tone:"red"},{label:"Pending Settlement",value:"₹ 2,40,000",meta:"3 payouts pending",tone:"orange"}]} filters={["All (246)","Completed (188)","Pending (22)","Refunded (18)","Payouts (20)"]} columns={["Date","Transaction ID","Booking ID","Customer","Type","Method","Amount","Status","Reconcile"]} rows={rows}/>;}
+import { requireAdminSession } from "@/lib/auth/session";
+
+function money(minor: bigint, currency = "INR") {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(Number(minor) / 100);
+}
+
+function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
+  if (["CAPTURED", "PROCESSED"].includes(status)) return "green";
+  if (["AUTHORIZED", "CREATED", "PENDING"].includes(status)) return "orange";
+  if (["FAILED", "CANCELLED", "REFUNDED"].includes(status)) return "red";
+  if (status === "PARTIALLY_REFUNDED") return "blue";
+  return "gray";
+}
+
+export default async function PaymentsPage() {
+  const session = await requireAdminSession();
+  if (!hasPermission(session.roles, "payment.read")) redirect("/admin");
+
+  const db = getDb();
+
+  const [intents, refunds, capturedAgg, pendingAgg, processedRefundAgg] =
+    await Promise.all([
+      db.paymentIntent.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 50,
+        include: {
+          carBooking: {
+            select: { reference: true, guestName: true, guestEmail: true },
+          },
+          packageBooking: {
+            select: { reference: true, guestName: true, guestEmail: true },
+          },
+        },
+      }),
+      db.refund.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 50,
+        include: {
+          paymentIntent: {
+            include: {
+              carBooking: {
+                select: { reference: true, guestName: true, guestEmail: true },
+              },
+              packageBooking: {
+                select: { reference: true, guestName: true, guestEmail: true },
+              },
+            },
+          },
+        },
+      }),
+      db.paymentIntent.aggregate({
+        where: {
+          status: { in: ["CAPTURED", "PARTIALLY_REFUNDED", "REFUNDED"] },
+        },
+        _sum: { amountPaidMinor: true },
+      }),
+      db.paymentIntent.aggregate({
+        where: { status: { in: ["CREATED", "AUTHORIZED"] } },
+        _sum: { amountMinor: true },
+      }),
+      db.refund.aggregate({
+        where: { status: "PROCESSED" },
+        _sum: { amountMinor: true },
+      }),
+    ]);
+
+  const paymentRows = intents.map((intent) => {
+    const booking = intent.carBooking ?? intent.packageBooking;
+    const reference = booking?.reference ?? "Unlinked";
+    const customer = booking?.guestName ?? booking?.guestEmail ?? "Unknown";
+
+    return {
+      createdAt: intent.createdAt,
+      cells: [
+        intent.createdAt.toLocaleDateString("en-IN"),
+        intent.providerPaymentId ?? intent.providerOrderId ?? intent.id,
+        reference === "Unlinked" ? reference : (
+          <Link key={`${intent.id}-booking`} href={`/admin/bookings/${reference}`}>
+            {reference}
+          </Link>
+        ),
+        customer,
+        "Payment",
+        "Razorpay",
+        money(intent.amountPaidMinor > 0n ? intent.amountPaidMinor : intent.amountMinor, intent.currency),
+        <StatusPill key={`${intent.id}-status`} tone={tone(intent.status)}>
+          {intent.status.replaceAll("_", " ")}
+        </StatusPill>,
+        intent.capturedAt ? "Verified" : "—",
+      ],
+    };
+  });
+
+  const refundRows = refunds.map((refund) => {
+    const booking =
+      refund.paymentIntent.carBooking ?? refund.paymentIntent.packageBooking;
+    const reference = booking?.reference ?? "Unlinked";
+    const customer = booking?.guestName ?? booking?.guestEmail ?? "Unknown";
+
+    return {
+      createdAt: refund.createdAt,
+      cells: [
+        refund.createdAt.toLocaleDateString("en-IN"),
+        refund.providerRefundId ?? refund.id,
+        reference === "Unlinked" ? reference : (
+          <Link key={`${refund.id}-booking`} href={`/admin/bookings/${reference}`}>
+            {reference}
+          </Link>
+        ),
+        customer,
+        "Refund",
+        "Razorpay",
+        money(refund.amountMinor, refund.currency),
+        <StatusPill key={`${refund.id}-status`} tone={tone(refund.status)}>
+          {refund.status.replaceAll("_", " ")}
+        </StatusPill>,
+        refund.processedAt ? "Verified" : "—",
+      ],
+    };
+  });
+
+  const rows = [...paymentRows, ...refundRows]
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, 50)
+    .map((entry) => entry.cells);
+
+  const capturedMinor = capturedAgg._sum.amountPaidMinor ?? 0n;
+  const refundMinor = processedRefundAgg._sum.amountMinor ?? 0n;
+  const pendingMinor = pendingAgg._sum.amountMinor ?? 0n;
+
+  return (
+    <AdminTablePage
+      active="Payments"
+      title="Payments"
+      subtitle="Live Razorpay payment intents and refund ledger from Neon."
+      metrics={[
+        { label: "Captured Payments", value: money(capturedMinor), meta: "verified provider captures", tone: "green" },
+        { label: "Processed Refunds", value: money(refundMinor), meta: "verified refunds", tone: "red" },
+        { label: "Net Captured", value: money(capturedMinor - refundMinor), meta: "captured less processed refunds", tone: "blue" },
+        { label: "Awaiting Capture", value: money(pendingMinor), meta: "created / authorized intents", tone: "orange" },
+      ]}
+      filters={["Latest 50"]}
+      columns={["Date", "Provider ID", "Booking ID", "Customer", "Type", "Provider", "Amount", "Status", "Reconcile"]}
+      rows={rows}
+    />
+  );
+}
