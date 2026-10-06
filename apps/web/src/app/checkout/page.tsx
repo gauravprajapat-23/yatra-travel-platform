@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { getDb } from "@yatra/db/client";
 
 export const metadata: Metadata = {
   title: "Booking Checkout",
@@ -16,15 +18,24 @@ function clean(value: string, maxLength: number): string {
   return value.trim().slice(0, maxLength);
 }
 
+function money(minor: bigint, currency: string): string {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(Number(minor) / 100);
+}
+
 export default async function CheckoutPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
   const params = await searchParams;
-  const isCustomTrip = first(params.source) === "custom-trip";
+  const source = first(params.source);
+  const isCustomTrip = source === "custom-trip";
 
-  const trip = isCustomTrip
+  const customTrip = isCustomTrip
     ? {
         title: "Custom Journey",
         from: clean(first(params.from, "Delhi"), 120),
@@ -35,23 +46,70 @@ export default async function CheckoutPage({
         vehicle: clean(first(params.vehicle, "SUV · 6 Seats"), 80),
         requests: clean(first(params.requests), 1000),
       }
-    : {
-        title: "Kedarnath Yatra",
-        from: "Delhi",
-        to: "Kedarnath",
-        duration: "6",
-        travelDate: "",
-        travellers: "4",
-        vehicle: "SUV",
-        requests: "",
-      };
+    : null;
+
+  let booking:
+    | {
+        reference: string;
+        status: string;
+        originText: string;
+        destinationText: string;
+        startsAt: Date;
+        endsAt: Date | null;
+        travellers: number;
+        currency: string;
+        totalMinor: bigint;
+        vehicleClass: { name: string };
+      }
+    | null = null;
+
+  if (!isCustomTrip && process.env.DATABASE_URL) {
+    const jar = await cookies();
+    const reference = jar.get("yatra_checkout_booking")?.value;
+
+    if (reference) {
+      const db = getDb();
+      booking = await db.carBooking.findUnique({
+        where: { reference },
+        select: {
+          reference: true,
+          status: true,
+          originText: true,
+          destinationText: true,
+          startsAt: true,
+          endsAt: true,
+          travellers: true,
+          currency: true,
+          totalMinor: true,
+          vehicleClass: { select: { name: true } },
+        },
+      });
+    }
+  }
+
+  if (!isCustomTrip && !booking) {
+    return (
+      <section className="reference-section reference-section--cream">
+        <div className="shell checkout-invalid-state booking-card">
+          <h1>Checkout session unavailable</h1>
+          <p>Your booking session may have expired. Please search for a vehicle and create a new booking.</p>
+          <a className="button-link button-link--primary" href="/">Start New Search →</a>
+        </div>
+      </section>
+    );
+  }
+
+  const canPay =
+    Boolean(booking) &&
+    booking?.status === "PENDING_PAYMENT" &&
+    booking.totalMinor > 0n;
 
   return (
     <section className="reference-section reference-section--cream">
       <div className="shell stepper">
-        {["Traveller Details", "Add-ons", "Payment", "Confirmation"].map((x, i) => (
+        {["Trip Summary", "Booking", "Payment", "Confirmation"].map((x, i) => (
           <span
-            className={i === 0 ? "stepper__step stepper__step--active" : "stepper__step"}
+            className={i <= 1 ? "stepper__step stepper__step--active" : "stepper__step"}
             key={x}
           >
             {i + 1}
@@ -64,106 +122,76 @@ export default async function CheckoutPage({
         <aside className="booking-card checkout-summary">
           <h2>Trip Summary</h2>
           <div className="checkout-trip-image" />
-          <h3>{trip.title}</h3>
-          <p>
-            {trip.duration} Days · {trip.vehicle}
-          </p>
 
-          {isCustomTrip ? (
-            <dl className="checkout-trip-details">
-              <div><dt>From</dt><dd>{trip.from}</dd></div>
-              <div><dt>To</dt><dd>{trip.to}</dd></div>
-              <div><dt>Travel date</dt><dd>{trip.travelDate || "To be confirmed"}</dd></div>
-              <div><dt>Travellers</dt><dd>{trip.travellers}</dd></div>
-            </dl>
-          ) : null}
-
-          <ul>
-            <li>Vehicle with experienced driver</li>
-            <li>Fuel, toll & driver allowance</li>
-            <li>Custom itinerary reviewed by the YATRA team</li>
-            <li>24×7 on-trip support</li>
-          </ul>
-
-          {trip.requests ? (
-            <div className="checkout-special-request">
-              <strong>Special requests</strong>
-              <p>{trip.requests}</p>
-            </div>
-          ) : null}
-
-          <div className="fare-total">
-            <span>{isCustomTrip ? "Final Price" : "Total Amount"}</span>
-            <strong>{isCustomTrip ? "Quote pending" : "₹48,000"}</strong>
-          </div>
-
-          {isCustomTrip ? (
-            <small className="checkout-quote-note">
-              Your itinerary and final price will be confirmed after server-side review.
-            </small>
+          {customTrip ? (
+            <>
+              <h3>{customTrip.title}</h3>
+              <p>{customTrip.duration} Days · {customTrip.vehicle}</p>
+              <dl className="checkout-trip-details">
+                <div><dt>From</dt><dd>{customTrip.from}</dd></div>
+                <div><dt>To</dt><dd>{customTrip.to}</dd></div>
+                <div><dt>Travel date</dt><dd>{customTrip.travelDate || "To be confirmed"}</dd></div>
+                <div><dt>Travellers</dt><dd>{customTrip.travellers}</dd></div>
+              </dl>
+              {customTrip.requests ? (
+                <div className="checkout-special-request">
+                  <strong>Special requests</strong>
+                  <p>{customTrip.requests}</p>
+                </div>
+              ) : null}
+              <div className="fare-total">
+                <span>Final Price</span>
+                <strong>Quote pending</strong>
+              </div>
+            </>
+          ) : booking ? (
+            <>
+              <h3>{booking.originText} → {booking.destinationText}</h3>
+              <p>{booking.vehicleClass.name} · {booking.travellers} Travellers</p>
+              <dl className="checkout-trip-details">
+                <div><dt>Booking</dt><dd>{booking.reference}</dd></div>
+                <div><dt>Departure</dt><dd>{booking.startsAt.toLocaleDateString("en-IN")}</dd></div>
+                <div><dt>Return</dt><dd>{booking.endsAt?.toLocaleDateString("en-IN") ?? "One way"}</dd></div>
+                <div><dt>Status</dt><dd>{booking.status.replaceAll("_", " ")}</dd></div>
+              </dl>
+              <div className="fare-total">
+                <span>Total Amount</span>
+                <strong>{money(booking.totalMinor, booking.currency)}</strong>
+              </div>
+            </>
           ) : null}
         </aside>
 
-        <section className="booking-card">
-          <h2>Traveller Details</h2>
-          <div className="form-grid">
-            <label>Full Name<input defaultValue="Rohit Sharma" /></label>
-            <label>Email<input defaultValue="rohit.sharma@gmail.com" /></label>
-            <label>Mobile Number<input defaultValue="+91 98765 43210" /></label>
-          </div>
-
-          <h3>Travellers ({trip.travellers})</h3>
-          {["Primary Traveller", "Traveller 2", "Traveller 3", "Traveller 4"]
-            .slice(0, Math.min(Math.max(Number(trip.travellers) || 1, 1), 4))
-            .map((x, i) => (
-              <div className="traveller-row" key={x}>
-                <span>{i + 1}</span>
-                <strong>{x}</strong>
-                <small>Adult</small>
-              </div>
-            ))}
+        <section className="booking-card checkout-assurance">
+          <h2>Booking Protection</h2>
+          <ul>
+            <li>Price shown above comes from the server-created quote.</li>
+            <li>Booking status is controlled by the server lifecycle.</li>
+            <li>Payment amount cannot be changed by the browser.</li>
+            <li>Razorpay verification and webhooks confirm successful payment.</li>
+          </ul>
         </section>
 
         <aside className="booking-card payment-column">
-          <h2>Add-ons</h2>
-          {[
-            "VIP Darshan Pass",
-            "Puja & Abhishek",
-            "Travel Insurance",
-            "Extra Luggage Space",
-            "Photoshoot at Temple",
-          ].map((x) => (
-            <label className="payment-option" key={x}>
-              <input type="checkbox" />
-              <span>{x}</span>
-            </label>
-          ))}
+          <h2>Payment</h2>
 
-          <h2>Payment Details</h2>
-
-          {isCustomTrip ? (
+          {customTrip ? (
             <div className="custom-trip-checkout-notice">
               <strong>Price confirmation required</strong>
+              <p>Your request needs review before payment can be enabled.</p>
+            </div>
+          ) : canPay && booking ? (
+            <a className="button-link button-link--primary" href="/payment">
+              Continue to Secure Payment →
+            </a>
+          ) : (
+            <div className="custom-trip-checkout-notice">
+              <strong>Payment not required yet</strong>
               <p>
-                Payment will be enabled after your custom itinerary and final server quote are confirmed.
+                This booking is currently {booking?.status.replaceAll("_", " ").toLowerCase()}.
+                The YATRA team will enable payment when the booking reaches the payable stage.
               </p>
             </div>
-          ) : (
-            <>
-              <div className="payment-tabs">
-                <button className="payment-tab payment-tab--active">UPI</button>
-                <button className="payment-tab">Card</button>
-                <button className="payment-tab">Net Banking</button>
-              </div>
-              <label>UPI ID<input defaultValue="rohit@okaxis" /></label>
-              <label className="terms-check">
-                <input type="checkbox" defaultChecked />
-                I accept the Terms & Conditions and Cancellation Policy
-              </label>
-              <a className="button-link button-link--primary" href="/payment">
-                Confirm Booking & Pay →
-              </a>
-            </>
           )}
         </aside>
       </div>
