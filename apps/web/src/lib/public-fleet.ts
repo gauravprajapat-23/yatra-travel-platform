@@ -11,6 +11,7 @@ export type PublicFleetVehicle = {
   features: unknown;
   description: string | null;
   isFeatured: boolean;
+  primaryImageUrl: string | null;
 };
 
 export async function getPublicFleet(): Promise<PublicFleetVehicle[]> {
@@ -37,6 +38,15 @@ export async function getPublicFleet(): Promise<PublicFleetVehicle[]> {
         vehicleClass: {
           select: { name: true },
         },
+        media: {
+          where: { isPrimary: true },
+          take: 1,
+          select: {
+            media: {
+              select: { publicUrl: true },
+            },
+          },
+        },
       },
       orderBy: [
         { isFeatured: "desc" },
@@ -55,6 +65,7 @@ export async function getPublicFleet(): Promise<PublicFleetVehicle[]> {
       features: vehicle.features,
       description: vehicle.description,
       isFeatured: vehicle.isFeatured,
+      primaryImageUrl: vehicle.media[0]?.media.publicUrl ?? null,
     }));
   } catch (error) {
     console.error(
