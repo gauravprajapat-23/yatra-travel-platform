@@ -62,9 +62,11 @@ function key(): string {
 }
 
 export function RazorpayPayment({
+  bookingType,
   bookingReference,
   displayAmount,
 }: {
+  bookingType: "CAR" | "PACKAGE";
   bookingReference: string;
   displayAmount: string;
 }) {
@@ -99,7 +101,7 @@ export function RazorpayPayment({
           "Idempotency-Key": key(),
         },
         body: JSON.stringify({
-          bookingType: "CAR",
+          bookingType,
           bookingReference,
         }),
       });
