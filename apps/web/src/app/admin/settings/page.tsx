@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
@@ -132,6 +133,14 @@ export default async function SettingsPage() {
       active="Settings"
       title="Settings & Runtime Configuration"
       subtitle="Production configuration status. Secrets are never displayed or editable from the admin UI."
+      actions={
+        <Link
+          className="admin-primary-button"
+          href="/admin/settings/booking-policies"
+        >
+          Booking Policies
+        </Link>
+      }
     >
       <div className="admin-metric-grid">
         <AdminMetric
