@@ -1,9 +1,128 @@
+import { redirect } from "next/navigation";
+import { getDb } from "@yatra/db/client";
+import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminMetric, AdminShell } from "@/components/admin-shell";
+import { requireAdminSession } from "@/lib/auth/session";
 
-export default function ReportsPage(){
- return <AdminShell active="Reports" title="Reports" subtitle="Track performance, revenue, bookings and operational metrics." actions={<><button className="admin-secondary-button">12 Oct 2024 – 10 Nov 2024</button><button className="admin-secondary-button">Export Report ↓</button></>}>
-   <div className="admin-metric-grid"><AdminMetric label="Total Bookings" value="128" meta="↑12%" tone="blue"/><AdminMetric label="Total Revenue" value="₹12,48,000" meta="↑18%" tone="orange"/><AdminMetric label="Total Customers" value="96" meta="↑14%" tone="green"/><AdminMetric label="Conversion Rate" value="24%" meta="↑6%" tone="green"/></div>
-   <section className="admin-panel admin-report-chart"><div className="admin-panel-heading"><h2>Bookings & Revenue Trend</h2><span>Last 30 Days⌄</span></div><div className="admin-chart admin-chart--large"><div className="admin-bars">{[38,50,44,61,55,69,59,72,76,64,82,80].map((h,i)=><span key={i} style={{height:`${h}%`}}/>)}</div><svg viewBox="0 0 700 180" preserveAspectRatio="none"><polyline points="0,140 65,115 130,90 195,118 260,83 325,103 390,66 455,74 520,48 585,60 650,35 700,48" fill="none" stroke="#f26b1d" strokeWidth="5"/></svg></div></section>
-   <div className="admin-report-bottom"><section className="admin-panel"><div className="admin-panel-heading"><h2>Top Performing Packages</h2><a>View All →</a></div><table className="admin-table"><thead><tr><th>Package</th><th>Bookings</th><th>Revenue</th></tr></thead><tbody>{[["Manali Tour","42","₹4,20,000"],["Rajasthan Heritage","28","₹2,80,000"],["Char Dham Yatra","18","₹1,98,000"],["Kashmir Snow Trip","16","₹1,76,000"]].map((r,i)=><tr key={i}>{r.map(c=><td key={c}>{c}</td>)}</tr>)}</tbody></table></section><section className="admin-panel"><div className="admin-panel-heading"><h2>Fleet Utilization</h2><span>This Month⌄</span></div><div className="admin-donut admin-donut--report"><div>78%<small>Utilized</small></div></div><ul className="admin-legend"><li>In Use <b>78%</b></li><li>Available <b>14%</b></li><li>Maintenance <b>6%</b></li></ul></section></div>
- </AdminShell>;
+export const dynamic = "force-dynamic";
+
+function money(minor: bigint, currency = "INR") {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(Number(minor) / 100);
+}
+
+export default async function ReportsPage() {
+  const session = await requireAdminSession();
+  if (!hasPermission(session.roles, "report.read")) redirect("/admin");
+
+  const db = getDb();
+  const now = new Date();
+
+  const [
+    carCount,
+    packageCount,
+    captured,
+    leadCount,
+    convertedLeadCount,
+    activeVehicles,
+    assignedTrips,
+    packageGroups,
+  ] = await Promise.all([
+    db.carBooking.count(),
+    db.packageBooking.count(),
+    db.paymentIntent.aggregate({
+      where: { status: { in: ["CAPTURED", "PARTIALLY_REFUNDED", "REFUNDED"] } },
+      _sum: { amountPaidMinor: true },
+    }),
+    db.lead.count(),
+    db.lead.count({ where: { status: { in: ["QUALIFIED", "CLOSED"] } } }),
+    db.vehicle.count({ where: { status: "ACTIVE" } }),
+    db.carBooking.findMany({
+      where: {
+        selectedVehicleId: { not: null },
+        status: { in: ["CONFIRMED", "DRIVER_ASSIGNED", "IN_PROGRESS"] },
+        startsAt: { lte: now },
+        OR: [{ endsAt: null }, { endsAt: { gte: now } }],
+      },
+      distinct: ["selectedVehicleId"],
+      select: { selectedVehicleId: true },
+    }),
+    db.packageBooking.groupBy({
+      by: ["packageId"],
+      _count: { _all: true },
+      _sum: { totalMinor: true },
+      orderBy: { _count: { packageId: "desc" } },
+      take: 5,
+    }),
+  ]);
+
+  const packageIds = packageGroups.map((group) => group.packageId);
+  const packageNames = packageIds.length
+    ? await db.tourPackage.findMany({
+        where: { id: { in: packageIds } },
+        select: { id: true, title: true },
+      })
+    : [];
+  const nameById = new Map(packageNames.map((item) => [item.id, item.title]));
+
+  const totalBookings = carCount + packageCount;
+  const conversionRate =
+    leadCount > 0 ? Math.round((convertedLeadCount / leadCount) * 100) : 0;
+  const fleetUtilization =
+    activeVehicles > 0 ? Math.round((assignedTrips.length / activeVehicles) * 100) : 0;
+
+  return (
+    <AdminShell
+      active="Reports"
+      title="Reports"
+      subtitle="Live operational and financial summary from Neon."
+    >
+      <div className="admin-metric-grid">
+        <AdminMetric label="Total Bookings" value={totalBookings.toString()} meta="car + package" tone="blue"/>
+        <AdminMetric label="Captured Revenue" value={money(captured._sum.amountPaidMinor ?? 0n)} meta="verified payment captures" tone="orange"/>
+        <AdminMetric label="Qualified / Closed Leads" value={convertedLeadCount.toString()} meta={`${conversionRate}% of all leads`} tone="green"/>
+        <AdminMetric label="Fleet Utilization" value={`${fleetUtilization}%`} meta={`${assignedTrips.length} of ${activeVehicles} active vehicles`} tone="green"/>
+      </div>
+
+      <div className="admin-report-bottom">
+        <section className="admin-panel">
+          <div className="admin-panel-heading">
+            <h2>Top Packages by Bookings</h2>
+          </div>
+          <table className="admin-table">
+            <thead>
+              <tr><th>Package</th><th>Bookings</th><th>Booked Value</th></tr>
+            </thead>
+            <tbody>
+              {packageGroups.length === 0 ? (
+                <tr><td colSpan={3}>No package bookings yet.</td></tr>
+              ) : packageGroups.map((group) => (
+                <tr key={group.packageId}>
+                  <td>{nameById.get(group.packageId) ?? group.packageId}</td>
+                  <td>{group._count._all}</td>
+                  <td>{money(group._sum.totalMinor ?? 0n)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        <section className="admin-panel">
+          <div className="admin-panel-heading">
+            <h2>Operational Snapshot</h2>
+          </div>
+          <div className="admin-card-body">
+            <p>Car bookings <strong>{carCount}</strong></p>
+            <p>Package bookings <strong>{packageCount}</strong></p>
+            <p>Total leads <strong>{leadCount}</strong></p>
+            <p>Active fleet <strong>{activeVehicles}</strong></p>
+            <p>Vehicles currently assigned <strong>{assignedTrips.length}</strong></p>
+          </div>
+        </section>
+      </div>
+    </AdminShell>
+  );
 }
