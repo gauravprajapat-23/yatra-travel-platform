@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
@@ -45,7 +46,9 @@ export default async function AdminDriversPage() {
   ]);
 
   const rows = drivers.map((driver) => [
-    driver.displayName,
+    <Link key={driver.id} href={`/admin/drivers/${driver.id}`}>
+      {driver.displayName}
+    </Link>,
     driver.phoneLast4 ? `•••• ${driver.phoneLast4}` : "Protected",
     driver.qualifications.map((item) => item.vehicleClass.name).join(", ") || "Unqualified",
     driver.licenseExpiry?.toLocaleDateString("en-IN") ?? "Not recorded",
@@ -61,6 +64,13 @@ export default async function AdminDriversPage() {
       active="Drivers & Staff"
       title="Drivers"
       subtitle="Live driver roster with qualifications and document status."
+      actions={
+        hasPermission(session.roles, "driver.write") ? (
+          <Link className="admin-primary-button" href="/admin/drivers/new">
+            ＋ New Driver
+          </Link>
+        ) : null
+      }
       metrics={[
         { label: "Total Drivers", value: total.toString(), meta: "all records", tone: "blue" },
         { label: "Active Drivers", value: active.toString(), meta: "eligible for assignment", tone: "green" },
