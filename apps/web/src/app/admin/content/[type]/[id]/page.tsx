@@ -24,6 +24,7 @@ import {
   stringifyOptionalJson,
   updateDestinationDetails,
 } from "@/modules/content/destination-management-service";
+import { updateBlogDetails } from "@/modules/content/blog-management-service";
 
 export const dynamic = "force-dynamic";
 
@@ -166,6 +167,28 @@ export default async function AdminContentEditorPage({
         })
       : null;
 
+  const blogDetails =
+    type === "blog"
+      ? await db.blogPost.findUnique({
+          where: { id },
+          select: {
+            excerpt: true,
+            categoryId: true,
+          },
+        })
+      : null;
+
+  const blogCategories =
+    type === "blog"
+      ? await db.blogCategory.findMany({
+          orderBy: { name: "asc" },
+          select: {
+            id: true,
+            name: true,
+          },
+        })
+      : [];
+
   const heroOptions = await db.mediaAsset.findMany({
     where: {
       mimeType: { startsWith: "image/" },
@@ -188,6 +211,34 @@ export default async function AdminContentEditorPage({
   const contentId = content.id;
   const contentSlug = content.slug;
   const contentType = type;
+
+  async function saveBlogSpecifics(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "content.write")) {
+      redirect(backPath(contentType));
+    }
+
+    if (contentType !== "blog") {
+      throw new Error("Blog details can only be edited for blog posts.");
+    }
+
+    const categoryId =
+      String(formData.get("categoryId") ?? "").trim() || null;
+
+    await updateBlogDetails({
+      postId: contentId,
+      excerpt: String(formData.get("excerpt") ?? ""),
+      categoryId,
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath("/admin/blog");
+    revalidatePath(`/admin/content/blog/${contentId}`);
+    revalidatePath("/travel-guides");
+    revalidatePath(`/travel-guides/${contentSlug}`);
+  }
 
   async function saveDestinationSpecifics(formData: FormData) {
     "use server";
@@ -368,6 +419,58 @@ export default async function AdminContentEditorPage({
             <div><dt>Updated</dt><dd>{content.updatedAt.toLocaleString("en-IN")}</dd></div>
           </dl>
         </section>
+
+        {type === "blog" && blogDetails ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Blog Details</h2>
+            {hasPermission(session.roles, "content.write") ? (
+              <form action={saveBlogSpecifics}>
+                <label>
+                  Category
+                  <select
+                    name="categoryId"
+                    defaultValue={blogDetails.categoryId ?? ""}
+                  >
+                    <option value="">Uncategorized</option>
+                    {blogCategories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  Excerpt
+                  <textarea
+                    name="excerpt"
+                    defaultValue={blogDetails.excerpt ?? ""}
+                    maxLength={500}
+                  />
+                </label>
+
+                <button className="admin-secondary-button" type="submit">
+                  Save Blog Details
+                </button>
+              </form>
+            ) : (
+              <dl>
+                <div>
+                  <dt>Category</dt>
+                  <dd>
+                    {blogCategories.find(
+                      (item) => item.id === blogDetails.categoryId,
+                    )?.name ?? "Uncategorized"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Excerpt</dt>
+                  <dd>{blogDetails.excerpt ?? "—"}</dd>
+                </div>
+              </dl>
+            )}
+          </section>
+        ) : null}
 
         {type === "destination" && destinationDetails ? (
           <section className="admin-panel admin-detail-card">
