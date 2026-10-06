@@ -1,19 +1,46 @@
 import type { Metadata } from "next";
+import { CmsPublicDocument } from "@/components/cms-public-document";
 import { PublicRouteShell } from "@/components/public-route-shell";
+import { getPublicCmsPageBySlug } from "@/lib/public-cms";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy",
-  robots: { index: true, follow: true },
-};
+export const dynamic = "force-dynamic";
 
-export default function PrivacyPolicyPage() {
-  return (
-    <PublicRouteShell
-      eyebrow="LEGAL"
-      title="Privacy Policy"
-      description="The production privacy notice will document data collection, purposes, retention, processors, customer rights and contact channels before launch."
-      primaryHref="/contact"
-      primaryLabel="Privacy Contact"
-    />
-  );
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getPublicCmsPageBySlug("privacy-policy");
+
+  if (!page) {
+    return {
+      title: "Privacy Policy",
+      description: "The Privacy Policy is not published yet.",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  return {
+    title: page.seoTitle ?? page.title,
+    description: page.seoDescription ?? page.excerpt ?? undefined,
+    alternates: page.canonicalUrl ? { canonical: page.canonicalUrl } : undefined,
+    robots: {
+      index: page.robotsIndex,
+      follow: page.robotsFollow,
+    },
+  };
+}
+
+export default async function Page() {
+  const page = await getPublicCmsPageBySlug("privacy-policy");
+
+  if (!page) {
+    return (
+      <PublicRouteShell
+        eyebrow="LEGAL"
+        title="Privacy Policy"
+        description="The Privacy Policy is not published yet. Live paid bookings remain blocked until this required legal document is published."
+        primaryHref="/contact"
+        primaryLabel="Contact Us"
+      />
+    );
+  }
+
+  return <CmsPublicDocument page={page} />;
 }
