@@ -4,13 +4,23 @@ import { verifyPassword } from "@/lib/auth/password";
 import { createAdminSession } from "@/lib/auth/session";
 import { hasPermission, type RoleKey } from "@yatra/domain/auth/permissions";
 
+export const runtime = "nodejs";
+
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-export async function POST(request: Request) {
-  const db = getDb();
+function serviceUnavailable(code: string) {
+  return NextResponse.json(
+    {
+      error: "Admin login service is temporarily unavailable.",
+      code,
+    },
+    { status: 503 },
+  );
+}
 
+export async function POST(request: Request) {
   let body: unknown;
   try {
     body = await request.json();
@@ -31,71 +41,86 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
   }
 
-  const user = await db.user.findUnique({
-    where: { emailNormalized: email },
-    include: {
-      roles: {
-        include: { role: true },
-      },
-    },
-  });
-
-  const genericError = { error: "Invalid email or password." };
-
-  if (!user || !user.passwordHash || user.status !== "ACTIVE") {
-    await db.auditLog.create({
-      data: {
-        action: "ADMIN_LOGIN_FAILED",
-        entityType: "User",
-        metadata: { email },
-      },
-    }).catch(() => undefined);
-    return NextResponse.json(genericError, { status: 401 });
+  if (!process.env.DATABASE_URL) {
+    console.error("[admin-auth] DATABASE_URL is missing in the runtime environment.");
+    return serviceUnavailable("AUTH_DATABASE_URL_MISSING");
   }
 
-  const passwordOk = await verifyPassword(password, user.passwordHash);
-  const roles = user.roles.map((entry) => entry.role.key) as RoleKey[];
-  const hasAdminAccess = hasPermission(roles, "admin.access");
+  try {
+    const db = getDb();
 
-  if (!passwordOk || !hasAdminAccess) {
-    await db.auditLog.create({
-      data: {
-        actorUserId: passwordOk ? user.id : null,
-        action: "ADMIN_LOGIN_FAILED",
-        entityType: "User",
-        entityId: passwordOk ? user.id : null,
-        metadata: { email },
+    const user = await db.user.findUnique({
+      where: { emailNormalized: email },
+      include: {
+        roles: {
+          include: { role: true },
+        },
       },
-    }).catch(() => undefined);
-    return NextResponse.json(genericError, { status: 401 });
+    });
+
+    const genericError = { error: "Invalid email or password." };
+
+    if (!user || !user.passwordHash || user.status !== "ACTIVE") {
+      await db.auditLog.create({
+        data: {
+          action: "ADMIN_LOGIN_FAILED",
+          entityType: "User",
+          metadata: { email },
+        },
+      }).catch(() => undefined);
+      return NextResponse.json(genericError, { status: 401 });
+    }
+
+    const passwordOk = await verifyPassword(password, user.passwordHash);
+    const roles = user.roles.map((entry) => entry.role.key) as RoleKey[];
+    const hasAdminAccess = hasPermission(roles, "admin.access");
+
+    if (!passwordOk || !hasAdminAccess) {
+      await db.auditLog.create({
+        data: {
+          actorUserId: passwordOk ? user.id : null,
+          action: "ADMIN_LOGIN_FAILED",
+          entityType: "User",
+          entityId: passwordOk ? user.id : null,
+          metadata: { email },
+        },
+      }).catch(() => undefined);
+      return NextResponse.json(genericError, { status: 401 });
+    }
+
+    const expiresAt = await createAdminSession(user.id);
+
+    await db.$transaction([
+      db.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
+      }),
+      db.auditLog.create({
+        data: {
+          actorUserId: user.id,
+          action: "ADMIN_LOGIN_SUCCEEDED",
+          entityType: "User",
+          entityId: user.id,
+          metadata: { roles },
+        },
+      }),
+    ]);
+
+    return NextResponse.json({
+      ok: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        roles,
+      },
+      expiresAt: expiresAt.toISOString(),
+    });
+  } catch (error) {
+    console.error(
+      "[admin-auth] Login runtime failure:",
+      error instanceof Error ? error.message : "Unknown database/runtime error",
+    );
+    return serviceUnavailable("AUTH_DATABASE_UNAVAILABLE");
   }
-
-  const expiresAt = await createAdminSession(user.id);
-
-  await db.$transaction([
-    db.user.update({
-      where: { id: user.id },
-      data: { lastLoginAt: new Date() },
-    }),
-    db.auditLog.create({
-      data: {
-        actorUserId: user.id,
-        action: "ADMIN_LOGIN_SUCCEEDED",
-        entityType: "User",
-        entityId: user.id,
-        metadata: { roles },
-      },
-    }),
-  ]);
-
-  return NextResponse.json({
-    ok: true,
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      roles,
-    },
-    expiresAt: expiresAt.toISOString(),
-  });
 }
