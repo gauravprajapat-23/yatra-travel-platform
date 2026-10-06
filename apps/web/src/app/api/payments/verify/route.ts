@@ -1,4 +1,10 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { getDb } from "@yatra/db/client";
+import {
+  CHECKOUT_SESSION_COOKIE,
+  verifyCheckoutSessionToken,
+} from "@/lib/checkout-session";
 import {
   PaymentReconciliationError,
   reconcileVerifiedRazorpayPayment,
@@ -53,7 +59,65 @@ export async function POST(request: Request) {
     );
   }
 
+  const jar = await cookies();
+  const checkoutSession = verifyCheckoutSessionToken(
+    jar.get(CHECKOUT_SESSION_COOKIE)?.value,
+  );
+
+  if (!checkoutSession) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "CHECKOUT_SESSION_REQUIRED",
+          message: "A valid checkout session is required.",
+        },
+      },
+      {
+        status: 403,
+        headers: { "Cache-Control": "no-store" },
+      },
+    );
+  }
+
   try {
+    const db = getDb();
+    const intent = await db.paymentIntent.findUnique({
+      where: { id: body.paymentIntentId.trim() },
+      select: {
+        carBooking: { select: { reference: true } },
+        packageBooking: { select: { reference: true } },
+      },
+    });
+
+    const intentType = intent?.carBooking
+      ? "CAR"
+      : intent?.packageBooking
+        ? "PACKAGE"
+        : null;
+    const intentReference =
+      intent?.carBooking?.reference ??
+      intent?.packageBooking?.reference ??
+      null;
+
+    if (
+      !intent ||
+      intentType !== checkoutSession.t ||
+      intentReference?.toUpperCase() !== checkoutSession.r
+    ) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "CHECKOUT_SESSION_MISMATCH",
+            message: "Payment intent does not belong to this checkout session.",
+          },
+        },
+        {
+          status: 403,
+          headers: { "Cache-Control": "no-store" },
+        },
+      );
+    }
+
     const result = await reconcileVerifiedRazorpayPayment({
       paymentIntentId: body.paymentIntentId.trim(),
       paymentId: body.razorpay_payment_id.trim(),
