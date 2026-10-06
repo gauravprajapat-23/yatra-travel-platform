@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getDb } from "@yatra/db/client";
 import { AdminMetric, AdminShell, StatusPill } from "@/components/admin-shell";
 
+export const dynamic = "force-dynamic";
+
 function money(minor: bigint, currency = "INR") {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
