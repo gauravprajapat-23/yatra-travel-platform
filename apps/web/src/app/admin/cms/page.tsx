@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
@@ -32,7 +33,9 @@ export default async function CmsPage() {
   ]);
 
   const rows = pages.map((page) => [
-    page.title,
+    <Link key={page.id} href={`/admin/content/cms/${page.id}`}>
+      {page.title}
+    </Link>,
     page.slug === "/" ? "/" : `/${page.slug.replace(/^\//, "")}`,
     page.seoTitle ? "SEO ready" : "SEO missing",
     page.robotsIndex ? "Index" : "Noindex",
