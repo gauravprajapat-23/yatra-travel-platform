@@ -13,7 +13,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/**/*.test.ts",
-    "verify:razorpay": "node scripts/verify-razorpay-connectivity.mjs"
+    "verify:razorpay": "node scripts/verify-razorpay-connectivity.mjs",
+    "verify:storage": "tsx scripts/verify-storage-connectivity.ts"
   },
   "devDependencies": {
     "@types/node": "^24",
