@@ -9,12 +9,90 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+type CheckoutBooking = {
+  type: "CAR" | "PACKAGE";
+  reference: string;
+  status: string;
+  title: string;
+  route: string;
+  startsAt: Date;
+  endsAt: Date | null;
+  travellers: number;
+  currency: string;
+  totalMinor: bigint;
+};
+
 function money(minor: bigint, currency: string): string {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
   }).format(Number(minor) / 100);
+}
+
+async function loadCheckoutBooking(reference: string): Promise<CheckoutBooking | null> {
+  const db = getDb();
+
+  if (reference.startsWith("YPK-")) {
+    const booking = await db.packageBooking.findUnique({
+      where: { reference },
+      select: {
+        reference: true,
+        status: true,
+        travelStartAt: true,
+        travellers: true,
+        currency: true,
+        totalMinor: true,
+        package: { select: { title: true } },
+      },
+    });
+
+    if (!booking) return null;
+
+    return {
+      type: "PACKAGE",
+      reference: booking.reference,
+      status: booking.status,
+      title: booking.package.title,
+      route: "Tour package",
+      startsAt: booking.travelStartAt,
+      endsAt: null,
+      travellers: booking.travellers,
+      currency: booking.currency,
+      totalMinor: booking.totalMinor,
+    };
+  }
+
+  const booking = await db.carBooking.findUnique({
+    where: { reference },
+    select: {
+      reference: true,
+      status: true,
+      originText: true,
+      destinationText: true,
+      startsAt: true,
+      endsAt: true,
+      travellers: true,
+      currency: true,
+      totalMinor: true,
+      vehicleClass: { select: { name: true } },
+    },
+  });
+
+  if (!booking) return null;
+
+  return {
+    type: "CAR",
+    reference: booking.reference,
+    status: booking.status,
+    title: booking.vehicleClass.name,
+    route: `${booking.originText} → ${booking.destinationText}`,
+    startsAt: booking.startsAt,
+    endsAt: booking.endsAt,
+    travellers: booking.travellers,
+    currency: booking.currency,
+    totalMinor: booking.totalMinor,
+  };
 }
 
 export default async function PaymentPage() {
@@ -33,22 +111,7 @@ export default async function PaymentPage() {
     );
   }
 
-  const db = getDb();
-  const booking = await db.carBooking.findUnique({
-    where: { reference },
-    select: {
-      reference: true,
-      status: true,
-      originText: true,
-      destinationText: true,
-      startsAt: true,
-      endsAt: true,
-      travellers: true,
-      currency: true,
-      totalMinor: true,
-      vehicleClass: { select: { name: true } },
-    },
-  });
+  const booking = await loadCheckoutBooking(reference);
 
   if (!booking) {
     return (
@@ -81,11 +144,11 @@ export default async function PaymentPage() {
             <h2>Booking Summary</h2>
             <dl className="checkout-trip-details">
               <div><dt>Reference</dt><dd>{booking.reference}</dd></div>
-              <div><dt>Route</dt><dd>{booking.originText} → {booking.destinationText}</dd></div>
-              <div><dt>Vehicle</dt><dd>{booking.vehicleClass.name}</dd></div>
+              <div><dt>{booking.type === "CAR" ? "Route" : "Package"}</dt><dd>{booking.type === "CAR" ? booking.route : booking.title}</dd></div>
+              <div><dt>{booking.type === "CAR" ? "Vehicle" : "Booking Type"}</dt><dd>{booking.type === "CAR" ? booking.title : "Tour package"}</dd></div>
               <div><dt>Travellers</dt><dd>{booking.travellers}</dd></div>
               <div><dt>Departure</dt><dd>{booking.startsAt.toLocaleDateString("en-IN")}</dd></div>
-              <div><dt>Return</dt><dd>{booking.endsAt?.toLocaleDateString("en-IN") ?? "One way"}</dd></div>
+              <div><dt>Return</dt><dd>{booking.endsAt?.toLocaleDateString("en-IN") ?? (booking.type === "CAR" ? "One way" : "As per itinerary")}</dd></div>
               <div><dt>Status</dt><dd>{booking.status.replaceAll("_"," ")}</dd></div>
             </dl>
             <div className="fare-total">
@@ -98,6 +161,7 @@ export default async function PaymentPage() {
             <h2>Secure Payment</h2>
             {payable ? (
               <RazorpayPayment
+                bookingType={booking.type}
                 bookingReference={booking.reference}
                 displayAmount={money(booking.totalMinor, booking.currency)}
               />
