@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
@@ -32,7 +33,9 @@ export default async function AdminVehiclesPage() {
 
   const rows = vehicles.map((vehicle) => [
     vehicle.registrationNumber,
-    vehicle.displayName,
+    <Link key={vehicle.id} href={`/admin/vehicles/${vehicle.id}`}>
+      {vehicle.displayName}
+    </Link>,
     vehicle.vehicleClass.name,
     vehicle.seats.toString(),
     vehicle.luggage?.toString() ?? "—",
@@ -48,6 +51,13 @@ export default async function AdminVehiclesPage() {
       active="Fleet Management"
       title="Vehicles"
       subtitle="Live fleet inventory used by booking and assignment operations."
+      actions={
+        hasPermission(session.roles, "vehicle.write") ? (
+          <Link className="admin-primary-button" href="/admin/vehicles/new">
+            ＋ New Vehicle
+          </Link>
+        ) : null
+      }
       metrics={[
         { label: "Total Vehicles", value: total.toString(), meta: "all fleet records", tone: "blue" },
         { label: "Active", value: active.toString(), meta: "eligible for assignment", tone: "green" },
