@@ -67,3 +67,45 @@ export async function getPublicCmsPageBySlug(
     return null;
   }
 }
+
+
+export async function getPublicCmsPages(): Promise<
+  Array<{ slug: string; robotsIndex: boolean }>
+> {
+  if (!process.env.DATABASE_URL) return [];
+
+  try {
+    const db = getDb();
+    const now = new Date();
+
+    const rows = await db.cmsPage.findMany({
+      where: {
+        status: "PUBLISHED",
+        publishedAt: { lte: now },
+      },
+      select: {
+        slug: true,
+        robotsIndex: true,
+      },
+      orderBy: { slug: "asc" },
+    });
+
+    return rows
+      .filter(
+        (row) =>
+          Boolean(row.slug) &&
+          row.slug !== "/" &&
+          !row.slug.includes("/"),
+      )
+      .map((row) => ({
+        slug: row.slug.replace(/^\/+|\/+$/g, ""),
+        robotsIndex: row.robotsIndex,
+      }));
+  } catch (error) {
+    console.error(
+      "[public-cms] Unable to list CMS pages:",
+      error instanceof Error ? error.message : "Unknown database error",
+    );
+    return [];
+  }
+}
