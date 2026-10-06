@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { JsonBodyError, readJsonBody } from "@/lib/read-json-body";
 import { cookies } from "next/headers";
 import {
   CHECKOUT_SESSION_COOKIE,
@@ -49,12 +50,23 @@ export async function POST(request: Request) {
 
   let body: RequestBody;
   try {
-    body = (await request.json()) as RequestBody;
-  } catch {
-    return NextResponse.json(
-      { error: { code: "INVALID_JSON" } },
-      { status: 400 },
-    );
+    body = await readJsonBody<RequestBody>(request, 4096);
+  } catch (error) {
+    if (error instanceof JsonBodyError) {
+      return NextResponse.json(
+        {
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        },
+        {
+          status: error.httpStatus,
+          headers: { "Cache-Control": "no-store" },
+        },
+      );
+    }
+    throw error;
   }
 
   if (body.bookingType !== "CAR" && body.bookingType !== "PACKAGE") {
