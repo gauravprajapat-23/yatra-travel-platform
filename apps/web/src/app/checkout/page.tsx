@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { getDb } from "@yatra/db/client";
 
@@ -93,7 +94,7 @@ export default async function CheckoutPage({
         <div className="shell checkout-invalid-state booking-card">
           <h1>Checkout session unavailable</h1>
           <p>Your booking session may have expired. Please search for a vehicle and create a new booking.</p>
-          <a className="button-link button-link--primary" href="/">Start New Search →</a>
+          <Link className="button-link button-link--primary" href="/">Start New Search →</Link>
         </div>
       </section>
     );
