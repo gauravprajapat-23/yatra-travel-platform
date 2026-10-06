@@ -175,3 +175,62 @@ export async function updateStaffAccess(input: {
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
   );
 }
+
+
+export async function revokeStaffSessions(input: {
+  targetUserId: string;
+  actorUserId: string;
+}) {
+  if (input.targetUserId === input.actorUserId) {
+    throw new Error("Use the normal logout flow to revoke your own current session.");
+  }
+
+  const db = getDb();
+
+  return db.$transaction(
+    async (tx) => {
+      const target = await tx.user.findUnique({
+        where: { id: input.targetUserId },
+        include: {
+          roles: {
+            include: { role: true },
+          },
+        },
+      });
+
+      if (!target) throw new Error("Staff user not found.");
+
+      const hasAdminRole = target.roles.some(
+        (entry) => entry.role.key !== "CUSTOMER",
+      );
+
+      if (!hasAdminRole) {
+        throw new Error("Target user is not an admin staff account.");
+      }
+
+      const result = await tx.session.updateMany({
+        where: {
+          userId: input.targetUserId,
+          revokedAt: null,
+        },
+        data: { revokedAt: new Date() },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorUserId: input.actorUserId,
+          action: "STAFF_SESSIONS_REVOKED",
+          entityType: "User",
+          entityId: input.targetUserId,
+          metadata: {
+            email: target.email,
+            revokedSessions: result.count,
+          },
+        },
+      });
+
+      return { revokedSessions: result.count };
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
+}
