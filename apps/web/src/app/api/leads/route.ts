@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
+import { JsonBodyError, readJsonBody } from "@/lib/read-json-body";
 import {
   consumePublicWriteAttempt,
   rateLimitedResponse,
@@ -97,12 +98,23 @@ export async function POST(request: Request) {
 
   let body: LeadBody;
   try {
-    body = (await request.json()) as LeadBody;
-  } catch {
-    return NextResponse.json(
-      { error: { code: "INVALID_JSON", message: "Request body must be valid JSON." } },
-      { status: 400 },
-    );
+    body = await readJsonBody<LeadBody>(request, 16384);
+  } catch (error) {
+    if (error instanceof JsonBodyError) {
+      return NextResponse.json(
+        {
+          error: {
+            code: error.code,
+            message: error.message,
+          },
+        },
+        {
+          status: error.httpStatus,
+          headers: { "Cache-Control": "no-store" },
+        },
+      );
+    }
+    throw error;
   }
 
   // Honeypot: bots that fill this field get a generic success response.
