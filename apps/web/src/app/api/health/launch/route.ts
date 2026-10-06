@@ -7,6 +7,14 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const status = {
+    deploymentCommit:
+      process.env.VERCEL_GIT_COMMIT_SHA?.trim() ||
+      process.env.GIT_COMMIT_SHA?.trim() ||
+      null,
+    deploymentEnvironment:
+      process.env.VERCEL_ENV?.trim() ||
+      process.env.NODE_ENV ||
+      null,
     databaseConfigured: Boolean(process.env.DATABASE_URL),
     databaseReachable: false,
     leadTableReady: false,
@@ -68,7 +76,7 @@ export async function GET() {
   try {
     const db = getDb();
 
-    await db.$queryRawUnsafe("SELECT 1");
+    await db.$queryRaw`SELECT 1`;
     status.databaseReachable = true;
 
     try {
