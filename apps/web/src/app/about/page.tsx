@@ -16,10 +16,10 @@ export default function AboutPage() {
           <h1>Driven by a deeper<br />love for India.</h1>
           <p>Premium travel experiences, curated journeys and reliable chauffeur-driven travel across India.</p>
           <div className="story-stats">
-            <span><strong>10+</strong> Years of Experience</span>
-            <span><strong>50,000+</strong> Happy Travellers</span>
-            <span><strong>24+</strong> Destinations</span>
-            <span><strong>4.9★</strong> Customer Rating</span>
+            <span><strong>Private</strong> Chauffeur-driven journeys</span>
+            <span><strong>Flexible</strong> Custom itineraries</span>
+            <span><strong>Transparent</strong> Server-verified quotes</span>
+            <span><strong>Support</strong> Before and during travel</span>
           </div>
         </div>
       </section>
@@ -30,7 +30,7 @@ export default function AboutPage() {
             <p className="eyebrow">OUR STORY</p>
             <h2 className="reference-title">Travel that feels personal.</h2>
             <p className="reference-copy">YATRA was built around a simple idea: help travellers experience India in comfort, safety and style. Reliable cars, thoughtful itineraries and transparent service sit at the heart of every journey.</p>
-            <ButtonLink href="/custom-trip">Our Journey →</ButtonLink>
+            <ButtonLink href="/custom-trip">Plan a Journey →</ButtonLink>
           </div>
           <div
             className="about-image-panel asset-sprite asset-destination--udaipur"
