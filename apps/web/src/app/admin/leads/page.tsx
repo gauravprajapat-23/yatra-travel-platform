@@ -5,6 +5,8 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
 import { requireAdminSession } from "@/lib/auth/session";
 
+export const dynamic = "force-dynamic";
+
 function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
   if (status === "QUALIFIED" || status === "CLOSED") return "green";
   if (status === "IN_PROGRESS") return "blue";
