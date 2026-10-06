@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CarSearchResults } from "@/components/car-search-results";
+import { getPublicFleet } from "@/lib/public-fleet";
 
 export const metadata: Metadata = {
   title: "Car Search Results",
@@ -24,6 +25,7 @@ export default async function CarSearchPage({
   searchParams: SearchParams;
 }) {
   const params = await searchParams;
+  const vehicles = await getPublicFleet();
 
   const from = first(params.from, "Raipur").trim().slice(0, 120);
   const to = first(params.to, "Ujjain").trim().slice(0, 120);
@@ -46,6 +48,7 @@ export default async function CarSearchPage({
           travellers,
           tripType,
         }}
+        vehicles={vehicles}
       />
     </section>
   );
