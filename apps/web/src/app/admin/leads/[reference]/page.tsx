@@ -44,8 +44,8 @@ export default async function LeadDetailPage({
   const lead = await db.lead.findUnique({ where: { reference } });
   if (!lead) notFound();
 
-  const leadId = leadId;
-  const leadReference = leadReference;
+  const leadId = lead.id;
+  const leadReference = lead.reference;
   const leadStatus = lead.status;
 
   async function updateLeadStatus(formData: FormData) {
