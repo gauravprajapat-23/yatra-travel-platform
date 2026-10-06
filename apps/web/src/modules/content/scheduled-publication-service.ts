@@ -240,11 +240,26 @@ export async function publishDueScheduledContent(
       await publishPackages();
       await publishFaqs();
 
+      const totalPublished = results.reduce(
+        (sum, item) => sum + item.published,
+        0,
+      );
+
+      await tx.auditLog.create({
+        data: {
+          action: "SCHEDULED_PUBLISHER_RUN",
+          entityType: "Scheduler",
+          entityId: "publish-content",
+          metadata: {
+            totalPublished,
+            results,
+            ranAt: now.toISOString(),
+          },
+        },
+      });
+
       return {
-        totalPublished: results.reduce(
-          (sum, item) => sum + item.published,
-          0,
-        ),
+        totalPublished,
         results,
       };
     },
