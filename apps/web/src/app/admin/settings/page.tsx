@@ -75,6 +75,15 @@ export default async function SettingsPage() {
       process.env.STORAGE_PUBLIC_BASE_URL,
   );
   const appUrlConfigured = Boolean(process.env.NEXT_PUBLIC_APP_URL);
+  const fieldEncryptionConfigured = (() => {
+    const raw = process.env.FIELD_ENCRYPTION_KEY?.trim();
+    if (!raw) return false;
+    try {
+      return Buffer.from(raw, "base64").length === 32;
+    } catch {
+      return false;
+    }
+  })();
 
   const bookingWriteEnabled = process.env.BOOKING_WRITE_ENABLED === "true";
   const packageBookingWriteEnabled =
@@ -102,6 +111,7 @@ export default async function SettingsPage() {
     ["Application URL", yesNo(appUrlConfigured), "NEXT_PUBLIC_APP_URL"],
     ["Razorpay", yesNo(razorpayConfigured), "Key ID + secret + webhook secret"],
     ["S3 Storage", yesNo(storageConfigured), "Bucket, endpoint, credentials, public base URL"],
+    ["Field Encryption", yesNo(fieldEncryptionConfigured), "32-byte AES-256-GCM key for driver phone/license fields"],
     ["Required Legal Pages", legalReady ? "Ready" : `${legalPages}/3 published`, "Privacy, Terms, Cancellation"],
     ["Car Booking Policy", carPolicies > 0 ? "Ready" : "Missing", `${carPolicies} active`],
     ["Package Booking Policy", packagePolicies > 0 ? "Ready" : "Missing", `${packagePolicies} active`],
