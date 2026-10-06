@@ -23,6 +23,7 @@ const nav: Array<{
   { href: "/admin/offers", label: "Offers", permission: "settings.manage" },
   { href: "/admin/cms", label: "CMS Pages", permission: "content.read" },
   { href: "/admin/blog", label: "Blog", permission: "content.read" },
+  { href: "/admin/faq", label: "FAQs", permission: "content.read" },
   { href: "/admin/media", label: "Media Library", permission: "content.read" },
   { href: "/admin/seo", label: "SEO Manager", permission: "seo.manage" },
   { href: "/admin/staff", label: "Staff / Roles", permission: "staff.manage" },
