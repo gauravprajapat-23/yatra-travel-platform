@@ -231,6 +231,11 @@ if (["scheduled", "full"].includes(mode)) {
     health.scheduledPublisherConfigured === true,
     String(health.scheduledPublisherConfigured),
   );
+  check(
+    "scheduled publisher recently ran",
+    health.scheduledPublisherRecentlyRan === true,
+    health.scheduledPublisherLastRunAt ?? "never",
+  );
 }
 
 console.log(`YATRA production readiness: ${baseUrl}`);
