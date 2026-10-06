@@ -72,6 +72,13 @@ export default async function PackagesPage() {
       active="Tours & Packages"
       title="Packages"
       subtitle="Live tour package catalog, pricing and publication state."
+      actions={
+        hasPermission(session.roles, "package.write") ? (
+          <Link className="admin-primary-button" href="/admin/packages/new">
+            ＋ New Package
+          </Link>
+        ) : null
+      }
       metrics={[
         { label: "Total Packages", value: total.toString(), meta: "all records", tone: "orange" },
         { label: "Published", value: published.toString(), meta: "visible publicly", tone: "green" },
