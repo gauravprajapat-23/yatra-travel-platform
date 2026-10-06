@@ -6,6 +6,8 @@ import {
   type TripType,
 } from "@yatra/domain/pricing/rule-selection";
 
+export { pricingBases, tripTypes };
+
 export const pricingRuleStatuses = [
   "DRAFT",
   "ACTIVE",
