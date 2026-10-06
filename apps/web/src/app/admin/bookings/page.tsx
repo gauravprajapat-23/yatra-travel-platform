@@ -1,11 +1,132 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getDb } from "@yatra/db/client";
+import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
+import { requireAdminSession } from "@/lib/auth/session";
 
-const rows=[
- ["YT1234","Rahul Mehta","Ujjain Tour","12 Oct 2024","Innova Crysta","₹14,000",<StatusPill key="s1">Confirmed</StatusPill>,"•••"],
- ["YT1233","Priya Sharma","Jaipur Heritage","13 Oct 2024","Tempo Traveller","₹26,000",<StatusPill key="s2" tone="orange">Pending</StatusPill>,"•••"],
- ["YT1232","Amit Verma","Varanasi – Prayagraj","15 Oct 2024","Fortuner","₹18,500",<StatusPill key="s3">Confirmed</StatusPill>,"•••"],
- ["YT1231","Neha Kapoor","Rameshwaram Tour","16 Oct 2024","Innova Hycross","₹32,000",<StatusPill key="s4" tone="orange">On Hold</StatusPill>,"•••"],
- ["YT1229","Karan Soni","Manali Getaway","20 Oct 2024","Tempo Traveller","₹24,000",<StatusPill key="s5">Confirmed</StatusPill>,"•••"],
- ["YT1228","Sneha Iyer","Kerala Backwaters","22 Oct 2024","Innova Crysta","₹28,000",<StatusPill key="s6">Confirmed</StatusPill>,"•••"],
-];
-export default function AdminBookingsPage(){return <AdminTablePage active="Bookings" title="Bookings" subtitle="View, search and manage all bookings across tours, cars and fleet." buttonLabel="New Booking" metrics={[{label:"All Bookings",value:"246",meta:"this month",tone:"orange"},{label:"Confirmed",value:"142",meta:"58%",tone:"green"},{label:"Pending",value:"36",meta:"needs action",tone:"orange"},{label:"Completed",value:"32",meta:"this month",tone:"blue"}]} filters={["All (246)","Confirmed (142)","Pending (36)","On Hold (18)","Completed (32)","Cancelled (18)"]} columns={["Booking ID","Customer","Route / Package","Date","Vehicle","Amount","Status","Actions"]} rows={rows}/>;}
+function money(minor: bigint, currency: string) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(Number(minor) / 100);
+}
+
+function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
+  if (["CONFIRMED", "COMPLETED"].includes(status)) return "green";
+  if (["PENDING_PAYMENT", "PENDING_REVIEW", "REFUND_PENDING"].includes(status)) return "orange";
+  if (["CANCELLED", "FAILED", "REFUNDED", "EXPIRED"].includes(status)) return "red";
+  if (["DRIVER_ASSIGNED", "IN_PROGRESS"].includes(status)) return "blue";
+  return "gray";
+}
+
+export default async function AdminBookingsPage() {
+  const session = await requireAdminSession();
+  if (!hasPermission(session.roles, "booking.read")) redirect("/admin");
+
+  const db = getDb();
+
+  const [cars, packages, carCount, packageCount] = await Promise.all([
+    db.carBooking.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      select: {
+        reference: true,
+        guestName: true,
+        originText: true,
+        destinationText: true,
+        startsAt: true,
+        currency: true,
+        totalMinor: true,
+        status: true,
+        vehicleClass: { select: { name: true } },
+        createdAt: true,
+      },
+    }),
+    db.packageBooking.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      select: {
+        reference: true,
+        guestName: true,
+        travelStartAt: true,
+        currency: true,
+        totalMinor: true,
+        status: true,
+        package: { select: { title: true } },
+        createdAt: true,
+      },
+    }),
+    db.carBooking.count(),
+    db.packageBooking.count(),
+  ]);
+
+  const combined = [
+    ...cars.map((booking) => ({
+      type: "CAR" as const,
+      reference: booking.reference,
+      customer: booking.guestName,
+      summary: `${booking.originText} → ${booking.destinationText}`,
+      date: booking.startsAt,
+      vehicle: booking.vehicleClass.name,
+      amount: money(booking.totalMinor, booking.currency),
+      status: booking.status,
+      createdAt: booking.createdAt,
+    })),
+    ...packages.map((booking) => ({
+      type: "PACKAGE" as const,
+      reference: booking.reference,
+      customer: booking.guestName,
+      summary: booking.package.title,
+      date: booking.travelStartAt,
+      vehicle: "Tour package",
+      amount: money(booking.totalMinor, booking.currency),
+      status: booking.status,
+      createdAt: booking.createdAt,
+    })),
+  ]
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, 50);
+
+  const allCount = carCount + packageCount;
+  const confirmed = combined.filter((booking) => booking.status === "CONFIRMED").length;
+  const pending = combined.filter((booking) =>
+    ["PENDING_PAYMENT", "PENDING_REVIEW"].includes(booking.status),
+  ).length;
+  const completed = combined.filter((booking) => booking.status === "COMPLETED").length;
+
+  const rows = combined.map((booking) => [
+    <Link key={booking.reference} href={`/admin/bookings/${booking.reference}`}>
+      {booking.reference}
+    </Link>,
+    booking.customer,
+    booking.summary,
+    booking.date.toLocaleDateString("en-IN"),
+    booking.vehicle,
+    booking.amount,
+    <StatusPill key={`${booking.reference}-status`} tone={tone(booking.status)}>
+      {booking.status.replaceAll("_", " ")}
+    </StatusPill>,
+    <Link key={`${booking.reference}-view`} href={`/admin/bookings/${booking.reference}`}>
+      View
+    </Link>,
+  ]);
+
+  return (
+    <AdminTablePage
+      active="Bookings"
+      title="Bookings"
+      subtitle="Live car and package bookings from Neon, newest first."
+      metrics={[
+        { label: "All Bookings", value: allCount.toString(), meta: "all time", tone: "orange" },
+        { label: "Confirmed", value: confirmed.toString(), meta: "latest 50", tone: "green" },
+        { label: "Pending", value: pending.toString(), meta: "latest 50", tone: "orange" },
+        { label: "Completed", value: completed.toString(), meta: "latest 50", tone: "blue" },
+      ]}
+      filters={["Latest 50"]}
+      columns={["Booking ID", "Customer", "Route / Package", "Date", "Vehicle / Type", "Amount", "Status", "Actions"]}
+      rows={rows}
+    />
+  );
+}
