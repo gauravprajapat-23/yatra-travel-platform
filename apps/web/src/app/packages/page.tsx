@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
 import { PackageBrowser } from "@/components/package-browser";
+import { getPublicPackages } from "@/lib/public-packages";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Tour Packages",
   description: "Curated temple, heritage and road-trip packages across India.",
 };
 
-export default function PackagesPage() {
+export default async function PackagesPage() {
+  const packages = await getPublicPackages();
+
   return (
     <>
       <section className="reference-page-hero reference-page-hero--packages">
@@ -14,11 +19,11 @@ export default function PackagesPage() {
         <div className="shell reference-page-hero__content">
           <p className="eyebrow">CURATED JOURNEYS</p>
           <h1>Curated journeys<br />across incredible India.</h1>
-          <p>Temple tours, weekend getaways, heritage trails and spiritual journeys crafted for meaningful travel.</p>
+          <p>Published temple tours, heritage trails and road journeys managed by the YATRA team.</p>
         </div>
       </section>
 
-      <PackageBrowser />
+      <PackageBrowser packages={packages} />
     </>
   );
 }
