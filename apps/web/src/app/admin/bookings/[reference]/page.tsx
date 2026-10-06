@@ -50,7 +50,9 @@ export default async function BookingDetailPage({
   const isPackage = reference.startsWith("YPK-");
 
   const rawBooking = isPackage
-    ? await db.packageBooking.findUnique({
+    ? {
+        type: "PACKAGE" as const,
+        data: await db.packageBooking.findUnique({
         where: { reference },
         include: {
           package: { select: { title: true } },
@@ -69,8 +71,11 @@ export default async function BookingDetailPage({
             },
           },
         },
-      })
-    : await db.carBooking.findUnique({
+      }),
+      }
+    : {
+        type: "CAR" as const,
+        data: await db.carBooking.findUnique({
         where: { reference },
         include: {
           vehicleClass: { select: { name: true } },
@@ -91,49 +96,50 @@ export default async function BookingDetailPage({
             },
           },
         },
-      });
+      }),
+      };
 
-  if (!rawBooking) notFound();
+  if (!rawBooking.data) notFound();
 
-  const booking = isPackage
+  const booking = rawBooking.type === "PACKAGE"
     ? {
-        id: rawBooking.id,
+        id: rawBooking.data.id,
         type: "PACKAGE" as const,
-        reference: rawBooking.reference,
-        status: rawBooking.status as BookingStatus,
-        title: rawBooking.package.title,
+        reference: rawBooking.data.reference,
+        status: rawBooking.data.status as BookingStatus,
+        title: rawBooking.data.package.title,
         route: "Tour package",
-        startsAt: rawBooking.travelStartAt,
+        startsAt: rawBooking.data.travelStartAt,
         endsAt: null as Date | null,
-        travellers: rawBooking.travellers,
-        guestName: rawBooking.guestName,
-        guestEmail: rawBooking.guestEmail,
-        currency: rawBooking.currency,
-        totalMinor: rawBooking.totalMinor,
-        createdAt: rawBooking.createdAt,
-        history: rawBooking.statusHistory,
-        paymentIntents: rawBooking.paymentIntents,
+        travellers: rawBooking.data.travellers,
+        guestName: rawBooking.data.guestName,
+        guestEmail: rawBooking.data.guestEmail,
+        currency: rawBooking.data.currency,
+        totalMinor: rawBooking.data.totalMinor,
+        createdAt: rawBooking.data.createdAt,
+        history: rawBooking.data.statusHistory,
+        paymentIntents: rawBooking.data.paymentIntents,
         assignment: null as string | null,
       }
     : {
-        id: rawBooking.id,
+        id: rawBooking.data.id,
         type: "CAR" as const,
-        reference: rawBooking.reference,
-        status: rawBooking.status as BookingStatus,
-        title: rawBooking.vehicleClass.name,
-        route: `${rawBooking.originText} → ${rawBooking.destinationText}`,
-        startsAt: rawBooking.startsAt,
-        endsAt: rawBooking.endsAt,
-        travellers: rawBooking.travellers,
-        guestName: rawBooking.guestName,
-        guestEmail: rawBooking.guestEmail,
-        currency: rawBooking.currency,
-        totalMinor: rawBooking.totalMinor,
-        createdAt: rawBooking.createdAt,
-        history: rawBooking.statusHistory,
-        paymentIntents: rawBooking.paymentIntents,
-        assignment: rawBooking.assignedDriver
-          ? `${rawBooking.assignedDriver.name} · ${rawBooking.selectedVehicle?.displayName ?? "Vehicle pending"}`
+        reference: rawBooking.data.reference,
+        status: rawBooking.data.status as BookingStatus,
+        title: rawBooking.data.vehicleClass.name,
+        route: `${rawBooking.data.originText} → ${rawBooking.data.destinationText}`,
+        startsAt: rawBooking.data.startsAt,
+        endsAt: rawBooking.data.endsAt,
+        travellers: rawBooking.data.travellers,
+        guestName: rawBooking.data.guestName,
+        guestEmail: rawBooking.data.guestEmail,
+        currency: rawBooking.data.currency,
+        totalMinor: rawBooking.data.totalMinor,
+        createdAt: rawBooking.data.createdAt,
+        history: rawBooking.data.statusHistory,
+        paymentIntents: rawBooking.data.paymentIntents,
+        assignment: rawBooking.data.assignedDriver
+          ? `${rawBooking.data.assignedDriver.name} · ${rawBooking.data.selectedVehicle?.displayName ?? "Vehicle pending"}`
           : null,
       };
 
