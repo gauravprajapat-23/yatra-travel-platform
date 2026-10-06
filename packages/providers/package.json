@@ -8,7 +8,8 @@
     "./payments/razorpay-config": "./src/payments/razorpay-config.ts",
     "./payments/razorpay-signature": "./src/payments/razorpay-signature.ts",
     "./storage/s3-config": "./src/storage/s3-config.ts",
-    "./storage/s3-client": "./src/storage/s3-client.ts"
+    "./storage/s3-client": "./src/storage/s3-client.ts",
+    "./security/field-encryption": "./src/security/field-encryption.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
