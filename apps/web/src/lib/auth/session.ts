@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, createHmac, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
@@ -12,11 +12,33 @@ export function hashSessionToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
-export async function createAdminSession(userId: string) {
+function requestIpHash(request: Request | undefined): string | null {
+  if (!request) return null;
+
+  const secret = process.env.AUTH_SECRET?.trim();
+  if (!secret) return null;
+
+  const forwarded = request.headers.get("x-forwarded-for");
+  const first = forwarded?.split(",")[0]?.trim();
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  const address = (first || realIp || "").slice(0, 128);
+
+  if (!address) return null;
+
+  return createHmac("sha256", secret)
+    .update(`admin-session-ip:${address}`)
+    .digest("hex");
+}
+
+export async function createAdminSession(
+  userId: string,
+  request?: Request,
+) {
   const db = getDb();
   const rawToken = randomBytes(32).toString("base64url");
   const tokenHash = hashSessionToken(rawToken);
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
+  const userAgent = request?.headers.get("user-agent")?.trim().slice(0, 500) || null;
 
   await db.session.create({
     data: {
@@ -24,6 +46,8 @@ export async function createAdminSession(userId: string) {
       userId,
       expiresAt,
       lastSeenAt: new Date(),
+      ipHash: requestIpHash(request),
+      userAgent,
     },
   });
 
