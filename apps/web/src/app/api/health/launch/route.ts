@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@yatra/db/client";
+import { checkoutSessionSigningConfigured } from "@/lib/checkout-session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ export async function GET() {
     activeCarBookingPolicies: 0,
     activePackageBookingPolicies: 0,
     requiredLegalPagesPublished: 0,
+    checkoutSessionSigningConfigured: checkoutSessionSigningConfigured(),
     bookingWriteEnabled: process.env.BOOKING_WRITE_ENABLED === "true",
     packageBookingWriteEnabled:
       process.env.PACKAGE_BOOKING_WRITE_ENABLED === "true",
@@ -126,11 +128,13 @@ export async function GET() {
       status.activeVehicles > 0 &&
       status.activePricingRules > 0 &&
       status.activeCarBookingPolicies > 0 &&
+      status.checkoutSessionSigningConfigured &&
       status.bookingWriteEnabled;
 
     status.packageBookingReady =
       status.databaseReachable &&
       status.activePackageBookingPolicies > 0 &&
+      status.checkoutSessionSigningConfigured &&
       status.packageBookingWriteEnabled;
 
     status.checkoutReady =
