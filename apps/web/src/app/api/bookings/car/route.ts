@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import {
+  CHECKOUT_SESSION_COOKIE,
+  checkoutSessionCookieOptions,
+  checkoutSessionSigningConfigured,
+  createCheckoutSessionToken,
+} from "@/lib/checkout-session";
+import {
   BookingServiceError,
   createGuestCarBooking,
 } from "@/modules/booking/car-booking-service";
@@ -28,6 +34,18 @@ function isEmail(value: string): boolean {
 }
 
 export async function POST(request: Request) {
+  if (!checkoutSessionSigningConfigured()) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "CHECKOUT_SESSION_SIGNING_UNAVAILABLE",
+          message: "Secure checkout sessions are not configured.",
+        },
+      },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
   if (process.env.BOOKING_WRITE_ENABLED !== "true") {
     return NextResponse.json(
       {
@@ -123,13 +141,17 @@ export async function POST(request: Request) {
       },
     });
 
-    response.cookies.set("yatra_checkout_booking", result.booking.reference, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 30 * 60,
+    const checkoutToken = createCheckoutSessionToken({
+      bookingType: "CAR",
+      bookingReference: result.booking.reference,
     });
+
+    response.cookies.set(
+      CHECKOUT_SESSION_COOKIE,
+      checkoutToken,
+      checkoutSessionCookieOptions(),
+    );
+    response.cookies.delete("yatra_checkout_booking");
 
     return response;
   } catch (error) {
