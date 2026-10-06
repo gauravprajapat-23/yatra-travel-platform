@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ButtonLink } from "@/components/button-link";
+import { ContactForm } from "@/components/contact-form";
 
 export const metadata: Metadata = {
   title: "Contact YATRA",
@@ -31,18 +32,7 @@ export default function ContactPage() {
         </div>
 
         <div className="shell contact-layout">
-          <form className="contact-form">
-            <p className="eyebrow">SEND US A MESSAGE</p>
-            <h2>Tell us about your travel plans.</h2>
-            <div className="form-grid">
-              <label>Full Name<input placeholder="Your name" /></label>
-              <label>Email Address<input type="email" placeholder="you@example.com" /></label>
-              <label>Phone Number<input placeholder="+91" /></label>
-              <label>Preferred Travel Date<input type="date" /></label>
-            </div>
-            <label>Your Message<textarea placeholder="Tell us about your travel plans..." /></label>
-            <button className="button-link button-link--primary" type="button">Send Message →</button>
-          </form>
+          <ContactForm />
 
           <aside className="office-card">
             <p className="eyebrow">OUR OFFICE</p>
