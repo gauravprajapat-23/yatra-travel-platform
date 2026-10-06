@@ -51,6 +51,13 @@ export default async function CmsPage() {
       active="CMS Pages"
       title="CMS Pages"
       subtitle="Live website pages and publication state from Neon."
+      actions={
+        hasPermission(session.roles, "content.write") ? (
+          <Link className="admin-primary-button" href="/admin/cms/new">
+            ＋ New CMS Page
+          </Link>
+        ) : null
+      }
       metrics={[
         { label: "All Pages", value: total.toString(), meta: "all records", tone: "blue" },
         { label: "Published", value: published.toString(), meta: "visible publicly", tone: "green" },
