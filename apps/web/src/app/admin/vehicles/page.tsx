@@ -1,9 +1,60 @@
+import { redirect } from "next/navigation";
+import { getDb } from "@yatra/db/client";
+import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
-const rows=[
- ["HR26AB1234","Innova Crysta","SUV","7","Delhi",<StatusPill key="1">Available</StatusPill>,<StatusPill key="2">Good</StatusPill>,"•••"],
- ["RJ14CD5678","Tempo Traveller","Tempo","12","Jaipur",<StatusPill key="3" tone="orange">On Trip</StatusPill>,<StatusPill key="4">Good</StatusPill>,"•••"],
- ["UP32EF9012","Force Traveller","Tempo","17","Lucknow",<StatusPill key="5">Available</StatusPill>,<StatusPill key="6" tone="red">Service Due</StatusPill>,"•••"],
- ["MH01GH3456","Toyota Fortuner","SUV","7","Mumbai",<StatusPill key="7" tone="orange">On Trip</StatusPill>,<StatusPill key="8">Good</StatusPill>,"•••"],
- ["KA05JK7890","Innova Hycross","SUV","7","Bengaluru",<StatusPill key="9">Available</StatusPill>,<StatusPill key="10">Good</StatusPill>,"•••"],
-];
-export default function AdminVehiclesPage(){return <AdminTablePage active="Fleet Management" title="Vehicles" subtitle="Manage your fleet, track availability, maintenance and assignments." buttonLabel="Add Vehicle" metrics={[{label:"Total Vehicles",value:"42",meta:"↑ 12%",tone:"blue"},{label:"On Trip",value:"24",meta:"57.1% currently in use",tone:"green"},{label:"Available",value:"14",meta:"33.3% ready",tone:"green"},{label:"In Maintenance",value:"4",meta:"9.5% under service",tone:"orange"}]} filters={["All Vehicles","Available","On Trip","Maintenance"]} columns={["Vehicle No.","Vehicle","Type","Seats","Location","Status","Maintenance","Actions"]} rows={rows}/>;}
+import { requireAdminSession } from "@/lib/auth/session";
+
+function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
+  if (status === "ACTIVE") return "green";
+  if (status === "MAINTENANCE") return "orange";
+  if (status === "RETIRED" || status === "INACTIVE") return "red";
+  return "gray";
+}
+
+export default async function AdminVehiclesPage() {
+  const session = await requireAdminSession();
+  if (!hasPermission(session.roles, "vehicle.read")) redirect("/admin");
+
+  const db = getDb();
+  const [vehicles, total, active, maintenance, inactive] = await Promise.all([
+    db.vehicle.findMany({
+      orderBy: [{ status: "asc" }, { displayName: "asc" }],
+      include: { vehicleClass: { select: { name: true } } },
+      take: 100,
+    }),
+    db.vehicle.count(),
+    db.vehicle.count({ where: { status: "ACTIVE" } }),
+    db.vehicle.count({ where: { status: "MAINTENANCE" } }),
+    db.vehicle.count({ where: { status: { in: ["INACTIVE", "RETIRED"] } } }),
+  ]);
+
+  const rows = vehicles.map((vehicle) => [
+    vehicle.registrationNumber,
+    vehicle.displayName,
+    vehicle.vehicleClass.name,
+    vehicle.seats.toString(),
+    vehicle.luggage?.toString() ?? "—",
+    <StatusPill key={vehicle.id} tone={tone(vehicle.status)}>
+      {vehicle.status.replaceAll("_", " ")}
+    </StatusPill>,
+    vehicle.airConditioned ? "AC" : "Non-AC",
+    vehicle.isFeatured ? "Featured" : "—",
+  ]);
+
+  return (
+    <AdminTablePage
+      active="Fleet Management"
+      title="Vehicles"
+      subtitle="Live fleet inventory used by booking and assignment operations."
+      metrics={[
+        { label: "Total Vehicles", value: total.toString(), meta: "all fleet records", tone: "blue" },
+        { label: "Active", value: active.toString(), meta: "eligible for assignment", tone: "green" },
+        { label: "Maintenance", value: maintenance.toString(), meta: "temporarily unavailable", tone: "orange" },
+        { label: "Inactive / Retired", value: inactive.toString(), meta: "not assignable", tone: "red" },
+      ]}
+      filters={["Latest 100"]}
+      columns={["Vehicle No.", "Vehicle", "Class", "Seats", "Luggage", "Status", "Comfort", "Featured"]}
+      rows={rows}
+    />
+  );
+}
