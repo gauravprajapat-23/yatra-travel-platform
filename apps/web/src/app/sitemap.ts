@@ -1,7 +1,9 @@
 import type { MetadataRoute } from "next";
+import { getPublicBlogPosts } from "@/lib/public-blog";
+import { getPublicCmsPages } from "@/lib/public-cms";
 import { getPublicDestinations } from "@/lib/public-destinations";
+import { getPublicFleet } from "@/lib/public-fleet";
 import { getPublicPackages } from "@/lib/public-packages";
-import { travelGuides } from "@/lib/travel-guides";
 
 export const dynamic = "force-dynamic";
 
@@ -12,30 +14,56 @@ const staticRoutes = [
   "/destinations",
   "/offers",
   "/travel-guides",
-  "/about",
   "/contact",
   "/faq",
-  "/privacy-policy",
-  "/terms",
-  "/cancellation-policy",
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000")
+    .replace(/\/$/, "");
 
-  const [packages, destinations] = await Promise.all([
-    getPublicPackages(),
-    getPublicDestinations(),
-  ]);
+  const [packages, destinations, blogPosts, vehicles, cmsPages] =
+    await Promise.all([
+      getPublicPackages(),
+      getPublicDestinations(),
+      getPublicBlogPosts(),
+      getPublicFleet(),
+      getPublicCmsPages(),
+    ]);
 
   const routes = new Set<string>(staticRoutes);
 
-  for (const pkg of packages) routes.add(`/packages/${pkg.slug}`);
-  for (const destination of destinations) {
-    routes.add(`/destinations/${destination.slug}`);
+  const hasCmsAbout = cmsPages.some((page) => page.slug === "about");
+  if (!hasCmsAbout) {
+    routes.add("/about");
   }
-  for (const guide of travelGuides) {
-    routes.add(`/travel-guides/${guide.slug}`);
+
+  for (const page of cmsPages) {
+    if (page.robotsIndex) {
+      routes.add(`/${page.slug}`);
+    }
+  }
+
+  for (const pkg of packages) {
+    if (pkg.robotsIndex) {
+      routes.add(`/packages/${pkg.slug}`);
+    }
+  }
+
+  for (const destination of destinations) {
+    if (destination.robotsIndex) {
+      routes.add(`/destinations/${destination.slug}`);
+    }
+  }
+
+  for (const post of blogPosts) {
+    if (post.robotsIndex) {
+      routes.add(`/travel-guides/${post.slug}`);
+    }
+  }
+
+  for (const vehicle of vehicles) {
+    routes.add(`/cars/${vehicle.slug}`);
   }
 
   return [...routes].map((route) => ({
