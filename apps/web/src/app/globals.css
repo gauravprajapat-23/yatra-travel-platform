@@ -2720,7 +2720,7 @@ body:has(.admin-root) {
 }
 
 .admin-primary-button {
-  min-height: 40px;
+  min-height: 44px;
   border: 0;
   border-radius: 7px;
   padding: 0 16px;
@@ -3141,7 +3141,7 @@ body:has(.admin-root) {
 /* === Admin detail/reference pages === */
 .admin-secondary-button,
 .admin-danger-button {
-  min-height: 38px;
+  min-height: 44px;
   padding: 0 13px;
   border-radius: 7px;
   background: #fff;
@@ -5797,7 +5797,7 @@ body:has(.admin-root) {
 .admin-field select {
   width: 100%;
   min-width: 0;
-  min-height: 43px;
+  min-height: 44px;
   padding: 9px 11px;
   border: 1px solid #dcd5ca;
   border-radius: 8px;
