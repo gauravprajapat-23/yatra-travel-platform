@@ -297,6 +297,7 @@ Current dedicated create coverage:
 - Package
 - Booking Policy Version
 - Vehicle
+- Staff Invite
 
 New dedicated create pages should not ship with raw label/input stacks or error-boundary-only validation unless there is a documented exception.
 
