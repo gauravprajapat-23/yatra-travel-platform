@@ -30,6 +30,17 @@ Behavior:
 
 All dedicated admin create pages currently use `AdminActionForm`.
 
+### `AdminPanelHeading`
+
+Use inside detail/editor panels that need a consistent title plus optional description, status/meta element or actions.
+
+Preferred uses:
+- overview/status panels in tabbed editors
+- section headers with a status pill
+- section headers with a compact count/action group
+
+Do not hand-build repeated `admin-panel-heading` title/status markup when this component fits.
+
 ### `AdminFormSection`
 Use to split forms into meaningful business sections.
 
@@ -255,6 +266,20 @@ Examples:
 Do not add pending behavior to simple GET search/filter forms.
 
 
+### `AdminDangerZone`
+
+Use to visually separate high-impact destructive actions from ordinary save/edit controls.
+
+Current uses include:
+- cancelling a pending staff invite
+- revoking all active staff sessions
+
+Rules:
+- pair it with `AdminConfirmSubmitButton`
+- explain the consequence in one short sentence
+- do not use it for routine toggles
+- do not treat visual separation as the authorization boundary
+
 ### `AdminConfirmSubmitButton`
 
 Use for destructive non-financial server actions that should require explicit confirmation.
@@ -439,6 +464,28 @@ Bookings, Leads, refunds, assignment and similar operational mutations should:
 - preserve idempotency/financial safeguards
 
 UI state must never be the security boundary.
+
+## Contextual Empty States
+
+Shared list pages should use `AdminTablePage` contextual empty-state props rather than generic blank-table messages.
+
+Use:
+- `emptyTitle`
+- `emptyMessage`
+- `emptyAction` when a meaningful create action is available
+
+Differentiate:
+- true first-run/no-data state
+- no-results-under-current-filters state
+
+Current contextual empty-state coverage includes:
+- Packages
+- Vehicles
+- Drivers
+- Leads
+- FAQs
+
+Do not show a create CTA when the user lacks the required write permission.
 
 ## Search / Filter Forms
 
