@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
-import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminPanelHeading, AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminConfirmSubmitButton } from "@/components/admin-confirm-submit-button";
@@ -455,12 +455,14 @@ export default async function AdminContentEditorPage({
       <div className="admin-editor-section-stack">
         {activeTab === "overview" ? (
           <section className="admin-panel admin-detail-card">
-            <div className="admin-panel-heading">
-              <h2>Publication Overview</h2>
-              <StatusPill tone={tone(content.status)}>
+            <AdminPanelHeading
+              title="Publication Overview"
+              meta={
+                <StatusPill tone={tone(content.status)}>
                 {content.status.replaceAll("_", " ")}
               </StatusPill>
-            </div>
+              }
+            />
             <dl>
               <div><dt>Slug</dt><dd>{content.slug}</dd></div>
               <div><dt>Type</dt><dd>{type.replaceAll("_", " ").toUpperCase()}</dd></div>
