@@ -14,6 +14,7 @@ import {
   AdminFormGrid,
   AdminFormSection,
 } from "@/components/admin-form";
+import { AdminMultiSelectCards } from "@/components/admin-multi-select-cards";
 import { requireAdminSession } from "@/lib/auth/session";
 import { createDriver } from "@/modules/fleet/fleet-management-service";
 
@@ -106,11 +107,14 @@ export default async function NewDriverPage() {
         </AdminFormSection>
 
         <AdminFormSection title="Vehicle qualifications" description="Select every vehicle class this driver is approved to operate.">
-          <AdminCheckboxGrid>
-            {classes.map((item) => (
-              <AdminCheckbox key={item.id} name="qualificationIds" value={item.id} label={item.name} description="Eligible for booking assignment." />
-            ))}
-          </AdminCheckboxGrid>
+          <AdminMultiSelectCards
+            name="qualificationIds"
+            options={classes.map((item) => ({
+              id: item.id,
+              label: item.name,
+              meta: "Eligible for booking assignment",
+            }))}
+          />
         </AdminFormSection>
 
         <AdminFormSection title="Internal notes" description="Private operational context. Do not add unnecessary sensitive information.">
