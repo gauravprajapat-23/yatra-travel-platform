@@ -9,6 +9,7 @@ import { AdminStructuredContentEditor } from "@/components/admin-structured-cont
 import { AdminMediaPicker } from "@/components/admin-media-picker";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminMultiSelectCards } from "@/components/admin-multi-select-cards";
+import { AdminMoneyField } from "@/components/admin-money-field";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
@@ -912,15 +913,13 @@ export default async function PackageDetailPage({
                                 </select>
                               </AdminField>
 
-                              <AdminField label="Price" htmlFor={`price-amount-${option.id}`} required>
-                                <input
-                                  id={`price-amount-${option.id}`}
-                                  name="amount"
-                                  defaultValue={(Number(option.amountMinor) / 100).toFixed(2)}
-                                  inputMode="decimal"
-                                  required
-                                />
-                              </AdminField>
+                              <AdminMoneyField
+                                name="amount"
+                                label="Price"
+                                currency={option.currency}
+                                defaultValue={(Number(option.amountMinor) / 100).toFixed(2)}
+                                required
+                              />
 
                               <AdminField label="Currency" htmlFor={`price-currency-${option.id}`} required>
                                 <input
@@ -1017,15 +1016,13 @@ export default async function PackageDetailPage({
                       </select>
                     </AdminField>
 
-                    <AdminField label="Price" htmlFor="newPriceAmount" required>
-                      <input
-                        id="newPriceAmount"
-                        name="amount"
-                        inputMode="decimal"
-                        placeholder="14000"
-                        required
-                      />
-                    </AdminField>
+                    <AdminMoneyField
+                      name="amount"
+                      label="Price"
+                      currency="INR"
+                      placeholder="14000"
+                      required
+                    />
 
                     <AdminField label="Currency" htmlFor="newPriceCurrency" required>
                       <input
