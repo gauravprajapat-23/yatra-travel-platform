@@ -372,3 +372,20 @@
     justify-content: space-between;
   }
 }
+
+
+.admin-table-query--compact {
+  grid-template-columns: minmax(240px, 2fr) minmax(170px, 1fr) auto auto;
+}
+
+@media (max-width: 760px) {
+  .admin-table-query--compact {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-table-query--compact {
+    grid-template-columns: 1fr;
+  }
+}
