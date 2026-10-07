@@ -486,10 +486,11 @@ export default async function VehicleDetailPage({
                     altText: asset.altText,
                   }))}
                 />
-                <label>
-                  <input type="checkbox" name="isPrimary"/>
-                  Use as primary fleet image
-                </label>
+                <AdminCheckbox
+                  name="isPrimary"
+                  label="Use as primary fleet image"
+                  description="This image becomes the main public fleet image."
+                />
                 <button className="admin-primary-button" type="submit">
                   Attach Image
                 </button>
