@@ -83,6 +83,7 @@ const sharedComponents = [
   "apps/web/src/components/admin-editor-tabs.tsx",
   "apps/web/src/components/admin-submit-button.tsx",
   "apps/web/src/components/admin-confirm-submit-button.tsx",
+  "apps/web/src/components/admin-danger-zone.tsx",
   "apps/web/src/components/admin-slug-fields.tsx",
   "apps/web/src/components/admin-money-field.tsx",
   "apps/web/src/components/admin-currency-field.tsx",
@@ -106,6 +107,21 @@ for (const file of sharedComponents) {
 }
 
 const primitiveCoverage = [
+  {
+    file: "apps/web/src/components/admin-table-page.tsx",
+    fragments: [
+      "emptyTitle",
+      "emptyMessage",
+      "emptyAction",
+      "admin-table-empty__action",
+    ],
+    label: "contextual table empty-state contract",
+  },
+  {
+    file: "apps/web/src/app/admin/staff/[id]/page.tsx",
+    fragments: ["<AdminDangerZone"],
+    label: "staff destructive-action hierarchy",
+  },
   {
     file: "apps/web/src/app/globals.css",
     fragments: [
