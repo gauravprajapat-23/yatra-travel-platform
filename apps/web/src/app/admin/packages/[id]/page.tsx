@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
-import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminPanelHeading, AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminStructuredContentEditor } from "@/components/admin-structured-content-editor";
 import { AdminMediaPicker } from "@/components/admin-media-picker";
@@ -668,12 +668,14 @@ export default async function PackageDetailPage({
       <div className="admin-editor-section-stack">
         {activeTab === "overview" ? (
           <section className="admin-panel admin-detail-card">
-            <div className="admin-panel-heading">
-              <h2>Package Overview</h2>
-              <StatusPill tone={tone(pkg.status)}>
+            <AdminPanelHeading
+              title="Package Overview"
+              meta={
+                <StatusPill tone={tone(pkg.status)}>
                 {pkg.status.replaceAll("_", " ")}
               </StatusPill>
-            </div>
+              }
+            />
             <p>{pkg.summary ?? "No summary provided."}</p>
             <dl>
               <div><dt>Duration</dt><dd>{packageDurationDays}D / {pkg.durationNights}N</dd></div>
