@@ -222,6 +222,23 @@ export default async function PackagesPage({
         "Published",
         "Slug",
       ]}
+      emptyTitle={
+        q || status ? "No packages match these filters" : "No packages yet"
+      }
+      emptyMessage={
+        q || status
+          ? "Try clearing the search or status filter to broaden the package list."
+          : "Create the first package draft to start building itinerary, pricing, media and SEO."
+      }
+      emptyAction={
+        !q &&
+        !status &&
+        hasPermission(session.roles, "package.write") ? (
+          <Link className="admin-primary-button" href="/admin/packages/new">
+            ＋ Create First Package
+          </Link>
+        ) : null
+      }
       rows={rows}
       footer={
         <>
