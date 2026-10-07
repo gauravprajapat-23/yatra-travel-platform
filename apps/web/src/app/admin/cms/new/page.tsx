@@ -143,6 +143,6 @@ export default async function NewCmsPage() {
 
         <AdminFormActions submitLabel="Create Draft Page" cancelHref="/admin/cms" helper="Creates a non-indexed CMS draft." />
       </AdminForm>
-
+    </AdminShell>
   );
 }
