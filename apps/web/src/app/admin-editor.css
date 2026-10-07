@@ -825,3 +825,91 @@
 .admin-field__count--limit {
   color: #c45d20;
 }
+
+
+.admin-file-upload {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-height: 94px;
+  padding: 12px;
+  border: 1.5px dashed #cfc6bb;
+  border-radius: 10px;
+  background: #fffdf9;
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+
+.admin-file-upload:hover,
+.admin-file-upload--dragging {
+  border-color: #e67f32;
+  background: #fff8f1;
+  box-shadow: 0 0 0 3px rgba(242, 103, 23, .08);
+}
+
+.admin-file-upload--error {
+  border-color: #d96c62;
+  background: #fff7f6;
+}
+
+.admin-file-upload > input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.admin-file-upload__icon,
+.admin-file-upload__preview {
+  width: 64px;
+  height: 64px;
+  border-radius: 9px;
+}
+
+.admin-file-upload__icon {
+  display: grid;
+  place-items: center;
+  background: #f3eee7;
+  color: #be6b2f;
+  font-size: 1.3rem;
+  font-weight: 900;
+}
+
+.admin-file-upload__preview {
+  object-fit: cover;
+  background: #f3eee7;
+}
+
+.admin-file-upload__copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.admin-file-upload__copy strong {
+  overflow: hidden;
+  color: #34483f;
+  font-size: .7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-file-upload__copy small {
+  color: #858d88;
+  font-size: .6rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 520px) {
+  .admin-file-upload {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .admin-file-upload__icon,
+  .admin-file-upload__preview {
+    margin-inline: auto;
+  }
+}
