@@ -5,7 +5,6 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell } from "@/components/admin-shell";
 import {
   AdminField,
-  AdminForm,
   AdminFormActions,
   AdminFormAsideCard,
   AdminFormCallout,
@@ -13,6 +12,10 @@ import {
   AdminFormSection,
 } from "@/components/admin-form";
 import { AdminMoneyField } from "@/components/admin-money-field";
+import {
+  AdminActionForm,
+  type AdminActionState,
+} from "@/components/admin-action-form";
 import { AdminCurrencyField } from "@/components/admin-currency-field";
 import { AdminDateTimeRange } from "@/components/admin-date-time-range";
 import { requireAdminSession } from "@/lib/auth/session";
@@ -65,7 +68,10 @@ export default async function NewPricingRulePage() {
     select: { id: true, name: true },
   });
 
-  async function create(formData: FormData) {
+  async function create(
+    _previousState: AdminActionState,
+    formData: FormData,
+  ): Promise<AdminActionState> {
     "use server";
 
     const currentSession = await requireAdminSession();
@@ -73,35 +79,55 @@ export default async function NewPricingRulePage() {
       redirect("/admin/offers");
     }
 
-    const tripType = String(formData.get("tripType") ?? "");
-    const basis = String(formData.get("basis") ?? "");
-    const status = String(formData.get("status") ?? "DRAFT");
+    let ruleId: string;
 
-    if (!isTripType(tripType)) throw new Error("Invalid trip type.");
-    if (!isPricingBasis(basis)) throw new Error("Invalid pricing basis.");
-    if (!isPricingRuleStatus(status)) throw new Error("Invalid pricing rule status.");
+    try {
+      const tripType = String(formData.get("tripType") ?? "");
+      const basis = String(formData.get("basis") ?? "");
+      const status = String(formData.get("status") ?? "DRAFT");
 
-    const rule = await savePricingRule({
-      name: String(formData.get("name") ?? ""),
-      vehicleClassId: String(formData.get("vehicleClassId") ?? ""),
-      tripType,
-      basis,
-      currency: String(formData.get("currency") ?? "INR"),
-      baseAmountMinor: parseMinor(formData.get("baseAmount")),
-      perKmMinor: parseMinor(formData.get("perKm")),
-      minimumDistanceKm: parseOptionalInt(formData.get("minimumDistanceKm")),
-      driverAllowancePerDayMinor: parseMinor(formData.get("driverAllowancePerDay")),
-      nightAllowanceMinor: parseMinor(formData.get("nightAllowance")),
-      originKey: String(formData.get("originKey") ?? ""),
-      destinationKey: String(formData.get("destinationKey") ?? ""),
-      priority: Number(formData.get("priority") ?? 0),
-      status,
-      activeFrom: parseOptionalDate(formData.get("activeFrom")),
-      activeTo: parseOptionalDate(formData.get("activeTo")),
-      actorUserId: currentSession.userId,
-    });
+      if (!isTripType(tripType)) throw new Error("Invalid trip type.");
+      if (!isPricingBasis(basis)) throw new Error("Invalid pricing basis.");
+      if (!isPricingRuleStatus(status)) {
+        throw new Error("Invalid pricing rule status.");
+      }
 
-    redirect(`/admin/offers/${rule.id}`);
+      const rule = await savePricingRule({
+        name: String(formData.get("name") ?? ""),
+        vehicleClassId: String(formData.get("vehicleClassId") ?? ""),
+        tripType,
+        basis,
+        currency: String(formData.get("currency") ?? "INR"),
+        baseAmountMinor: parseMinor(formData.get("baseAmount")),
+        perKmMinor: parseMinor(formData.get("perKm")),
+        minimumDistanceKm: parseOptionalInt(
+          formData.get("minimumDistanceKm"),
+        ),
+        driverAllowancePerDayMinor: parseMinor(
+          formData.get("driverAllowancePerDay"),
+        ),
+        nightAllowanceMinor: parseMinor(formData.get("nightAllowance")),
+        originKey: String(formData.get("originKey") ?? ""),
+        destinationKey: String(formData.get("destinationKey") ?? ""),
+        priority: Number(formData.get("priority") ?? 0),
+        status,
+        activeFrom: parseOptionalDate(formData.get("activeFrom")),
+        activeTo: parseOptionalDate(formData.get("activeTo")),
+        actorUserId: currentSession.userId,
+      });
+
+      ruleId = rule.id;
+    } catch (error) {
+      return {
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to create pricing rule.",
+      };
+    }
+
+    redirect(`/admin/offers/${ruleId}`);
   }
 
   return (
@@ -111,8 +137,9 @@ export default async function NewPricingRulePage() {
       subtitle="Build a server-authoritative fare rule with scope, calculation basis and controlled activation dates."
       actions={<Link className="admin-secondary-button" href="/admin/offers">← Pricing Rules</Link>}
     >
-      <AdminForm
+      <AdminActionForm
         action={create}
+        className="admin-form"
         aside={
           <>
             <AdminFormAsideCard title="Pricing precedence">
@@ -233,7 +260,7 @@ export default async function NewPricingRulePage() {
         </AdminFormSection>
 
         <AdminFormActions submitLabel="Create Pricing Rule" cancelHref="/admin/offers" helper="Pricing remains server-authoritative." />
-      </AdminForm>
+      </AdminActionForm>
     </AdminShell>
   );
 }
