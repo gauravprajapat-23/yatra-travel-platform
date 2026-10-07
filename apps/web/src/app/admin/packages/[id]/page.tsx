@@ -8,6 +8,7 @@ import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminStructuredContentEditor } from "@/components/admin-structured-content-editor";
 import { AdminMediaPicker } from "@/components/admin-media-picker";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
+import { AdminConfirmSubmitButton } from "@/components/admin-confirm-submit-button";
 import { AdminMultiSelectCards } from "@/components/admin-multi-select-cards";
 import { AdminMoneyField } from "@/components/admin-money-field";
 import { AdminTextareaField } from "@/components/admin-textarea-field";
@@ -779,10 +780,10 @@ export default async function PackageDetailPage({
 
                           <form action={deleteItineraryDay}>
                             <input type="hidden" name="itineraryId" value={day.id}/>
-                            <AdminSubmitButton
-                              className="admin-danger-button"
+                            <AdminConfirmSubmitButton
                               label="Delete Day"
                               pendingLabel="Deleting…"
+                              confirmMessage={`Delete Day ${day.dayNumber} from this itinerary? This cannot be undone.`}
                             />
                           </form>
                         </div>
