@@ -156,6 +156,24 @@ Current uses:
 - CMS/Blog/Destination SEO & Publishing
 - FAQ create/edit publishing
 
+
+### `AdminFileUploadField`
+
+Use for admin file uploads that benefit from immediate client feedback.
+
+Behavior:
+- supports click-to-browse and drag/drop
+- previews selected images
+- shows filename, MIME type and human-readable size
+- applies client-side accept/type and size checks
+- keeps the normal file input in the submitted `FormData`
+- never replaces server-side MIME/magic-byte/size validation
+
+Current use:
+- Media Library upload
+
+The Media Library remains limited to the server-approved JPEG, PNG, WebP, GIF and PDF types with a 10 MB server-side limit.
+
 ### `AdminCheckbox`
 Use for standalone boolean choices.
 
