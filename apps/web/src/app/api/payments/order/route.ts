@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { JsonBodyError, readJsonBody } from "@/lib/read-json-body";
+import {
+  consumePublicWriteAttempt,
+  rateLimitedResponse,
+} from "@/lib/public-write-rate-limit";
 import { cookies } from "next/headers";
 import {
   CHECKOUT_SESSION_COOKIE,
@@ -18,6 +22,26 @@ type RequestBody = {
 };
 
 export async function POST(request: Request) {
+  const rateLimit = await consumePublicWriteAttempt({
+    request,
+    scope: "payment_order",
+    maxAttempts: 30,
+    windowMs: 15 * 60 * 1000,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      rateLimitedResponse(rateLimit.retryAfterSeconds),
+      {
+        status: 429,
+        headers: {
+          "Cache-Control": "no-store",
+          "Retry-After": String(rateLimit.retryAfterSeconds),
+        },
+      },
+    );
+  }
+
   if (process.env.PAYMENT_WRITE_ENABLED !== "true") {
     return NextResponse.json(
       {
