@@ -802,3 +802,26 @@
   outline: none;
   background: transparent;
 }
+
+
+.admin-field__footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-field__footer .admin-field__hint {
+  min-width: 0;
+}
+
+.admin-field__count {
+  flex: 0 0 auto;
+  color: #8d948f;
+  font-size: .58rem;
+  font-weight: 700;
+}
+
+.admin-field__count--limit {
+  color: #c45d20;
+}
