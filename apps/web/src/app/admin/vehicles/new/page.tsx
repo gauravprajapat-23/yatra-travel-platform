@@ -7,13 +7,16 @@ import {
   AdminCheckbox,
   AdminCheckboxGrid,
   AdminField,
-  AdminForm,
   AdminFormActions,
   AdminFormAsideCard,
   AdminFormCallout,
   AdminFormGrid,
   AdminFormSection,
 } from "@/components/admin-form";
+import {
+  AdminActionForm,
+  type AdminActionState,
+} from "@/components/admin-action-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import { createVehicle } from "@/modules/fleet/fleet-management-service";
 
@@ -43,7 +46,10 @@ export default async function NewVehiclePage() {
     },
   });
 
-  async function create(formData: FormData) {
+  async function create(
+    _previousState: AdminActionState,
+    formData: FormData,
+  ): Promise<AdminActionState> {
     "use server";
 
     const currentSession = await requireAdminSession();
@@ -51,22 +57,38 @@ export default async function NewVehiclePage() {
       redirect("/admin/vehicles");
     }
 
-    const seats = Number(formData.get("seats"));
-    const luggage = optionalInt(formData.get("luggage"));
+    let vehicleId: string;
 
-    const vehicle = await createVehicle({
-      displayName: String(formData.get("displayName") ?? ""),
-      registrationNumber: String(formData.get("registrationNumber") ?? ""),
-      vehicleClassId: String(formData.get("vehicleClassId") ?? ""),
-      seats,
-      luggage,
-      airConditioned: formData.get("airConditioned") === "on",
-      description: String(formData.get("description") ?? ""),
-      isFeatured: formData.get("isFeatured") === "on",
-      actorUserId: currentSession.userId,
-    });
+    try {
+      const seats = Number(formData.get("seats"));
+      const luggage = optionalInt(formData.get("luggage"));
 
-    redirect(`/admin/vehicles/${vehicle.id}`);
+      const vehicle = await createVehicle({
+        displayName: String(formData.get("displayName") ?? ""),
+        registrationNumber: String(
+          formData.get("registrationNumber") ?? "",
+        ),
+        vehicleClassId: String(formData.get("vehicleClassId") ?? ""),
+        seats,
+        luggage,
+        airConditioned: formData.get("airConditioned") === "on",
+        description: String(formData.get("description") ?? ""),
+        isFeatured: formData.get("isFeatured") === "on",
+        actorUserId: currentSession.userId,
+      });
+
+      vehicleId = vehicle.id;
+    } catch (error) {
+      return {
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to create vehicle.",
+      };
+    }
+
+    redirect(`/admin/vehicles/${vehicleId}`);
   }
 
   return (
@@ -76,8 +98,9 @@ export default async function NewVehiclePage() {
       subtitle="Add a fleet vehicle with assignment capacity, public visibility and operational details."
       actions={<Link className="admin-secondary-button" href="/admin/vehicles">← Vehicles</Link>}
     >
-      <AdminForm
+      <AdminActionForm
         action={create}
+        className="admin-form"
         aside={
           <>
             <AdminFormAsideCard title="Fleet checklist">
@@ -140,7 +163,7 @@ export default async function NewVehiclePage() {
         </AdminFormSection>
 
         <AdminFormActions submitLabel="Create Vehicle" cancelHref="/admin/vehicles" helper="Creates an operational fleet record." />
-      </AdminForm>
+      </AdminActionForm>
     </AdminShell>
   );
 }
