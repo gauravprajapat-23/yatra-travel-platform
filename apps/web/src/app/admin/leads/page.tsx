@@ -226,6 +226,16 @@ export default async function LeadsPage({
         "Created",
         "Reference",
       ]}
+      emptyTitle={
+        q || status || type
+          ? "No leads match these filters"
+          : "No enquiries captured yet"
+      }
+      emptyMessage={
+        q || status || type
+          ? "Clear or adjust the current search, type or status filters."
+          : "Public contact and custom-trip enquiries will appear here automatically."
+      }
       rows={rows}
       footer={
         <>
