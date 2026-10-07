@@ -6,6 +6,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminTextareaField } from "@/components/admin-textarea-field";
+import { AdminPublicationFields } from "@/components/admin-publication-fields";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
@@ -211,32 +212,16 @@ export default async function FaqDetailPage({
                     />
                   </AdminField>
 
-                  <AdminField label="Status" htmlFor="faqStatus" required>
-                    <select
-                      id="faqStatus"
-                      name="status"
-                      defaultValue={faq.status}
-                    >
-                      {faqStatuses.map((status) => (
-                        <option key={status} value={status}>
-                          {status.replaceAll("_", " ")}
-                        </option>
-                      ))}
-                    </select>
-                  </AdminField>
-
-                  <AdminField
-                    label="Schedule date"
-                    htmlFor="faqScheduledFor"
-                    hint="Only used when the status is scheduled."
-                  >
-                    <input
-                      id="faqScheduledFor"
-                      type="datetime-local"
-                      name="scheduledFor"
-                      defaultValue={localDateTime(faq.scheduledFor)}
-                    />
-                  </AdminField>
+                  <AdminPublicationFields
+                    statuses={faqStatuses.map((status) => ({
+                      value: status,
+                      label: status.replaceAll("_", " "),
+                    }))}
+                    defaultStatus={faq.status}
+                    defaultScheduledFor={localDateTime(faq.scheduledFor)}
+                    statusId="faqStatus"
+                    scheduleId="faqScheduledFor"
+                  />
                 </AdminFormGrid>
                 <AdminSubmitButton
                   label="Save Publishing"
