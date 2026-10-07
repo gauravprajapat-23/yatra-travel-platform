@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getDb, Prisma } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
+import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   adminRoleKeys,
@@ -191,38 +192,42 @@ export default async function StaffPage({
       ]}
       toolbar={
         <form className="admin-table-query" method="get">
-          <label>
-            <span>Search</span>
-            <input
-              name="q"
-              defaultValue={q}
-              placeholder="Name, email or role"
-            />
-          </label>
+          <AdminFormGrid columns={3}>
+            <AdminField label="Search" htmlFor="staffSearch">
+              <input
+                id="staffSearch"
+                name="q"
+                defaultValue={q}
+                placeholder="Name, email or role"
+              />
+            </AdminField>
 
-          <label>
-            <span>Role</span>
-            <select name="role" defaultValue={role ?? ""}>
-              <option value="">All roles</option>
-              {adminRoleKeys.map((item) => (
-                <option key={item} value={item}>
-                  {item.replaceAll("_", " ")}
-                </option>
-              ))}
-            </select>
-          </label>
+            <AdminField label="Role" htmlFor="staffRole">
+              <select id="staffRole" name="role" defaultValue={role ?? ""}>
+                <option value="">All roles</option>
+                {adminRoleKeys.map((item) => (
+                  <option key={item} value={item}>
+                    {item.replaceAll("_", " ")}
+                  </option>
+                ))}
+              </select>
+            </AdminField>
 
-          <label>
-            <span>Status</span>
-            <select name="status" defaultValue={status ?? ""}>
-              <option value="">All statuses</option>
-              {staffStatuses.map((item) => (
-                <option key={item} value={item}>
-                  {item.replaceAll("_", " ")}
-                </option>
-              ))}
-            </select>
-          </label>
+            <AdminField label="Status" htmlFor="staffStatusFilter">
+              <select
+                id="staffStatusFilter"
+                name="status"
+                defaultValue={status ?? ""}
+              >
+                <option value="">All statuses</option>
+                {staffStatuses.map((item) => (
+                  <option key={item} value={item}>
+                    {item.replaceAll("_", " ")}
+                  </option>
+                ))}
+              </select>
+            </AdminField>
+          </AdminFormGrid>
 
           <button className="admin-primary-button" type="submit">
             Apply
