@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   addVehicleAvailabilityBlock,
@@ -35,13 +36,21 @@ function optionalInt(value: FormDataEntryValue | null): number | null {
 
 export default async function VehicleDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "vehicle.read")) redirect("/admin");
 
   const { id } = await params;
+  const { tab: requestedTab } = await searchParams;
+  const activeTab = ["overview", "details", "availability", "media"].includes(
+    requestedTab ?? "",
+  )
+    ? requestedTab!
+    : "overview";
   const db = getDb();
 
   const [vehicle, classes, mediaOptions] = await Promise.all([
@@ -218,194 +227,159 @@ export default async function VehicleDetailPage({
       active="Fleet Management"
       title={vehicle.displayName}
       subtitle={vehicle.registrationNumber}
-      actions={
-        <Link className="admin-secondary-button" href="/admin/vehicles">
-          ← Vehicles
-        </Link>
-      }
+      actions={<Link className="admin-secondary-button" href="/admin/vehicles">← Vehicles</Link>}
     >
-      <div className="admin-detail-grid">
-        <section className="admin-panel admin-detail-card">
-          <div className="admin-panel-heading">
-            <h2>Vehicle Overview</h2>
-            <StatusPill tone={tone(vehicle.status)}>
-              {vehicle.status.replaceAll("_", " ")}
-            </StatusPill>
-          </div>
-          <dl>
-            <div><dt>Class</dt><dd>{vehicle.vehicleClass.name}</dd></div>
-            <div><dt>Seats</dt><dd>{vehicle.seats}</dd></div>
-            <div><dt>Luggage</dt><dd>{vehicle.luggage ?? "—"}</dd></div>
-            <div><dt>Comfort</dt><dd>{vehicle.airConditioned ? "Air conditioned" : "Non-AC"}</dd></div>
-            <div><dt>Featured</dt><dd>{vehicle.isFeatured ? "Yes" : "No"}</dd></div>
-          </dl>
-          {vehicle.description ? <p>{vehicle.description}</p> : null}
-        </section>
+      <AdminEditorTabs
+        basePath={`/admin/vehicles/${vehicle.id}`}
+        active={activeTab}
+        tabs={[
+          { key: "overview", label: "Overview", description: "Fleet status" },
+          { key: "details", label: "Vehicle Details", description: "Class & capacity" },
+          { key: "availability", label: "Availability", description: "Blocks & maintenance" },
+          { key: "media", label: "Media", description: "Primary & gallery" },
+        ]}
+      />
 
-        <section className="admin-panel admin-detail-card">
-          <h2>Edit Vehicle</h2>
-          {hasPermission(session.roles, "vehicle.write") ? (
-            <form action={save}>
-              <label>
-                Vehicle name
-                <input name="displayName" defaultValue={vehicle.displayName} required minLength={2} maxLength={120}/>
-              </label>
-              <label>
-                Vehicle class
-                <select name="vehicleClassId" defaultValue={vehicle.vehicleClassId}>
-                  {classes.map((item) => (
-                    <option key={item.id} value={item.id}>{item.name}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Status
-                <select name="status" defaultValue={vehicle.status}>
-                  {vehicleStatuses.map((status) => (
-                    <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Seats
-                <input type="number" name="seats" min={1} max={80} defaultValue={vehicle.seats} required/>
-              </label>
-              <label>
-                Luggage capacity
-                <input type="number" name="luggage" min={0} max={100} defaultValue={vehicle.luggage ?? ""}/>
-              </label>
-              <label>
-                Description
-                <textarea name="description" defaultValue={vehicle.description ?? ""} maxLength={2000}/>
-              </label>
-              <label>
-                <input type="checkbox" name="airConditioned" defaultChecked={vehicle.airConditioned}/>
-                Air conditioned
-              </label>
-              <label>
-                <input type="checkbox" name="isFeatured" defaultChecked={vehicle.isFeatured}/>
-                Featured
-              </label>
-              <button className="admin-primary-button" type="submit">Save Vehicle</button>
-            </form>
-          ) : (
-            <p>Your role has read-only fleet access.</p>
-          )}
-        </section>
-
-        <section className="admin-panel admin-detail-card">
-          <h2>Availability Blocks</h2>
-          {vehicle.availability.length === 0 ? (
-            <p>No availability blocks recorded.</p>
-          ) : (
-            <table className="admin-table">
-              <thead>
-                <tr><th>Starts</th><th>Ends</th><th>Reason</th><th>Action</th></tr>
-              </thead>
-              <tbody>
-                {vehicle.availability.map((block) => (
-                  <tr key={block.id}>
-                    <td>{block.startsAt.toLocaleString("en-IN")}</td>
-                    <td>{block.endsAt.toLocaleString("en-IN")}</td>
-                    <td>{block.reason ?? "—"}</td>
-                    <td>
-                      {hasPermission(session.roles, "vehicle.write") ? (
-                        <form action={removeBlock}>
-                          <input type="hidden" name="blockId" value={block.id}/>
-                          <button className="admin-danger-button" type="submit">Delete</button>
-                        </form>
-                      ) : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-
-          {hasPermission(session.roles, "vehicle.write") ? (
-            <form action={addBlock}>
-              <h3>Add Availability Block</h3>
-              <label>
-                Starts
-                <input type="datetime-local" name="startsAt" required/>
-              </label>
-              <label>
-                Ends
-                <input type="datetime-local" name="endsAt" required/>
-              </label>
-              <label>
-                Reason
-                <textarea name="reason" maxLength={500}/>
-              </label>
-              <button className="admin-secondary-button" type="submit">Add Block</button>
-            </form>
-          ) : null}
-        </section>
-
-        <section className="admin-panel admin-detail-card">
-          <h2>Vehicle Media</h2>
-          {vehicle.media.length === 0 ? (
-            <p>No media attached to this vehicle yet.</p>
-          ) : (
-            <div className="admin-media-grid">
-              {vehicle.media.map((item) => (
-                <article className="admin-media-card" key={item.mediaId}>
-                  {item.media.publicUrl ? (
-                    <img
-                      src={item.media.publicUrl}
-                      alt={item.media.altText ?? vehicle.displayName}
-                      loading="lazy"
-                    />
-                  ) : null}
-                  <strong>{item.media.altText ?? item.media.objectKey}</strong>
-                  <small>{item.isPrimary ? "Primary" : "Gallery"}</small>
-                  {hasPermission(session.roles, "vehicle.write") ? (
-                    <>
-                      {!item.isPrimary ? (
-                        <form action={makePrimary}>
-                          <input type="hidden" name="mediaId" value={item.mediaId}/>
-                          <button className="admin-secondary-button" type="submit">
-                            Make Primary
-                          </button>
-                        </form>
-                      ) : null}
-                      <form action={detachMedia}>
-                        <input type="hidden" name="mediaId" value={item.mediaId}/>
-                        <button className="admin-danger-button" type="submit">
-                          Detach
-                        </button>
-                      </form>
-                    </>
-                  ) : null}
-                </article>
-              ))}
+      <div className="admin-editor-section-stack">
+        {activeTab === "overview" ? (
+          <section className="admin-panel admin-detail-card">
+            <div className="admin-panel-heading">
+              <h2>Vehicle Overview</h2>
+              <StatusPill tone={tone(vehicle.status)}>{vehicle.status.replaceAll("_", " ")}</StatusPill>
             </div>
-          )}
+            <dl>
+              <div><dt>Class</dt><dd>{vehicle.vehicleClass.name}</dd></div>
+              <div><dt>Seats</dt><dd>{vehicle.seats}</dd></div>
+              <div><dt>Luggage</dt><dd>{vehicle.luggage ?? "—"}</dd></div>
+              <div><dt>Comfort</dt><dd>{vehicle.airConditioned ? "Air conditioned" : "Non-AC"}</dd></div>
+              <div><dt>Featured</dt><dd>{vehicle.isFeatured ? "Yes" : "No"}</dd></div>
+              <div><dt>Availability blocks</dt><dd>{vehicle.availability.length}</dd></div>
+              <div><dt>Attached media</dt><dd>{vehicle.media.length}</dd></div>
+            </dl>
+            {vehicle.description ? <p>{vehicle.description}</p> : null}
+          </section>
+        ) : null}
 
-          {hasPermission(session.roles, "vehicle.write") ? (
-            <form action={attachMedia}>
-              <h3>Attach Media</h3>
-              <label>
-                Image
-                <select name="mediaId" required defaultValue="">
-                  <option value="" disabled>Select media asset</option>
-                  {mediaOptions.map((asset) => (
-                    <option key={asset.id} value={asset.id}>
-                      {asset.altText ?? asset.objectKey.split("/").pop() ?? asset.objectKey}
-                    </option>
+        {activeTab === "details" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Edit Vehicle</h2>
+            {hasPermission(session.roles, "vehicle.write") ? (
+              <form action={save}>
+                <label>Vehicle name<input name="displayName" defaultValue={vehicle.displayName} required minLength={2} maxLength={120}/></label>
+                <label>
+                  Vehicle class
+                  <select name="vehicleClassId" defaultValue={vehicle.vehicleClassId}>
+                    {classes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                  </select>
+                </label>
+                <label>
+                  Status
+                  <select name="status" defaultValue={vehicle.status}>
+                    {vehicleStatuses.map((status) => <option key={status} value={status}>{status.replaceAll("_", " ")}</option>)}
+                  </select>
+                </label>
+                <label>Seats<input type="number" name="seats" min={1} max={80} defaultValue={vehicle.seats} required/></label>
+                <label>Luggage capacity<input type="number" name="luggage" min={0} max={100} defaultValue={vehicle.luggage ?? ""}/></label>
+                <label>Description<textarea name="description" defaultValue={vehicle.description ?? ""} maxLength={2000}/></label>
+                <label><input type="checkbox" name="airConditioned" defaultChecked={vehicle.airConditioned}/>Air conditioned</label>
+                <label><input type="checkbox" name="isFeatured" defaultChecked={vehicle.isFeatured}/>Featured</label>
+                <button className="admin-primary-button" type="submit">Save Vehicle</button>
+              </form>
+            ) : <p>Your role has read-only fleet access.</p>}
+          </section>
+        ) : null}
+
+        {activeTab === "availability" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Availability Blocks</h2>
+            {vehicle.availability.length === 0 ? (
+              <p>No availability blocks recorded.</p>
+            ) : (
+              <table className="admin-table">
+                <thead><tr><th>Starts</th><th>Ends</th><th>Reason</th><th>Action</th></tr></thead>
+                <tbody>
+                  {vehicle.availability.map((block) => (
+                    <tr key={block.id}>
+                      <td>{block.startsAt.toLocaleString("en-IN")}</td>
+                      <td>{block.endsAt.toLocaleString("en-IN")}</td>
+                      <td>{block.reason ?? "—"}</td>
+                      <td>
+                        {hasPermission(session.roles, "vehicle.write") ? (
+                          <form action={removeBlock}>
+                            <input type="hidden" name="blockId" value={block.id}/>
+                            <button className="admin-danger-button" type="submit">Delete</button>
+                          </form>
+                        ) : "—"}
+                      </td>
+                    </tr>
                   ))}
-                </select>
-              </label>
-              <label>
-                <input type="checkbox" name="isPrimary"/>
-                Use as primary fleet image
-              </label>
-              <button className="admin-secondary-button" type="submit">
-                Attach Image
-              </button>
-            </form>
-          ) : null}
-        </section>
+                </tbody>
+              </table>
+            )}
+            {hasPermission(session.roles, "vehicle.write") ? (
+              <form action={addBlock}>
+                <h3>Add Availability Block</h3>
+                <label>Starts<input type="datetime-local" name="startsAt" required/></label>
+                <label>Ends<input type="datetime-local" name="endsAt" required/></label>
+                <label>Reason<textarea name="reason" maxLength={500}/></label>
+                <button className="admin-primary-button" type="submit">Add Block</button>
+              </form>
+            ) : null}
+          </section>
+        ) : null}
+
+        {activeTab === "media" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Vehicle Media</h2>
+            {vehicle.media.length === 0 ? (
+              <p>No media attached to this vehicle yet.</p>
+            ) : (
+              <div className="admin-media-grid">
+                {vehicle.media.map((item) => (
+                  <article className="admin-media-card" key={item.mediaId}>
+                    {item.media.publicUrl ? (
+                      <img src={item.media.publicUrl} alt={item.media.altText ?? vehicle.displayName} loading="lazy"/>
+                    ) : null}
+                    <strong>{item.media.altText ?? item.media.objectKey}</strong>
+                    <small>{item.isPrimary ? "Primary" : "Gallery"}</small>
+                    {hasPermission(session.roles, "vehicle.write") ? (
+                      <>
+                        {!item.isPrimary ? (
+                          <form action={makePrimary}>
+                            <input type="hidden" name="mediaId" value={item.mediaId}/>
+                            <button className="admin-secondary-button" type="submit">Make Primary</button>
+                          </form>
+                        ) : null}
+                        <form action={detachMedia}>
+                          <input type="hidden" name="mediaId" value={item.mediaId}/>
+                          <button className="admin-danger-button" type="submit">Detach</button>
+                        </form>
+                      </>
+                    ) : null}
+                  </article>
+                ))}
+              </div>
+            )}
+            {hasPermission(session.roles, "vehicle.write") ? (
+              <form action={attachMedia}>
+                <h3>Attach Media</h3>
+                <label>
+                  Image
+                  <select name="mediaId" required defaultValue="">
+                    <option value="" disabled>Select media asset</option>
+                    {mediaOptions.map((asset) => (
+                      <option key={asset.id} value={asset.id}>
+                        {asset.altText ?? asset.objectKey.split("/").pop() ?? asset.objectKey}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label><input type="checkbox" name="isPrimary"/>Use as primary fleet image</label>
+                <button className="admin-primary-button" type="submit">Attach Image</button>
+              </form>
+            ) : null}
+          </section>
+        ) : null}
       </div>
     </AdminShell>
   );
