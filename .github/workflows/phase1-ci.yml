@@ -56,5 +56,8 @@ jobs:
       - name: Provider tests
         run: npm run test:providers
 
+      - name: Check readiness script syntax
+        run: node --check scripts/verify-production-readiness.mjs
+
       - name: Production build
         run: npm run build
