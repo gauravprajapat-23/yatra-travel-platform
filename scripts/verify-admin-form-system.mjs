@@ -107,6 +107,16 @@ const primitiveCoverage = [
     label: "pricing create money/currency/date primitives",
   },
   {
+    file: "apps/web/src/app/admin/drivers/[id]/page.tsx",
+    fragments: ["<AdminMultiSelectCards", "<AdminDateTimeRange"],
+    label: "driver searchable qualifications/date range",
+  },
+  {
+    file: "apps/web/src/app/admin/vehicles/[id]/page.tsx",
+    fragments: ["<AdminMediaPicker", "<AdminDateTimeRange"],
+    label: "vehicle visual media/date range",
+  },
+  {
     file: "apps/web/src/app/admin/offers/[id]/page.tsx",
     fragments: [
       "<AdminMoneyField",
@@ -120,6 +130,7 @@ const primitiveCoverage = [
     fragments: [
       "<AdminStructuredContentEditor",
       "<AdminMediaPicker",
+      "<AdminMultiSelectCards",
       "<AdminMoneyField",
       "<AdminCurrencyField",
       "<AdminPublicationFields",
@@ -130,6 +141,7 @@ const primitiveCoverage = [
     file: "apps/web/src/app/admin/content/[type]/[id]/page.tsx",
     fragments: [
       "<AdminStructuredContentEditor",
+      "<AdminMediaPicker",
       "<AdminPublicationFields",
     ],
     label: "content rich editor primitives",
