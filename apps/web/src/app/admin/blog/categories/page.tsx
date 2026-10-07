@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminMetric, AdminShell } from "@/components/admin-shell";
+import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
@@ -131,9 +132,10 @@ export default async function BlogCategoriesPage() {
               </AdminField>
             </AdminFormGrid>
 
-            <button className="admin-primary-button" type="submit">
-              Create Category
-            </button>
+            <AdminSubmitButton
+              label="Create Category"
+              pendingLabel="Creating Category…"
+            />
           </form>
         </section>
       ) : null}
