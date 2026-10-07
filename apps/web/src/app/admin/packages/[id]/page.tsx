@@ -774,9 +774,11 @@ export default async function PackageDetailPage({
 
                           <form action={deleteItineraryDay}>
                             <input type="hidden" name="itineraryId" value={day.id}/>
-                            <button className="admin-danger-button" type="submit">
-                              Delete Day
-                            </button>
+                            <AdminSubmitButton
+                              className="admin-danger-button"
+                              label="Delete Day"
+                              pendingLabel="Deleting…"
+                            />
                           </form>
                         </div>
                       ) : null}
