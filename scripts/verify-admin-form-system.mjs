@@ -79,6 +79,24 @@ for (const file of sharedComponents) {
 
 const primitiveCoverage = [
   {
+    file: "apps/web/src/components/admin-form.tsx",
+    fragments: [
+      '"aria-invalid": true',
+      '"aria-describedby"',
+      "admin-field__error",
+    ],
+    label: "field-level accessibility linkage",
+  },
+  {
+    file: "apps/web/src/components/admin-action-form.tsx",
+    fragments: [
+      "feedbackRef",
+      "scrollIntoView",
+      'aria-atomic="true"',
+    ],
+    label: "action feedback focus and live-region accessibility",
+  },
+  {
     file: "apps/web/src/app/admin/packages/new/page.tsx",
     fragments: ["<AdminSlugFields", "<AdminTextareaField"],
     label: "package create guided identity/content",
