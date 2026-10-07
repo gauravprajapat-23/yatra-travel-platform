@@ -240,6 +240,27 @@ Examples:
 Do not add pending behavior to simple GET search/filter forms.
 
 
+### `AdminConfirmSubmitButton`
+
+Use for destructive non-financial server actions that should require explicit confirmation.
+
+Behavior:
+- shows a browser confirmation prompt before submit
+- prevents submission when the editor cancels
+- disables during pending submission
+- supports a pending label
+- defaults to the destructive button style
+
+Current uses:
+- package itinerary day deletion
+- staff invite cancellation
+- staff session revocation
+- vehicle availability block deletion
+- vehicle media detach
+- driver availability block deletion
+
+Do not use this as the sole safeguard for financial actions such as refunds. Financial workflows must keep their dedicated server-side confirmation, authorization, idempotency and ledger protections.
+
 ## Dedicated Create-Page Coverage
 
 Every dedicated `/admin/**/new` page currently uses the common form primitives and recoverable `AdminActionForm` state.
