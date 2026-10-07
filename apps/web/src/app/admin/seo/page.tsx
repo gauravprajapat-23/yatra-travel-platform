@@ -5,6 +5,7 @@ import { getDb, Prisma } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminMetric, AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
+import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -602,9 +603,10 @@ export default async function SeoPage({
             </AdminField>
           </AdminFormGrid>
 
-          <button className="admin-primary-button" type="submit">
-            Save Redirect
-          </button>
+          <AdminSubmitButton
+            label="Save Redirect"
+            pendingLabel="Saving Redirect…"
+          />
         </form>
 
         <div className="admin-table-wrap">
