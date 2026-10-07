@@ -32,6 +32,7 @@ function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
 export default async function AdminDashboardPage() {
   const db = getDb();
   const now = new Date();
+  const dispatchHorizon = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
 
   const [
     carCount,
@@ -39,6 +40,7 @@ export default async function AdminDashboardPage() {
     activeCars,
     activePackages,
     pendingLeads,
+    unassignedUpcoming,
     capturedPayments,
     processedRefunds,
     recentCars,
@@ -53,6 +55,13 @@ export default async function AdminDashboardPage() {
       where: { status: { in: ["CONFIRMED", "DRIVER_ASSIGNED", "IN_PROGRESS"] } },
     }),
     db.lead.count({ where: { status: { in: ["NEW", "IN_PROGRESS"] } } }),
+    db.carBooking.count({
+      where: {
+        status: "CONFIRMED",
+        startsAt: { gte: now, lte: dispatchHorizon },
+        OR: [{ selectedVehicleId: null }, { assignedDriverId: null }],
+      },
+    }),
     db.paymentIntent.groupBy({
       by: ["currency"],
       where: { status: { in: ["CAPTURED", "PARTIALLY_REFUNDED", "REFUNDED"] } },
@@ -155,7 +164,12 @@ export default async function AdminDashboardPage() {
           tone="orange"
         />
         <AdminMetric label="Active Trips" value={activeTrips.toString()} meta="confirmed / assigned / in progress" tone="green"/>
-        <AdminMetric label="Pending Leads" value={pendingLeads.toString()} meta="new + in progress" tone="red"/>
+        <AdminMetric
+          label="Needs Dispatch"
+          value={unassignedUpcoming.toString()}
+          meta="confirmed car trips in next 14 days"
+          tone={unassignedUpcoming > 0 ? "orange" : "green"}
+        />
       </div>
 
       <div className="admin-dashboard-grid admin-dashboard-grid--tables">
@@ -205,10 +219,18 @@ export default async function AdminDashboardPage() {
             <h2>Operations</h2>
           </div>
           <div className="admin-detail-card">
-            <p>Use the live operational views to review customer activity and financial state.</p>
+            <p>
+              Dispatch, booking, customer and financial views are backed by the
+              current operational database state.
+            </p>
+            <p>
+              <Link href="/admin/dispatch">
+                Dispatch board{unassignedUpcoming > 0 ? ` · ${unassignedUpcoming} need assignment` : ""} →
+              </Link>
+            </p>
             <p><Link href="/admin/bookings">Bookings →</Link></p>
             <p><Link href="/admin/payments">Payments & refunds →</Link></p>
-            <p><Link href="/admin/leads">Leads & enquiries →</Link></p>
+            <p><Link href="/admin/leads">Leads & enquiries · {pendingLeads} pending →</Link></p>
             <p><Link href="/admin/customers">Customers →</Link></p>
           </div>
         </section>
