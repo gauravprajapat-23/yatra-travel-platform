@@ -45,14 +45,14 @@ export default async function NewCmsPage() {
   ): Promise<AdminActionState> {
     "use server";
 
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "content.write")) {
+      redirect("/admin/cms");
+    }
+
     let createdId: string;
 
     try {
-      const currentSession = await requireAdminSession();
-      if (!hasPermission(currentSession.roles, "content.write")) {
-        redirect("/admin/cms");
-      }
-
       const db = getDb();
       const title = String(formData.get("title") ?? "").trim();
       const slug = normalizeSlug(String(formData.get("slug") ?? ""));
