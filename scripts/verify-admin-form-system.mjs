@@ -356,6 +356,25 @@ process.stdout.write(
   `PASS global admin raw-label audit: ${allAdminPages.length} admin pages\n`,
 );
 
+const rawSubmitAllowed = new Set(lightweightFilterPages);
+
+for (const file of allAdminPages) {
+  const source = read(file);
+
+  if (
+    /<button[^>]*type=["']submit["']/.test(source) &&
+    !rawSubmitAllowed.has(file)
+  ) {
+    throw new Error(
+      `${file} contains a raw submit button. Use AdminSubmitButton/AdminConfirmSubmitButton unless the page is an approved lightweight GET filter page.`,
+    );
+  }
+}
+
+process.stdout.write(
+  `PASS global admin raw-submit audit: ${allAdminPages.length} admin pages, ${rawSubmitAllowed.size} lightweight GET-filter exceptions\n`,
+);
+
 for (const item of primitiveCoverage) {
   requireFragments(item.file, item.fragments);
   process.stdout.write(`PASS specialized admin form coverage: ${item.label}\n`);
