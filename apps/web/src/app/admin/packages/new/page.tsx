@@ -126,6 +126,7 @@ export default async function NewPackagePage() {
               sourceName="title"
               sourcePlaceholder="Mahakal & Omkareshwar Spiritual Circuit"
               slugPlaceholder="ujjain-omkareshwar-3d2n"
+              pathPrefix="/packages"
             />
           </AdminFormGrid>
         </AdminFormSection>
