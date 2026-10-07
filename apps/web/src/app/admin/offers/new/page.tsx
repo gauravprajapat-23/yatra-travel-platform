@@ -3,6 +3,15 @@ import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell } from "@/components/admin-shell";
+import {
+  AdminField,
+  AdminForm,
+  AdminFormActions,
+  AdminFormAsideCard,
+  AdminFormCallout,
+  AdminFormGrid,
+  AdminFormSection,
+} from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   isPricingBasis,
@@ -96,122 +105,112 @@ export default async function NewPricingRulePage() {
     <AdminShell
       active="Offers"
       title="New Pricing Rule"
-      subtitle="Create a server-authoritative fare rule. Coupon codes are not part of this model."
-      actions={
-        <Link className="admin-secondary-button" href="/admin/offers">
-          ← Pricing Rules
-        </Link>
-      }
+      subtitle="Build a server-authoritative fare rule with scope, calculation basis and controlled activation dates."
+      actions={<Link className="admin-secondary-button" href="/admin/offers">← Pricing Rules</Link>}
     >
-      <section className="admin-panel admin-detail-card">
-        <form action={create}>
-          <label>
-            Rule name
-            <input name="name" required minLength={2} maxLength={160}/>
-          </label>
+      <AdminForm
+        action={create}
+        aside={
+          <>
+            <AdminFormAsideCard title="Pricing precedence">
+              <p>More specific route scope and higher priority should only be used intentionally. Overlapping active rules with the same scope and priority are rejected.</p>
+            </AdminFormAsideCard>
+            <AdminFormAsideCard title="Use Quote Only when">
+              <p>The final fare needs human review, trusted route distance is unavailable, or pricing cannot be safely automated.</p>
+            </AdminFormAsideCard>
+          </>
+        }
+      >
+        <AdminFormSection title="Rule identity" description="Name the fare rule and select which vehicle/trip context it applies to." badge="Required">
+          <AdminFormGrid columns={2}>
+            <AdminField label="Rule name" htmlFor="name" required>
+              <input id="name" name="name" required minLength={2} maxLength={160} placeholder="Indore to Ujjain Sedan One Way" />
+            </AdminField>
+            <AdminField label="Vehicle class" htmlFor="vehicleClassId" required>
+              <select id="vehicleClassId" name="vehicleClassId" required defaultValue="">
+                <option value="" disabled>Select class</option>
+                {classes.map((item) => (
+                  <option key={item.id} value={item.id}>{item.name}</option>
+                ))}
+              </select>
+            </AdminField>
+            <AdminField label="Trip type" htmlFor="tripType">
+              <select id="tripType" name="tripType" defaultValue="ONE_WAY">
+                {tripTypes.map((item) => (
+                  <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
+                ))}
+              </select>
+            </AdminField>
+            <AdminField label="Pricing basis" htmlFor="basis">
+              <select id="basis" name="basis" defaultValue="QUOTE_ONLY">
+                {pricingBases.map((item) => (
+                  <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
+                ))}
+              </select>
+            </AdminField>
+          </AdminFormGrid>
+        </AdminFormSection>
 
-          <label>
-            Vehicle class
-            <select name="vehicleClassId" required defaultValue="">
-              <option value="" disabled>Select class</option>
-              {classes.map((item) => (
-                <option key={item.id} value={item.id}>{item.name}</option>
-              ))}
-            </select>
-          </label>
+        <AdminFormSection title="Fare calculation" description="All money values are entered in major currency units and stored server-side in minor units.">
+          <AdminFormGrid columns={3}>
+            <AdminField label="Currency" htmlFor="currency" required hint="ISO currency code.">
+              <input id="currency" name="currency" defaultValue="INR" maxLength={3} required />
+            </AdminField>
+            <AdminField label="Fixed base amount" htmlFor="baseAmount">
+              <input id="baseAmount" name="baseAmount" inputMode="decimal" placeholder="4500.00" />
+            </AdminField>
+            <AdminField label="Per-km amount" htmlFor="perKm">
+              <input id="perKm" name="perKm" inputMode="decimal" placeholder="14.00" />
+            </AdminField>
+            <AdminField label="Minimum distance (km)" htmlFor="minimumDistanceKm">
+              <input id="minimumDistanceKm" type="number" name="minimumDistanceKm" min={0} />
+            </AdminField>
+            <AdminField label="Driver allowance / day" htmlFor="driverAllowancePerDay">
+              <input id="driverAllowancePerDay" name="driverAllowancePerDay" inputMode="decimal" />
+            </AdminField>
+            <AdminField label="Night allowance" htmlFor="nightAllowance">
+              <input id="nightAllowance" name="nightAllowance" inputMode="decimal" />
+            </AdminField>
+          </AdminFormGrid>
+        </AdminFormSection>
 
-          <label>
-            Trip type
-            <select name="tripType" defaultValue="ONE_WAY">
-              {tripTypes.map((item) => (
-                <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
-              ))}
-            </select>
-          </label>
+        <AdminFormSection title="Route scope" description="Restrict this rule to a route or leave either key blank as a wildcard.">
+          <AdminFormGrid columns={2}>
+            <AdminField label="Origin scope key" htmlFor="originKey" hint="Blank means any origin.">
+              <input id="originKey" name="originKey" maxLength={200} placeholder="indore" />
+            </AdminField>
+            <AdminField label="Destination scope key" htmlFor="destinationKey" hint="Blank means any destination.">
+              <input id="destinationKey" name="destinationKey" maxLength={200} placeholder="ujjain" />
+            </AdminField>
+            <AdminField label="Priority" htmlFor="priority" hint="Higher values win among otherwise matching rules.">
+              <input id="priority" type="number" name="priority" defaultValue={0} min={-100000} max={100000} />
+            </AdminField>
+          </AdminFormGrid>
+        </AdminFormSection>
 
-          <label>
-            Pricing basis
-            <select name="basis" defaultValue="QUOTE_ONLY">
-              {pricingBases.map((item) => (
-                <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
-              ))}
-            </select>
-          </label>
+        <AdminFormSection title="Activation" description="Control when the pricing rule may participate in server-side fare selection.">
+          <AdminFormGrid columns={3}>
+            <AdminField label="Active from" htmlFor="activeFrom">
+              <input id="activeFrom" type="datetime-local" name="activeFrom" />
+            </AdminField>
+            <AdminField label="Active to" htmlFor="activeTo">
+              <input id="activeTo" type="datetime-local" name="activeTo" />
+            </AdminField>
+            <AdminField label="Status" htmlFor="status">
+              <select id="status" name="status" defaultValue="DRAFT">
+                {pricingRuleStatuses.map((item) => (
+                  <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
+                ))}
+              </select>
+            </AdminField>
+          </AdminFormGrid>
+          <AdminFormCallout tone="warning" title="Activation safety">
+            Start with DRAFT unless the fare has been reviewed. Active rules with ambiguous overlapping scope, priority and effective dates are rejected.
+          </AdminFormCallout>
+        </AdminFormSection>
 
-          <label>
-            Currency
-            <input name="currency" defaultValue="INR" maxLength={3} required/>
-          </label>
+        <AdminFormActions submitLabel="Create Pricing Rule" cancelHref="/admin/offers" helper="Pricing remains server-authoritative." />
+      </AdminForm>
 
-          <label>
-            Fixed base amount
-            <input name="baseAmount" inputMode="decimal" placeholder="4500.00"/>
-          </label>
-
-          <label>
-            Per-km amount
-            <input name="perKm" inputMode="decimal" placeholder="14.00"/>
-          </label>
-
-          <label>
-            Minimum distance (km)
-            <input type="number" name="minimumDistanceKm" min={0}/>
-          </label>
-
-          <label>
-            Driver allowance / day
-            <input name="driverAllowancePerDay" inputMode="decimal"/>
-          </label>
-
-          <label>
-            Night allowance
-            <input name="nightAllowance" inputMode="decimal"/>
-          </label>
-
-          <label>
-            Origin scope key
-            <input name="originKey" maxLength={200} placeholder="leave blank for wildcard"/>
-          </label>
-
-          <label>
-            Destination scope key
-            <input name="destinationKey" maxLength={200} placeholder="leave blank for wildcard"/>
-          </label>
-
-          <label>
-            Priority
-            <input type="number" name="priority" defaultValue={0} min={-100000} max={100000}/>
-          </label>
-
-          <label>
-            Active from
-            <input type="datetime-local" name="activeFrom"/>
-          </label>
-
-          <label>
-            Active to
-            <input type="datetime-local" name="activeTo"/>
-          </label>
-
-          <label>
-            Status
-            <select name="status" defaultValue="DRAFT">
-              {pricingRuleStatuses.map((item) => (
-                <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
-              ))}
-            </select>
-          </label>
-
-          <p>
-            Use QUOTE ONLY when the final fare must be reviewed manually. Active
-            rules with the same scope, priority and overlapping dates are rejected.
-          </p>
-
-          <button className="admin-primary-button" type="submit">
-            Create Pricing Rule
-          </button>
-        </form>
-      </section>
-    </AdminShell>
   );
 }
