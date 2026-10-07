@@ -7,6 +7,7 @@ import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminStructuredContentEditor } from "@/components/admin-structured-content-editor";
 import { AdminMediaPicker } from "@/components/admin-media-picker";
+import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminMultiSelectCards } from "@/components/admin-multi-select-cards";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
@@ -700,9 +701,10 @@ export default async function PackageDetailPage({
                   />
                 )}
                 <p>Selected destinations are stored in the order shown here.</p>
-                <button className="admin-primary-button" type="submit">
-                  Save Destinations
-                </button>
+                <AdminSubmitButton
+                  label="Save Destinations"
+                  pendingLabel="Saving Destinations…"
+                />
               </form>
             ) : (
               <p>{pkg.destinations.map((item) => item.destination.name).join(", ") || "No destinations assigned."}</p>
@@ -763,9 +765,10 @@ export default async function PackageDetailPage({
                                 />
                               </AdminField>
 
-                              <button className="admin-primary-button" type="submit">
-                                Save Day {day.dayNumber}
-                              </button>
+                              <AdminSubmitButton
+                                label={`Save Day ${day.dayNumber}`}
+                                pendingLabel={`Saving Day ${day.dayNumber}…`}
+                              />
                             </form>
                           </details>
 
@@ -823,9 +826,10 @@ export default async function PackageDetailPage({
                     </AdminField>
                   </AdminFormGrid>
 
-                  <button className="admin-primary-button" type="submit">
-                    Add Itinerary Day
-                  </button>
+                  <AdminSubmitButton
+                    label="Add Itinerary Day"
+                    pendingLabel="Adding Day…"
+                  />
                 </form>
               </section>
             ) : null}
@@ -971,9 +975,10 @@ export default async function PackageDetailPage({
                               </AdminField>
                             </AdminFormGrid>
 
-                            <button className="admin-primary-button" type="submit">
-                              Update Price Option
-                            </button>
+                            <AdminSubmitButton
+                              label="Update Price Option"
+                              pendingLabel="Updating Price…"
+                            />
                           </form>
                         </details>
 
@@ -1054,9 +1059,10 @@ export default async function PackageDetailPage({
                     </AdminField>
                   </AdminFormGrid>
 
-                  <button className="admin-primary-button" type="submit">
-                    Add Price Option
-                  </button>
+                  <AdminSubmitButton
+                    label="Add Price Option"
+                    pendingLabel="Adding Price…"
+                  />
                 </form>
               </section>
             ) : null}
@@ -1070,9 +1076,10 @@ export default async function PackageDetailPage({
             {hasPermission(session.roles, "package.write") ? (
               <form action={saveBody}>
                 <AdminStructuredContentEditor initialValue={pkg.body} />
-                <button className="admin-primary-button" type="submit">
-                  Save Package Content
-                </button>
+                <AdminSubmitButton
+                  label="Save Package Content"
+                  pendingLabel="Saving Content…"
+                />
               </form>
             ) : (
               <pre>{stringifyStructuredBody(pkg.body)}</pre>
@@ -1103,9 +1110,10 @@ export default async function PackageDetailPage({
                     altText: asset.altText,
                   }))}
                 />
-                <button className="admin-primary-button" type="submit">
-                  Save Hero Image
-                </button>
+                <AdminSubmitButton
+                  label="Save Hero Image"
+                  pendingLabel="Saving Image…"
+                />
               </form>
             ) : null}
           </section>
@@ -1231,9 +1239,10 @@ export default async function PackageDetailPage({
                     description="Permit search engines to follow links from this package."
                   />
                 </div>
-                <button className="admin-primary-button" type="submit">
-                  Save SEO & Publishing
-                </button>
+                <AdminSubmitButton
+                  label="Save SEO & Publishing"
+                  pendingLabel="Saving SEO…"
+                />
               </form>
             ) : (
               <p>Your role has read-only package access.</p>
