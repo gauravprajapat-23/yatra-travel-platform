@@ -426,7 +426,16 @@ Search/filter toolbars are intentionally lighter than create/edit forms.
 
 They may use the compact table-query pattern and normal GET submit button.
 
-Do not wrap ordinary filtering in `AdminForm`.
+Use shared `AdminField` controls for filter labels/inputs, but do not wrap ordinary filtering in `AdminForm` or `AdminActionForm`.
+
+Current lightweight shared filter pages:
+- Dispatch Board
+- Dispatch Availability Calendar
+- Dispatch Resource Schedule
+- Reports
+- SEO Manager
+
+Filter validation should stay recoverable on the page when practical. For example, Reports marks invalid/reversed date fields inline and safely falls back to all-time data until the range is corrected.
 
 ## Login Form
 
