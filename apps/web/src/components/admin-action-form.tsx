@@ -45,8 +45,13 @@ export function AdminActionForm({
     if (!feedback) return;
 
     feedback.focus({ preventScroll: true });
+
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
     feedback.scrollIntoView({
-      behavior: "smooth",
+      behavior: reduceMotion ? "auto" : "smooth",
       block: "center",
     });
   }, [state.status, state.message]);
