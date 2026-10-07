@@ -13,6 +13,8 @@ export function AdminTablePage({
   filters,
   columns,
   rows,
+  toolbar,
+  footer,
 }: {
   active: string;
   title: string;
@@ -28,6 +30,8 @@ export function AdminTablePage({
   filters: string[];
   columns: string[];
   rows: Row[];
+  toolbar?: ReactNode;
+  footer?: ReactNode;
 }) {
   return (
     <AdminShell
@@ -50,6 +54,8 @@ export function AdminTablePage({
       </div>
 
       <section className="admin-panel">
+        {toolbar ? <div className="admin-table-toolbar">{toolbar}</div> : null}
+
         <div className="admin-table-scope">
           <div className="admin-table-scope__chips">
             {filters.map((filter) => (
@@ -92,13 +98,17 @@ export function AdminTablePage({
         )}
 
         <div className="admin-table-footer">
-          <span>
-            Showing {rows.length} loaded record{rows.length === 1 ? "" : "s"}
-          </span>
-          <small>
-            Search, filtering and pagination appear only on pages with real
-            server-side query controls.
-          </small>
+          {footer ?? (
+            <>
+              <span>
+                Showing {rows.length} loaded record{rows.length === 1 ? "" : "s"}
+              </span>
+              <small>
+                Search, filtering and pagination appear only on pages with real
+                server-side query controls.
+              </small>
+            </>
+          )}
         </div>
       </section>
     </AdminShell>
