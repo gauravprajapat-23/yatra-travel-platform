@@ -127,6 +127,7 @@ export default async function NewCmsPage() {
               sourceName="title"
               sourcePlaceholder="Privacy Policy"
               slugPlaceholder="privacy-policy"
+              pathPrefix=""
             />
           </AdminFormGrid>
         </AdminFormSection>
