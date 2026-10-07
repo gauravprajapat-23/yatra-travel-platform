@@ -1,5 +1,11 @@
 import Link from "next/link";
-import type { FormHTMLAttributes, ReactNode } from "react";
+import {
+  cloneElement,
+  isValidElement,
+  type FormHTMLAttributes,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 
 type AdminFormProps = FormHTMLAttributes<HTMLFormElement> & {
@@ -87,6 +93,28 @@ export function AdminField({
     .filter(Boolean)
     .join(" ");
 
+  const errorId = error && htmlFor ? `${htmlFor}-error` : undefined;
+
+  const control =
+    error && isValidElement(children)
+      ? cloneElement(
+          children as ReactElement<{
+            "aria-invalid"?: boolean;
+            "aria-describedby"?: string;
+          }>,
+          {
+            "aria-invalid": true,
+            "aria-describedby":
+              errorId ??
+              (
+                children as ReactElement<{
+                  "aria-describedby"?: string;
+                }>
+              ).props["aria-describedby"],
+          },
+        )
+      : children;
+
   return (
     <label
       className={className}
@@ -96,11 +124,11 @@ export function AdminField({
         {label}
         {required ? <b aria-hidden="true">*</b> : null}
       </span>
-      {children}
+      {control}
       {error ? (
         <small
           className="admin-field__error"
-          id={htmlFor ? `${htmlFor}-error` : undefined}
+          id={errorId}
           role="alert"
         >
           {error}
