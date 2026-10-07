@@ -6,6 +6,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminMediaPicker } from "@/components/admin-media-picker";
+import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
@@ -358,9 +359,10 @@ export default async function VehicleDetailPage({
                   />
                 </div>
 
-                <button className="admin-primary-button" type="submit">
-                  Save Vehicle
-                </button>
+                <AdminSubmitButton
+                  label="Save Vehicle"
+                  pendingLabel="Saving Vehicle…"
+                />
               </form>
             ) : <p>Your role has read-only fleet access.</p>}
           </section>
@@ -457,7 +459,11 @@ export default async function VehicleDetailPage({
                         {!item.isPrimary ? (
                           <form action={makePrimary}>
                             <input type="hidden" name="mediaId" value={item.mediaId}/>
-                            <button className="admin-secondary-button" type="submit">Make Primary</button>
+                            <AdminSubmitButton
+                              className="admin-secondary-button"
+                              label="Make Primary"
+                              pendingLabel="Updating…"
+                            />
                           </form>
                         ) : null}
                         <form action={detachMedia}>
@@ -491,9 +497,10 @@ export default async function VehicleDetailPage({
                   label="Use as primary fleet image"
                   description="This image becomes the main public fleet image."
                 />
-                <button className="admin-primary-button" type="submit">
-                  Attach Image
-                </button>
+                <AdminSubmitButton
+                  label="Attach Image"
+                  pendingLabel="Attaching…"
+                />
               </form>
             ) : null}
           </section>
