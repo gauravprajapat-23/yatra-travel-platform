@@ -1,23 +1,15 @@
 import { getDb, Prisma } from "@yatra/db/client";
+import {
+  bookingTimeWindow,
+  credentialValidThrough,
+  windowsOverlap,
+} from "@yatra/domain/fleet/availability";
 
 const activeBookingStatuses = [
   "CONFIRMED",
   "DRIVER_ASSIGNED",
   "IN_PROGRESS",
 ] as const;
-
-function fallbackEnd(startsAt: Date, endsAt: Date | null): Date {
-  return endsAt ?? new Date(startsAt.getTime() + 12 * 60 * 60 * 1000);
-}
-
-function overlaps(
-  aStart: Date,
-  aEnd: Date,
-  bStart: Date,
-  bEnd: Date,
-): boolean {
-  return aStart < bEnd && aEnd > bStart;
-}
 
 export async function assignCarBookingResources(input: {
   bookingId: string;
@@ -88,12 +80,18 @@ export async function assignCarBookingResources(input: {
         throw new Error("Selected driver is not active or qualified for this vehicle class.");
       }
 
-      const tripStart = booking.startsAt;
-      const tripEnd = fallbackEnd(booking.startsAt, booking.endsAt);
+      const tripWindow = bookingTimeWindow(
+        booking.startsAt,
+        booking.endsAt,
+      );
+      const tripStart = tripWindow.startsAt;
+      const tripEnd = tripWindow.endsAt;
 
       if (
-        driverQualification.driver.licenseExpiry &&
-        driverQualification.driver.licenseExpiry < tripEnd
+        !credentialValidThrough(
+          driverQualification.driver.licenseExpiry,
+          tripEnd,
+        )
       ) {
         throw new Error(
           "Selected driver's license does not remain valid through the trip.",
@@ -146,21 +144,17 @@ export async function assignCarBookingResources(input: {
       if (driverBlock) throw new Error("Selected driver is unavailable for this trip window.");
 
       const vehicleConflict = vehicleBookings.some((other) =>
-        overlaps(
-          tripStart,
-          tripEnd,
-          other.startsAt,
-          fallbackEnd(other.startsAt, other.endsAt),
+        windowsOverlap(
+          tripWindow,
+          bookingTimeWindow(other.startsAt, other.endsAt),
         ),
       );
       if (vehicleConflict) throw new Error("Selected vehicle already has an overlapping booking.");
 
       const driverConflict = driverBookings.some((other) =>
-        overlaps(
-          tripStart,
-          tripEnd,
-          other.startsAt,
-          fallbackEnd(other.startsAt, other.endsAt),
+        windowsOverlap(
+          tripWindow,
+          bookingTimeWindow(other.startsAt, other.endsAt),
         ),
       );
       if (driverConflict) throw new Error("Selected driver already has an overlapping booking.");
