@@ -88,15 +88,17 @@ export async function assignCarBookingResources(input: {
         throw new Error("Selected driver is not active or qualified for this vehicle class.");
       }
 
-      if (
-        driverQualification.driver.licenseExpiry &&
-        driverQualification.driver.licenseExpiry <= booking.startsAt
-      ) {
-        throw new Error("Selected driver's license expires before the trip starts.");
-      }
-
       const tripStart = booking.startsAt;
       const tripEnd = fallbackEnd(booking.startsAt, booking.endsAt);
+
+      if (
+        driverQualification.driver.licenseExpiry &&
+        driverQualification.driver.licenseExpiry < tripEnd
+      ) {
+        throw new Error(
+          "Selected driver's license does not remain valid through the trip.",
+        );
+      }
 
       const [
         vehicleBlock,
