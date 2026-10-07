@@ -935,3 +935,13 @@ model Refund {
   @@index([paymentIntentId, createdAt])
   @@index([status, createdAt])
 }
+
+
+model RateLimitBucket {
+  key             String   @id
+  windowStartedAt DateTime
+  count           Int
+  updatedAt       DateTime @updatedAt
+
+  @@index([updatedAt])
+}
