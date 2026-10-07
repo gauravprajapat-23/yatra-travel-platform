@@ -9,6 +9,7 @@ import {
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
+import { AdminConfirmSubmitButton } from "@/components/admin-confirm-submit-button";
 import {
   AdminActionForm,
   type AdminActionState,
@@ -305,10 +306,10 @@ export default async function StaffDetailPage({
 
             {user.status === "INVITED" ? (
               <form action={cancelInvite}>
-                <AdminSubmitButton
-                  className="admin-danger-button"
+                <AdminConfirmSubmitButton
                   label="Cancel Invite & Remove Pending Account"
                   pendingLabel="Cancelling Invite…"
+                  confirmMessage="Cancel this invite and remove the pending staff account? This cannot be undone."
                 />
               </form>
             ) : null}
@@ -320,9 +321,11 @@ export default async function StaffDetailPage({
               </p>
             ) : activeSessions > 0 ? (
               <form action={revokeSessions}>
-                <button className="admin-danger-button" type="submit">
-                  Revoke All Active Sessions
-                </button>
+                <AdminConfirmSubmitButton
+                  label="Revoke All Active Sessions"
+                  pendingLabel="Revoking Sessions…"
+                  confirmMessage="Revoke all active sessions for this staff account? They will need to sign in again."
+                />
               </form>
             ) : (
               <p>No active sessions to revoke.</p>
@@ -421,9 +424,11 @@ export default async function StaffDetailPage({
 
             {!isSelf && activeSessions > 0 ? (
               <form action={revokeSessions}>
-                <button className="admin-danger-button" type="submit">
-                  Revoke All Active Sessions
-                </button>
+                <AdminConfirmSubmitButton
+                  label="Revoke All Active Sessions"
+                  pendingLabel="Revoking Sessions…"
+                  confirmMessage="Revoke all active sessions for this staff account? They will need to sign in again."
+                />
               </form>
             ) : null}
           </section>
