@@ -742,26 +742,26 @@ export default async function PackageDetailPage({
                                 value={day.dayNumber}
                               />
 
-                              <label className="admin-field">
-                                <span className="admin-field__label">Title</span>
+                              <AdminField label="Title" htmlFor={`itinerary-title-${day.id}`} required>
                                 <input
+                                  id={`itinerary-title-${day.id}`}
                                   name="title"
                                   defaultValue={day.title}
                                   required
                                   minLength={2}
                                   maxLength={180}
                                 />
-                              </label>
+                              </AdminField>
 
-                              <label className="admin-field">
-                                <span className="admin-field__label">Description</span>
+                              <AdminField label="Description" htmlFor={`itinerary-description-${day.id}`}>
                                 <textarea
+                                  id={`itinerary-description-${day.id}`}
                                   name="description"
                                   defaultValue={day.description ?? ""}
                                   maxLength={3000}
                                   rows={5}
                                 />
-                              </label>
+                              </AdminField>
 
                               <button className="admin-primary-button" type="submit">
                                 Save Day {day.dayNumber}
@@ -789,39 +789,39 @@ export default async function PackageDetailPage({
                 <p>Choose a day number from 1 to {packageDurationDays}. Existing day numbers will be updated instead of duplicated.</p>
 
                 <form action={saveItineraryDay}>
-                  <div className="admin-form-grid admin-form-grid--2">
-                    <label className="admin-field">
-                      <span className="admin-field__label">Day number</span>
+                  <AdminFormGrid columns={2}>
+                    <AdminField label="Day number" htmlFor="newItineraryDay" required>
                       <input
+                        id="newItineraryDay"
                         type="number"
                         name="dayNumber"
                         min={1}
                         max={packageDurationDays}
                         required
                       />
-                    </label>
+                    </AdminField>
 
-                    <label className="admin-field">
-                      <span className="admin-field__label">Title</span>
+                    <AdminField label="Title" htmlFor="newItineraryTitle" required>
                       <input
+                        id="newItineraryTitle"
                         name="title"
                         required
                         minLength={2}
                         maxLength={180}
                         placeholder="Arrival and local sightseeing"
                       />
-                    </label>
+                    </AdminField>
 
-                    <label className="admin-field admin-field--wide">
-                      <span className="admin-field__label">Description</span>
+                    <AdminField label="Description" htmlFor="newItineraryDescription" wide>
                       <textarea
+                        id="newItineraryDescription"
                         name="description"
                         maxLength={3000}
                         rows={6}
                         placeholder="Describe transfers, sightseeing, meals, stays and key activities."
                       />
-                    </label>
-                  </div>
+                    </AdminField>
+                  </AdminFormGrid>
 
                   <button className="admin-primary-button" type="submit">
                     Add Itinerary Day
@@ -891,70 +891,73 @@ export default async function PackageDetailPage({
                           <form action={savePriceOption}>
                             <input type="hidden" name="optionId" value={option.id}/>
 
-                            <div className="admin-form-grid admin-form-grid--2">
-                              <label className="admin-field">
-                                <span className="admin-field__label">Mode</span>
-                                <select name="mode" defaultValue={option.mode}>
+                            <AdminFormGrid columns={2}>
+                              <AdminField label="Mode" htmlFor={`price-mode-${option.id}`}>
+                                <select
+                                  id={`price-mode-${option.id}`}
+                                  name="mode"
+                                  defaultValue={option.mode}
+                                >
                                   {packagePriceModes.map((mode) => (
                                     <option key={mode} value={mode}>
                                       {mode.replaceAll("_", " ")}
                                     </option>
                                   ))}
                                 </select>
-                              </label>
+                              </AdminField>
 
-                              <label className="admin-field">
-                                <span className="admin-field__label">Price</span>
+                              <AdminField label="Price" htmlFor={`price-amount-${option.id}`} required>
                                 <input
+                                  id={`price-amount-${option.id}`}
                                   name="amount"
                                   defaultValue={(Number(option.amountMinor) / 100).toFixed(2)}
                                   inputMode="decimal"
                                   required
                                 />
-                              </label>
+                              </AdminField>
 
-                              <label className="admin-field">
-                                <span className="admin-field__label">Currency</span>
+                              <AdminField label="Currency" htmlFor={`price-currency-${option.id}`} required>
                                 <input
+                                  id={`price-currency-${option.id}`}
                                   name="currency"
                                   defaultValue={option.currency}
                                   maxLength={3}
                                   required
                                 />
-                              </label>
+                              </AdminField>
 
-                              <label className="admin-field">
-                                <span className="admin-field__label">Sort order</span>
+                              <AdminField label="Sort order" htmlFor={`price-sort-${option.id}`}>
                                 <input
+                                  id={`price-sort-${option.id}`}
                                   type="number"
                                   name="sortOrder"
                                   defaultValue={option.sortOrder}
                                 />
-                              </label>
+                              </AdminField>
 
-                              <label className="admin-field">
-                                <span className="admin-field__label">Minimum travellers</span>
+                              <AdminField label="Minimum travellers" htmlFor={`price-min-${option.id}`}>
                                 <input
+                                  id={`price-min-${option.id}`}
                                   type="number"
                                   name="minTravellers"
                                   min={1}
                                   defaultValue={option.minTravellers ?? ""}
                                 />
-                              </label>
+                              </AdminField>
 
-                              <label className="admin-field">
-                                <span className="admin-field__label">Maximum travellers</span>
+                              <AdminField label="Maximum travellers" htmlFor={`price-max-${option.id}`}>
                                 <input
+                                  id={`price-max-${option.id}`}
                                   type="number"
                                   name="maxTravellers"
                                   min={1}
                                   defaultValue={option.maxTravellers ?? ""}
                                 />
-                              </label>
+                              </AdminField>
 
-                              <label className="admin-field admin-field--wide">
-                                <span className="admin-field__label">Vehicle class</span>
+                              <AdminField label="Vehicle class" htmlFor={`price-vehicle-${option.id}`} wide>
                                 <select
+                                  id={`price-vehicle-${option.id}`}
                                   name="vehicleClassId"
                                   defaultValue={option.vehicleClassId ?? ""}
                                 >
@@ -965,8 +968,8 @@ export default async function PackageDetailPage({
                                     </option>
                                   ))}
                                 </select>
-                              </label>
-                            </div>
+                              </AdminField>
+                            </AdminFormGrid>
 
                             <button className="admin-primary-button" type="submit">
                               Update Price Option
@@ -996,56 +999,51 @@ export default async function PackageDetailPage({
                 <p>Create another fare option for a traveller count or vehicle class.</p>
 
                 <form action={savePriceOption}>
-                  <div className="admin-form-grid admin-form-grid--3">
-                    <label className="admin-field">
-                      <span className="admin-field__label">Mode</span>
-                      <select name="mode" defaultValue="PER_PERSON">
+                  <AdminFormGrid columns={3}>
+                    <AdminField label="Mode" htmlFor="newPriceMode">
+                      <select id="newPriceMode" name="mode" defaultValue="PER_PERSON">
                         {packagePriceModes.map((mode) => (
                           <option key={mode} value={mode}>
                             {mode.replaceAll("_", " ")}
                           </option>
                         ))}
                       </select>
-                    </label>
+                    </AdminField>
 
-                    <label className="admin-field">
-                      <span className="admin-field__label">Price</span>
+                    <AdminField label="Price" htmlFor="newPriceAmount" required>
                       <input
+                        id="newPriceAmount"
                         name="amount"
                         inputMode="decimal"
                         placeholder="14000"
                         required
                       />
-                    </label>
+                    </AdminField>
 
-                    <label className="admin-field">
-                      <span className="admin-field__label">Currency</span>
+                    <AdminField label="Currency" htmlFor="newPriceCurrency" required>
                       <input
+                        id="newPriceCurrency"
                         name="currency"
                         defaultValue="INR"
                         maxLength={3}
                         required
                       />
-                    </label>
+                    </AdminField>
 
-                    <label className="admin-field">
-                      <span className="admin-field__label">Minimum travellers</span>
-                      <input type="number" name="minTravellers" min={1}/>
-                    </label>
+                    <AdminField label="Minimum travellers" htmlFor="newPriceMin">
+                      <input id="newPriceMin" type="number" name="minTravellers" min={1}/>
+                    </AdminField>
 
-                    <label className="admin-field">
-                      <span className="admin-field__label">Maximum travellers</span>
-                      <input type="number" name="maxTravellers" min={1}/>
-                    </label>
+                    <AdminField label="Maximum travellers" htmlFor="newPriceMax">
+                      <input id="newPriceMax" type="number" name="maxTravellers" min={1}/>
+                    </AdminField>
 
-                    <label className="admin-field">
-                      <span className="admin-field__label">Sort order</span>
-                      <input type="number" name="sortOrder" defaultValue={0}/>
-                    </label>
+                    <AdminField label="Sort order" htmlFor="newPriceSort">
+                      <input id="newPriceSort" type="number" name="sortOrder" defaultValue={0}/>
+                    </AdminField>
 
-                    <label className="admin-field admin-field--wide">
-                      <span className="admin-field__label">Vehicle class</span>
-                      <select name="vehicleClassId" defaultValue="">
+                    <AdminField label="Vehicle class" htmlFor="newPriceVehicle" wide>
+                      <select id="newPriceVehicle" name="vehicleClassId" defaultValue="">
                         <option value="">Not applicable</option>
                         {vehicleClasses.map((vehicleClass) => (
                           <option key={vehicleClass.id} value={vehicleClass.id}>
@@ -1053,8 +1051,8 @@ export default async function PackageDetailPage({
                           </option>
                         ))}
                       </select>
-                    </label>
-                  </div>
+                    </AdminField>
+                  </AdminFormGrid>
 
                   <button className="admin-primary-button" type="submit">
                     Add Price Option
