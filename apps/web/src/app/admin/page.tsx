@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getDb } from "@yatra/db/client";
 import { AdminMetric, AdminShell, StatusPill } from "@/components/admin-shell";
+import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
 }
 
 export default async function AdminDashboardPage() {
+  await requireAdminSession();
   const db = getDb();
   const now = new Date();
   const dispatchHorizon = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
