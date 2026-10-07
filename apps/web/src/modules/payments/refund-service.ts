@@ -176,9 +176,14 @@ export async function createRefundRequest(input: {
       currency: updated.currency,
     };
   } catch {
-    throw new RefundServiceError(
-      "Refund was accepted by Razorpay but local reconciliation is still pending.",
-      "RECONCILIATION_PENDING",
-      503,
-    );
-  }}
+    return {
+      replayed: false,
+      refundId: refund.id,
+      status: "PENDING" as const,
+      providerRefundId: providerRefund.id,
+      amountMinor: refund.amountMinor.toString(),
+      currency: refund.currency,
+      reconciliationPending: true,
+    };
+  }
+}
