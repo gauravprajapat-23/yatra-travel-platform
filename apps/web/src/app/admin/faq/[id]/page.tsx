@@ -5,6 +5,7 @@ import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
+import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
@@ -173,7 +174,10 @@ export default async function FaqDetailPage({
                     />
                   </AdminField>
                 </AdminFormGrid>
-                <button className="admin-primary-button" type="submit">Save FAQ Content</button>
+                <AdminSubmitButton
+                  label="Save FAQ Content"
+                  pendingLabel="Saving FAQ…"
+                />
               </form>
             ) : <p>Your role has read-only content access.</p>}
           </section>
@@ -243,7 +247,10 @@ export default async function FaqDetailPage({
                     />
                   </AdminField>
                 </AdminFormGrid>
-                <button className="admin-primary-button" type="submit">Save Publishing</button>
+                <AdminSubmitButton
+                  label="Save Publishing"
+                  pendingLabel="Saving Publishing…"
+                />
               </form>
             ) : <p>Your role has read-only content access.</p>}
           </section>
