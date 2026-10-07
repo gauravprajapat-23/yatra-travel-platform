@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getDb } from "@yatra/db/client";
+import { getDb, Prisma } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
 import { requireAdminSession } from "@/lib/auth/session";
+import {
+  driverStatuses,
+  type DriverStatus,
+} from "@/modules/fleet/fleet-management-service";
 
 export const dynamic = "force-dynamic";
+
+const PAGE_SIZE = 25;
 
 function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
   if (status === "ACTIVE") return "green";
@@ -14,29 +20,82 @@ function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
   return "gray";
 }
 
-export default async function AdminDriversPage() {
+function isDriverStatus(value: string): value is DriverStatus {
+  return (driverStatuses as readonly string[]).includes(value);
+}
+
+export default async function AdminDriversPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    page?: string;
+  }>;
+}) {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "driver.read")) redirect("/admin");
+
+  const params = await searchParams;
+  const q = String(params.q ?? "").trim().slice(0, 120);
+  const status = isDriverStatus(String(params.status ?? ""))
+    ? (String(params.status) as DriverStatus)
+    : null;
+  const requestedPage = Number(params.page ?? "1");
+  const page =
+    Number.isInteger(requestedPage) && requestedPage > 0
+      ? requestedPage
+      : 1;
 
   const db = getDb();
   const now = new Date();
   const soon = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-  const [drivers, total, active, onLeave, docsDue] = await Promise.all([
+  const baseWhere: Prisma.DriverWhereInput = q
+    ? {
+        OR: [
+          { displayName: { contains: q, mode: "insensitive" } },
+          { phoneLast4: { contains: q, mode: "insensitive" } },
+          {
+            qualifications: {
+              some: {
+                vehicleClass: {
+                  name: { contains: q, mode: "insensitive" },
+                },
+              },
+            },
+          },
+        ],
+      }
+    : {};
+
+  const where: Prisma.DriverWhereInput = {
+    ...baseWhere,
+    ...(status ? { status } : {}),
+  };
+
+  const total = await db.driver.count({ where });
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const skip = (safePage - 1) * PAGE_SIZE;
+
+  const [drivers, active, onLeave, docsDue] = await Promise.all([
     db.driver.findMany({
+      where,
       orderBy: [{ status: "asc" }, { displayName: "asc" }],
       include: {
         qualifications: {
           include: { vehicleClass: { select: { name: true } } },
         },
       },
-      take: 100,
+      skip,
+      take: PAGE_SIZE,
     }),
-    db.driver.count(),
-    db.driver.count({ where: { status: "ACTIVE" } }),
-    db.driver.count({ where: { status: "ON_LEAVE" } }),
+    db.driver.count({ where: { ...baseWhere, status: "ACTIVE" } }),
+    db.driver.count({ where: { ...baseWhere, status: "ON_LEAVE" } }),
     db.driver.count({
       where: {
+        ...baseWhere,
         licenseExpiry: {
           not: null,
           lte: soon,
@@ -50,7 +109,8 @@ export default async function AdminDriversPage() {
       {driver.displayName}
     </Link>,
     driver.phoneLast4 ? `•••• ${driver.phoneLast4}` : "Protected",
-    driver.qualifications.map((item) => item.vehicleClass.name).join(", ") || "Unqualified",
+    driver.qualifications.map((item) => item.vehicleClass.name).join(", ") ||
+      "Unqualified",
     driver.licenseExpiry?.toLocaleDateString("en-IN") ?? "Not recorded",
     <StatusPill key={driver.id} tone={tone(driver.status)}>
       {driver.status.replaceAll("_", " ")}
@@ -58,6 +118,18 @@ export default async function AdminDriversPage() {
     driver.licenseExpiry && driver.licenseExpiry <= soon ? "Due soon" : "OK",
     driver.internalNotes ?? "—",
   ]);
+
+  function pageHref(targetPage: number) {
+    const next = new URLSearchParams();
+    if (q) next.set("q", q);
+    if (status) next.set("status", status);
+    if (targetPage > 1) next.set("page", targetPage.toString());
+    const query = next.toString();
+    return query ? `/admin/drivers?${query}` : "/admin/drivers";
+  }
+
+  const firstShown = total === 0 ? 0 : skip + 1;
+  const lastShown = Math.min(skip + drivers.length, total);
 
   return (
     <AdminTablePage
@@ -72,14 +144,107 @@ export default async function AdminDriversPage() {
         ) : null
       }
       metrics={[
-        { label: "Total Drivers", value: total.toString(), meta: "all records", tone: "blue" },
-        { label: "Active Drivers", value: active.toString(), meta: "eligible for assignment", tone: "green" },
-        { label: "On Leave", value: onLeave.toString(), meta: "temporarily unavailable", tone: "orange" },
-        { label: "Documents Due", value: docsDue.toString(), meta: "license due within 30 days", tone: "red" },
+        {
+          label: "Matching Drivers",
+          value: total.toString(),
+          meta: "current filters",
+          tone: "blue",
+        },
+        {
+          label: "Active Drivers",
+          value: active.toString(),
+          meta: "current search",
+          tone: "green",
+        },
+        {
+          label: "On Leave",
+          value: onLeave.toString(),
+          meta: "current search",
+          tone: "orange",
+        },
+        {
+          label: "Documents Due",
+          value: docsDue.toString(),
+          meta: "license due within 30 days",
+          tone: "red",
+        },
       ]}
-      filters={["Latest 100"]}
-      columns={["Driver", "Contact", "Qualified Classes", "License Expiry", "Status", "Documents", "Notes"]}
+      filters={[
+        status ? status.replaceAll("_", " ") : "All statuses",
+        q ? `Search: ${q}` : "All drivers",
+      ]}
+      toolbar={
+        <form className="admin-table-query admin-table-query--compact" method="get">
+          <label>
+            <span>Search</span>
+            <input
+              name="q"
+              defaultValue={q}
+              placeholder="Driver name, phone last-4 or vehicle class"
+            />
+          </label>
+
+          <label>
+            <span>Status</span>
+            <select name="status" defaultValue={status ?? ""}>
+              <option value="">All statuses</option>
+              {driverStatuses.map((item) => (
+                <option key={item} value={item}>
+                  {item.replaceAll("_", " ")}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <button className="admin-primary-button" type="submit">
+            Apply
+          </button>
+
+          {(q || status) ? (
+            <Link className="admin-secondary-button" href="/admin/drivers">
+              Reset
+            </Link>
+          ) : null}
+        </form>
+      }
+      columns={[
+        "Driver",
+        "Contact",
+        "Qualified Classes",
+        "License Expiry",
+        "Status",
+        "Documents",
+        "Notes",
+      ]}
       rows={rows}
+      footer={
+        <>
+          <span>
+            Showing {firstShown}–{lastShown} of {total}
+          </span>
+          <div className="admin-table-pager">
+            {safePage > 1 ? (
+              <Link
+                className="admin-secondary-button"
+                href={pageHref(safePage - 1)}
+              >
+                ← Previous
+              </Link>
+            ) : null}
+            <small>
+              Page {safePage} of {totalPages}
+            </small>
+            {safePage < totalPages ? (
+              <Link
+                className="admin-secondary-button"
+                href={pageHref(safePage + 1)}
+              >
+                Next →
+              </Link>
+            ) : null}
+          </div>
+        </>
+      }
     />
   );
 }
