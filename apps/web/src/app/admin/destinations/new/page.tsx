@@ -3,6 +3,15 @@ import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell } from "@/components/admin-shell";
+import {
+  AdminField,
+  AdminForm,
+  AdminFormActions,
+  AdminFormAsideCard,
+  AdminFormCallout,
+  AdminFormGrid,
+  AdminFormSection,
+} from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -84,34 +93,53 @@ export default async function NewDestinationPage() {
     <AdminShell
       active="Destinations"
       title="New Destination"
-      subtitle="Create a non-indexed draft, then add body, hero media, SEO and publication settings."
+      subtitle="Create a destination foundation, then complete rich content, media, SEO and publishing in the editor."
       actions={<Link className="admin-secondary-button" href="/admin/destinations">← Destinations</Link>}
     >
-      <section className="admin-panel admin-detail-card">
-        <form action={createDestination}>
-          <label>
-            Destination name
-            <input name="name" required minLength={2} maxLength={180}/>
-          </label>
-          <label>
-            Slug
-            <input name="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="ujjain"/>
-          </label>
-          <label>
-            Kind
-            <select name="kind" defaultValue="CITY">
-              {destinationKinds.map((kind) => (
-                <option key={kind} value={kind}>{kind.replaceAll("_", " ")}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Summary
-            <textarea name="summary" maxLength={700}/>
-          </label>
-          <button className="admin-primary-button" type="submit">Create Draft Destination</button>
-        </form>
-      </section>
-    </AdminShell>
+      <AdminForm
+        action={createDestination}
+        aside={
+          <>
+            <AdminFormAsideCard title="Destination types">
+              <p>Use CITY or REGION for broad destinations, TEMPLE for pilgrimage entities, and NATURE / HERITAGE for focused discovery pages.</p>
+            </AdminFormAsideCard>
+            <AdminFormAsideCard title="Draft safety">
+              <p>New destinations remain non-indexed drafts until their complete content and SEO are reviewed.</p>
+            </AdminFormAsideCard>
+          </>
+        }
+      >
+        <AdminFormSection title="Destination identity" description="Public name, URL slug and destination category." badge="Required">
+          <AdminFormGrid columns={2}>
+            <AdminField label="Destination name" htmlFor="name" required>
+              <input id="name" name="name" required minLength={2} maxLength={180} placeholder="Ujjain" />
+            </AdminField>
+            <AdminField label="Slug" htmlFor="slug" required hint="Use a short stable URL identifier.">
+              <input id="slug" name="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="ujjain" />
+            </AdminField>
+            <AdminField label="Kind" htmlFor="kind" required>
+              <select id="kind" name="kind" defaultValue="CITY">
+                {destinationKinds.map((kind) => (
+                  <option key={kind} value={kind}>{kind.replaceAll("_", " ")}</option>
+                ))}
+              </select>
+            </AdminField>
+          </AdminFormGrid>
+        </AdminFormSection>
+
+        <AdminFormSection title="Editorial summary" description="Short overview before building the complete destination story.">
+          <AdminFormGrid columns={1}>
+            <AdminField label="Summary" htmlFor="summary" hint="Maximum 700 characters.">
+              <textarea id="summary" name="summary" maxLength={700} rows={5} placeholder="Describe why travellers visit, what makes it special and the main experience." />
+            </AdminField>
+          </AdminFormGrid>
+          <AdminFormCallout title="Next step">
+            The full editor adds structured body content, hero media, SEO metadata and publication scheduling.
+          </AdminFormCallout>
+        </AdminFormSection>
+
+        <AdminFormActions submitLabel="Create Draft Destination" cancelHref="/admin/destinations" helper="Creates a non-indexed destination draft." />
+      </AdminForm>
+
   );
 }
