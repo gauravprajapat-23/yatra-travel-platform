@@ -10,6 +10,7 @@ import { AdminMediaPicker } from "@/components/admin-media-picker";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminMultiSelectCards } from "@/components/admin-multi-select-cards";
 import { AdminMoneyField } from "@/components/admin-money-field";
+import { AdminCurrencyField } from "@/components/admin-currency-field";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
@@ -922,15 +923,11 @@ export default async function PackageDetailPage({
                                 required
                               />
 
-                              <AdminField label="Currency" htmlFor={`price-currency-${option.id}`} required>
-                                <input
-                                  id={`price-currency-${option.id}`}
-                                  name="currency"
-                                  defaultValue={option.currency}
-                                  maxLength={3}
-                                  required
-                                />
-                              </AdminField>
+                              <AdminCurrencyField
+                                id={`price-currency-${option.id}`}
+                                name="currency"
+                                defaultValue={option.currency}
+                              />
 
                               <AdminField label="Sort order" htmlFor={`price-sort-${option.id}`}>
                                 <input
@@ -1026,15 +1023,11 @@ export default async function PackageDetailPage({
                       required
                     />
 
-                    <AdminField label="Currency" htmlFor="newPriceCurrency" required>
-                      <input
-                        id="newPriceCurrency"
-                        name="currency"
-                        defaultValue="INR"
-                        maxLength={3}
-                        required
-                      />
-                    </AdminField>
+                    <AdminCurrencyField
+                      id="newPriceCurrency"
+                      name="currency"
+                      defaultValue="INR"
+                    />
 
                     <AdminField label="Minimum travellers" htmlFor="newPriceMin">
                       <input id="newPriceMin" type="number" name="minTravellers" min={1}/>
