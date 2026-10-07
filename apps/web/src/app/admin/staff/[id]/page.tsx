@@ -23,6 +23,7 @@ import {
   updateStaffAccess,
   revokeStaffSessions,
   renewStaffInvite,
+  revokeStaffInvite,
 } from "@/modules/staff/staff-management-service";
 
 export const dynamic = "force-dynamic";
@@ -166,6 +167,23 @@ export default async function StaffDetailPage({
     }
   }
 
+  async function cancelInvite() {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "staff.manage")) {
+      redirect("/admin");
+    }
+
+    await revokeStaffInvite({
+      targetUserId,
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath(`/admin/staff/${targetUserId}`);
+    revalidatePath("/admin/staff");
+  }
+
   async function saveAccess(formData: FormData) {
     "use server";
 
@@ -276,11 +294,23 @@ export default async function StaffDetailPage({
                   </AdminField>
                 </AdminFormGrid>
 
-                <AdminSubmitButton
-                  label="Regenerate Invite Link"
-                  pendingLabel="Generating Invite…"
-                />
+                <div className="admin-form-actions__buttons">
+                  <AdminSubmitButton
+                    label="Regenerate Invite Link"
+                    pendingLabel="Generating Invite…"
+                  />
+                </div>
               </AdminActionForm>
+            ) : null}
+
+            {user.status === "INVITED" ? (
+              <form action={cancelInvite}>
+                <AdminSubmitButton
+                  className="admin-danger-button"
+                  label="Cancel Invite & Disable Account"
+                  pendingLabel="Cancelling Invite…"
+                />
+              </form>
             ) : null}
 
             {isSelf ? (
