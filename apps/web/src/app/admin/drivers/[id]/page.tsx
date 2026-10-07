@@ -5,6 +5,7 @@ import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
+import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminMultiSelectCards } from "@/components/admin-multi-select-cards";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
@@ -286,7 +287,10 @@ export default async function DriverDetailPage({
                   New phone/license values are encrypted before persistence and
                   excluded from audit logs.
                 </p>
-                <button className="admin-primary-button" type="submit">Save Driver</button>
+                <AdminSubmitButton
+                  label="Save Driver"
+                  pendingLabel="Saving Driver…"
+                />
               </form>
             ) : <p>Your role has read-only driver access.</p>}
           </section>
@@ -356,9 +360,10 @@ export default async function DriverDetailPage({
                   </AdminField>
                 </AdminFormGrid>
 
-                <button className="admin-primary-button" type="submit">
-                  Add Block
-                </button>
+                <AdminSubmitButton
+                  label="Add Block"
+                  pendingLabel="Adding Block…"
+                />
               </form>
             ) : null}
           </section>
