@@ -70,6 +70,25 @@ if (exportLocation.pathname !== "/admin/login") {
 
 process.stdout.write("PASS /api/admin/bookings/export -> /admin/login\n");
 
+const reportExportResponse = await request("/api/admin/reports/export");
+if (![302, 303, 307, 308].includes(reportExportResponse.status)) {
+  throw new Error(
+    `Report export must reject unauthenticated access; received ${reportExportResponse.status}`,
+  );
+}
+
+const reportExportLocation = new URL(
+  reportExportResponse.headers.get("location") ?? "/",
+  baseUrl,
+);
+if (reportExportLocation.pathname !== "/admin/login") {
+  throw new Error(
+    `Report export redirected to ${reportExportLocation.pathname} instead of /admin/login`,
+  );
+}
+
+process.stdout.write("PASS /api/admin/reports/export -> /admin/login\n");
+
 const inviteResponse = await request("/admin/invite/invalid-certification-token");
 if (inviteResponse.status !== 200) {
   throw new Error(
