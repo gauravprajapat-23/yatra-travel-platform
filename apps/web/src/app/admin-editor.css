@@ -913,3 +913,10 @@
     margin-inline: auto;
   }
 }
+
+
+.admin-table-empty__action {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
