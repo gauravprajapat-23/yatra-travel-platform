@@ -87,6 +87,7 @@ export default async function DispatchPage({
         destinationText: true,
         startsAt: true,
         endsAt: true,
+        status: true,
         selectedVehicle: {
           select: { displayName: true, registrationNumber: true },
         },
