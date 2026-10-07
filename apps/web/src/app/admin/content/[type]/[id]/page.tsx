@@ -6,6 +6,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
+import { AdminConfirmSubmitButton } from "@/components/admin-confirm-submit-button";
 import { AdminStructuredContentEditor } from "@/components/admin-structured-content-editor";
 import { AdminMediaPicker } from "@/components/admin-media-picker";
 import { AdminTextareaField } from "@/components/admin-textarea-field";
@@ -698,9 +699,11 @@ export default async function AdminContentEditorPage({
 
                 {destinationDetails.templeProfile ? (
                   <form action={removeTemple}>
-                    <button className="admin-danger-button" type="submit">
-                      Remove Temple Profile
-                    </button>
+                    <AdminConfirmSubmitButton
+                      label="Remove Temple Profile"
+                      pendingLabel="Removing Temple Profile…"
+                      confirmMessage="Remove this Temple Profile? The destination will keep its normal content, but temple-specific data will be deleted."
+                    />
                   </form>
                 ) : null}
               </>
