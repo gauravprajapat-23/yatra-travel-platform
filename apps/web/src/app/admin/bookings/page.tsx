@@ -377,6 +377,12 @@ export default async function AdminBookingsPage({
             Export CSV
           </Link>
 
+          {hasPermission(session.roles, "booking.write") ? (
+            <Link className="admin-secondary-button" href="/admin/bookings/bulk">
+              Bulk Operations
+            </Link>
+          ) : null}
+
           {(q || status || type !== "ALL" || assignment !== "ALL" || from || to) ? (
             <Link className="admin-secondary-button" href="/admin/bookings">
               Reset
