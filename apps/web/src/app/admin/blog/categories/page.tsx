@@ -163,20 +163,46 @@ export default async function BlogCategoriesPage() {
                     <td>
                       {hasPermission(session.roles, "content.write") ? (
                         <form action={update}>
-                          <input type="hidden" name="categoryId" value={category.id}/>
                           <input
-                            name="name"
-                            defaultValue={category.name}
-                            required
-                            minLength={2}
-                            maxLength={120}
+                            type="hidden"
+                            name="categoryId"
+                            value={category.id}
                           />
-                          <textarea
-                            name="description"
-                            defaultValue={category.description ?? ""}
-                            maxLength={1000}
-                          />
-                          <button className="admin-secondary-button" type="submit">
+
+                          <AdminFormGrid columns={1}>
+                            <AdminField
+                              label="Name"
+                              htmlFor={`category-name-${category.id}`}
+                              required
+                            >
+                              <input
+                                id={`category-name-${category.id}`}
+                                name="name"
+                                defaultValue={category.name}
+                                required
+                                minLength={2}
+                                maxLength={120}
+                              />
+                            </AdminField>
+
+                            <AdminField
+                              label="Description"
+                              htmlFor={`category-description-${category.id}`}
+                            >
+                              <textarea
+                                id={`category-description-${category.id}`}
+                                name="description"
+                                defaultValue={category.description ?? ""}
+                                maxLength={1000}
+                                rows={4}
+                              />
+                            </AdminField>
+                          </AdminFormGrid>
+
+                          <button
+                            className="admin-secondary-button"
+                            type="submit"
+                          >
                             Save
                           </button>
                         </form>
