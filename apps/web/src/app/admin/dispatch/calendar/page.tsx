@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
+import { AdminField } from "@/components/admin-form";
 import { AdminMetric, AdminShell } from "@/components/admin-shell";
 import { requireAdminSession } from "@/lib/auth/session";
 import styles from "./calendar.module.css";
@@ -116,14 +117,13 @@ export default async function FleetAvailabilityCalendarPage({
     >
       <section className="admin-panel admin-card-body">
         <form className="admin-table-query admin-table-query--compact" method="get">
-          <label>
-            <span>Calendar window</span>
-            <select name="days" defaultValue={days.toString()}>
+          <AdminField label="Calendar window" htmlFor="calendarDays">
+            <select id="calendarDays" name="days" defaultValue={days.toString()}>
               <option value="7">Next 7 days</option>
               <option value="14">Next 14 days</option>
               <option value="30">Next 30 days</option>
             </select>
-          </label>
+          </AdminField>
           <button className="admin-primary-button" type="submit">Apply Window</button>
         </form>
       </section>
