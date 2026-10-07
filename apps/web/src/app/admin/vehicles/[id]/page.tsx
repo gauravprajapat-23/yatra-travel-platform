@@ -268,25 +268,99 @@ export default async function VehicleDetailPage({
             <h2>Edit Vehicle</h2>
             {hasPermission(session.roles, "vehicle.write") ? (
               <form action={save}>
-                <label>Vehicle name<input name="displayName" defaultValue={vehicle.displayName} required minLength={2} maxLength={120}/></label>
-                <label>
-                  Vehicle class
-                  <select name="vehicleClassId" defaultValue={vehicle.vehicleClassId}>
-                    {classes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-                  </select>
-                </label>
-                <label>
-                  Status
-                  <select name="status" defaultValue={vehicle.status}>
-                    {vehicleStatuses.map((status) => <option key={status} value={status}>{status.replaceAll("_", " ")}</option>)}
-                  </select>
-                </label>
-                <label>Seats<input type="number" name="seats" min={1} max={80} defaultValue={vehicle.seats} required/></label>
-                <label>Luggage capacity<input type="number" name="luggage" min={0} max={100} defaultValue={vehicle.luggage ?? ""}/></label>
-                <label>Description<textarea name="description" defaultValue={vehicle.description ?? ""} maxLength={2000}/></label>
-                <label><input type="checkbox" name="airConditioned" defaultChecked={vehicle.airConditioned}/>Air conditioned</label>
-                <label><input type="checkbox" name="isFeatured" defaultChecked={vehicle.isFeatured}/>Featured</label>
-                <button className="admin-primary-button" type="submit">Save Vehicle</button>
+                <AdminFormGrid columns={2}>
+                  <AdminField label="Vehicle name" htmlFor="displayName" required>
+                    <input
+                      id="displayName"
+                      name="displayName"
+                      defaultValue={vehicle.displayName}
+                      required
+                      minLength={2}
+                      maxLength={120}
+                    />
+                  </AdminField>
+
+                  <AdminField label="Vehicle class" htmlFor="vehicleClassId" required>
+                    <select
+                      id="vehicleClassId"
+                      name="vehicleClassId"
+                      defaultValue={vehicle.vehicleClassId}
+                    >
+                      {classes.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
+                        </option>
+                      ))}
+                    </select>
+                  </AdminField>
+
+                  <AdminField label="Status" htmlFor="status" required>
+                    <select id="status" name="status" defaultValue={vehicle.status}>
+                      {vehicleStatuses.map((status) => (
+                        <option key={status} value={status}>
+                          {status.replaceAll("_", " ")}
+                        </option>
+                      ))}
+                    </select>
+                  </AdminField>
+
+                  <AdminField label="Seats" htmlFor="seats" required>
+                    <input
+                      id="seats"
+                      type="number"
+                      name="seats"
+                      min={1}
+                      max={80}
+                      defaultValue={vehicle.seats}
+                      required
+                    />
+                  </AdminField>
+
+                  <AdminField label="Luggage capacity" htmlFor="luggage">
+                    <input
+                      id="luggage"
+                      type="number"
+                      name="luggage"
+                      min={0}
+                      max={100}
+                      defaultValue={vehicle.luggage ?? ""}
+                    />
+                  </AdminField>
+
+                  <AdminField
+                    label="Description"
+                    htmlFor="description"
+                    wide
+                    hint="Maximum 2,000 characters."
+                  >
+                    <textarea
+                      id="description"
+                      name="description"
+                      defaultValue={vehicle.description ?? ""}
+                      maxLength={2000}
+                      rows={6}
+                    />
+                  </AdminField>
+                </AdminFormGrid>
+
+                <div className="admin-checkbox-grid">
+                  <AdminCheckbox
+                    name="airConditioned"
+                    defaultChecked={vehicle.airConditioned}
+                    label="Air conditioned"
+                    description="Vehicle is equipped with working AC."
+                  />
+                  <AdminCheckbox
+                    name="isFeatured"
+                    defaultChecked={vehicle.isFeatured}
+                    label="Featured vehicle"
+                    description="Show this vehicle prominently in public fleet views."
+                  />
+                </div>
+
+                <button className="admin-primary-button" type="submit">
+                  Save Vehicle
+                </button>
               </form>
             ) : <p>Your role has read-only fleet access.</p>}
           </section>
