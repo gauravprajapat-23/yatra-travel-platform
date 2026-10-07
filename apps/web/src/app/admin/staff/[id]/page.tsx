@@ -193,31 +193,34 @@ export default async function StaffDetailPage({
             <h2>Roles & Status</h2>
 
             <form action={saveAccess}>
-              <label>
-                Account status
-                <select name="status" defaultValue={user.status}>
-                  {staffStatuses.map((status) => (
-                    <option key={status} value={status}>
-                      {status.replaceAll("_", " ")}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <AdminFormGrid columns={1}>
+                <AdminField label="Account status" htmlFor="staffStatus" required>
+                  <select
+                    id="staffStatus"
+                    name="status"
+                    defaultValue={user.status}
+                  >
+                    {staffStatuses.map((status) => (
+                      <option key={status} value={status}>
+                        {status.replaceAll("_", " ")}
+                      </option>
+                    ))}
+                  </select>
+                </AdminField>
+              </AdminFormGrid>
 
-              <fieldset>
-                <legend>Admin roles</legend>
+              <div className="admin-checkbox-grid">
                 {adminRoleKeys.map((role) => (
-                  <label key={role}>
-                    <input
-                      type="checkbox"
-                      name="roles"
-                      value={role}
-                      defaultChecked={currentRoles.includes(role)}
-                    />
-                    {roleLabel(role)}
-                  </label>
+                  <AdminCheckbox
+                    key={role}
+                    name="roles"
+                    value={role}
+                    defaultChecked={currentRoles.includes(role)}
+                    label={roleLabel(role)}
+                    description="Grant this admin role to the staff account."
+                  />
                 ))}
-              </fieldset>
+              </div>
 
               <p>
                 Reducing another user&apos;s access revokes their active
