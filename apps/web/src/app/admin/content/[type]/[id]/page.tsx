@@ -6,6 +6,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminStructuredContentEditor } from "@/components/admin-structured-content-editor";
+import { AdminMediaPicker } from "@/components/admin-media-picker";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   contentStatuses,
@@ -629,17 +630,19 @@ export default async function AdminContentEditorPage({
             )}
             {hasPermission(session.roles, "content.write") ? (
               <form action={saveHero}>
-                <label>
-                  Hero image
-                  <select name="heroMediaId" defaultValue={content.heroMediaId ?? ""}>
-                    <option value="">No hero image</option>
-                    {heroOptions.map((asset) => (
-                      <option key={asset.id} value={asset.id}>
-                        {asset.altText ?? asset.objectKey.split("/").pop() ?? asset.objectKey}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <AdminMediaPicker
+                  name="heroMediaId"
+                  defaultValue={content.heroMediaId ?? ""}
+                  options={heroOptions.map((asset) => ({
+                    id: asset.id,
+                    publicUrl: asset.publicUrl,
+                    label:
+                      asset.altText ??
+                      asset.objectKey.split("/").pop() ??
+                      asset.objectKey,
+                    altText: asset.altText,
+                  }))}
+                />
                 <button className="admin-primary-button" type="submit">
                   Save Hero Image
                 </button>
