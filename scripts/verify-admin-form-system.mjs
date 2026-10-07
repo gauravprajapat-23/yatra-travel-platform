@@ -51,6 +51,7 @@ function requireFragments(file, fragments) {
 
 const sharedComponents = [
   "apps/web/src/components/admin-form.tsx",
+  "apps/web/src/components/admin-action-form.tsx",
   "apps/web/src/components/admin-editor-tabs.tsx",
   "apps/web/src/components/admin-submit-button.tsx",
   "apps/web/src/components/admin-slug-fields.tsx",
@@ -73,6 +74,103 @@ for (const file of sharedComponents) {
   }
 
   process.stdout.write(`PASS shared form component: ${file}\n`);
+}
+
+const primitiveCoverage = [
+  {
+    file: "apps/web/src/app/admin/packages/new/page.tsx",
+    fragments: ["<AdminSlugFields", "<AdminTextareaField"],
+    label: "package create guided identity/content",
+  },
+  {
+    file: "apps/web/src/app/admin/cms/new/page.tsx",
+    fragments: ["<AdminSlugFields", "<AdminTextareaField"],
+    label: "CMS create guided identity/content",
+  },
+  {
+    file: "apps/web/src/app/admin/destinations/new/page.tsx",
+    fragments: ["<AdminSlugFields", "<AdminTextareaField"],
+    label: "destination create guided identity/content",
+  },
+  {
+    file: "apps/web/src/app/admin/blog/new/page.tsx",
+    fragments: ["<AdminSlugFields", "<AdminTextareaField"],
+    label: "blog create guided identity/content",
+  },
+  {
+    file: "apps/web/src/app/admin/offers/new/page.tsx",
+    fragments: [
+      "<AdminMoneyField",
+      "<AdminCurrencyField",
+      "<AdminDateTimeRange",
+    ],
+    label: "pricing create money/currency/date primitives",
+  },
+  {
+    file: "apps/web/src/app/admin/offers/[id]/page.tsx",
+    fragments: [
+      "<AdminMoneyField",
+      "<AdminCurrencyField",
+      "<AdminDateTimeRange",
+    ],
+    label: "pricing editor money/currency/date primitives",
+  },
+  {
+    file: "apps/web/src/app/admin/packages/[id]/page.tsx",
+    fragments: [
+      "<AdminStructuredContentEditor",
+      "<AdminMediaPicker",
+      "<AdminMoneyField",
+      "<AdminCurrencyField",
+      "<AdminPublicationFields",
+    ],
+    label: "package rich editor primitives",
+  },
+  {
+    file: "apps/web/src/app/admin/content/[type]/[id]/page.tsx",
+    fragments: [
+      "<AdminStructuredContentEditor",
+      "<AdminPublicationFields",
+    ],
+    label: "content rich editor primitives",
+  },
+  {
+    file: "apps/web/src/app/admin/faq/new/page.tsx",
+    fragments: ["<AdminPublicationFields", "<AdminTextareaField"],
+    label: "FAQ create publication/content primitives",
+  },
+  {
+    file: "apps/web/src/app/admin/faq/[id]/page.tsx",
+    fragments: ["<AdminPublicationFields", "<AdminTextareaField"],
+    label: "FAQ editor publication/content primitives",
+  },
+  {
+    file: "apps/web/src/app/admin/settings/booking-policies/new/page.tsx",
+    fragments: ["<AdminDateTimeRange", "<AdminTextareaField"],
+    label: "booking policy create guided policy/date primitives",
+  },
+  {
+    file: "apps/web/src/app/admin/settings/booking-policies/[id]/page.tsx",
+    fragments: ["<AdminDateTimeRange", "<AdminTextareaField"],
+    label: "booking policy editor guided policy/date primitives",
+  },
+  {
+    file: "apps/web/src/components/admin-media-manager.tsx",
+    fragments: [
+      "<AdminFileUploadField",
+      "mediaSearch",
+      "mediaFilter",
+      "filteredMedia",
+      "<AdminTextInputField",
+      "<AdminTextareaField",
+    ],
+    label: "media library upload/search/metadata primitives",
+  },
+];
+
+for (const item of primitiveCoverage) {
+  requireFragments(item.file, item.fragments);
+  process.stdout.write(`PASS specialized admin form coverage: ${item.label}\n`);
 }
 
 for (const file of newPages) {
@@ -119,5 +217,5 @@ for (const file of tabbedEditors) {
 }
 
 process.stdout.write(
-  `Admin form-system certification passed: ${newPages.length} shared create pages, ${actionNewPages.length} action-create pages, ${tabbedEditors.length} tabbed editors, ${sharedComponents.length} shared components.\n`,
+  `Admin form-system certification passed: ${newPages.length} shared create pages, ${actionNewPages.length} action-create pages, ${tabbedEditors.length} tabbed editors, ${sharedComponents.length} shared components, ${primitiveCoverage.length} specialized primitive coverage checks.\n`,
 );
