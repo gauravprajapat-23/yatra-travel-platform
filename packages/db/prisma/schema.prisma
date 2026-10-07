@@ -160,8 +160,10 @@ model User {
   updatedAt       DateTime    @updatedAt
   roles           UserRole[]  @relation("UserRoles")
   assignedRoles   UserRole[]  @relation("AssignedRoles")
-  sessions        Session[]
-  auditLogs       AuditLog[]  @relation("AuditActor")
+  sessions            Session[]
+  staffInvite         StaffInvite?  @relation("StaffInviteUser")
+  createdStaffInvites StaffInvite[] @relation("StaffInviteCreator")
+  auditLogs           AuditLog[]  @relation("AuditActor")
   carBookings     CarBooking[] @relation("CustomerBookings")
   bookingChanges  BookingStatusHistory[] @relation("BookingStatusActor")
   packageBookings       PackageBooking[] @relation("CustomerPackageBookings")
@@ -193,6 +195,25 @@ model UserRole {
   @@id([userId, roleId])
   @@index([roleId])
   @@index([assignedById])
+}
+
+model StaffInvite {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  tokenHash   String    @unique
+  createdById String?
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  user      User  @relation("StaffInviteUser", fields: [userId], references: [id], onDelete: Cascade)
+  createdBy User? @relation("StaffInviteCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([createdById, createdAt])
+  @@index([expiresAt])
+  @@index([acceptedAt])
+  @@index([revokedAt])
 }
 
 model Session {
