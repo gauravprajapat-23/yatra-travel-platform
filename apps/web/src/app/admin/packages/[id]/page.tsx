@@ -763,138 +763,233 @@ export default async function PackageDetailPage({
 
         {activeTab === "pricing" ? (
           <section className="admin-panel admin-detail-card">
-            <h2>Pricing</h2>
+            <div className="admin-panel-heading">
+              <div>
+                <h2>Package Pricing</h2>
+                <p>Manage active fare options, traveller ranges and vehicle-specific pricing.</p>
+              </div>
+              <span>{pkg.priceOptions.length} option{pkg.priceOptions.length === 1 ? "" : "s"}</span>
+            </div>
+
             {pkg.priceOptions.length === 0 ? (
               <p>No package pricing options configured.</p>
             ) : (
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Mode</th>
-                    <th>Price</th>
-                    <th>Travellers</th>
-                    <th>Vehicle Class</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pkg.priceOptions.map((option) => (
-                    <tr key={option.id}>
-                      <td>{option.mode.replaceAll("_", " ")}</td>
-                      <td>{money(option.amountMinor, option.currency)}</td>
-                      <td>{option.minTravellers ?? "—"} – {option.maxTravellers ?? "—"}</td>
-                      <td>{option.vehicleClassId ? vehicleClasses.find((item) => item.id === option.vehicleClassId)?.name ?? "Unknown" : "—"}</td>
-                      <td>{option.isActive ? "Active" : "Inactive"}</td>
-                      <td>
-                        {hasPermission(session.roles, "package.write") ? (
-                          <form action={togglePriceOption}>
+              <div className="admin-price-card-grid">
+                {pkg.priceOptions.map((option) => (
+                  <article
+                    className={
+                      option.isActive
+                        ? "admin-price-card admin-price-card--active"
+                        : "admin-price-card"
+                    }
+                    key={option.id}
+                  >
+                    <header>
+                      <div>
+                        <span>{option.mode.replaceAll("_", " ")}</span>
+                        <strong>{money(option.amountMinor, option.currency)}</strong>
+                      </div>
+                      <small>{option.isActive ? "Active" : "Inactive"}</small>
+                    </header>
+
+                    <dl>
+                      <div>
+                        <dt>Travellers</dt>
+                        <dd>{option.minTravellers ?? "Any"} – {option.maxTravellers ?? "Any"}</dd>
+                      </div>
+                      <div>
+                        <dt>Vehicle class</dt>
+                        <dd>
+                          {option.vehicleClassId
+                            ? vehicleClasses.find(
+                                (item) => item.id === option.vehicleClassId,
+                              )?.name ?? "Unknown"
+                            : "Not applicable"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Sort order</dt>
+                        <dd>{option.sortOrder}</dd>
+                      </div>
+                    </dl>
+
+                    {hasPermission(session.roles, "package.write") ? (
+                      <>
+                        <details className="admin-price-card__edit">
+                          <summary>Edit pricing option</summary>
+                          <form action={savePriceOption}>
                             <input type="hidden" name="optionId" value={option.id}/>
-                            <button className="admin-secondary-button" type="submit">
-                              {option.isActive ? "Deactivate" : "Activate"}
+
+                            <div className="admin-form-grid admin-form-grid--2">
+                              <label className="admin-field">
+                                <span className="admin-field__label">Mode</span>
+                                <select name="mode" defaultValue={option.mode}>
+                                  {packagePriceModes.map((mode) => (
+                                    <option key={mode} value={mode}>
+                                      {mode.replaceAll("_", " ")}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+
+                              <label className="admin-field">
+                                <span className="admin-field__label">Price</span>
+                                <input
+                                  name="amount"
+                                  defaultValue={(Number(option.amountMinor) / 100).toFixed(2)}
+                                  inputMode="decimal"
+                                  required
+                                />
+                              </label>
+
+                              <label className="admin-field">
+                                <span className="admin-field__label">Currency</span>
+                                <input
+                                  name="currency"
+                                  defaultValue={option.currency}
+                                  maxLength={3}
+                                  required
+                                />
+                              </label>
+
+                              <label className="admin-field">
+                                <span className="admin-field__label">Sort order</span>
+                                <input
+                                  type="number"
+                                  name="sortOrder"
+                                  defaultValue={option.sortOrder}
+                                />
+                              </label>
+
+                              <label className="admin-field">
+                                <span className="admin-field__label">Minimum travellers</span>
+                                <input
+                                  type="number"
+                                  name="minTravellers"
+                                  min={1}
+                                  defaultValue={option.minTravellers ?? ""}
+                                />
+                              </label>
+
+                              <label className="admin-field">
+                                <span className="admin-field__label">Maximum travellers</span>
+                                <input
+                                  type="number"
+                                  name="maxTravellers"
+                                  min={1}
+                                  defaultValue={option.maxTravellers ?? ""}
+                                />
+                              </label>
+
+                              <label className="admin-field admin-field--wide">
+                                <span className="admin-field__label">Vehicle class</span>
+                                <select
+                                  name="vehicleClassId"
+                                  defaultValue={option.vehicleClassId ?? ""}
+                                >
+                                  <option value="">Not applicable</option>
+                                  {vehicleClasses.map((vehicleClass) => (
+                                    <option key={vehicleClass.id} value={vehicleClass.id}>
+                                      {vehicleClass.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                            </div>
+
+                            <button className="admin-primary-button" type="submit">
+                              Update Price Option
                             </button>
                           </form>
-                        ) : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        </details>
+
+                        <form action={togglePriceOption}>
+                          <input type="hidden" name="optionId" value={option.id}/>
+                          <button
+                            className="admin-secondary-button"
+                            type="submit"
+                          >
+                            {option.isActive ? "Deactivate" : "Activate"}
+                          </button>
+                        </form>
+                      </>
+                    ) : null}
+                  </article>
+                ))}
+              </div>
             )}
 
             {hasPermission(session.roles, "package.write") ? (
-              <>
+              <section className="admin-price-create">
                 <h3>Add Price Option</h3>
+                <p>Create another fare option for a traveller count or vehicle class.</p>
+
                 <form action={savePriceOption}>
-                  <label>
-                    Mode
-                    <select name="mode" defaultValue="PER_PERSON">
-                      {packagePriceModes.map((mode) => (
-                        <option key={mode} value={mode}>{mode.replaceAll("_", " ")}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Price
-                    <input name="amount" inputMode="decimal" placeholder="14000" required/>
-                  </label>
-                  <label>
-                    Currency
-                    <input name="currency" defaultValue="INR" maxLength={3} required/>
-                  </label>
-                  <label>
-                    Minimum travellers
-                    <input type="number" name="minTravellers" min={1}/>
-                  </label>
-                  <label>
-                    Maximum travellers
-                    <input type="number" name="maxTravellers" min={1}/>
-                  </label>
-                  <label>
-                    Vehicle class
-                    <select name="vehicleClassId" defaultValue="">
-                      <option value="">Not applicable</option>
-                      {vehicleClasses.map((vehicleClass) => (
-                        <option key={vehicleClass.id} value={vehicleClass.id}>{vehicleClass.name}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Sort order
-                    <input type="number" name="sortOrder" defaultValue={0}/>
-                  </label>
+                  <div className="admin-form-grid admin-form-grid--3">
+                    <label className="admin-field">
+                      <span className="admin-field__label">Mode</span>
+                      <select name="mode" defaultValue="PER_PERSON">
+                        {packagePriceModes.map((mode) => (
+                          <option key={mode} value={mode}>
+                            {mode.replaceAll("_", " ")}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="admin-field">
+                      <span className="admin-field__label">Price</span>
+                      <input
+                        name="amount"
+                        inputMode="decimal"
+                        placeholder="14000"
+                        required
+                      />
+                    </label>
+
+                    <label className="admin-field">
+                      <span className="admin-field__label">Currency</span>
+                      <input
+                        name="currency"
+                        defaultValue="INR"
+                        maxLength={3}
+                        required
+                      />
+                    </label>
+
+                    <label className="admin-field">
+                      <span className="admin-field__label">Minimum travellers</span>
+                      <input type="number" name="minTravellers" min={1}/>
+                    </label>
+
+                    <label className="admin-field">
+                      <span className="admin-field__label">Maximum travellers</span>
+                      <input type="number" name="maxTravellers" min={1}/>
+                    </label>
+
+                    <label className="admin-field">
+                      <span className="admin-field__label">Sort order</span>
+                      <input type="number" name="sortOrder" defaultValue={0}/>
+                    </label>
+
+                    <label className="admin-field admin-field--wide">
+                      <span className="admin-field__label">Vehicle class</span>
+                      <select name="vehicleClassId" defaultValue="">
+                        <option value="">Not applicable</option>
+                        {vehicleClasses.map((vehicleClass) => (
+                          <option key={vehicleClass.id} value={vehicleClass.id}>
+                            {vehicleClass.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+
                   <button className="admin-primary-button" type="submit">
                     Add Price Option
                   </button>
                 </form>
-
-                {pkg.priceOptions.map((option) => (
-                  <form action={savePriceOption} key={`edit-${option.id}`}>
-                    <input type="hidden" name="optionId" value={option.id}/>
-                    <strong>{option.mode.replaceAll("_", " ")} · {money(option.amountMinor, option.currency)}</strong>
-                    <label>
-                      Mode
-                      <select name="mode" defaultValue={option.mode}>
-                        {packagePriceModes.map((mode) => (
-                          <option key={mode} value={mode}>{mode.replaceAll("_", " ")}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      Price
-                      <input name="amount" defaultValue={(Number(option.amountMinor) / 100).toFixed(2)} inputMode="decimal" required/>
-                    </label>
-                    <label>
-                      Currency
-                      <input name="currency" defaultValue={option.currency} maxLength={3} required/>
-                    </label>
-                    <label>
-                      Minimum travellers
-                      <input type="number" name="minTravellers" min={1} defaultValue={option.minTravellers ?? ""}/>
-                    </label>
-                    <label>
-                      Maximum travellers
-                      <input type="number" name="maxTravellers" min={1} defaultValue={option.maxTravellers ?? ""}/>
-                    </label>
-                    <label>
-                      Vehicle class
-                      <select name="vehicleClassId" defaultValue={option.vehicleClassId ?? ""}>
-                        <option value="">Not applicable</option>
-                        {vehicleClasses.map((vehicleClass) => (
-                          <option key={vehicleClass.id} value={vehicleClass.id}>{vehicleClass.name}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      Sort order
-                      <input type="number" name="sortOrder" defaultValue={option.sortOrder}/>
-                    </label>
-                    <button className="admin-secondary-button" type="submit">
-                      Update Price Option
-                    </button>
-                  </form>
-                ))}
-              </>
+              </section>
             ) : null}
           </section>
         ) : null}
