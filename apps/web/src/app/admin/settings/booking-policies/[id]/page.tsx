@@ -6,6 +6,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminDateTimeRange } from "@/components/admin-date-time-range";
+import { AdminTextareaField } from "@/components/admin-textarea-field";
 import {
   AdminField,
   AdminFormCallout,
@@ -239,41 +240,37 @@ export default async function BookingPolicyDetailPage({
                 description="Complete the commercial rules customers rely on before activation."
               >
                 <AdminFormGrid columns={1}>
-                  <AdminField label="Cancellation policy" htmlFor="cancellation">
-                    <textarea
+                  <AdminTextareaField
                       id="cancellation"
                       name="cancellation"
+                      label="Cancellation policy"
                       rows={5}
                       defaultValue={policyValue(policy.document, "cancellation")}
                     />
-                  </AdminField>
 
-                  <AdminField label="Refund eligibility" htmlFor="refundEligibility">
-                    <textarea
+                  <AdminTextareaField
                       id="refundEligibility"
                       name="refundEligibility"
+                      label="Refund eligibility"
                       rows={5}
                       defaultValue={policyValue(policy.document, "refundEligibility")}
                     />
-                  </AdminField>
 
-                  <AdminField label="Rescheduling policy" htmlFor="rescheduling">
-                    <textarea
+                  <AdminTextareaField
                       id="rescheduling"
                       name="rescheduling"
+                      label="Rescheduling policy"
                       rows={5}
                       defaultValue={policyValue(policy.document, "rescheduling")}
                     />
-                  </AdminField>
 
-                  <AdminField label="No-show policy" htmlFor="noShow">
-                    <textarea
+                  <AdminTextareaField
                       id="noShow"
                       name="noShow"
+                      label="No-show policy"
                       rows={4}
                       defaultValue={policyValue(policy.document, "noShow")}
                     />
-                  </AdminField>
                 </AdminFormGrid>
               </AdminFormSection>
 
@@ -282,44 +279,29 @@ export default async function BookingPolicyDetailPage({
                 description="Define customer obligations and operational boundaries."
               >
                 <AdminFormGrid columns={1}>
-                  <AdminField
-                    label="Customer responsibilities"
-                    htmlFor="customerResponsibilities"
-                  >
-                    <textarea
+                  <AdminTextareaField
                       id="customerResponsibilities"
                       name="customerResponsibilities"
+                      label="Customer responsibilities"
                       rows={5}
-                      defaultValue={policyValue(
-                        policy.document,
-                        "customerResponsibilities",
-                      )}
+                      defaultValue={policyValue(policy.document, "customerResponsibilities")}
                     />
-                  </AdminField>
 
-                  <AdminField
-                    label="Service limitations"
-                    htmlFor="serviceLimitations"
-                  >
-                    <textarea
+                  <AdminTextareaField
                       id="serviceLimitations"
                       name="serviceLimitations"
+                      label="Service limitations"
                       rows={5}
-                      defaultValue={policyValue(
-                        policy.document,
-                        "serviceLimitations",
-                      )}
+                      defaultValue={policyValue(policy.document, "serviceLimitations")}
                     />
-                  </AdminField>
 
-                  <AdminField label="Booking terms" htmlFor="bookingTerms">
-                    <textarea
+                  <AdminTextareaField
                       id="bookingTerms"
                       name="bookingTerms"
+                      label="Booking terms"
                       rows={6}
                       defaultValue={policyValue(policy.document, "bookingTerms")}
                     />
-                  </AdminField>
                 </AdminFormGrid>
 
                 <AdminFormCallout tone="warning" title="Activation validation">
