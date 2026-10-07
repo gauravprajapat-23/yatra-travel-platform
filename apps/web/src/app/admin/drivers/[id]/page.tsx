@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   addDriverAvailabilityBlock,
@@ -24,13 +25,21 @@ function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
 
 export default async function DriverDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "driver.read")) redirect("/admin");
 
   const { id } = await params;
+  const { tab: requestedTab } = await searchParams;
+  const activeTab = ["overview", "details", "availability"].includes(
+    requestedTab ?? "",
+  )
+    ? requestedTab!
+    : "overview";
   const db = getDb();
 
   const [driver, classes] = await Promise.all([
@@ -141,226 +150,114 @@ export default async function DriverDetailPage({
       active="Drivers & Staff"
       title={driver.displayName}
       subtitle="Driver operations and assignment readiness"
-      actions={
-        <Link className="admin-secondary-button" href="/admin/drivers">
-          ← Drivers
-        </Link>
-      }
+      actions={<Link className="admin-secondary-button" href="/admin/drivers">← Drivers</Link>}
     >
-      <div className="admin-detail-grid">
-        <section className="admin-panel admin-detail-card">
-          <div className="admin-panel-heading">
-            <h2>Driver Overview</h2>
-            <StatusPill tone={tone(driver.status)}>
-              {driver.status.replaceAll("_", " ")}
-            </StatusPill>
-          </div>
+      <AdminEditorTabs
+        basePath={`/admin/drivers/${driver.id}`}
+        active={activeTab}
+        tabs={[
+          { key: "overview", label: "Overview", description: "Status & readiness" },
+          { key: "details", label: "Driver Details", description: "Profile & qualifications" },
+          { key: "availability", label: "Availability", description: "Time blocks" },
+        ]}
+      />
 
-          <dl>
-            <div>
-              <dt>Qualified classes</dt>
-              <dd>
-                {driver.qualifications
-                  .map((item) => item.vehicleClass.name)
-                  .join(", ") || "None"}
-              </dd>
+      <div className="admin-editor-section-stack">
+        {activeTab === "overview" ? (
+          <section className="admin-panel admin-detail-card">
+            <div className="admin-panel-heading">
+              <h2>Driver Overview</h2>
+              <StatusPill tone={tone(driver.status)}>{driver.status.replaceAll("_", " ")}</StatusPill>
             </div>
-            <div>
-              <dt>License expiry</dt>
-              <dd>
-                {driver.licenseExpiry?.toLocaleDateString("en-IN") ??
-                  "Not recorded"}
-              </dd>
-            </div>
-            <div>
-              <dt>Protected contact</dt>
-              <dd>
-                {driver.phoneLast4
-                  ? `•••• ${driver.phoneLast4}`
-                  : "Not available"}
-              </dd>
-            </div>
-          </dl>
+            <dl>
+              <div><dt>Qualified classes</dt><dd>{driver.qualifications.map((item) => item.vehicleClass.name).join(", ") || "None"}</dd></div>
+              <div><dt>License expiry</dt><dd>{driver.licenseExpiry?.toLocaleDateString("en-IN") ?? "Not recorded"}</dd></div>
+              <div><dt>Protected contact</dt><dd>{driver.phoneLast4 ? `•••• ${driver.phoneLast4}` : "Not available"}</dd></div>
+              <div><dt>Availability blocks</dt><dd>{driver.availability.length}</dd></div>
+            </dl>
+            {driver.internalNotes ? <p>{driver.internalNotes}</p> : null}
+          </section>
+        ) : null}
 
-          {driver.internalNotes ? <p>{driver.internalNotes}</p> : null}
-        </section>
-
-        <section className="admin-panel admin-detail-card">
-          <h2>Edit Driver</h2>
-
-          {hasPermission(session.roles, "driver.write") ? (
-            <form action={save}>
-              <label>
-                Driver name
-                <input
-                  name="displayName"
-                  defaultValue={driver.displayName}
-                  required
-                  minLength={2}
-                  maxLength={120}
-                />
-              </label>
-
-              <label>
-                Status
-                <select name="status" defaultValue={driver.status}>
-                  {driverStatuses.map((status) => (
-                    <option key={status} value={status}>
-                      {status.replaceAll("_", " ")}
-                    </option>
+        {activeTab === "details" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Edit Driver</h2>
+            {hasPermission(session.roles, "driver.write") ? (
+              <form action={save}>
+                <label>Driver name<input name="displayName" defaultValue={driver.displayName} required minLength={2} maxLength={120}/></label>
+                <label>
+                  Status
+                  <select name="status" defaultValue={driver.status}>
+                    {driverStatuses.map((status) => <option key={status} value={status}>{status.replaceAll("_", " ")}</option>)}
+                  </select>
+                </label>
+                <label>
+                  Replace phone number
+                  <input name="phoneNumber" inputMode="tel" autoComplete="off" placeholder={driver.phoneLast4 ? `Current: •••• ${driver.phoneLast4}` : "Enter phone number"} maxLength={40}/>
+                </label>
+                <label>
+                  Replace license number
+                  <input name="licenseNumber" autoComplete="off" placeholder={driver.licenseNumberCiphertext ? "Encrypted value already stored" : "Enter license number"} maxLength={80}/>
+                </label>
+                <label>
+                  License expiry
+                  <input type="date" name="licenseExpiry" defaultValue={driver.licenseExpiry ? driver.licenseExpiry.toISOString().slice(0, 10) : ""}/>
+                </label>
+                <fieldset>
+                  <legend>Qualified vehicle classes</legend>
+                  {classes.map((item) => (
+                    <label key={item.id}>
+                      <input type="checkbox" name="qualificationIds" value={item.id} defaultChecked={qualificationIds.includes(item.id)}/>
+                      {item.name}
+                    </label>
                   ))}
-                </select>
-              </label>
+                </fieldset>
+                <label>Internal notes<textarea name="internalNotes" defaultValue={driver.internalNotes ?? ""} maxLength={1000}/></label>
+                <p>Leave phone/license number blank to keep the current encrypted value. New values remain encrypted and excluded from audit logs.</p>
+                <button className="admin-primary-button" type="submit">Save Driver</button>
+              </form>
+            ) : <p>Your role has read-only driver access.</p>}
+          </section>
+        ) : null}
 
-              <label>
-                Replace phone number
-                <input
-                  name="phoneNumber"
-                  inputMode="tel"
-                  autoComplete="off"
-                  placeholder={
-                    driver.phoneLast4
-                      ? `Current: •••• ${driver.phoneLast4}`
-                      : "Enter phone number"
-                  }
-                  maxLength={40}
-                />
-              </label>
-
-              <label>
-                Replace license number
-                <input
-                  name="licenseNumber"
-                  autoComplete="off"
-                  placeholder={
-                    driver.licenseNumberCiphertext
-                      ? "Encrypted value already stored"
-                      : "Enter license number"
-                  }
-                  maxLength={80}
-                />
-              </label>
-
-              <label>
-                License expiry
-                <input
-                  type="date"
-                  name="licenseExpiry"
-                  defaultValue={
-                    driver.licenseExpiry
-                      ? driver.licenseExpiry.toISOString().slice(0, 10)
-                      : ""
-                  }
-                />
-              </label>
-
-              <fieldset>
-                <legend>Qualified vehicle classes</legend>
-                {classes.map((item) => (
-                  <label key={item.id}>
-                    <input
-                      type="checkbox"
-                      name="qualificationIds"
-                      value={item.id}
-                      defaultChecked={qualificationIds.includes(item.id)}
-                    />
-                    {item.name}
-                  </label>
-                ))}
-              </fieldset>
-
-              <label>
-                Internal notes
-                <textarea
-                  name="internalNotes"
-                  defaultValue={driver.internalNotes ?? ""}
-                  maxLength={1000}
-                />
-              </label>
-
-              <p>
-                Leave phone/license number blank to keep the current encrypted
-                value. New values are encrypted before persistence and are not
-                included in audit logs.
-              </p>
-
-              <button className="admin-primary-button" type="submit">
-                Save Driver
-              </button>
-            </form>
-          ) : (
-            <p>Your role has read-only driver access.</p>
-          )}
-        </section>
-
-        <section className="admin-panel admin-detail-card">
-          <h2>Availability Blocks</h2>
-
-          {driver.availability.length === 0 ? (
-            <p>No availability blocks recorded.</p>
-          ) : (
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Starts</th>
-                  <th>Ends</th>
-                  <th>Reason</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {driver.availability.map((block) => (
-                  <tr key={block.id}>
-                    <td>{block.startsAt.toLocaleString("en-IN")}</td>
-                    <td>{block.endsAt.toLocaleString("en-IN")}</td>
-                    <td>{block.reason ?? "—"}</td>
-                    <td>
-                      {hasPermission(session.roles, "driver.write") ? (
-                        <form action={removeBlock}>
-                          <input
-                            type="hidden"
-                            name="blockId"
-                            value={block.id}
-                          />
-                          <button className="admin-danger-button" type="submit">
-                            Delete
-                          </button>
-                        </form>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-
-          {hasPermission(session.roles, "driver.write") ? (
-            <form action={addBlock}>
-              <h3>Add Availability Block</h3>
-
-              <label>
-                Starts
-                <input type="datetime-local" name="startsAt" required />
-              </label>
-
-              <label>
-                Ends
-                <input type="datetime-local" name="endsAt" required />
-              </label>
-
-              <label>
-                Reason
-                <textarea name="reason" maxLength={500} />
-              </label>
-
-              <button className="admin-secondary-button" type="submit">
-                Add Block
-              </button>
-            </form>
-          ) : null}
-        </section>
+        {activeTab === "availability" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Availability Blocks</h2>
+            {driver.availability.length === 0 ? (
+              <p>No availability blocks recorded.</p>
+            ) : (
+              <table className="admin-table">
+                <thead><tr><th>Starts</th><th>Ends</th><th>Reason</th><th>Action</th></tr></thead>
+                <tbody>
+                  {driver.availability.map((block) => (
+                    <tr key={block.id}>
+                      <td>{block.startsAt.toLocaleString("en-IN")}</td>
+                      <td>{block.endsAt.toLocaleString("en-IN")}</td>
+                      <td>{block.reason ?? "—"}</td>
+                      <td>
+                        {hasPermission(session.roles, "driver.write") ? (
+                          <form action={removeBlock}>
+                            <input type="hidden" name="blockId" value={block.id}/>
+                            <button className="admin-danger-button" type="submit">Delete</button>
+                          </form>
+                        ) : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {hasPermission(session.roles, "driver.write") ? (
+              <form action={addBlock}>
+                <h3>Add Availability Block</h3>
+                <label>Starts<input type="datetime-local" name="startsAt" required/></label>
+                <label>Ends<input type="datetime-local" name="endsAt" required/></label>
+                <label>Reason<textarea name="reason" maxLength={500}/></label>
+                <button className="admin-primary-button" type="submit">Add Block</button>
+              </form>
+            ) : null}
+          </section>
+        ) : null}
       </div>
     </AdminShell>
   );
