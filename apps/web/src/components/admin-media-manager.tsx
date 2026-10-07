@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 type MediaItem = {
   id: string;
@@ -36,6 +36,34 @@ export function AdminMediaManager({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<
+    "ALL" | "IMAGES" | "PDFS" | "REFERENCED" | "ORPHANED" | "MISSING_ALT"
+  >("ALL");
+
+  const filteredMedia = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+
+    return media.filter((asset) => {
+      const matchesSearch =
+        !needle ||
+        [asset.objectKey, asset.altText ?? "", asset.caption ?? "", asset.mimeType]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle);
+
+      if (!matchesSearch) return false;
+      if (filter === "IMAGES") return asset.mimeType.startsWith("image/");
+      if (filter === "PDFS") return asset.mimeType === "application/pdf";
+      if (filter === "REFERENCED") return asset.referenceCount > 0;
+      if (filter === "ORPHANED") return asset.referenceCount === 0;
+      if (filter === "MISSING_ALT") {
+        return asset.mimeType.startsWith("image/") && !asset.altText;
+      }
+
+      return true;
+    });
+  }, [media, query, filter]);
 
   async function upload(formData: FormData) {
     setUploading(true);
