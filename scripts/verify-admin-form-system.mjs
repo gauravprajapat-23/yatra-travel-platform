@@ -78,6 +78,15 @@ for (const file of sharedComponents) {
 
 const primitiveCoverage = [
   {
+    file: "apps/web/src/app/globals.css",
+    fragments: [
+      "env(safe-area-inset-bottom)",
+      "-webkit-overflow-scrolling: touch",
+      "min-height: 48px",
+    ],
+    label: "mobile safe-area and touch editor ergonomics",
+  },
+  {
     file: "apps/web/src/components/admin-form.tsx",
     fragments: [
       '"aria-invalid": true',
@@ -91,6 +100,7 @@ const primitiveCoverage = [
     fragments: [
       "feedbackRef",
       "scrollIntoView",
+      "prefers-reduced-motion",
       'aria-atomic="true"',
     ],
     label: "action feedback focus and live-region accessibility",
