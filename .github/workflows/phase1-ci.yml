@@ -106,3 +106,4 @@ jobs:
           done
           ADMIN_SMOKE_BASE_URL=http://127.0.0.1:3000 npm run verify:admin-routes
           ADMIN_SMOKE_BASE_URL=http://127.0.0.1:3000 npm run verify:admin-authenticated
+          ADMIN_SMOKE_BASE_URL=http://127.0.0.1:3000 npm run verify:admin-accessibility
