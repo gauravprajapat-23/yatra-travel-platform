@@ -297,3 +297,78 @@
     flex-direction: column;
   }
 }
+
+
+.admin-table-toolbar {
+  padding: 12px 14px 0;
+}
+
+.admin-table-query {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) repeat(2, minmax(150px, 1fr)) auto auto;
+  gap: 9px;
+  align-items: end;
+}
+
+.admin-table-query label {
+  display: grid;
+  gap: 6px;
+  color: #4a5952;
+  font-size: .61rem;
+  font-weight: 800;
+}
+
+.admin-table-query input,
+.admin-table-query select {
+  width: 100%;
+  min-width: 0;
+  min-height: 41px;
+  padding: 8px 10px;
+  border: 1px solid #ddd6cb;
+  border-radius: 8px;
+  background: #fff;
+  color: #2e4038;
+  font: inherit;
+  font-size: .67rem;
+}
+
+.admin-table-query input:focus,
+.admin-table-query select:focus {
+  border-color: #e47a2d;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(242, 103, 23, .1);
+}
+
+.admin-table-pager {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-table-pager small {
+  min-width: 82px;
+  color: #69746e;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .admin-table-query {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .admin-table-query {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-table-query .admin-primary-button,
+  .admin-table-query .admin-secondary-button {
+    width: 100%;
+  }
+
+  .admin-table-pager {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
