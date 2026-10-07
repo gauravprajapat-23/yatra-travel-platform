@@ -47,14 +47,14 @@ export default async function NewBlogPage() {
   ): Promise<AdminActionState> {
     "use server";
 
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "content.write")) {
+      redirect("/admin/blog");
+    }
+
     let createdId: string;
 
     try {
-      const currentSession = await requireAdminSession();
-      if (!hasPermission(currentSession.roles, "content.write")) {
-        redirect("/admin/blog");
-      }
-
       const title = String(formData.get("title") ?? "").trim();
       const slug = normalizeSlug(String(formData.get("slug") ?? ""));
       const excerpt = String(formData.get("excerpt") ?? "").trim();
