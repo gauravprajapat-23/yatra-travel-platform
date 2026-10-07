@@ -920,3 +920,44 @@
   justify-content: center;
   margin-top: 12px;
 }
+
+
+.admin-danger-zone {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 14px;
+  border: 1px solid #efd2cd;
+  border-radius: 10px;
+  background: #fff7f5;
+}
+
+.admin-danger-zone strong {
+  color: #8f3027;
+  font-size: .7rem;
+}
+
+.admin-danger-zone p {
+  margin: 4px 0 0;
+  color: #8b6965;
+  font-size: .61rem;
+  line-height: 1.45;
+}
+
+.admin-danger-zone__actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 700px) {
+  .admin-danger-zone {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-danger-zone__actions > * {
+    width: 100%;
+  }
+}
