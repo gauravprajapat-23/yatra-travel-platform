@@ -11,6 +11,7 @@ import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminMultiSelectCards } from "@/components/admin-multi-select-cards";
 import { AdminMoneyField } from "@/components/admin-money-field";
 import { AdminTextareaField } from "@/components/admin-textarea-field";
+import { AdminTextInputField } from "@/components/admin-text-input-field";
 import { AdminPublicationFields } from "@/components/admin-publication-fields";
 import { AdminCurrencyField } from "@/components/admin-currency-field";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
@@ -1163,14 +1164,15 @@ export default async function PackageDetailPage({
                     scheduleId="packageScheduledFor"
                   />
 
-                  <AdminField label="SEO title" htmlFor="packageSeoTitle" wide>
-                    <input
-                      id="packageSeoTitle"
-                      name="seoTitle"
-                      defaultValue={pkg.seoTitle ?? ""}
-                      maxLength={120}
-                    />
-                  </AdminField>
+                  <AdminTextInputField
+                    id="packageSeoTitle"
+                    name="seoTitle"
+                    label="SEO title"
+                    defaultValue={pkg.seoTitle ?? ""}
+                    maxLength={120}
+                    wide
+                    hint="Search-result title for this package."
+                  />
 
                   <AdminTextareaField
                     id="packageSeoDescription"
