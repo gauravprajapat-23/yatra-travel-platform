@@ -32,15 +32,10 @@ export function AdminFileUploadField({
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!file || !file.type.startsWith("image/")) {
-      setPreviewUrl(null);
-      return;
-    }
-
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   function acceptedTypes(): string[] {
     return accept
@@ -76,6 +71,10 @@ export function AdminFileUploadField({
 
     if (!next) {
       setFile(null);
+      setPreviewUrl((current) => {
+        if (current) URL.revokeObjectURL(current);
+        return null;
+      });
       if (inputRef.current) inputRef.current.value = "";
       return;
     }
@@ -84,6 +83,10 @@ export function AdminFileUploadField({
     if (validation) {
       setError(validation);
       setFile(null);
+      setPreviewUrl((current) => {
+        if (current) URL.revokeObjectURL(current);
+        return null;
+      });
       if (inputRef.current) {
         inputRef.current.value = "";
         inputRef.current.setCustomValidity(validation);
@@ -92,6 +95,12 @@ export function AdminFileUploadField({
     }
 
     setFile(next);
+    setPreviewUrl((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return next.type.startsWith("image/")
+        ? URL.createObjectURL(next)
+        : null;
+    });
     if (inputRef.current) inputRef.current.setCustomValidity("");
   }
 
