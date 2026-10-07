@@ -5,6 +5,7 @@ import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
+import { AdminStructuredContentEditor } from "@/components/admin-structured-content-editor";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   contentStatuses,
@@ -604,13 +605,7 @@ export default async function AdminContentEditorPage({
             <p>Body content uses safe structured blocks. Raw HTML and scripts are rejected.</p>
             {hasPermission(session.roles, "content.write") ? (
               <form action={saveBody}>
-                <label>
-                  Structured JSON
-                  <textarea name="body" defaultValue={stringifyStructuredBody(content.body)} rows={22} spellCheck={false}/>
-                </label>
-                <small>
-                  Supported blocks include paragraph, heading, image, gallery, quote, callout, CTA, list, route highlights, itinerary summary and FAQ groups.
-                </small>
+                <AdminStructuredContentEditor initialValue={content.body} />
                 <button className="admin-primary-button" type="submit">
                   Save Structured Content
                 </button>
