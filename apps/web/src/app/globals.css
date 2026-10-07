@@ -6194,3 +6194,76 @@ body:has(.admin-root) {
   min-width: 120px;
   margin-top: 2px;
 }
+
+
+/* === URL-driven admin editor tabs === */
+.admin-editor-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin: 0 0 16px;
+  padding: 5px;
+  border: 1px solid #e5ded3;
+  border-radius: 11px;
+  background: #fff;
+  scrollbar-width: thin;
+}
+
+.admin-editor-tab {
+  flex: 0 0 auto;
+  min-width: 138px;
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #5e6963;
+  text-decoration: none;
+  transition: background .16s ease, color .16s ease, box-shadow .16s ease;
+}
+
+.admin-editor-tab:hover {
+  background: #fff8ef;
+  color: #a95917;
+}
+
+.admin-editor-tab strong {
+  font-size: .68rem;
+  line-height: 1.2;
+}
+
+.admin-editor-tab small {
+  color: #959b97;
+  font-size: .56rem;
+  line-height: 1.25;
+}
+
+.admin-editor-tab--active {
+  background: linear-gradient(135deg,#f26717,#df7d21);
+  color: #fff;
+  box-shadow: 0 5px 14px rgba(242,103,23,.18);
+}
+
+.admin-editor-tab--active small {
+  color: rgba(255,255,255,.82);
+}
+
+.admin-editor-section-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-editor-section-stack > .admin-panel,
+.admin-editor-section-stack > .admin-form-section {
+  min-width: 0;
+}
+
+@media (max-width: 700px) {
+  .admin-editor-tabs {
+    margin-inline: -2px;
+  }
+
+  .admin-editor-tab {
+    min-width: 118px;
+    padding: 9px 10px;
+  }
+}
