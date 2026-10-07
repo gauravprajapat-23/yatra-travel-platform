@@ -244,13 +244,19 @@ export default async function AdminSearchPage({
     hasPermission(session.roles, "customer.read")
       ? db.user.findMany({
           where: {
-            OR: [
-              { name: { contains: q, mode: "insensitive" } },
-              { email: { contains: q, mode: "insensitive" } },
-            ],
-            OR: [
-              { carBookings: { some: {} } },
-              { packageBookings: { some: {} } },
+            AND: [
+              {
+                OR: [
+                  { name: { contains: q, mode: "insensitive" } },
+                  { email: { contains: q, mode: "insensitive" } },
+                ],
+              },
+              {
+                OR: [
+                  { carBookings: { some: {} } },
+                  { packageBookings: { some: {} } },
+                ],
+              },
             ],
           },
           orderBy: { updatedAt: "desc" },
