@@ -5840,6 +5840,39 @@ body:has(.admin-root) {
   line-height: 1.45;
 }
 
+.admin-field__error {
+  color: #b13b2f;
+  font-size: .61rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.admin-field--error input:not([type="checkbox"]):not([type="radio"]),
+.admin-field--error textarea,
+.admin-field--error select,
+.admin-field input:user-invalid,
+.admin-field textarea:user-invalid,
+.admin-field select:user-invalid {
+  border-color: #d85b4f;
+  background: #fffafa;
+  box-shadow: 0 0 0 3px rgba(216,91,79,.08);
+}
+
+.admin-field input:user-valid:not(:placeholder-shown),
+.admin-field textarea:user-valid:not(:placeholder-shown),
+.admin-field select:user-valid {
+  border-color: #b9d3c3;
+}
+
+.admin-primary-button:disabled,
+.admin-secondary-button:disabled,
+.admin-danger-button:disabled {
+  opacity: .58;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .admin-checkbox-grid {
   display: grid;
   grid-template-columns: repeat(2,minmax(0,1fr));
