@@ -1,6 +1,6 @@
 # Admin Form Design System
 
-Updated: 2026-10-07
+Updated: 2026-10-08
 
 ## Goal
 
@@ -408,6 +408,26 @@ Use `AdminMultiSelectCards` for larger searchable option sets such as:
 - future multi-entity assignments
 
 Do not remove filtered options from the DOM if that would cause already-selected values to disappear from form submission.
+
+## Inline Management Forms
+
+Some admin management pages intentionally combine create/edit controls with a list or read view instead of using a dedicated `/new` route or a tabbed editor.
+
+These pages must still use the shared field/action primitives and must not regress to raw label/input stacks or raw submit buttons.
+
+Current certified inline managers:
+- Blog Categories
+- Booking Policy Version detail/edit
+- Media Library (client-managed upload/search/metadata workflow)
+
+Use:
+- `AdminField` / specialized field components for controls
+- `AdminSubmitButton` or `AdminConfirmSubmitButton` for server-action mutations
+- existing client busy-state protection for API-driven media mutations
+- clear inline success/error feedback
+- the same mobile/accessibility rules as dedicated forms
+
+The repository verifier enforces this coverage through `scripts/verify-admin-form-system.mjs`.
 
 ## Operational Forms
 
