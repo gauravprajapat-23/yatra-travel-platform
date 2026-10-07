@@ -117,6 +117,7 @@ export default async function NewDestinationPage() {
               sourceName="name"
               sourcePlaceholder="Ujjain"
               slugPlaceholder="ujjain"
+              pathPrefix="/destinations"
             />
             <AdminField label="Kind" htmlFor="kind" required>
               <select id="kind" name="kind" defaultValue="CITY">
