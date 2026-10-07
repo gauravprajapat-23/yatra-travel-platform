@@ -108,6 +108,46 @@ for (const file of sharedComponents) {
 
 const primitiveCoverage = [
   {
+    file: "apps/web/src/components/admin-shell.tsx",
+    fragments: ["export function AdminPanelHeading"],
+    label: "shared panel heading primitive",
+  },
+  {
+    file: "apps/web/src/app/admin/packages/[id]/page.tsx",
+    fragments: ["<AdminPanelHeading"],
+    label: "package shared overview heading",
+  },
+  {
+    file: "apps/web/src/app/admin/vehicles/[id]/page.tsx",
+    fragments: ["<AdminPanelHeading"],
+    label: "vehicle shared overview heading",
+  },
+  {
+    file: "apps/web/src/app/admin/drivers/[id]/page.tsx",
+    fragments: ["<AdminPanelHeading"],
+    label: "driver shared overview heading",
+  },
+  {
+    file: "apps/web/src/app/admin/staff/[id]/page.tsx",
+    fragments: ["<AdminPanelHeading"],
+    label: "staff shared overview heading",
+  },
+  {
+    file: "apps/web/src/app/admin/offers/[id]/page.tsx",
+    fragments: ["<AdminPanelHeading"],
+    label: "pricing shared overview heading",
+  },
+  {
+    file: "apps/web/src/app/admin/faq/[id]/page.tsx",
+    fragments: ["<AdminPanelHeading"],
+    label: "FAQ shared overview heading",
+  },
+  {
+    file: "apps/web/src/app/admin/content/[type]/[id]/page.tsx",
+    fragments: ["<AdminPanelHeading"],
+    label: "content shared overview heading",
+  },
+  {
     file: "apps/web/src/components/admin-table-page.tsx",
     fragments: [
       "emptyTitle",
