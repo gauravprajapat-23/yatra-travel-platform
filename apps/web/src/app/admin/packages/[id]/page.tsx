@@ -987,12 +987,15 @@ export default async function PackageDetailPage({
 
                         <form action={togglePriceOption}>
                           <input type="hidden" name="optionId" value={option.id}/>
-                          <button
+                          <AdminSubmitButton
                             className="admin-secondary-button"
-                            type="submit"
-                          >
-                            {option.isActive ? "Deactivate" : "Activate"}
-                          </button>
+                            label={option.isActive ? "Deactivate" : "Activate"}
+                            pendingLabel={
+                              option.isActive
+                                ? "Deactivating…"
+                                : "Activating…"
+                            }
+                          />
                         </form>
                       </>
                     ) : null}
