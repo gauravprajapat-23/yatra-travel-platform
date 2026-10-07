@@ -262,10 +262,16 @@ for (const file of actionNewPages) {
 }
 
 for (const file of tabbedEditors) {
-  requireFragments(file, [
+  const source = requireFragments(file, [
     "<AdminEditorTabs",
     "admin-editor-section-stack",
   ]);
+
+  if (/<button[^>]*type=["']submit["']/.test(source)) {
+    throw new Error(
+      `${file} contains a raw submit button. Use AdminSubmitButton or AdminConfirmSubmitButton.`,
+    );
+  }
 
   process.stdout.write(`PASS tabbed editor: ${file}\n`);
 }
