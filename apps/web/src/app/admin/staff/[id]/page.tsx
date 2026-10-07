@@ -6,7 +6,7 @@ import {
   hasPermission,
   type RoleKey,
 } from "@yatra/domain/auth/permissions";
-import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminPanelHeading, AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminConfirmSubmitButton } from "@/components/admin-confirm-submit-button";
@@ -250,12 +250,14 @@ export default async function StaffDetailPage({
       <div className="admin-editor-section-stack">
         {activeTab === "overview" ? (
           <section className="admin-panel admin-detail-card">
-            <div className="admin-panel-heading">
-              <h2>Account</h2>
-              <StatusPill tone={tone(user.status)}>
+            <AdminPanelHeading
+              title="Account"
+              meta={
+                <StatusPill tone={tone(user.status)}>
                 {user.status.replaceAll("_", " ")}
               </StatusPill>
-            </div>
+              }
+            />
 
             <dl>
               <div><dt>Email</dt><dd>{user.email}</dd></div>
