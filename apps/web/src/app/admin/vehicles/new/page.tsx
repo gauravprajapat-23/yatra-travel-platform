@@ -141,6 +141,6 @@ export default async function NewVehiclePage() {
 
         <AdminFormActions submitLabel="Create Vehicle" cancelHref="/admin/vehicles" helper="Creates an operational fleet record." />
       </AdminForm>
-
+    </AdminShell>
   );
 }
