@@ -13,6 +13,7 @@ import {
   AdminFormSection,
 } from "@/components/admin-form";
 import { AdminSlugFields } from "@/components/admin-slug-fields";
+import { AdminTextareaField } from "@/components/admin-textarea-field";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -146,9 +147,15 @@ export default async function NewBlogPage() {
 
         <AdminFormSection title="Article excerpt" description="A concise editorial summary before the full article is written.">
           <AdminFormGrid columns={1}>
-            <AdminField label="Excerpt" htmlFor="excerpt" hint="Maximum 500 characters.">
-              <textarea id="excerpt" name="excerpt" maxLength={500} rows={5} placeholder="Summarize the value of the article in a few clear sentences." />
-            </AdminField>
+            <AdminTextareaField
+              id="excerpt"
+              name="excerpt"
+              label="Excerpt"
+              maxLength={500}
+              rows={5}
+              placeholder="Summarize the value of the article in a few clear sentences."
+              hint="Short editorial summary shown before the full article."
+            />
           </AdminFormGrid>
           <AdminFormCallout title="After creation">
             Continue in the content editor to add the structured article body, media, SEO, robots settings and publication schedule.
