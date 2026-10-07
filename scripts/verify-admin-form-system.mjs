@@ -57,6 +57,7 @@ const sharedComponents = [
   "apps/web/src/components/admin-money-field.tsx",
   "apps/web/src/components/admin-currency-field.tsx",
   "apps/web/src/components/admin-date-time-range.tsx",
+  "apps/web/src/components/admin-publication-fields.tsx",
   "apps/web/src/components/admin-textarea-field.tsx",
   "apps/web/src/components/admin-media-picker.tsx",
   "apps/web/src/components/admin-multi-select-cards.tsx",
