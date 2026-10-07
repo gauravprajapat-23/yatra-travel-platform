@@ -6,6 +6,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
+import { AdminConfirmSubmitButton } from "@/components/admin-confirm-submit-button";
 import { AdminMultiSelectCards } from "@/components/admin-multi-select-cards";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { AdminDateTimeRange } from "@/components/admin-date-time-range";
@@ -315,10 +316,10 @@ export default async function DriverDetailPage({
                         {hasPermission(session.roles, "driver.write") ? (
                           <form action={removeBlock}>
                             <input type="hidden" name="blockId" value={block.id}/>
-                            <AdminSubmitButton
-                              className="admin-danger-button"
+                            <AdminConfirmSubmitButton
                               label="Delete"
                               pendingLabel="Deleting…"
+                              confirmMessage="Delete this driver availability block? This cannot be undone."
                             />
                           </form>
                         ) : "—"}
