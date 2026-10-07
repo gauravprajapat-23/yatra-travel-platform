@@ -3,6 +3,15 @@ import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell } from "@/components/admin-shell";
+import {
+  AdminField,
+  AdminForm,
+  AdminFormActions,
+  AdminFormAsideCard,
+  AdminFormCallout,
+  AdminFormGrid,
+  AdminFormSection,
+} from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -93,35 +102,59 @@ export default async function NewBlogPage() {
     <AdminShell
       active="Blog"
       title="New Blog Post"
-      subtitle="Create a draft, then add structured body, hero media, SEO and publication settings."
+      subtitle="Create the editorial foundation, then complete the article body, hero media, SEO and publication settings."
       actions={<Link className="admin-secondary-button" href="/admin/blog">← Blog</Link>}
     >
-      <section className="admin-panel admin-detail-card">
-        <form action={createPost}>
-          <label>
-            Title
-            <input name="title" required minLength={2} maxLength={180}/>
-          </label>
-          <label>
-            Slug
-            <input name="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="ujjain-travel-guide"/>
-          </label>
-          <label>
-            Category
-            <select name="categoryId" defaultValue="">
-              <option value="">Uncategorized</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>{category.name}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Excerpt
-            <textarea name="excerpt" maxLength={500}/>
-          </label>
-          <button className="admin-primary-button" type="submit">Create Draft Post</button>
-        </form>
-      </section>
-    </AdminShell>
+      <AdminForm
+        action={createPost}
+        aside={
+          <>
+            <AdminFormAsideCard title="Editorial workflow">
+              <ul>
+                <li>Create title, slug and category.</li>
+                <li>Build the structured article body.</li>
+                <li>Add hero media and SEO.</li>
+                <li>Preview before scheduling or publishing.</li>
+              </ul>
+            </AdminFormAsideCard>
+            <AdminFormAsideCard title="Draft default">
+              <p>New posts are created as non-indexed drafts and cannot leak into search before review.</p>
+            </AdminFormAsideCard>
+          </>
+        }
+      >
+        <AdminFormSection title="Article identity" description="Core article metadata used by editors and the public URL." badge="Required">
+          <AdminFormGrid columns={2}>
+            <AdminField label="Title" htmlFor="title" required>
+              <input id="title" name="title" required minLength={2} maxLength={180} placeholder="Ujjain Travel Guide: Temples, Food & Best Time to Visit" />
+            </AdminField>
+            <AdminField label="Slug" htmlFor="slug" required hint="Lowercase letters, numbers and single hyphens only.">
+              <input id="slug" name="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="ujjain-travel-guide" />
+            </AdminField>
+            <AdminField label="Category" htmlFor="categoryId">
+              <select id="categoryId" name="categoryId" defaultValue="">
+                <option value="">Uncategorized</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>{category.name}</option>
+                ))}
+              </select>
+            </AdminField>
+          </AdminFormGrid>
+        </AdminFormSection>
+
+        <AdminFormSection title="Article excerpt" description="A concise editorial summary before the full article is written.">
+          <AdminFormGrid columns={1}>
+            <AdminField label="Excerpt" htmlFor="excerpt" hint="Maximum 500 characters.">
+              <textarea id="excerpt" name="excerpt" maxLength={500} rows={5} placeholder="Summarize the value of the article in a few clear sentences." />
+            </AdminField>
+          </AdminFormGrid>
+          <AdminFormCallout title="After creation">
+            Continue in the content editor to add the structured article body, media, SEO, robots settings and publication schedule.
+          </AdminFormCallout>
+        </AdminFormSection>
+
+        <AdminFormActions submitLabel="Create Draft Post" cancelHref="/admin/blog" helper="Creates a safe non-indexed article draft." />
+      </AdminForm>
+
   );
 }
