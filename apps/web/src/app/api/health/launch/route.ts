@@ -63,8 +63,13 @@ export async function GET() {
     carBookingReady: false,
     packageBookingReady: false,
     checkoutReady: false,
+    fullBookingReady: false,
     legalReady: false,
+    carPaymentReady: false,
+    packagePaymentReady: false,
     paymentReady: false,
+    fullPaymentReady: false,
+    refundReady: false,
     mediaReady: false,
   };
 
@@ -173,13 +178,33 @@ export async function GET() {
     status.checkoutReady =
       status.carBookingReady || status.packageBookingReady;
 
+    status.fullBookingReady =
+      status.carBookingReady && status.packageBookingReady;
+
     status.legalReady = status.requiredLegalPagesPublished === 3;
 
-    status.paymentReady =
-      status.checkoutReady &&
+    status.carPaymentReady =
+      status.carBookingReady &&
       status.paymentWriteEnabled &&
       status.razorpayConfigured &&
       status.legalReady;
+
+    status.packagePaymentReady =
+      status.packageBookingReady &&
+      status.paymentWriteEnabled &&
+      status.razorpayConfigured &&
+      status.legalReady;
+
+    status.paymentReady =
+      status.carPaymentReady || status.packagePaymentReady;
+
+    status.fullPaymentReady =
+      status.carPaymentReady && status.packagePaymentReady;
+
+    status.refundReady =
+      status.databaseReachable &&
+      status.refundWriteEnabled &&
+      status.razorpayConfigured;
 
     status.mediaReady =
       status.databaseReachable &&
