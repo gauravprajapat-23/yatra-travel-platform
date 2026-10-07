@@ -44,6 +44,45 @@ Provide:
 - `required` when applicable
 - concise hint text when business meaning is not obvious
 - `wide` for fields that should span the form grid
+- `error` for field-level validation feedback when a form uses recoverable action state
+
+When `error` is present, the shared field renders an alert-style message and error styling.
+
+
+### `AdminSlugFields`
+
+Use for create flows where an editor enters a title/name and a public slug.
+
+Current uses:
+- Packages
+- CMS Pages
+- Destinations
+- Blog Posts
+
+Behavior:
+- derives a normalized lowercase slug while the source field is edited
+- stops overwriting once the editor manually changes the slug
+- keeps the existing server-side slug validation authoritative
+- explicitly associates labels with both inputs for accessibility
+
+Do not use auto-slug behavior when changing an existing stable public URL unless the product explicitly supports URL migration/redirects.
+
+### `AdminMoneyField`
+
+Use for admin monetary inputs stored in minor units server-side.
+
+Current uses:
+- Pricing Rule creation
+- Pricing Rule editing
+- Package price option creation/editing
+
+Behavior:
+- displays the active ISO currency beside the amount
+- accepts major-unit decimal input with up to two fractional digits
+- can bind to a sibling currency input through `currencyInputId`
+- updates its displayed currency prefix live when that field changes
+
+Money display is only a UX aid. Server parsing, currency validation and amount authority remain server-side.
 
 ### `AdminCheckbox`
 Use for standalone boolean choices.
@@ -92,6 +131,23 @@ Examples:
 - Save Lead Status
 
 Do not add pending behavior to simple GET search/filter forms.
+
+
+## Dedicated Create-Page Coverage
+
+Every dedicated `/admin/**/new` page currently uses the common form primitives:
+
+- Blog Post
+- CMS Page
+- Destination
+- Driver
+- FAQ
+- Pricing Rule
+- Package
+- Booking Policy Version
+- Vehicle
+
+New dedicated create pages should not ship with raw label/input stacks unless there is a documented exception.
 
 ## Editor Navigation
 
