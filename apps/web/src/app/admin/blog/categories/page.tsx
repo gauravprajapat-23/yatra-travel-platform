@@ -90,23 +90,47 @@ export default async function BlogCategoriesPage() {
         <section className="admin-panel admin-detail-card">
           <h2>Create Category</h2>
           <form action={create}>
-            <label>
-              Name
-              <input name="name" required minLength={2} maxLength={120}/>
-            </label>
-            <label>
-              Slug
-              <input
-                name="slug"
-                placeholder="temple-guides"
-                pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-                maxLength={120}
-              />
-            </label>
-            <label>
-              Description
-              <textarea name="description" maxLength={1000}/>
-            </label>
+            <AdminFormGrid columns={2}>
+              <AdminField label="Name" htmlFor="categoryName" required>
+                <input
+                  id="categoryName"
+                  name="name"
+                  required
+                  minLength={2}
+                  maxLength={120}
+                  placeholder="Temple Guides"
+                />
+              </AdminField>
+
+              <AdminField
+                label="Slug"
+                htmlFor="categorySlug"
+                hint="Leave blank to derive it from the category name."
+              >
+                <input
+                  id="categorySlug"
+                  name="slug"
+                  placeholder="temple-guides"
+                  pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+                  maxLength={120}
+                />
+              </AdminField>
+
+              <AdminField
+                label="Description"
+                htmlFor="categoryDescription"
+                wide
+                hint="Maximum 1,000 characters."
+              >
+                <textarea
+                  id="categoryDescription"
+                  name="description"
+                  maxLength={1000}
+                  rows={4}
+                />
+              </AdminField>
+            </AdminFormGrid>
+
             <button className="admin-primary-button" type="submit">
               Create Category
             </button>
