@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
+import { AdminFileUploadField } from "@/components/admin-file-upload-field";
+import { AdminTextareaField } from "@/components/admin-textarea-field";
 
 type MediaItem = {
   id: string;
@@ -166,15 +168,15 @@ export function AdminMediaManager({
           <h2>Upload Media</h2>
           <form action={upload}>
             <AdminFormGrid columns={2}>
-              <AdminField label="File" htmlFor="mediaFile" required wide>
-                <input
-                  id="mediaFile"
-                  type="file"
-                  name="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
-                  required
-                />
-              </AdminField>
+              <AdminFileUploadField
+                id="mediaFile"
+                name="file"
+                label="File"
+                accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
+                maxBytes={10 * 1024 * 1024}
+                required
+                hint="JPEG, PNG, WebP, GIF or PDF. Maximum 10 MB."
+              />
 
               <AdminField
                 label="Alt text"
@@ -189,19 +191,15 @@ export function AdminMediaManager({
                 />
               </AdminField>
 
-              <AdminField
+              <AdminTextareaField
+                id="mediaCaption"
+                name="caption"
                 label="Caption"
-                htmlFor="mediaCaption"
+                maxLength={500}
+                rows={4}
+                placeholder="Optional caption"
                 hint="Optional public/internal caption."
-              >
-                <textarea
-                  id="mediaCaption"
-                  name="caption"
-                  maxLength={500}
-                  rows={4}
-                  placeholder="Optional caption"
-                />
-              </AdminField>
+              />
             </AdminFormGrid>
 
             <button
@@ -303,15 +301,15 @@ export function AdminMediaManager({
                         />
                       </AdminField>
 
-                      <AdminField label="Caption" htmlFor={`caption-${asset.id}`}>
-                        <textarea
-                          id={`caption-${asset.id}`}
-                          name="caption"
-                          defaultValue={asset.caption ?? ""}
-                          maxLength={500}
-                          rows={4}
-                        />
-                      </AdminField>
+                      <AdminTextareaField
+                        id={`caption-${asset.id}`}
+                        name="caption"
+                        label="Caption"
+                        defaultValue={asset.caption ?? ""}
+                        maxLength={500}
+                        rows={4}
+                        hint="Optional public/internal caption."
+                      />
                     </AdminFormGrid>
 
                     <button
