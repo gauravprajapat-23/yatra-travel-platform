@@ -304,9 +304,21 @@ async function processRefundEvent(
     return "no matching payment intent for refund";
   }
 
-  const refund = await db.refund.findUnique({
+  const notes = asObject(entity.notes);
+  const localRefundId = stringField(notes, "refundId");
+  const notedPaymentIntentId = stringField(notes, "paymentIntentId");
+
+  const refundByProviderId = await db.refund.findUnique({
     where: { providerRefundId: refundId },
   });
+
+  const refund =
+    refundByProviderId ??
+    (localRefundId
+      ? await db.refund.findUnique({
+          where: { id: localRefundId },
+        })
+      : null);
 
   if (!refund) {
     return "no matching refund record";
@@ -315,7 +327,9 @@ async function processRefundEvent(
   if (
     refund.paymentIntentId !== paymentIntent.id ||
     refund.currency !== currency ||
-    refund.amountMinor !== BigInt(amount)
+    refund.amountMinor !== BigInt(amount) ||
+    (refund.providerRefundId && refund.providerRefundId !== refundId) ||
+    (notedPaymentIntentId && notedPaymentIntentId !== paymentIntent.id)
   ) {
     return "refund event did not match stored refund";
   }
@@ -327,6 +341,7 @@ async function processRefundEvent(
         data: {
           status: "PROCESSED",
           processedAt: new Date(),
+          providerRefundId: refund.providerRefundId ?? refundId,
         },
       });
 
@@ -360,7 +375,10 @@ async function processRefundEvent(
     if (refund.status !== "PROCESSED") {
       await db.refund.update({
         where: { id: refund.id },
-        data: { status: "FAILED" },
+        data: {
+          status: "FAILED",
+          providerRefundId: refund.providerRefundId ?? refundId,
+        },
       });
     }
   }
