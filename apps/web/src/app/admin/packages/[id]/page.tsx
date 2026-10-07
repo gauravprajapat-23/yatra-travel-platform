@@ -7,6 +7,7 @@ import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminStructuredContentEditor } from "@/components/admin-structured-content-editor";
 import { AdminMediaPicker } from "@/components/admin-media-picker";
+import { AdminMultiSelectCards } from "@/components/admin-multi-select-cards";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
@@ -683,24 +684,21 @@ export default async function PackageDetailPage({
             <h2>Destinations</h2>
             {hasPermission(session.roles, "package.write") ? (
               <form action={saveDestinations}>
-                <fieldset>
-                  <legend>Package destinations</legend>
-                  {allDestinations.length === 0 ? (
-                    <p>No destinations exist yet. Create destinations first.</p>
-                  ) : allDestinations.map((destination) => (
-                    <label key={destination.id}>
-                      <input
-                        type="checkbox"
-                        name="destinationIds"
-                        value={destination.id}
-                        defaultChecked={pkg.destinations.some(
-                          (item) => item.destinationId === destination.id,
-                        )}
-                      />
-                      {destination.name} · {destination.status.replaceAll("_", " ")}
-                    </label>
-                  ))}
-                </fieldset>
+                {allDestinations.length === 0 ? (
+                  <p>No destinations exist yet. Create destinations first.</p>
+                ) : (
+                  <AdminMultiSelectCards
+                    name="destinationIds"
+                    defaultValues={pkg.destinations.map(
+                      (item) => item.destinationId,
+                    )}
+                    options={allDestinations.map((destination) => ({
+                      id: destination.id,
+                      label: destination.name,
+                      meta: destination.status.replaceAll("_", " "),
+                    }))}
+                  />
+                )}
                 <p>Selected destinations are stored in the order shown here.</p>
                 <button className="admin-primary-button" type="submit">
                   Save Destinations
