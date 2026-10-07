@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getDb, Prisma } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
+import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import { contentStatuses } from "@/modules/content/admin-content-service";
 
@@ -181,18 +182,21 @@ export default async function PackagesPage({
       ]}
       toolbar={
         <form className="admin-table-query admin-table-query--compact" method="get">
-          <label>
-            <span>Search</span>
+          <AdminField label="Search" htmlFor="packageSearch">
             <input
+              id="packageSearch"
               name="q"
               defaultValue={q}
               placeholder="Package title, slug or summary"
             />
-          </label>
+          </AdminField>
 
-          <label>
-            <span>Status</span>
-            <select name="status" defaultValue={status ?? ""}>
+          <AdminField label="Status" htmlFor="packageStatus">
+            <select
+              id="packageStatus"
+              name="status"
+              defaultValue={status ?? ""}
+            >
               <option value="">All statuses</option>
               {contentStatuses.map((item) => (
                 <option key={item} value={item}>
@@ -200,7 +204,7 @@ export default async function PackagesPage({
                 </option>
               ))}
             </select>
-          </label>
+          </AdminField>
 
           <button className="admin-primary-button" type="submit">
             Apply
