@@ -155,6 +155,6 @@ export default async function NewBlogPage() {
 
         <AdminFormActions submitLabel="Create Draft Post" cancelHref="/admin/blog" helper="Creates a safe non-indexed article draft." />
       </AdminForm>
-
+    </AdminShell>
   );
 }
