@@ -24,6 +24,7 @@
     "admin:bootstrap": "npm run db:bootstrap:admin -w @yatra/db",
     "verify:production": "node scripts/verify-production-readiness.mjs",
     "verify:admin-routes": "node scripts/verify-admin-route-protection.mjs",
-    "verify:admin-authenticated": "node scripts/verify-admin-authenticated-runtime.mjs"
+    "verify:admin-authenticated": "node scripts/verify-admin-authenticated-runtime.mjs",
+    "verify:admin-accessibility": "node scripts/verify-admin-accessibility-runtime.mjs"
   }
 }
