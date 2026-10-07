@@ -5,6 +5,7 @@ import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
+import { AdminStructuredContentEditor } from "@/components/admin-structured-content-editor";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   contentStatuses,
@@ -902,13 +903,9 @@ export default async function PackageDetailPage({
             <p>Long-form package content is stored as safe structured blocks. Raw HTML/script is rejected.</p>
             {hasPermission(session.roles, "package.write") ? (
               <form action={saveBody}>
-                <label>
-                  Structured JSON
-                  <textarea name="body" defaultValue={stringifyStructuredBody(pkg.body)} rows={22} spellCheck={false}/>
-                </label>
-                <small>Use structured blocks for headings, paragraphs, galleries, CTAs, FAQs and route highlights.</small>
+                <AdminStructuredContentEditor initialValue={pkg.body} />
                 <button className="admin-primary-button" type="submit">
-                  Save Package Body
+                  Save Package Content
                 </button>
               </form>
             ) : (
