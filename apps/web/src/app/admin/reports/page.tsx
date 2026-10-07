@@ -50,24 +50,40 @@ export default async function ReportsPage({
   const to = String(params.to ?? "").trim();
   const fromDate = parseIstStart(from);
   const toDate = parseIstEnd(to);
-
-  if (fromDate && toDate && fromDate > toDate) {
-    throw new Error("Report start date must be before the end date.");
-  }
+  const reversedRange = Boolean(
+    fromDate && toDate && fromDate > toDate,
+  );
+  const fromError =
+    from && !fromDate
+      ? "Enter a valid start date."
+      : reversedRange
+        ? "Start date must be on or before the end date."
+        : undefined;
+  const toError =
+    to && !toDate
+      ? "Enter a valid end date."
+      : reversedRange
+        ? "End date must be on or after the start date."
+        : undefined;
+  const hasRangeError = Boolean(fromError || toError);
+  const effectiveFromDate = hasRangeError ? null : fromDate;
+  const effectiveToDate = hasRangeError ? null : toDate;
 
   const db = getDb();
   const now = new Date();
-  const trendEnd = toDate ?? now;
+  const trendEnd = effectiveToDate ?? now;
   const trendStartFloor = new Date(trendEnd.getTime() - 13 * 24 * 60 * 60 * 1000);
   const trendStart =
-    fromDate && fromDate > trendStartFloor ? fromDate : trendStartFloor;
+    effectiveFromDate && effectiveFromDate > trendStartFloor
+      ? effectiveFromDate
+      : trendStartFloor;
   const trendRange = { gte: trendStart, lte: trendEnd };
 
   const createdRange =
-    fromDate || toDate
+    effectiveFromDate || effectiveToDate
       ? {
-          ...(fromDate ? { gte: fromDate } : {}),
-          ...(toDate ? { lte: toDate } : {}),
+          ...(effectiveFromDate ? { gte: effectiveFromDate } : {}),
+          ...(effectiveToDate ? { lte: effectiveToDate } : {}),
         }
       : undefined;
 
@@ -227,14 +243,15 @@ export default async function ReportsPage({
       ? Math.round((assignedTrips.length / activeVehicles) * 100)
       : 0;
 
-  const periodLabel =
-    from || to
+  const periodLabel = hasRangeError
+    ? "Invalid date range · showing all-time activity until corrected"
+    : from || to
       ? `${from || "…"} → ${to || "…"} (IST)`
       : "All-time activity";
 
   const exportParams = new URLSearchParams();
-  if (from) exportParams.set("from", from);
-  if (to) exportParams.set("to", to);
+  if (!hasRangeError && from) exportParams.set("from", from);
+  if (!hasRangeError && to) exportParams.set("to", to);
   const exportQuery = exportParams.toString();
   const exportHref = exportQuery
     ? `/api/admin/reports/export?${exportQuery}`
@@ -331,7 +348,11 @@ export default async function ReportsPage({
       <section className="admin-panel admin-card-body">
         <form className="admin-table-query admin-table-query--compact" method="get">
           <AdminFormGrid columns={2}>
-            <AdminField label="From date (IST)" htmlFor="reportFrom">
+            <AdminField
+              label="From date (IST)"
+              htmlFor="reportFrom"
+              error={fromError}
+            >
               <input
                 id="reportFrom"
                 type="date"
@@ -340,7 +361,11 @@ export default async function ReportsPage({
               />
             </AdminField>
 
-            <AdminField label="To date (IST)" htmlFor="reportTo">
+            <AdminField
+              label="To date (IST)"
+              htmlFor="reportTo"
+              error={toError}
+            >
               <input
                 id="reportTo"
                 type="date"
