@@ -5,6 +5,7 @@ import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
+import { AdminMultiSelectCards } from "@/components/admin-multi-select-cards";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
@@ -258,15 +259,15 @@ export default async function DriverDetailPage({
                     />
                   </AdminField>
                 </AdminFormGrid>
-                <fieldset>
-                  <legend>Qualified vehicle classes</legend>
-                  {classes.map((item) => (
-                    <label key={item.id}>
-                      <input type="checkbox" name="qualificationIds" value={item.id} defaultChecked={qualificationIds.includes(item.id)}/>
-                      {item.name}
-                    </label>
-                  ))}
-                </fieldset>
+                <AdminMultiSelectCards
+                  name="qualificationIds"
+                  defaultValues={qualificationIds}
+                  options={classes.map((item) => ({
+                    id: item.id,
+                    label: item.name,
+                    meta: "Eligible vehicle class",
+                  }))}
+                />
                 <AdminField
                   label="Internal notes"
                   htmlFor="internalNotes"
