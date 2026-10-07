@@ -161,12 +161,14 @@ export default async function NewPricingRulePage() {
               name="baseAmount"
               label="Fixed base amount"
               currency="INR"
+              currencyInputId="currency"
               placeholder="4500.00"
             />
             <AdminMoneyField
               name="perKm"
               label="Per-km amount"
               currency="INR"
+              currencyInputId="currency"
               placeholder="14.00"
             />
             <AdminField label="Minimum distance (km)" htmlFor="minimumDistanceKm">
@@ -176,6 +178,7 @@ export default async function NewPricingRulePage() {
               name="driverAllowancePerDay"
               label="Driver allowance / day"
               currency="INR"
+              currencyInputId="currency"
             />
             <AdminMoneyField
               name="nightAllowance"
