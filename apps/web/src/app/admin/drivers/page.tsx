@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getDb, Prisma } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
+import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import { driverStatuses } from "@/modules/fleet/fleet-management-service";
 
@@ -174,18 +175,21 @@ export default async function AdminDriversPage({
       ]}
       toolbar={
         <form className="admin-table-query admin-table-query--compact" method="get">
-          <label>
-            <span>Search</span>
+          <AdminField label="Search" htmlFor="driverSearch">
             <input
+              id="driverSearch"
               name="q"
               defaultValue={q}
               placeholder="Driver name, phone last-4 or vehicle class"
             />
-          </label>
+          </AdminField>
 
-          <label>
-            <span>Status</span>
-            <select name="status" defaultValue={status ?? ""}>
+          <AdminField label="Status" htmlFor="driverStatus">
+            <select
+              id="driverStatus"
+              name="status"
+              defaultValue={status ?? ""}
+            >
               <option value="">All statuses</option>
               {driverStatuses.map((item) => (
                 <option key={item} value={item}>
@@ -193,7 +197,7 @@ export default async function AdminDriversPage({
                 </option>
               ))}
             </select>
-          </label>
+          </AdminField>
 
           <button className="admin-primary-button" type="submit">
             Apply
