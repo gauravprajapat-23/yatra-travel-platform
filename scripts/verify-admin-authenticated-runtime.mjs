@@ -63,6 +63,8 @@ const protectedRoutes = [
   "/admin/payments",
   "/admin/customers",
   "/admin/leads",
+  "/admin/staff",
+  "/admin/staff/new",
 ];
 
 for (const path of protectedRoutes) {
