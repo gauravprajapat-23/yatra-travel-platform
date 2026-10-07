@@ -6082,3 +6082,115 @@ body:has(.admin-root) {
     flex: 1;
   }
 }
+
+
+/* Existing admin edit/sub-forms inherit the shared form language. */
+.admin-detail-card > form,
+.admin-card-body > form,
+.admin-panel > form:not(.admin-form) {
+  display: grid;
+  gap: 13px;
+  margin-top: 12px;
+}
+
+.admin-detail-card > form > h3,
+.admin-card-body > form > h3,
+.admin-panel > form:not(.admin-form) > h3 {
+  margin: 4px 0 2px;
+  color: #263b33;
+  font-size: .8rem;
+}
+
+.admin-detail-card > form > label,
+.admin-card-body > form > label,
+.admin-panel > form:not(.admin-form) > label {
+  display: grid;
+  gap: 7px;
+  color: #45534d;
+  font-size: .69rem;
+  font-weight: 800;
+}
+
+.admin-detail-card > form > label > input:not([type="checkbox"]):not([type="radio"]),
+.admin-detail-card > form > label > textarea,
+.admin-detail-card > form > label > select,
+.admin-card-body > form > label > input:not([type="checkbox"]):not([type="radio"]),
+.admin-card-body > form > label > textarea,
+.admin-card-body > form > label > select,
+.admin-panel > form:not(.admin-form) > label > input:not([type="checkbox"]):not([type="radio"]),
+.admin-panel > form:not(.admin-form) > label > textarea,
+.admin-panel > form:not(.admin-form) > label > select {
+  width: 100%;
+  min-width: 0;
+  min-height: 43px;
+  padding: 9px 11px;
+  border: 1px solid #dcd5ca;
+  border-radius: 8px;
+  outline: none;
+  background: #fff;
+  color: #273a33;
+  font: inherit;
+  font-size: .74rem;
+}
+
+.admin-detail-card > form > label > textarea,
+.admin-card-body > form > label > textarea,
+.admin-panel > form:not(.admin-form) > label > textarea {
+  min-height: 100px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.admin-detail-card > form > label > input:focus,
+.admin-detail-card > form > label > textarea:focus,
+.admin-detail-card > form > label > select:focus,
+.admin-card-body > form > label > input:focus,
+.admin-card-body > form > label > textarea:focus,
+.admin-card-body > form > label > select:focus,
+.admin-panel > form:not(.admin-form) > label > input:focus,
+.admin-panel > form:not(.admin-form) > label > textarea:focus,
+.admin-panel > form:not(.admin-form) > label > select:focus {
+  border-color: #e47a2d;
+  box-shadow: 0 0 0 3px rgba(242,103,23,.11);
+}
+
+.admin-detail-card > form > label:has(> input[type="checkbox"]),
+.admin-card-body > form > label:has(> input[type="checkbox"]),
+.admin-panel > form:not(.admin-form) > label:has(> input[type="checkbox"]) {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid #e1dbd1;
+  border-radius: 8px;
+  background: #fffdfa;
+  cursor: pointer;
+}
+
+.admin-detail-card > form > label > input[type="checkbox"],
+.admin-card-body > form > label > input[type="checkbox"],
+.admin-panel > form:not(.admin-form) > label > input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: #f26717;
+}
+
+.admin-detail-card > form > small,
+.admin-card-body > form > small,
+.admin-panel > form:not(.admin-form) > small {
+  color: #858b87;
+  font-size: .61rem;
+  line-height: 1.5;
+}
+
+.admin-detail-card > form > .admin-primary-button,
+.admin-detail-card > form > .admin-secondary-button,
+.admin-card-body > form > .admin-primary-button,
+.admin-card-body > form > .admin-secondary-button,
+.admin-panel > form:not(.admin-form) > .admin-primary-button,
+.admin-panel > form:not(.admin-form) > .admin-secondary-button {
+  width: max-content;
+  min-width: 120px;
+  margin-top: 2px;
+}
