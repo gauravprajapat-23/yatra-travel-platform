@@ -13,11 +13,10 @@ const newPages = [
   "apps/web/src/app/admin/packages/new/page.tsx",
   "apps/web/src/app/admin/settings/booking-policies/new/page.tsx",
   "apps/web/src/app/admin/vehicles/new/page.tsx",
-];
-
-const actionNewPages = [
   "apps/web/src/app/admin/staff/new/page.tsx",
 ];
+
+const actionNewPages = [];
 
 const tabbedEditors = [
   "apps/web/src/app/admin/bookings/[reference]/page.tsx",
@@ -272,5 +271,5 @@ for (const file of tabbedEditors) {
 }
 
 process.stdout.write(
-  `Admin form-system certification passed: ${newPages.length} shared create pages, ${actionNewPages.length} action-create pages, ${tabbedEditors.length} tabbed editors, ${sharedComponents.length} shared components, ${primitiveCoverage.length} specialized primitive coverage checks.\n`,
+  `Admin form-system certification passed: ${newPages.length} recoverable shared create pages, ${tabbedEditors.length} tabbed editors, ${sharedComponents.length} shared components, ${primitiveCoverage.length} specialized primitive coverage checks.\n`,
 );
