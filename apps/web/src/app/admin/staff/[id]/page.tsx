@@ -8,6 +8,7 @@ import {
 } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
+import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
@@ -228,9 +229,10 @@ export default async function StaffDetailPage({
                 disabled.
               </p>
 
-              <button className="admin-primary-button" type="submit">
-                Save Access
-              </button>
+              <AdminSubmitButton
+                label="Save Access"
+                pendingLabel="Saving Access…"
+              />
             </form>
           </section>
         ) : null}
