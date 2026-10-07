@@ -5,6 +5,7 @@ import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
+import { AdminActionForm, type AdminActionState } from "@/components/admin-action-form";
 import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 
@@ -52,7 +53,10 @@ export default async function LeadDetailPage({
   const leadReference = lead.reference;
   const leadStatus = lead.status;
 
-  async function updateLeadStatus(formData: FormData) {
+  async function updateLeadStatus(
+    _previousState: AdminActionState,
+    formData: FormData,
+  ): Promise<AdminActionState> {
     "use server";
 
     const currentSession = await requireAdminSession();
@@ -62,33 +66,48 @@ export default async function LeadDetailPage({
 
     const status = String(formData.get("status") ?? "");
     if (!isLeadStatus(status)) {
-      throw new Error("Invalid lead status.");
+      return {
+        status: "error",
+        message: "Select a valid lead status.",
+      };
     }
 
     const previousStatus = leadStatus;
 
-    await db.$transaction([
-      db.lead.update({
-        where: { id: leadId },
-        data: { status },
-      }),
-      db.auditLog.create({
-        data: {
-          actorUserId: currentSession.userId,
-          action: "LEAD_STATUS_CHANGED",
-          entityType: "Lead",
-          entityId: leadId,
-          metadata: {
-            reference: leadReference,
-            fromStatus: previousStatus,
-            toStatus: status,
+    try {
+      await db.$transaction([
+        db.lead.update({
+          where: { id: leadId },
+          data: { status },
+        }),
+        db.auditLog.create({
+          data: {
+            actorUserId: currentSession.userId,
+            action: "LEAD_STATUS_CHANGED",
+            entityType: "Lead",
+            entityId: leadId,
+            metadata: {
+              reference: leadReference,
+              fromStatus: previousStatus,
+              toStatus: status,
+            },
           },
-        },
-      }),
-    ]);
+        }),
+      ]);
+    } catch {
+      return {
+        status: "error",
+        message: "Unable to update the lead status. Please try again.",
+      };
+    }
 
     revalidatePath(`/admin/leads/${leadReference}`);
     revalidatePath("/admin/leads");
+
+    return {
+      status: "success",
+      message: "Lead status updated.",
+    };
   }
 
   const tripData = renderTripData(lead.tripData);
@@ -140,7 +159,7 @@ export default async function LeadDetailPage({
         <section className="admin-panel admin-detail-card">
           <h2>Update Status</h2>
           {hasPermission(session.roles, "lead.write") ? (
-            <form action={updateLeadStatus}>
+            <AdminActionForm action={updateLeadStatus}>
               <AdminField
                 label="Lead status"
                 htmlFor="leadStatus"
@@ -162,7 +181,7 @@ export default async function LeadDetailPage({
                 label="Save Lead Status"
                 pendingLabel="Saving Status…"
               />
-            </form>
+            </AdminActionForm>
           ) : (
             <p>Your role has read-only access to leads.</p>
           )}
