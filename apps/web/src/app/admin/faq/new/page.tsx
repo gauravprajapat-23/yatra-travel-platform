@@ -11,6 +11,7 @@ import {
   AdminFormGrid,
   AdminFormSection,
 } from "@/components/admin-form";
+import { AdminTextareaField } from "@/components/admin-textarea-field";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   createFaq,
@@ -87,12 +88,28 @@ export default async function NewFaqPage() {
       >
         <AdminFormSection title="Question & answer" description="Write the customer-facing FAQ content." badge="Required">
           <AdminFormGrid columns={1}>
-            <AdminField label="Question" htmlFor="question" required hint="Maximum 500 characters.">
-              <textarea id="question" name="question" required minLength={5} maxLength={500} rows={3} placeholder="What is included in the package price?" />
-            </AdminField>
-            <AdminField label="Answer" htmlFor="answer" required hint="Maximum 5,000 characters.">
-              <textarea id="answer" name="answer" required minLength={5} maxLength={5000} rows={10} placeholder="Give a clear answer, then add only the detail customers need." />
-            </AdminField>
+            <AdminTextareaField
+              id="question"
+              name="question"
+              label="Question"
+              required
+              minLength={5}
+              maxLength={500}
+              rows={3}
+              placeholder="What is included in the package price?"
+              hint="Keep the question clear and specific."
+            />
+            <AdminTextareaField
+              id="answer"
+              name="answer"
+              label="Answer"
+              required
+              minLength={5}
+              maxLength={5000}
+              rows={10}
+              placeholder="Give a clear answer, then add only the detail customers need."
+              hint="Answer directly, then add only the detail customers need."
+            />
           </AdminFormGrid>
         </AdminFormSection>
 
