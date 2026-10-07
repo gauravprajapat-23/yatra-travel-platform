@@ -23,6 +23,7 @@
     "check": "npm run lint && npm run typecheck && npm run typecheck:domain && npm run typecheck:providers && npm run test:domain && npm run test:providers && npm run db:validate && npm run build",
     "admin:bootstrap": "npm run db:bootstrap:admin -w @yatra/db",
     "verify:production": "node scripts/verify-production-readiness.mjs",
-    "verify:admin-routes": "node scripts/verify-admin-route-protection.mjs"
+    "verify:admin-routes": "node scripts/verify-admin-route-protection.mjs",
+    "verify:admin-authenticated": "node scripts/verify-admin-authenticated-runtime.mjs"
   }
 }
