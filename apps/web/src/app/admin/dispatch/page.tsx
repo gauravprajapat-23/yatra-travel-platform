@@ -189,9 +189,14 @@ export default async function DispatchPage({
       title="Dispatch"
       subtitle={`Operational assignment and availability board for the next ${days} days.`}
       actions={
-        <Link className="admin-secondary-button" href="/admin/bookings">
-          All Bookings
-        </Link>
+        <>
+          <Link className="admin-secondary-button" href="/admin/dispatch/resources">
+            Resource Schedule
+          </Link>
+          <Link className="admin-secondary-button" href="/admin/bookings">
+            All Bookings
+          </Link>
+        </>
       }
     >
       <section className="admin-panel admin-card-body">
