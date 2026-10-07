@@ -657,50 +657,107 @@ export default async function AdminContentEditorPage({
             <h2>SEO & Publishing</h2>
             {hasPermission(session.roles, "content.write") ? (
               <form action={save}>
-                <label>
-                  Title
-                  <input name="title" defaultValue={content.title} required minLength={2} maxLength={180}/>
-                </label>
-                <label>
-                  Status
-                  <select name="status" defaultValue={content.status}>
-                    {contentStatuses.map((status) => (
-                      <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Schedule date
-                  <input
-                    name="scheduledFor"
-                    type="datetime-local"
-                    defaultValue={
-                      content.scheduledFor
-                        ? new Date(content.scheduledFor.getTime() - content.scheduledFor.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
-                        : ""
-                    }
+                <AdminFormGrid columns={2}>
+                  <AdminField label="Title" htmlFor="contentTitle" required wide>
+                    <input
+                      id="contentTitle"
+                      name="title"
+                      defaultValue={content.title}
+                      required
+                      minLength={2}
+                      maxLength={180}
+                    />
+                  </AdminField>
+
+                  <AdminField label="Status" htmlFor="contentStatus" required>
+                    <select
+                      id="contentStatus"
+                      name="status"
+                      defaultValue={content.status}
+                    >
+                      {contentStatuses.map((status) => (
+                        <option key={status} value={status}>
+                          {status.replaceAll("_", " ")}
+                        </option>
+                      ))}
+                    </select>
+                  </AdminField>
+
+                  <AdminField
+                    label="Schedule date"
+                    htmlFor="contentScheduledFor"
+                    hint="Only used when the status is scheduled."
+                  >
+                    <input
+                      id="contentScheduledFor"
+                      name="scheduledFor"
+                      type="datetime-local"
+                      defaultValue={
+                        content.scheduledFor
+                          ? new Date(
+                              content.scheduledFor.getTime() -
+                                content.scheduledFor.getTimezoneOffset() * 60_000,
+                            )
+                              .toISOString()
+                              .slice(0, 16)
+                          : ""
+                      }
+                    />
+                  </AdminField>
+
+                  <AdminField label="SEO title" htmlFor="contentSeoTitle" wide>
+                    <input
+                      id="contentSeoTitle"
+                      name="seoTitle"
+                      defaultValue={content.seoTitle ?? ""}
+                      maxLength={120}
+                    />
+                  </AdminField>
+
+                  <AdminField
+                    label="SEO description"
+                    htmlFor="contentSeoDescription"
+                    wide
+                    hint="Maximum 320 characters."
+                  >
+                    <textarea
+                      id="contentSeoDescription"
+                      name="seoDescription"
+                      defaultValue={content.seoDescription ?? ""}
+                      maxLength={320}
+                      rows={4}
+                    />
+                  </AdminField>
+
+                  <AdminField
+                    label="Canonical URL"
+                    htmlFor="contentCanonicalUrl"
+                    wide
+                  >
+                    <input
+                      id="contentCanonicalUrl"
+                      name="canonicalUrl"
+                      defaultValue={content.canonicalUrl ?? ""}
+                      maxLength={500}
+                    />
+                  </AdminField>
+                </AdminFormGrid>
+
+                <div className="admin-checkbox-grid">
+                  <AdminCheckbox
+                    name="robotsIndex"
+                    defaultChecked={content.robotsIndex}
+                    label="Allow search indexing"
+                    description="Permit search engines to index this content."
                   />
-                </label>
-                <label>
-                  SEO title
-                  <input name="seoTitle" defaultValue={content.seoTitle ?? ""} maxLength={120}/>
-                </label>
-                <label>
-                  SEO description
-                  <textarea name="seoDescription" defaultValue={content.seoDescription ?? ""} maxLength={320}/>
-                </label>
-                <label>
-                  Canonical URL
-                  <input name="canonicalUrl" defaultValue={content.canonicalUrl ?? ""} maxLength={500}/>
-                </label>
-                <label>
-                  <input type="checkbox" name="robotsIndex" defaultChecked={content.robotsIndex}/>
-                  Allow search indexing
-                </label>
-                <label>
-                  <input type="checkbox" name="robotsFollow" defaultChecked={content.robotsFollow}/>
-                  Allow link following
-                </label>
+                  <AdminCheckbox
+                    name="robotsFollow"
+                    defaultChecked={content.robotsFollow}
+                    label="Allow link following"
+                    description="Permit search engines to follow links from this content."
+                  />
+                </div>
+
                 <button className="admin-primary-button" type="submit">
                   Save SEO & Publishing
                 </button>
