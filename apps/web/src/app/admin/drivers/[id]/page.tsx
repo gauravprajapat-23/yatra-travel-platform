@@ -185,13 +185,28 @@ export default async function DriverDetailPage({
             <h2>Edit Driver</h2>
             {hasPermission(session.roles, "driver.write") ? (
               <form action={save}>
-                <label>Driver name<input name="displayName" defaultValue={driver.displayName} required minLength={2} maxLength={120}/></label>
-                <label>
-                  Status
-                  <select name="status" defaultValue={driver.status}>
-                    {driverStatuses.map((status) => <option key={status} value={status}>{status.replaceAll("_", " ")}</option>)}
-                  </select>
-                </label>
+                <AdminFormGrid columns={2}>
+                  <AdminField label="Driver name" htmlFor="displayName" required>
+                    <input
+                      id="displayName"
+                      name="displayName"
+                      defaultValue={driver.displayName}
+                      required
+                      minLength={2}
+                      maxLength={120}
+                    />
+                  </AdminField>
+
+                  <AdminField label="Status" htmlFor="status" required>
+                    <select id="status" name="status" defaultValue={driver.status}>
+                      {driverStatuses.map((status) => (
+                        <option key={status} value={status}>
+                          {status.replaceAll("_", " ")}
+                        </option>
+                      ))}
+                    </select>
+                  </AdminField>
+                </AdminFormGrid>
                 <label>
                   Replace phone number
                   <input name="phoneNumber" inputMode="tel" autoComplete="off" placeholder={driver.phoneLast4 ? `Current: •••• ${driver.phoneLast4}` : "Enter phone number"} maxLength={40}/>
