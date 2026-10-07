@@ -9,6 +9,7 @@ import {
   type BookingStatus,
 } from "@yatra/domain/booking/status-machine";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   transitionCarBookingStatus,
@@ -490,20 +491,41 @@ export default async function BookingDetailPage({
             <h2>Change Status</h2>
             {hasPermission(session.roles, "booking.write") && nextStatuses.length > 0 ? (
               <form action={updateStatus}>
-                <label>
-                  Next status
-                  <select name="toStatus" required defaultValue="">
-                    <option value="" disabled>Select status</option>
-                    {nextStatuses.map((status) => (
-                      <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Reason
-                  <textarea name="reason" maxLength={500} placeholder="Operational note for the audit trail" />
-                </label>
-                <button className="admin-primary-button" type="submit">Update Status</button>
+                <AdminFormGrid columns={1}>
+                  <AdminField label="Next status" htmlFor="bookingNextStatus" required>
+                    <select
+                      id="bookingNextStatus"
+                      name="toStatus"
+                      required
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Select status</option>
+                      {nextStatuses.map((status) => (
+                        <option key={status} value={status}>
+                          {status.replaceAll("_", " ")}
+                        </option>
+                      ))}
+                    </select>
+                  </AdminField>
+
+                  <AdminField
+                    label="Reason"
+                    htmlFor="bookingStatusReason"
+                    hint="Optional operational note stored in the audit trail."
+                  >
+                    <textarea
+                      id="bookingStatusReason"
+                      name="reason"
+                      maxLength={500}
+                      rows={4}
+                      placeholder="Operational note for the audit trail"
+                    />
+                  </AdminField>
+                </AdminFormGrid>
+
+                <button className="admin-primary-button" type="submit">
+                  Update Status
+                </button>
               </form>
             ) : (
               <p>No manual status transition is available for your role or the current state.</p>
@@ -517,28 +539,41 @@ export default async function BookingDetailPage({
               assignableVehicles.length > 0 &&
               assignableDrivers.length > 0 ? (
                 <form action={assignResources}>
-                  <label>
-                    Vehicle
-                    <select name="vehicleId" required defaultValue="">
-                      <option value="" disabled>Select active vehicle</option>
-                      {assignableVehicles.map((vehicle) => (
-                        <option key={vehicle.id} value={vehicle.id}>
-                          {vehicle.displayName} · {vehicle.registrationNumber}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Driver
-                    <select name="driverId" required defaultValue="">
-                      <option value="" disabled>Select qualified driver</option>
-                      {assignableDrivers.map((driver) => (
-                        <option key={driver.id} value={driver.id}>
-                          {driver.displayName}{driver.phoneLast4 ? ` · •••• ${driver.phoneLast4}` : ""}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <AdminFormGrid columns={1}>
+                    <AdminField label="Vehicle" htmlFor="bookingVehicle" required>
+                      <select
+                        id="bookingVehicle"
+                        name="vehicleId"
+                        required
+                        defaultValue=""
+                      >
+                        <option value="" disabled>Select active vehicle</option>
+                        {assignableVehicles.map((vehicle) => (
+                          <option key={vehicle.id} value={vehicle.id}>
+                            {vehicle.displayName} · {vehicle.registrationNumber}
+                          </option>
+                        ))}
+                      </select>
+                    </AdminField>
+
+                    <AdminField label="Driver" htmlFor="bookingDriver" required>
+                      <select
+                        id="bookingDriver"
+                        name="driverId"
+                        required
+                        defaultValue=""
+                      >
+                        <option value="" disabled>Select qualified driver</option>
+                        {assignableDrivers.map((driver) => (
+                          <option key={driver.id} value={driver.id}>
+                            {driver.displayName}
+                            {driver.phoneLast4 ? ` · •••• ${driver.phoneLast4}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </AdminField>
+                  </AdminFormGrid>
+
                   <button className="admin-primary-button" type="submit">
                     Assign Resources
                   </button>
