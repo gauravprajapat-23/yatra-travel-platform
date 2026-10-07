@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
-import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminPanelHeading, AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminConfirmSubmitButton } from "@/components/admin-confirm-submit-button";
@@ -170,10 +170,12 @@ export default async function DriverDetailPage({
       <div className="admin-editor-section-stack">
         {activeTab === "overview" ? (
           <section className="admin-panel admin-detail-card">
-            <div className="admin-panel-heading">
-              <h2>Driver Overview</h2>
-              <StatusPill tone={tone(driver.status)}>{driver.status.replaceAll("_", " ")}</StatusPill>
-            </div>
+            <AdminPanelHeading
+              title="Driver Overview"
+              meta={
+                <StatusPill tone={tone(driver.status)}>{driver.status.replaceAll("_", " ")}</StatusPill>
+              }
+            />
             <dl>
               <div><dt>Qualified classes</dt><dd>{driver.qualifications.map((item) => item.vehicleClass.name).join(", ") || "None"}</dd></div>
               <div><dt>License expiry</dt><dd>{driver.licenseExpiry?.toLocaleDateString("en-IN") ?? "Not recorded"}</dd></div>
