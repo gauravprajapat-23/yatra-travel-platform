@@ -84,6 +84,39 @@ Behavior:
 
 Money display is only a UX aid. Server parsing, currency validation and amount authority remain server-side.
 
+
+### `AdminCurrencyField`
+
+Use for editable ISO currency codes.
+
+Behavior:
+- keeps the value uppercase
+- strips non-letter characters
+- enforces a 3-letter ISO-style code
+- integrates with `AdminMoneyField` through the currency input id
+
+Current uses:
+- Pricing Rule creation/editing
+- Package price option creation/editing
+
+### `AdminDateTimeRange`
+
+Use for start/end date-time pairs.
+
+Behavior:
+- keeps the end field constrained to the selected start
+- clears an end value that becomes earlier than the new start
+- supports required or optional ranges
+- preserves the existing field names expected by server actions
+
+Current uses:
+- Pricing Rule activation windows
+- Booking Policy effective windows
+- Vehicle availability blocks
+- Driver availability blocks
+
+Server-side date/order validation remains authoritative.
+
 ### `AdminCheckbox`
 Use for standalone boolean choices.
 
