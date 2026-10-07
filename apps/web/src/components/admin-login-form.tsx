@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AdminField } from "@/components/admin-form";
 
 type LoginResponse = {
   error?: string;
@@ -10,8 +11,9 @@ type LoginResponse = {
 
 export function AdminLoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@yatra.com");
-  const [password, setPassword] = useState("password123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -61,31 +63,41 @@ export function AdminLoginForm() {
       <h2>Welcome Back</h2>
       <p>Sign in to your YATRA admin account to continue.</p>
 
-      <label>
-        Email Address
+      <AdminField label="Email Address" htmlFor="adminEmail" required>
         <input
+          id="adminEmail"
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           autoComplete="username"
+          placeholder="admin@example.com"
           required
         />
-      </label>
+      </AdminField>
 
-      <label>
-        Password
-        <input
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          autoComplete="current-password"
-          required
-        />
-      </label>
+      <AdminField label="Password" htmlFor="adminPassword" required>
+        <div className="admin-login-password">
+          <input
+            id="adminPassword"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="current-password"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((value) => !value)}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? "Hide" : "Show"}
+          </button>
+        </div>
+      </AdminField>
 
       <div className="admin-login-options">
-        <label><input type="checkbox" defaultChecked /> Remember me</label>
         <span>Secure admin access</span>
+        <span>Sessions expire automatically.</span>
       </div>
 
       {error ? <p className="admin-login-error" role="alert">{error}</p> : null}
