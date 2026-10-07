@@ -88,6 +88,9 @@ jobs:
       - name: Production build
         run: npm run build
 
+      - name: Admin form-system certification
+        run: npm run verify:admin-forms
+
       - name: Admin route protection certification
         shell: bash
         run: |
