@@ -8,6 +8,7 @@ import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminStructuredContentEditor } from "@/components/admin-structured-content-editor";
 import { AdminMediaPicker } from "@/components/admin-media-picker";
+import { AdminTextareaField } from "@/components/admin-textarea-field";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
@@ -842,20 +843,16 @@ export default async function AdminContentEditorPage({
                     />
                   </AdminField>
 
-                  <AdminField
+                  <AdminTextareaField
+                    id="contentSeoDescription"
+                    name="seoDescription"
                     label="SEO description"
-                    htmlFor="contentSeoDescription"
+                    defaultValue={content.seoDescription ?? ""}
+                    maxLength={320}
+                    rows={4}
                     wide
-                    hint="Maximum 320 characters."
-                  >
-                    <textarea
-                      id="contentSeoDescription"
-                      name="seoDescription"
-                      defaultValue={content.seoDescription ?? ""}
-                      maxLength={320}
-                      rows={4}
-                    />
-                  </AdminField>
+                    hint="Search-result description for this content."
+                  />
 
                   <AdminField
                     label="Canonical URL"
