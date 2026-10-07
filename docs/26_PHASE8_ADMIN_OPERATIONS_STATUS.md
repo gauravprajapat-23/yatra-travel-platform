@@ -52,7 +52,7 @@ Assignment writes continue to use the existing server-authoritative assignment s
 - [x] Add resource-specific schedule views for vehicles and drivers
 - [x] Add explicit overlap/conflict indicators before assignment submission
 - [ ] Add maintenance/document-expiry operational warnings when corresponding source data exists
-- [ ] Add configurable near-term departure alerts
+- [x] Add configurable near-term departure alerts
 - [ ] Add package/tour operations handoff once package departure inventory exists
 
 ### Dashboard and reporting
@@ -62,15 +62,15 @@ Assignment writes continue to use the existing server-authoritative assignment s
 - [ ] Add CSV/Excel exports where operationally useful
 
 ### Fleet operations
-- [ ] Improve availability calendar UX
+- [x] Improve availability calendar UX
 - [ ] Add service/maintenance lifecycle if introduced in the data model
 - [ ] Add document-compliance lifecycle if introduced in the data model
 
 ### Admin QA
-- [ ] Add critical admin E2E coverage
+- [~] Admin runtime certification started: unauthenticated route-protection suite is wired into Application CI; authenticated workflow E2E remains
 - [ ] Verify mobile table/dispatch usability
 - [ ] Verify keyboard/focus behavior
-- [ ] Verify all Phase 8 mutations remain permission checked and audited
+- [~] Permission/audit certification in progress; bulk booking mutations are permission checked, lifecycle validated and audited
 - [ ] Final production build / CI certification
 
 ## Phase 8 acceptance rule
