@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { bookingTimeWindow, windowsOverlap } from "@yatra/domain/fleet/availability";
+import { AdminField } from "@/components/admin-form";
 import { AdminMetric, AdminShell, StatusPill } from "@/components/admin-shell";
 import { requireAdminSession } from "@/lib/auth/session";
 
@@ -131,14 +132,13 @@ export default async function DispatchResourcesPage({
     >
       <section className="admin-panel admin-card-body">
         <form className="admin-table-query admin-table-query--compact" method="get">
-          <label>
-            <span>Planning window</span>
-            <select name="days" defaultValue={days.toString()}>
+          <AdminField label="Planning window" htmlFor="resourceDays">
+            <select id="resourceDays" name="days" defaultValue={days.toString()}>
               <option value="7">Next 7 days</option>
               <option value="14">Next 14 days</option>
               <option value="30">Next 30 days</option>
             </select>
-          </label>
+          </AdminField>
           <button className="admin-primary-button" type="submit">Apply Window</button>
         </form>
       </section>
