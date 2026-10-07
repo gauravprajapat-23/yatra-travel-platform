@@ -1,10 +1,13 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getDb } from "@yatra/db/client";
+import { getDb, Prisma } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
-import { AdminMetric, AdminShell } from "@/components/admin-shell";
+import { AdminTablePage } from "@/components/admin-table-page";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
+
+const PAGE_SIZE = 25;
 
 const sensitiveKeyPattern =
   /(secret|token|password|ciphertext|signature|authorization|credential|api[-_]?key)/i;
@@ -18,7 +21,9 @@ function sanitizeMetadata(value: unknown, depth = 0): unknown {
 
   if (typeof value === "object" && value !== null) {
     const result: Record<string, unknown> = {};
-    for (const [key, entry] of Object.entries(value as Record<string, unknown>).slice(0, 40)) {
+    for (const [key, entry] of Object.entries(
+      value as Record<string, unknown>,
+    ).slice(0, 40)) {
       result[key] = sensitiveKeyPattern.test(key)
         ? "[redacted]"
         : sanitizeMetadata(entry, depth + 1);
@@ -39,22 +44,99 @@ function metadataText(value: unknown): string {
   try {
     const safe = sanitizeMetadata(value);
     const rendered = JSON.stringify(safe);
-    return rendered.length > 900 ? `${rendered.slice(0, 900)}…` : rendered;
+    return rendered.length > 900
+      ? `${rendered.slice(0, 900)}…`
+      : rendered;
   } catch {
     return "Unavailable";
   }
 }
 
-export default async function AuditPage() {
+function parseDateStart(value: string): Date | null {
+  if (!value) return null;
+  const parsed = new Date(`${value}T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function parseDateEnd(value: string): Date | null {
+  if (!value) return null;
+  const parsed = new Date(`${value}T23:59:59.999`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+export default async function AuditPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    q?: string;
+    action?: string;
+    entityType?: string;
+    from?: string;
+    to?: string;
+    page?: string;
+  }>;
+}) {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "audit.read")) redirect("/admin");
 
+  const params = await searchParams;
+  const q = String(params.q ?? "").trim().slice(0, 160);
+  const action = String(params.action ?? "").trim().slice(0, 120);
+  const entityType = String(params.entityType ?? "").trim().slice(0, 120);
+  const from = String(params.from ?? "").trim();
+  const to = String(params.to ?? "").trim();
+  const fromDate = parseDateStart(from);
+  const toDate = parseDateEnd(to);
+  const requestedPage = Number(params.page ?? "1");
+  const page =
+    Number.isInteger(requestedPage) && requestedPage > 0
+      ? requestedPage
+      : 1;
+
   const db = getDb();
 
-  const [events, total, actors] = await Promise.all([
+  const where: Prisma.AuditLogWhereInput = {
+    ...(action ? { action } : {}),
+    ...(entityType ? { entityType } : {}),
+    ...(fromDate || toDate
+      ? {
+          createdAt: {
+            ...(fromDate ? { gte: fromDate } : {}),
+            ...(toDate ? { lte: toDate } : {}),
+          },
+        }
+      : {}),
+    ...(q
+      ? {
+          OR: [
+            { action: { contains: q, mode: "insensitive" } },
+            { entityType: { contains: q, mode: "insensitive" } },
+            { entityId: { contains: q, mode: "insensitive" } },
+            { requestId: { contains: q, mode: "insensitive" } },
+            {
+              actor: {
+                OR: [
+                  { email: { contains: q, mode: "insensitive" } },
+                  { name: { contains: q, mode: "insensitive" } },
+                ],
+              },
+            },
+          ],
+        }
+      : {}),
+  };
+
+  const total = await db.auditLog.count({ where });
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const skip = (safePage - 1) * PAGE_SIZE;
+
+  const [events, actors, actionOptions, entityOptions] = await Promise.all([
     db.auditLog.findMany({
+      where,
       orderBy: { createdAt: "desc" },
-      take: 200,
+      skip,
+      take: PAGE_SIZE,
       include: {
         actor: {
           select: {
@@ -64,89 +146,179 @@ export default async function AuditPage() {
         },
       },
     }),
-    db.auditLog.count(),
     db.auditLog.findMany({
-      where: { actorUserId: { not: null } },
+      where: {
+        ...where,
+        actorUserId: { not: null },
+      },
       distinct: ["actorUserId"],
       select: { actorUserId: true },
     }),
+    db.auditLog.findMany({
+      distinct: ["action"],
+      orderBy: { action: "asc" },
+      select: { action: true },
+      take: 200,
+    }),
+    db.auditLog.findMany({
+      distinct: ["entityType"],
+      orderBy: { entityType: "asc" },
+      select: { entityType: true },
+      take: 200,
+    }),
   ]);
 
+  const rows = events.map((event) => [
+    event.createdAt.toLocaleString("en-IN"),
+    event.actor?.name ??
+      event.actor?.email ??
+      (event.actorUserId ? "Known user" : "System"),
+    event.action.replaceAll("_", " "),
+    event.entityType,
+    event.entityId ?? "—",
+    event.requestId ?? "—",
+    <code key={event.id.toString()}>{metadataText(event.metadata)}</code>,
+  ]);
+
+  function pageHref(targetPage: number) {
+    const next = new URLSearchParams();
+    if (q) next.set("q", q);
+    if (action) next.set("action", action);
+    if (entityType) next.set("entityType", entityType);
+    if (from) next.set("from", from);
+    if (to) next.set("to", to);
+    if (targetPage > 1) next.set("page", targetPage.toString());
+    const query = next.toString();
+    return query ? `/admin/audit?${query}` : "/admin/audit";
+  }
+
+  const firstShown = total === 0 ? 0 : skip + 1;
+  const lastShown = Math.min(skip + events.length, total);
+
   return (
-    <AdminShell
+    <AdminTablePage
       active="Audit Log"
       title="Audit Log"
       subtitle="Read-only security and operations history. Sensitive-looking metadata values are redacted in this view."
-    >
-      <div className="admin-metric-grid">
-        <AdminMetric
-          label="Total Events"
-          value={total.toString()}
-          meta="all audit records"
-          tone="blue"
-        />
-        <AdminMetric
-          label="Unique Actors"
-          value={actors.length.toString()}
-          meta="users represented in log"
-          tone="orange"
-        />
-        <AdminMetric
-          label="Loaded"
-          value={events.length.toString()}
-          meta="latest records shown"
-          tone="blue"
-        />
-        <AdminMetric
-          label="Latest Event"
-          value={events[0]?.createdAt.toLocaleDateString("en-IN") ?? "—"}
-          meta="database timestamp"
-          tone="green"
-        />
-      </div>
+      metrics={[
+        {
+          label: "Matching Events",
+          value: total.toString(),
+          meta: "current filters",
+          tone: "blue",
+        },
+        {
+          label: "Unique Actors",
+          value: actors.length.toString(),
+          meta: "current filters",
+          tone: "orange",
+        },
+        {
+          label: "Loaded",
+          value: events.length.toString(),
+          meta: "current page",
+          tone: "blue",
+        },
+        {
+          label: "Latest Event",
+          value: events[0]?.createdAt.toLocaleDateString("en-IN") ?? "—",
+          meta: "current results",
+          tone: "green",
+        },
+      ]}
+      filters={[
+        action ? action.replaceAll("_", " ") : "All actions",
+        entityType || "All entity types",
+        from || to ? `${from || "…"} → ${to || "…"}` : "All dates",
+      ]}
+      toolbar={
+        <form className="admin-table-query" method="get">
+          <label>
+            <span>Search</span>
+            <input
+              name="q"
+              defaultValue={q}
+              placeholder="Actor, action, entity, request ID"
+            />
+          </label>
 
-      <section className="admin-panel">
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>Actor</th>
-                <th>Action</th>
-                <th>Entity</th>
-                <th>Entity ID</th>
-                <th>Request ID</th>
-                <th>Metadata</th>
-              </tr>
-            </thead>
-            <tbody>
-              {events.length === 0 ? (
-                <tr>
-                  <td colSpan={7}>No audit events recorded yet.</td>
-                </tr>
-              ) : (
-                events.map((event) => (
-                  <tr key={event.id.toString()}>
-                    <td>{event.createdAt.toLocaleString("en-IN")}</td>
-                    <td>
-                      {event.actor?.name ??
-                        event.actor?.email ??
-                        (event.actorUserId ? "Known user" : "System")}
-                    </td>
-                    <td>{event.action.replaceAll("_", " ")}</td>
-                    <td>{event.entityType}</td>
-                    <td>{event.entityId ?? "—"}</td>
-                    <td>{event.requestId ?? "—"}</td>
-                    <td>
-                      <code>{metadataText(event.metadata)}</code>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </AdminShell>
+          <label>
+            <span>Action</span>
+            <select name="action" defaultValue={action}>
+              <option value="">All actions</option>
+              {actionOptions.map((item) => (
+                <option key={item.action} value={item.action}>
+                  {item.action.replaceAll("_", " ")}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span>Entity</span>
+            <select name="entityType" defaultValue={entityType}>
+              <option value="">All entity types</option>
+              {entityOptions.map((item) => (
+                <option key={item.entityType} value={item.entityType}>
+                  {item.entityType}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span>From</span>
+            <input type="date" name="from" defaultValue={from} />
+          </label>
+
+          <label>
+            <span>To</span>
+            <input type="date" name="to" defaultValue={to} />
+          </label>
+
+          <button className="admin-primary-button" type="submit">
+            Apply
+          </button>
+
+          {(q || action || entityType || from || to) ? (
+            <Link className="admin-secondary-button" href="/admin/audit">
+              Reset
+            </Link>
+          ) : null}
+        </form>
+      }
+      columns={[
+        "Time",
+        "Actor",
+        "Action",
+        "Entity",
+        "Entity ID",
+        "Request ID",
+        "Metadata",
+      ]}
+      rows={rows}
+      footer={
+        <>
+          <span>
+            Showing {firstShown}–{lastShown} of {total}
+          </span>
+          <div className="admin-table-pager">
+            {safePage > 1 ? (
+              <Link className="admin-secondary-button" href={pageHref(safePage - 1)}>
+                ← Previous
+              </Link>
+            ) : null}
+            <small>
+              Page {safePage} of {totalPages}
+            </small>
+            {safePage < totalPages ? (
+              <Link className="admin-secondary-button" href={pageHref(safePage + 1)}>
+                Next →
+              </Link>
+            ) : null}
+          </div>
+        </>
+      }
+    />
   );
 }
