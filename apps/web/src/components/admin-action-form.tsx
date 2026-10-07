@@ -20,6 +20,7 @@ export function AdminActionForm({
   action,
   children,
   className,
+  aside,
 }: {
   action: (
     previousState: AdminActionState,
@@ -27,6 +28,7 @@ export function AdminActionForm({
   ) => Promise<AdminActionState>;
   children: ReactNode;
   className?: string;
+  aside?: ReactNode;
 }) {
   const [state, formAction] = useActionState(action, initialState);
 
@@ -35,7 +37,7 @@ export function AdminActionForm({
     await navigator.clipboard.writeText(state.details.value);
   }
 
-  return (
+  const form = (
     <form action={formAction} className={className}>
       {state.status !== "idle" && state.message ? (
         <div
@@ -74,5 +76,14 @@ export function AdminActionForm({
 
       {children}
     </form>
+  );
+
+  if (!aside) return form;
+
+  return (
+    <div className="admin-form-layout">
+      {form}
+      <aside className="admin-form-aside">{aside}</aside>
+    </div>
   );
 }
