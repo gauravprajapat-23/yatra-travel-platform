@@ -9,6 +9,10 @@ import {
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
+import {
+  AdminActionForm,
+  type AdminActionState,
+} from "@/components/admin-action-form";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
@@ -18,6 +22,7 @@ import {
   staffStatuses,
   updateStaffAccess,
   revokeStaffSessions,
+  renewStaffInvite,
 } from "@/modules/staff/staff-management-service";
 
 export const dynamic = "force-dynamic";
@@ -57,6 +62,13 @@ export default async function StaffDetailPage({
     include: {
       roles: {
         include: { role: true },
+      },
+      staffInvite: {
+        select: {
+          expiresAt: true,
+          acceptedAt: true,
+          revokedAt: true,
+        },
       },
       sessions: {
         orderBy: { createdAt: "desc" },
@@ -99,6 +111,61 @@ export default async function StaffDetailPage({
     revalidatePath(`/admin/staff/${targetUserId}`);
   }
 
+  async function regenerateInvite(
+    _previousState: AdminActionState,
+    formData: FormData,
+  ): Promise<AdminActionState> {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "staff.manage")) {
+      redirect("/admin");
+    }
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+    if (!appUrl) {
+      return {
+        status: "error",
+        message:
+          "NEXT_PUBLIC_APP_URL must be configured before an invite link can be generated.",
+      };
+    }
+
+    const expiresInHours = Number(formData.get("expiresInHours") ?? 48);
+
+    try {
+      const result = await renewStaffInvite({
+        targetUserId,
+        actorUserId: currentSession.userId,
+        expiresInHours,
+      });
+
+      const inviteUrl =
+        `${appUrl.replace(/\/$/, "")}/admin/invite/${encodeURIComponent(result.token)}`;
+
+      revalidatePath(`/admin/staff/${targetUserId}`);
+      revalidatePath("/admin/staff");
+
+      return {
+        status: "success",
+        message:
+          "Replacement invite generated. The previous invite link is no longer valid.",
+        details: {
+          label: "Replacement staff invite link",
+          value: inviteUrl,
+        },
+      };
+    } catch (error) {
+      return {
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to regenerate staff invite.",
+      };
+    }
+  }
+
   async function saveAccess(formData: FormData) {
     "use server";
 
@@ -131,6 +198,13 @@ export default async function StaffDetailPage({
   const activeSessions = user.sessions.filter(
     (item) => !item.revokedAt && item.expiresAt > new Date(),
   ).length;
+
+  const editableStatuses =
+    user.status === "INVITED"
+      ? staffStatuses.filter((status) =>
+          ["INVITED", "DISABLED"].includes(status),
+        )
+      : staffStatuses.filter((status) => status !== "INVITED");
 
   return (
     <AdminShell
@@ -170,7 +244,44 @@ export default async function StaffDetailPage({
               <div><dt>Last Login</dt><dd>{user.lastLoginAt?.toLocaleString("en-IN") ?? "Never"}</dd></div>
               <div><dt>Active Sessions</dt><dd>{activeSessions}</dd></div>
               <div><dt>Created</dt><dd>{user.createdAt.toLocaleString("en-IN")}</dd></div>
+              {user.status === "INVITED" ? (
+                <div>
+                  <dt>Invite expiry</dt>
+                  <dd>
+                    {user.staffInvite?.expiresAt.toLocaleString("en-IN") ??
+                      "Invite link needs regeneration"}
+                  </dd>
+                </div>
+              ) : null}
             </dl>
+
+            {user.status === "INVITED" ? (
+              <AdminActionForm action={regenerateInvite}>
+                <AdminFormGrid columns={1}>
+                  <AdminField
+                    label="Replacement invite expiry"
+                    htmlFor="replacementInviteExpiry"
+                    hint="Generating a new link invalidates the previous token."
+                  >
+                    <select
+                      id="replacementInviteExpiry"
+                      name="expiresInHours"
+                      defaultValue="48"
+                    >
+                      <option value="24">24 hours</option>
+                      <option value="48">48 hours</option>
+                      <option value="72">72 hours</option>
+                      <option value="168">7 days</option>
+                    </select>
+                  </AdminField>
+                </AdminFormGrid>
+
+                <AdminSubmitButton
+                  label="Regenerate Invite Link"
+                  pendingLabel="Generating Invite…"
+                />
+              </AdminActionForm>
+            ) : null}
 
             {isSelf ? (
               <p>
@@ -201,7 +312,7 @@ export default async function StaffDetailPage({
                     name="status"
                     defaultValue={user.status}
                   >
-                    {staffStatuses.map((status) => (
+                    {editableStatuses.map((status) => (
                       <option key={status} value={status}>
                         {status.replaceAll("_", " ")}
                       </option>
