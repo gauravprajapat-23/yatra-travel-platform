@@ -5,7 +5,6 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell } from "@/components/admin-shell";
 import {
   AdminField,
-  AdminForm,
   AdminFormActions,
   AdminFormAsideCard,
   AdminFormCallout,
@@ -13,6 +12,10 @@ import {
   AdminFormSection,
 } from "@/components/admin-form";
 import { AdminMultiSelectCards } from "@/components/admin-multi-select-cards";
+import {
+  AdminActionForm,
+  type AdminActionState,
+} from "@/components/admin-action-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import { createDriver } from "@/modules/fleet/fleet-management-service";
 
@@ -29,7 +32,10 @@ export default async function NewDriverPage() {
     select: { id: true, name: true },
   });
 
-  async function create(formData: FormData) {
+  async function create(
+    _previousState: AdminActionState,
+    formData: FormData,
+  ): Promise<AdminActionState> {
     "use server";
 
     const currentSession = await requireAdminSession();
@@ -37,26 +43,42 @@ export default async function NewDriverPage() {
       redirect("/admin/drivers");
     }
 
-    const expiryRaw = String(formData.get("licenseExpiry") ?? "").trim();
-    const licenseExpiry = expiryRaw ? new Date(expiryRaw) : null;
+    let driverId: string;
 
-    if (licenseExpiry && Number.isNaN(licenseExpiry.getTime())) {
-      throw new Error("Invalid license expiry date.");
+    try {
+      const expiryRaw = String(
+        formData.get("licenseExpiry") ?? "",
+      ).trim();
+      const licenseExpiry = expiryRaw ? new Date(expiryRaw) : null;
+
+      if (licenseExpiry && Number.isNaN(licenseExpiry.getTime())) {
+        throw new Error("Invalid license expiry date.");
+      }
+
+      const driver = await createDriver({
+        displayName: String(formData.get("displayName") ?? ""),
+        phoneNumber: String(formData.get("phoneNumber") ?? ""),
+        licenseNumber: String(formData.get("licenseNumber") ?? ""),
+        licenseExpiry,
+        internalNotes: String(formData.get("internalNotes") ?? ""),
+        qualificationIds: formData
+          .getAll("qualificationIds")
+          .map((value) => String(value)),
+        actorUserId: currentSession.userId,
+      });
+
+      driverId = driver.id;
+    } catch (error) {
+      return {
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to create driver.",
+      };
     }
 
-    const driver = await createDriver({
-      displayName: String(formData.get("displayName") ?? ""),
-      phoneNumber: String(formData.get("phoneNumber") ?? ""),
-      licenseNumber: String(formData.get("licenseNumber") ?? ""),
-      licenseExpiry,
-      internalNotes: String(formData.get("internalNotes") ?? ""),
-      qualificationIds: formData
-        .getAll("qualificationIds")
-        .map((value) => String(value)),
-      actorUserId: currentSession.userId,
-    });
-
-    redirect(`/admin/drivers/${driver.id}`);
+    redirect(`/admin/drivers/${driverId}`);
   }
 
   return (
@@ -66,8 +88,9 @@ export default async function NewDriverPage() {
       subtitle="Create an operational driver profile, secure private details and assign eligible vehicle classes."
       actions={<Link className="admin-secondary-button" href="/admin/drivers">← Drivers</Link>}
     >
-      <AdminForm
+      <AdminActionForm
         action={create}
+        className="admin-form"
         aside={
           <>
             <AdminFormAsideCard title="Private information">
@@ -124,7 +147,7 @@ export default async function NewDriverPage() {
         </AdminFormSection>
 
         <AdminFormActions submitLabel="Create Driver" cancelHref="/admin/drivers" helper="Sensitive fields are encrypted before storage." />
-      </AdminForm>
+      </AdminActionForm>
     </AdminShell>
   );
 }
