@@ -1120,54 +1120,121 @@ export default async function PackageDetailPage({
             <h2>SEO & Publishing</h2>
             {hasPermission(session.roles, "package.write") ? (
               <form action={saveMetadata}>
-                <label>
-                  Title
-                  <input name="title" defaultValue={pkg.title} required minLength={2} maxLength={180}/>
-                </label>
-                <label>
-                  Summary
-                  <textarea name="summary" defaultValue={pkg.summary ?? ""} maxLength={1000}/>
-                </label>
-                <label>
-                  Status
-                  <select name="status" defaultValue={pkg.status}>
-                    {contentStatuses.map((status) => (
-                      <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Schedule date
-                  <input
-                    type="datetime-local"
-                    name="scheduledFor"
-                    defaultValue={
-                      pkg.scheduledFor
-                        ? new Date(pkg.scheduledFor.getTime() - pkg.scheduledFor.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
-                        : ""
-                    }
+                <AdminFormGrid columns={2}>
+                  <AdminField label="Title" htmlFor="packageTitle" required wide>
+                    <input
+                      id="packageTitle"
+                      name="title"
+                      defaultValue={pkg.title}
+                      required
+                      minLength={2}
+                      maxLength={180}
+                    />
+                  </AdminField>
+
+                  <AdminField
+                    label="Summary"
+                    htmlFor="packageSummary"
+                    wide
+                    hint="Short public description used across package surfaces."
+                  >
+                    <textarea
+                      id="packageSummary"
+                      name="summary"
+                      defaultValue={pkg.summary ?? ""}
+                      maxLength={1000}
+                      rows={5}
+                    />
+                  </AdminField>
+
+                  <AdminField label="Status" htmlFor="packageStatus" required>
+                    <select
+                      id="packageStatus"
+                      name="status"
+                      defaultValue={pkg.status}
+                    >
+                      {contentStatuses.map((status) => (
+                        <option key={status} value={status}>
+                          {status.replaceAll("_", " ")}
+                        </option>
+                      ))}
+                    </select>
+                  </AdminField>
+
+                  <AdminField
+                    label="Schedule date"
+                    htmlFor="packageScheduledFor"
+                    hint="Only used when the status is scheduled."
+                  >
+                    <input
+                      id="packageScheduledFor"
+                      type="datetime-local"
+                      name="scheduledFor"
+                      defaultValue={
+                        pkg.scheduledFor
+                          ? new Date(
+                              pkg.scheduledFor.getTime() -
+                                pkg.scheduledFor.getTimezoneOffset() * 60_000,
+                            )
+                              .toISOString()
+                              .slice(0, 16)
+                          : ""
+                      }
+                    />
+                  </AdminField>
+
+                  <AdminField label="SEO title" htmlFor="packageSeoTitle" wide>
+                    <input
+                      id="packageSeoTitle"
+                      name="seoTitle"
+                      defaultValue={pkg.seoTitle ?? ""}
+                      maxLength={120}
+                    />
+                  </AdminField>
+
+                  <AdminField
+                    label="SEO description"
+                    htmlFor="packageSeoDescription"
+                    wide
+                    hint="Maximum 320 characters."
+                  >
+                    <textarea
+                      id="packageSeoDescription"
+                      name="seoDescription"
+                      defaultValue={pkg.seoDescription ?? ""}
+                      maxLength={320}
+                      rows={4}
+                    />
+                  </AdminField>
+
+                  <AdminField
+                    label="Canonical URL"
+                    htmlFor="packageCanonicalUrl"
+                    wide
+                  >
+                    <input
+                      id="packageCanonicalUrl"
+                      name="canonicalUrl"
+                      defaultValue={pkg.canonicalUrl ?? ""}
+                      maxLength={500}
+                    />
+                  </AdminField>
+                </AdminFormGrid>
+
+                <div className="admin-checkbox-grid">
+                  <AdminCheckbox
+                    name="robotsIndex"
+                    defaultChecked={pkg.robotsIndex}
+                    label="Allow search indexing"
+                    description="Permit search engines to index this package."
                   />
-                </label>
-                <label>
-                  SEO title
-                  <input name="seoTitle" defaultValue={pkg.seoTitle ?? ""} maxLength={120}/>
-                </label>
-                <label>
-                  SEO description
-                  <textarea name="seoDescription" defaultValue={pkg.seoDescription ?? ""} maxLength={320}/>
-                </label>
-                <label>
-                  Canonical URL
-                  <input name="canonicalUrl" defaultValue={pkg.canonicalUrl ?? ""} maxLength={500}/>
-                </label>
-                <label>
-                  <input type="checkbox" name="robotsIndex" defaultChecked={pkg.robotsIndex}/>
-                  Allow search indexing
-                </label>
-                <label>
-                  <input type="checkbox" name="robotsFollow" defaultChecked={pkg.robotsFollow}/>
-                  Allow link following
-                </label>
+                  <AdminCheckbox
+                    name="robotsFollow"
+                    defaultChecked={pkg.robotsFollow}
+                    label="Allow link following"
+                    description="Permit search engines to follow links from this package."
+                  />
+                </div>
                 <button className="admin-primary-button" type="submit">
                   Save SEO & Publishing
                 </button>
