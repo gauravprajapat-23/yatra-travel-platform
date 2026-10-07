@@ -9,6 +9,7 @@ import {
   type BookingStatus,
 } from "@yatra/domain/booking/status-machine";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
@@ -587,9 +588,10 @@ export default async function BookingDetailPage({
                     </AdminField>
                   </AdminFormGrid>
 
-                  <button className="admin-primary-button" type="submit">
-                    Assign Resources
-                  </button>
+                  <AdminSubmitButton
+                    label="Assign Resources"
+                    pendingLabel="Assigning Resources…"
+                  />
                 </form>
               ) : (
                 <p>No assignable resources are available, or your role cannot assign bookings.</p>
