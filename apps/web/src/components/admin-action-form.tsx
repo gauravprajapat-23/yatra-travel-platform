@@ -1,6 +1,11 @@
 "use client";
 
-import { useActionState, type ReactNode } from "react";
+import {
+  useActionState,
+  useEffect,
+  useRef,
+  type ReactNode,
+} from "react";
 
 export type AdminActionState = {
   status: "idle" | "success" | "error";
@@ -31,6 +36,20 @@ export function AdminActionForm({
   aside?: ReactNode;
 }) {
   const [state, formAction] = useActionState(action, initialState);
+  const feedbackRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (state.status === "idle" || !state.message) return;
+
+    const feedback = feedbackRef.current;
+    if (!feedback) return;
+
+    feedback.focus({ preventScroll: true });
+    feedback.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [state.status, state.message]);
 
   async function copyDetails() {
     if (!state.details?.value) return;
@@ -41,6 +60,8 @@ export function AdminActionForm({
     <form action={formAction} className={className}>
       {state.status !== "idle" && state.message ? (
         <div
+          ref={feedbackRef}
+          tabIndex={-1}
           className={
             state.status === "error"
               ? "admin-action-feedback admin-action-feedback--error"
@@ -48,6 +69,7 @@ export function AdminActionForm({
           }
           role={state.status === "error" ? "alert" : "status"}
           aria-live="polite"
+          aria-atomic="true"
         >
           {state.message}
         </div>
