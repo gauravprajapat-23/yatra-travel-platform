@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
+import { AdminField } from "@/components/admin-form";
 import { AdminMetric, AdminShell, StatusPill } from "@/components/admin-shell";
 import { requireAdminSession } from "@/lib/auth/session";
 
@@ -231,23 +232,25 @@ export default async function DispatchPage({
     >
       <section className="admin-panel admin-card-body">
         <form className="admin-table-query admin-table-query--compact" method="get">
-          <label>
-            <span>Planning window</span>
-            <select name="days" defaultValue={days.toString()}>
+          <AdminField label="Planning window" htmlFor="dispatchDays">
+            <select id="dispatchDays" name="days" defaultValue={days.toString()}>
               <option value="7">Next 7 days</option>
               <option value="14">Next 14 days</option>
               <option value="30">Next 30 days</option>
             </select>
-          </label>
-          <label>
-            <span>Departure alert</span>
-            <select name="alertHours" defaultValue={alertHours.toString()}>
+          </AdminField>
+          <AdminField label="Departure alert" htmlFor="dispatchAlertHours">
+            <select
+              id="dispatchAlertHours"
+              name="alertHours"
+              defaultValue={alertHours.toString()}
+            >
               <option value="6">Next 6 hours</option>
               <option value="12">Next 12 hours</option>
               <option value="24">Next 24 hours</option>
               <option value="48">Next 48 hours</option>
             </select>
-          </label>
+          </AdminField>
           <button className="admin-primary-button" type="submit">
             Apply Window
           </button>
