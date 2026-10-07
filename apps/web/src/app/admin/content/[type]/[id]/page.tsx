@@ -584,40 +584,121 @@ export default async function AdminContentEditorPage({
             {hasPermission(session.roles, "content.write") ? (
               <>
                 <form action={saveTemple}>
-                  <label>
-                    Temple name
-                    <input
-                      name="templeName"
+                  <AdminFormGrid columns={2}>
+                    <AdminField
+                      label="Temple name"
+                      htmlFor="templeName"
                       required
-                      minLength={2}
-                      maxLength={180}
-                      defaultValue={destinationDetails.templeProfile?.templeName ?? content.title}
-                    />
-                  </label>
-                  <label>
-                    Deity
-                    <input name="deity" maxLength={180} defaultValue={destinationDetails.templeProfile?.deity ?? ""}/>
-                  </label>
-                  <label>
-                    Darshan notes
-                    <textarea name="darshanNotes" maxLength={3000} defaultValue={destinationDetails.templeProfile?.darshanNotes ?? ""}/>
-                  </label>
-                  <label>
-                    Dress code
-                    <textarea name="dressCode" maxLength={1000} defaultValue={destinationDetails.templeProfile?.dressCode ?? ""}/>
-                  </label>
-                  <label>
-                    Opening hours JSON
-                    <textarea name="openingHours" rows={8} spellCheck={false} defaultValue={stringifyOptionalJson(destinationDetails.templeProfile?.openingHours)}/>
-                  </label>
-                  <label>
-                    Nearby places JSON
-                    <textarea name="nearbyPlaces" rows={8} spellCheck={false} defaultValue={stringifyOptionalJson(destinationDetails.templeProfile?.nearbyPlaces)}/>
-                  </label>
-                  <label>
-                    Practical notes JSON
-                    <textarea name="practicalNotes" rows={8} spellCheck={false} defaultValue={stringifyOptionalJson(destinationDetails.templeProfile?.practicalNotes)}/>
-                  </label>
+                    >
+                      <input
+                        id="templeName"
+                        name="templeName"
+                        required
+                        minLength={2}
+                        maxLength={180}
+                        defaultValue={
+                          destinationDetails.templeProfile?.templeName ??
+                          content.title
+                        }
+                      />
+                    </AdminField>
+
+                    <AdminField label="Deity" htmlFor="templeDeity">
+                      <input
+                        id="templeDeity"
+                        name="deity"
+                        maxLength={180}
+                        defaultValue={
+                          destinationDetails.templeProfile?.deity ?? ""
+                        }
+                      />
+                    </AdminField>
+
+                    <AdminField
+                      label="Darshan notes"
+                      htmlFor="darshanNotes"
+                      wide
+                      hint="Timings, queue guidance, special access and visitor expectations."
+                    >
+                      <textarea
+                        id="darshanNotes"
+                        name="darshanNotes"
+                        maxLength={3000}
+                        rows={6}
+                        defaultValue={
+                          destinationDetails.templeProfile?.darshanNotes ?? ""
+                        }
+                      />
+                    </AdminField>
+
+                    <AdminField
+                      label="Dress code"
+                      htmlFor="dressCode"
+                      wide
+                    >
+                      <textarea
+                        id="dressCode"
+                        name="dressCode"
+                        maxLength={1000}
+                        rows={4}
+                        defaultValue={
+                          destinationDetails.templeProfile?.dressCode ?? ""
+                        }
+                      />
+                    </AdminField>
+
+                    <AdminField
+                      label="Opening hours JSON"
+                      htmlFor="openingHours"
+                      wide
+                      hint="Advanced structured field for daily/seasonal timings."
+                    >
+                      <textarea
+                        id="openingHours"
+                        name="openingHours"
+                        rows={8}
+                        spellCheck={false}
+                        defaultValue={stringifyOptionalJson(
+                          destinationDetails.templeProfile?.openingHours,
+                        )}
+                      />
+                    </AdminField>
+
+                    <AdminField
+                      label="Nearby places JSON"
+                      htmlFor="nearbyPlaces"
+                      wide
+                      hint="Advanced structured field for nearby attractions or facilities."
+                    >
+                      <textarea
+                        id="nearbyPlaces"
+                        name="nearbyPlaces"
+                        rows={8}
+                        spellCheck={false}
+                        defaultValue={stringifyOptionalJson(
+                          destinationDetails.templeProfile?.nearbyPlaces,
+                        )}
+                      />
+                    </AdminField>
+
+                    <AdminField
+                      label="Practical notes JSON"
+                      htmlFor="practicalNotes"
+                      wide
+                      hint="Advanced structured field for parking, accessibility, local transport and similar notes."
+                    >
+                      <textarea
+                        id="practicalNotes"
+                        name="practicalNotes"
+                        rows={8}
+                        spellCheck={false}
+                        defaultValue={stringifyOptionalJson(
+                          destinationDetails.templeProfile?.practicalNotes,
+                        )}
+                      />
+                    </AdminField>
+                  </AdminFormGrid>
+
                   <button className="admin-primary-button" type="submit">
                     Save Temple Profile
                   </button>
