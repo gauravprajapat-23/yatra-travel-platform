@@ -168,6 +168,6 @@ export default async function NewPackagePage() {
           helper="Creates a safe non-indexed draft."
         />
       </AdminForm>
-
+    </AdminShell>
   );
 }
