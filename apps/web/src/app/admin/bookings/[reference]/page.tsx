@@ -14,6 +14,7 @@ import {
   windowsOverlap,
 } from "@yatra/domain/fleet/availability";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminActionForm, type AdminActionState } from "@/components/admin-action-form";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
@@ -49,14 +50,22 @@ function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
 
 export default async function BookingDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ reference: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "booking.read")) redirect("/admin");
 
   const { reference: rawReference } = await params;
+  const { tab: requestedTab } = await searchParams;
   const reference = rawReference.trim().toUpperCase();
+  const activeTab = ["overview", "payments", "operations", "timeline"].includes(
+    requestedTab ?? "",
+  )
+    ? requestedTab!
+    : "overview";
   const db = getDb();
 
   const isPackage = reference.startsWith("YPK-");
@@ -717,163 +726,312 @@ export default async function BookingDetailPage({
                 ["CONFIRMED", "DRIVER_ASSIGNED", "COMPLETED", "CANCELLED"].includes(booking.status);
 
               return (
-                <div key={intent.id}>
-                  <strong>{intent.status.replaceAll("_", " ")}</strong>
-                  <p>
-                    {money(intent.amountPaidMinor > 0n ? intent.amountPaidMinor : intent.amountMinor, intent.currency)}
-                    {" · "}
-                    {intent.providerOrderId ?? "No provider order"}
-                  </p>
-                  {intent.refunds.map((refund) => (
-                    <small key={refund.id}>
-                      Refund {refund.status}: {money(refund.amountMinor, refund.currency)}
-                    </small>
-                  ))}
-                  {canRefund ? (
-                    <form action={refundRemainingPayment}>
-                      <input type="hidden" name="paymentIntentId" value={intent.id} />
-                      <button className="admin-danger-button" type="submit">
-                        Refund Remaining {money(remainingMinor, intent.currency)}
-                      </button>
-                    </form>
-                  ) : null}
-                </div>
-              );
-            })}
-          </article>
-        </section>
+    <AdminShell
+      active="Bookings"
+      title={`Booking #${booking.reference}`}
+      subtitle={`${booking.type === "CAR" ? "Car booking" : "Package booking"} · created ${booking.createdAt.toLocaleString("en-IN")}`}
+      actions={
+        <Link className="admin-secondary-button" href="/admin/bookings">
+          ← All Bookings
+        </Link>
+      }
+    >
+      <AdminEditorTabs
+        basePath={`/admin/bookings/${booking.reference}`}
+        active={activeTab}
+        tabs={[
+          { key: "overview", label: "Overview", description: "Trip & customer" },
+          { key: "payments", label: "Payments", description: "Captured & refunds" },
+          { key: "operations", label: "Operations", description: "Status & assignment" },
+          { key: "timeline", label: "Timeline", description: "Audit history" },
+        ]}
+      />
 
-        <section className="admin-detail-column">
-          <article className="admin-panel admin-detail-card">
-            <h2>Change Status</h2>
-            {hasPermission(session.roles, "booking.write") && nextStatuses.length > 0 ? (
-              <AdminActionForm action={updateStatus}>
-                <AdminFormGrid columns={1}>
-                  <AdminField label="Next status" htmlFor="bookingNextStatus" required>
-                    <select
-                      id="bookingNextStatus"
-                      name="toStatus"
-                      required
-                      defaultValue=""
-                    >
-                      <option value="" disabled>Select status</option>
-                      {nextStatuses.map((status) => (
-                        <option key={status} value={status}>
-                          {status.replaceAll("_", " ")}
-                        </option>
-                      ))}
-                    </select>
-                  </AdminField>
+      <div className="admin-editor-section-stack">
+        {activeTab === "overview" ? (
+          <>
+            <section className="admin-panel admin-detail-card">
+              <div className="admin-panel-heading">
+                <h2>Trip Overview</h2>
+                <StatusPill tone={tone(booking.status)}>
+                  {booking.status.replaceAll("_", " ")}
+                </StatusPill>
+              </div>
+              <h3>{booking.title}</h3>
+              <p>{booking.route}</p>
+              <dl>
+                <div><dt>Departure</dt><dd>{booking.startsAt.toLocaleDateString("en-IN")}</dd></div>
+                <div><dt>Return</dt><dd>{booking.endsAt?.toLocaleDateString("en-IN") ?? "As per booking"}</dd></div>
+                <div><dt>Travellers</dt><dd>{booking.travellers}</dd></div>
+                <div><dt>Assignment</dt><dd>{booking.assignment ?? "Not assigned"}</dd></div>
+              </dl>
+              <div className="admin-amount-card">
+                <span>Total Amount</span>
+                <strong>{money(booking.totalMinor, booking.currency)}</strong>
+              </div>
+            </section>
 
-                  <AdminField
-                    label="Reason"
-                    htmlFor="bookingStatusReason"
-                    hint="Optional operational note stored in the audit trail."
-                  >
-                    <textarea
-                      id="bookingStatusReason"
-                      name="reason"
-                      maxLength={500}
-                      rows={4}
-                      placeholder="Operational note for the audit trail"
-                    />
-                  </AdminField>
-                </AdminFormGrid>
+            <section className="admin-panel admin-detail-card">
+              <h2>Customer</h2>
+              <dl>
+                <div><dt>Name</dt><dd>{booking.guestName ?? "Account customer"}</dd></div>
+                <div><dt>Email</dt><dd>{booking.guestEmail ?? "Not available"}</dd></div>
+                <div><dt>Reference</dt><dd>{booking.reference}</dd></div>
+                <div><dt>Booking type</dt><dd>{booking.type}</dd></div>
+              </dl>
+            </section>
+          </>
+        ) : null}
 
-                <AdminSubmitButton
-                  label="Update Status"
-                  pendingLabel="Updating Status…"
-                />
-              </AdminActionForm>
-            ) : (
-              <p>No manual status transition is available for your role or the current state.</p>
-            )}
-          </article>
+        {activeTab === "payments" ? (
+          <>
+            <section className="admin-panel admin-detail-card">
+              <h2>Financial & Cancellation Summary</h2>
+              <dl>
+                <div><dt>Booking total</dt><dd>{money(booking.totalMinor, booking.currency)}</dd></div>
+                <div><dt>Captured / paid</dt><dd>{money(paidMinor, booking.currency)}</dd></div>
+                <div><dt>Pending refunds</dt><dd>{money(pendingRefundMinor, booking.currency)}</dd></div>
+                <div><dt>Processed refunds</dt><dd>{money(processedRefundMinor, booking.currency)}</dd></div>
+                <div><dt>Net paid</dt><dd>{money(netPaidMinor, booking.currency)}</dd></div>
+                <div><dt>Cancellation state</dt><dd>{booking.status === "CANCELLED" ? "Cancelled" : "Not cancelled"}</dd></div>
+              </dl>
 
-          {booking.type === "CAR" ? (
-            <article className="admin-panel admin-detail-card">
-              <h2>Vehicle & Driver Assignment</h2>
-              <p>
-                Availability is previewed for this trip window before submission.
-                The assignment transaction re-checks all conflicts server-side.
-              </p>
-              {unavailableVehicles.length > 0 || unavailableDrivers.length > 0 ? (
-                <div className="admin-assignment-conflicts">
-                  {unavailableVehicles.length > 0 ? (
-                    <div>
-                      <strong>Unavailable vehicles</strong>
-                      {unavailableVehicles.map((vehicle) => (
-                        <small key={vehicle.id}>
-                          {vehicle.displayName} · {vehicle.registrationNumber} — {vehicle.conflictReason}
-                        </small>
-                      ))}
-                    </div>
-                  ) : null}
-                  {unavailableDrivers.length > 0 ? (
-                    <div>
-                      <strong>Unavailable drivers</strong>
-                      {unavailableDrivers.map((driver) => (
-                        <small key={driver.id}>
-                          {driver.displayName} — {driver.conflictReason}
-                        </small>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
+              {booking.status === "CANCELLED" && processedRefundMinor < paidMinor ? (
+                <p>
+                  This booking is cancelled with an unreconciled paid balance of{" "}
+                  <strong>{money(paidMinor - processedRefundMinor, booking.currency)}</strong>.
+                </p>
               ) : null}
-              {hasPermission(session.roles, "booking.assign") &&
-              assignableVehicles.length > 0 &&
-              assignableDrivers.length > 0 ? (
-                <AdminActionForm action={assignResources}>
+
+              {booking.status === "REFUND_PENDING" ? (
+                <p>
+                  Refund processing is still pending. Review payment activity
+                  before further action.
+                </p>
+              ) : null}
+            </section>
+
+            <section className="admin-panel admin-detail-card">
+              <h2>Payment Activity</h2>
+              {booking.paymentIntents.length === 0 ? (
+                <p>No payment intent has been created yet.</p>
+              ) : booking.paymentIntents.map((intent) => {
+                const reservedMinor = intent.refunds
+                  .filter((refund) => ["PENDING", "PROCESSED"].includes(refund.status))
+                  .reduce((sum, refund) => sum + refund.amountMinor, 0n);
+                const remainingMinor = intent.amountPaidMinor - reservedMinor;
+                const canRefund =
+                  hasPermission(session.roles, "refund.manage") &&
+                  ["CAPTURED", "PARTIALLY_REFUNDED"].includes(intent.status) &&
+                  remainingMinor > 0n &&
+                  ["CONFIRMED", "DRIVER_ASSIGNED", "COMPLETED", "CANCELLED"].includes(booking.status);
+
+                return (
+                  <div key={intent.id}>
+                    <strong>{intent.status.replaceAll("_", " ")}</strong>
+                    <p>
+                      {money(
+                        intent.amountPaidMinor > 0n
+                          ? intent.amountPaidMinor
+                          : intent.amountMinor,
+                        intent.currency,
+                      )}
+                      {" · "}
+                      {intent.providerOrderId ?? "No provider order"}
+                    </p>
+
+                    {intent.refunds.map((refund) => (
+                      <small key={refund.id}>
+                        Refund {refund.status}: {money(refund.amountMinor, refund.currency)}
+                      </small>
+                    ))}
+
+                    {canRefund ? (
+                      <form action={refundRemainingPayment}>
+                        <input
+                          type="hidden"
+                          name="paymentIntentId"
+                          value={intent.id}
+                        />
+                        <button className="admin-danger-button" type="submit">
+                          Refund Remaining {money(remainingMinor, intent.currency)}
+                        </button>
+                      </form>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </section>
+          </>
+        ) : null}
+
+        {activeTab === "operations" ? (
+          <>
+            <section className="admin-panel admin-detail-card">
+              <h2>Change Status</h2>
+              {hasPermission(session.roles, "booking.write") &&
+              nextStatuses.length > 0 ? (
+                <AdminActionForm action={updateStatus}>
                   <AdminFormGrid columns={1}>
-                    <AdminField label="Vehicle" htmlFor="bookingVehicle" required>
+                    <AdminField
+                      label="Next status"
+                      htmlFor="bookingNextStatus"
+                      required
+                    >
                       <select
-                        id="bookingVehicle"
-                        name="vehicleId"
+                        id="bookingNextStatus"
+                        name="toStatus"
                         required
                         defaultValue=""
                       >
-                        <option value="" disabled>Select active vehicle</option>
-                        {assignableVehicles.map((vehicle) => (
-                          <option key={vehicle.id} value={vehicle.id}>
-                            {vehicle.displayName} · {vehicle.registrationNumber}
+                        <option value="" disabled>Select status</option>
+                        {nextStatuses.map((status) => (
+                          <option key={status} value={status}>
+                            {status.replaceAll("_", " ")}
                           </option>
                         ))}
                       </select>
                     </AdminField>
 
-                    <AdminField label="Driver" htmlFor="bookingDriver" required>
-                      <select
-                        id="bookingDriver"
-                        name="driverId"
-                        required
-                        defaultValue=""
-                      >
-                        <option value="" disabled>Select qualified driver</option>
-                        {assignableDrivers.map((driver) => (
-                          <option key={driver.id} value={driver.id}>
-                            {driver.displayName}
-                            {driver.phoneLast4 ? ` · •••• ${driver.phoneLast4}` : ""}
-                          </option>
-                        ))}
-                      </select>
+                    <AdminField
+                      label="Reason"
+                      htmlFor="bookingStatusReason"
+                      hint="Optional operational note stored in the audit trail."
+                    >
+                      <textarea
+                        id="bookingStatusReason"
+                        name="reason"
+                        maxLength={500}
+                        rows={4}
+                        placeholder="Operational note for the audit trail"
+                      />
                     </AdminField>
                   </AdminFormGrid>
 
                   <AdminSubmitButton
-                    label="Assign Resources"
-                    pendingLabel="Assigning Resources…"
+                    label="Update Status"
+                    pendingLabel="Updating Status…"
                   />
                 </AdminActionForm>
               ) : (
-                <p>No assignable resources are available, or your role cannot assign bookings.</p>
+                <p>
+                  No manual status transition is available for your role or the
+                  current state.
+                </p>
               )}
-            </article>
-          ) : null}
+            </section>
 
-          <article className="admin-panel admin-detail-card">
+            {booking.type === "CAR" ? (
+              <section className="admin-panel admin-detail-card">
+                <h2>Vehicle & Driver Assignment</h2>
+                <p>
+                  Availability is previewed for this trip window before
+                  submission. The assignment transaction re-checks all
+                  conflicts server-side.
+                </p>
+
+                {unavailableVehicles.length > 0 ||
+                unavailableDrivers.length > 0 ? (
+                  <div className="admin-assignment-conflicts">
+                    {unavailableVehicles.length > 0 ? (
+                      <div>
+                        <strong>Unavailable vehicles</strong>
+                        {unavailableVehicles.map((vehicle) => (
+                          <small key={vehicle.id}>
+                            {vehicle.displayName} · {vehicle.registrationNumber}
+                            {" — "}
+                            {vehicle.conflictReason}
+                          </small>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    {unavailableDrivers.length > 0 ? (
+                      <div>
+                        <strong>Unavailable drivers</strong>
+                        {unavailableDrivers.map((driver) => (
+                          <small key={driver.id}>
+                            {driver.displayName} — {driver.conflictReason}
+                          </small>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {hasPermission(session.roles, "booking.assign") &&
+                assignableVehicles.length > 0 &&
+                assignableDrivers.length > 0 ? (
+                  <AdminActionForm action={assignResources}>
+                    <AdminFormGrid columns={1}>
+                      <AdminField
+                        label="Vehicle"
+                        htmlFor="bookingVehicle"
+                        required
+                      >
+                        <select
+                          id="bookingVehicle"
+                          name="vehicleId"
+                          required
+                          defaultValue=""
+                        >
+                          <option value="" disabled>Select active vehicle</option>
+                          {assignableVehicles.map((vehicle) => (
+                            <option key={vehicle.id} value={vehicle.id}>
+                              {vehicle.displayName} · {vehicle.registrationNumber}
+                            </option>
+                          ))}
+                        </select>
+                      </AdminField>
+
+                      <AdminField
+                        label="Driver"
+                        htmlFor="bookingDriver"
+                        required
+                      >
+                        <select
+                          id="bookingDriver"
+                          name="driverId"
+                          required
+                          defaultValue=""
+                        >
+                          <option value="" disabled>
+                            Select qualified driver
+                          </option>
+                          {assignableDrivers.map((driver) => (
+                            <option key={driver.id} value={driver.id}>
+                              {driver.displayName}
+                              {driver.phoneLast4
+                                ? ` · •••• ${driver.phoneLast4}`
+                                : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </AdminField>
+                    </AdminFormGrid>
+
+                    <AdminSubmitButton
+                      label="Assign Resources"
+                      pendingLabel="Assigning Resources…"
+                    />
+                  </AdminActionForm>
+                ) : (
+                  <p>
+                    No assignable resources are available, or your role cannot
+                    assign bookings.
+                  </p>
+                )}
+              </section>
+            ) : null}
+          </>
+        ) : null}
+
+        {activeTab === "timeline" ? (
+          <section className="admin-panel admin-detail-card">
             <h2>Operational Timeline</h2>
-            <p>Status, payment and refund events are shown together, newest first.</p>
+            <p>
+              Status, payment and refund events are shown together, newest first.
+            </p>
             <div className="admin-timeline">
               {timelineEvents.length === 0 ? (
                 <p>No operational events recorded yet.</p>
@@ -882,7 +1040,9 @@ export default async function BookingDetailPage({
                   <span>✓</span>
                   <div>
                     <strong>
-                      <StatusPill tone={entry.tone}>{entry.title}</StatusPill>
+                      <StatusPill tone={entry.tone}>
+                        {entry.title}
+                      </StatusPill>
                     </strong>
                     <small>{entry.at.toLocaleString("en-IN")}</small>
                     <p>{entry.detail}</p>
@@ -890,8 +1050,8 @@ export default async function BookingDetailPage({
                 </div>
               ))}
             </div>
-          </article>
-        </section>
+          </section>
+        ) : null}
       </div>
     </AdminShell>
   );
