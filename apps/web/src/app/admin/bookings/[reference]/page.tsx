@@ -537,9 +537,10 @@ export default async function BookingDetailPage({
                   </AdminField>
                 </AdminFormGrid>
 
-                <button className="admin-primary-button" type="submit">
-                  Update Status
-                </button>
+                <AdminSubmitButton
+                  label="Update Status"
+                  pendingLabel="Updating Status…"
+                />
               </form>
             ) : (
               <p>No manual status transition is available for your role or the current state.</p>
