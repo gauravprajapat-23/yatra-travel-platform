@@ -15,6 +15,9 @@ export function AdminTablePage({
   rows,
   toolbar,
   footer,
+  emptyTitle = "No records to show",
+  emptyMessage = "No rows were returned for the current loaded scope.",
+  emptyAction,
 }: {
   active: string;
   title: string;
@@ -32,6 +35,9 @@ export function AdminTablePage({
   rows: Row[];
   toolbar?: ReactNode;
   footer?: ReactNode;
+  emptyTitle?: string;
+  emptyMessage?: string;
+  emptyAction?: ReactNode;
 }) {
   return (
     <AdminShell
@@ -71,8 +77,13 @@ export function AdminTablePage({
 
         {rows.length === 0 ? (
           <div className="admin-table-empty">
-            <strong>No records to show</strong>
-            <p>No rows were returned for the current loaded scope.</p>
+            <strong>{emptyTitle}</strong>
+            <p>{emptyMessage}</p>
+            {emptyAction ? (
+              <div className="admin-table-empty__action">
+                {emptyAction}
+              </div>
+            ) : null}
           </div>
         ) : (
           <div className="admin-table-wrap">
