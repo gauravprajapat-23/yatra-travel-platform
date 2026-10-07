@@ -853,9 +853,11 @@ export default async function BookingDetailPage({
                           name="paymentIntentId"
                           value={intent.id}
                         />
-                        <button className="admin-danger-button" type="submit">
-                          Refund Remaining {money(remainingMinor, intent.currency)}
-                        </button>
+                        <AdminSubmitButton
+                          className="admin-danger-button"
+                          label={`Refund Remaining ${money(remainingMinor, intent.currency)}`}
+                          pendingLabel="Requesting Refund…"
+                        />
                       </form>
                     ) : null}
                   </div>
