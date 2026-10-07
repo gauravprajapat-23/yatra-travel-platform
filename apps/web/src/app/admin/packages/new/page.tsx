@@ -5,7 +5,6 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell } from "@/components/admin-shell";
 import {
   AdminField,
-  AdminForm,
   AdminFormActions,
   AdminFormAsideCard,
   AdminFormCallout,
@@ -14,6 +13,10 @@ import {
 } from "@/components/admin-form";
 import { AdminSlugFields } from "@/components/admin-slug-fields";
 import { AdminTextareaField } from "@/components/admin-textarea-field";
+import {
+  AdminActionForm,
+  type AdminActionState,
+} from "@/components/admin-action-form";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +29,10 @@ export default async function NewPackagePage() {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "package.write")) redirect("/admin/packages");
 
-  async function createPackage(formData: FormData) {
+  async function createPackage(
+    _previousState: AdminActionState,
+    formData: FormData,
+  ): Promise<AdminActionState> {
     "use server";
 
     const currentSession = await requireAdminSession();
@@ -34,61 +40,91 @@ export default async function NewPackagePage() {
       redirect("/admin/packages");
     }
 
-    const db = getDb();
-    const title = String(formData.get("title") ?? "").trim();
-    const slug = normalizeSlug(String(formData.get("slug") ?? ""));
-    const summary = String(formData.get("summary") ?? "").trim();
-    const durationDays = Number(formData.get("durationDays"));
-    const durationNights = Number(formData.get("durationNights"));
+    let packageId: string;
 
-    if (title.length < 2 || title.length > 180) {
-      throw new Error("Package title must be between 2 and 180 characters.");
-    }
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
-      throw new Error("Slug must use lowercase letters, numbers and single hyphens.");
-    }
-    if (!Number.isInteger(durationDays) || durationDays < 1 || durationDays > 365) {
-      throw new Error("Duration days must be between 1 and 365.");
-    }
-    if (!Number.isInteger(durationNights) || durationNights < 0 || durationNights > durationDays) {
-      throw new Error("Duration nights must be between 0 and the number of days.");
-    }
+    try {
+      const db = getDb();
+      const title = String(formData.get("title") ?? "").trim();
+      const slug = normalizeSlug(String(formData.get("slug") ?? ""));
+      const summary = String(formData.get("summary") ?? "").trim();
+      const durationDays = Number(formData.get("durationDays"));
+      const durationNights = Number(formData.get("durationNights"));
 
-    const existing = await db.tourPackage.findUnique({
-      where: { slug },
-      select: { id: true },
-    });
-    if (existing) throw new Error("A package with this slug already exists.");
+      if (title.length < 2 || title.length > 180) {
+        throw new Error(
+          "Package title must be between 2 and 180 characters.",
+        );
+      }
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+        throw new Error(
+          "Slug must use lowercase letters, numbers and single hyphens.",
+        );
+      }
+      if (
+        !Number.isInteger(durationDays) ||
+        durationDays < 1 ||
+        durationDays > 365
+      ) {
+        throw new Error("Duration days must be between 1 and 365.");
+      }
+      if (
+        !Number.isInteger(durationNights) ||
+        durationNights < 0 ||
+        durationNights > durationDays
+      ) {
+        throw new Error(
+          "Duration nights must be between 0 and the number of days.",
+        );
+      }
 
-    const pkg = await db.$transaction(async (tx) => {
-      const created = await tx.tourPackage.create({
-        data: {
-          slug,
-          title,
-          summary: summary || null,
-          body: [],
-          durationDays,
-          durationNights,
-          status: "DRAFT",
-          robotsIndex: false,
-          robotsFollow: false,
-        },
+      const existing = await db.tourPackage.findUnique({
+        where: { slug },
+        select: { id: true },
+      });
+      if (existing) {
+        throw new Error("A package with this slug already exists.");
+      }
+
+      const pkg = await db.$transaction(async (tx) => {
+        const created = await tx.tourPackage.create({
+          data: {
+            slug,
+            title,
+            summary: summary || null,
+            body: [],
+            durationDays,
+            durationNights,
+            status: "DRAFT",
+            robotsIndex: false,
+            robotsFollow: false,
+          },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            actorUserId: currentSession.userId,
+            action: "PACKAGE_CREATED",
+            entityType: "TourPackage",
+            entityId: created.id,
+            metadata: { slug, title, durationDays, durationNights },
+          },
+        });
+
+        return created;
       });
 
-      await tx.auditLog.create({
-        data: {
-          actorUserId: currentSession.userId,
-          action: "PACKAGE_CREATED",
-          entityType: "TourPackage",
-          entityId: created.id,
-          metadata: { slug, title, durationDays, durationNights },
-        },
-      });
+      packageId = pkg.id;
+    } catch (error) {
+      return {
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to create package.",
+      };
+    }
 
-      return created;
-    });
-
-    redirect(`/admin/packages/${pkg.id}`);
+    redirect(`/admin/packages/${packageId}`);
   }
 
   return (
@@ -98,8 +134,9 @@ export default async function NewPackagePage() {
       subtitle="Create the package foundation first. Itinerary, destinations, pricing, media and SEO can be completed after the draft exists."
       actions={<Link className="admin-secondary-button" href="/admin/packages">← Packages</Link>}
     >
-      <AdminForm
+      <AdminActionForm
         action={createPackage}
+        className="admin-form"
         aside={
           <>
             <AdminFormAsideCard title="Package workflow">
@@ -171,7 +208,7 @@ export default async function NewPackagePage() {
           cancelHref="/admin/packages"
           helper="Creates a safe non-indexed draft."
         />
-      </AdminForm>
+      </AdminActionForm>
     </AdminShell>
   );
 }
