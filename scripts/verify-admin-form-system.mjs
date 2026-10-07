@@ -40,6 +40,11 @@ const managedInlinePages = [
 ];
 
 const lightweightFilterPages = [
+  "apps/web/src/app/admin/packages/page.tsx",
+  "apps/web/src/app/admin/vehicles/page.tsx",
+  "apps/web/src/app/admin/drivers/page.tsx",
+  "apps/web/src/app/admin/leads/page.tsx",
+  "apps/web/src/app/admin/faq/page.tsx",
   "apps/web/src/app/admin/dispatch/page.tsx",
   "apps/web/src/app/admin/dispatch/calendar/page.tsx",
   "apps/web/src/app/admin/dispatch/resources/page.tsx",
