@@ -3,6 +3,15 @@ import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell } from "@/components/admin-shell";
+import {
+  AdminField,
+  AdminForm,
+  AdminFormActions,
+  AdminFormAsideCard,
+  AdminFormCallout,
+  AdminFormGrid,
+  AdminFormSection,
+} from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -89,45 +98,51 @@ export default async function NewCmsPage() {
     <AdminShell
       active="CMS Pages"
       title="New CMS Page"
-      subtitle="Create a draft page, then add body, SEO, hero media and publication settings."
-      actions={
-        <Link className="admin-secondary-button" href="/admin/cms">
-          ← CMS Pages
-        </Link>
-      }
+      subtitle="Create the page identity and summary first, then complete structured content, media, SEO and publishing."
+      actions={<Link className="admin-secondary-button" href="/admin/cms">← CMS Pages</Link>}
     >
-      <section className="admin-panel admin-detail-card">
-        <form action={createPage}>
-          <label>
-            Page title
-            <input name="title" required minLength={2} maxLength={180}/>
-          </label>
+      <AdminForm
+        action={createPage}
+        aside={
+          <>
+            <AdminFormAsideCard title="CMS workflow">
+              <ul>
+                <li>Create the draft URL and title.</li>
+                <li>Add structured content blocks.</li>
+                <li>Assign hero media and SEO.</li>
+                <li>Review before publishing.</li>
+              </ul>
+            </AdminFormAsideCard>
+            <AdminFormAsideCard title="Publishing default">
+              <p>New CMS pages are non-indexed drafts until publication settings are explicitly changed.</p>
+            </AdminFormAsideCard>
+          </>
+        }
+      >
+        <AdminFormSection title="Page identity" description="Primary page title and canonical URL slug." badge="Required">
+          <AdminFormGrid columns={2}>
+            <AdminField label="Page title" htmlFor="title" required>
+              <input id="title" name="title" required minLength={2} maxLength={180} placeholder="Privacy Policy" />
+            </AdminField>
+            <AdminField label="Slug" htmlFor="slug" required hint="Reserved application paths cannot be used.">
+              <input id="slug" name="slug" required placeholder="privacy-policy" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" />
+            </AdminField>
+          </AdminFormGrid>
+        </AdminFormSection>
 
-          <label>
-            Slug
-            <input
-              name="slug"
-              required
-              placeholder="privacy-policy"
-              pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-            />
-          </label>
+        <AdminFormSection title="Content summary" description="Short description used by editors and suitable for later SEO refinement.">
+          <AdminFormGrid columns={1}>
+            <AdminField label="Short description" htmlFor="excerpt" hint="Maximum 500 characters.">
+              <textarea id="excerpt" name="excerpt" maxLength={500} rows={5} placeholder="Briefly explain what this page covers." />
+            </AdminField>
+          </AdminFormGrid>
+          <AdminFormCallout title="Safe by default">
+            The page is created as a DRAFT with robots indexing disabled. Structured body, hero media, SEO metadata and publication are completed in the editor.
+          </AdminFormCallout>
+        </AdminFormSection>
 
-          <label>
-            Short description
-            <textarea name="excerpt" maxLength={500}/>
-          </label>
+        <AdminFormActions submitLabel="Create Draft Page" cancelHref="/admin/cms" helper="Creates a non-indexed CMS draft." />
+      </AdminForm>
 
-          <p>
-            New pages are created as non-indexed drafts. Publish them only after
-            their structured body and SEO settings are reviewed.
-          </p>
-
-          <button className="admin-primary-button" type="submit">
-            Create Draft Page
-          </button>
-        </form>
-      </section>
-    </AdminShell>
   );
 }
