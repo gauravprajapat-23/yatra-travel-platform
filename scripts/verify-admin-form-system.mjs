@@ -18,6 +18,27 @@ const newPages = [
 
 const actionNewPages = [];
 
+const managedInlinePages = [
+  {
+    file: "apps/web/src/app/admin/blog/categories/page.tsx",
+    fragments: [
+      "<AdminField",
+      "<AdminSubmitButton",
+    ],
+    label: "blog category management",
+  },
+  {
+    file: "apps/web/src/app/admin/settings/booking-policies/[id]/page.tsx",
+    fragments: [
+      "<AdminFormSection",
+      "<AdminSubmitButton",
+      "<AdminDateTimeRange",
+      "<AdminTextareaField",
+    ],
+    label: "booking policy version management",
+  },
+];
+
 const lightweightFilterPages = [
   "apps/web/src/app/admin/dispatch/page.tsx",
   "apps/web/src/app/admin/dispatch/calendar/page.tsx",
@@ -279,6 +300,24 @@ for (const file of actionNewPages) {
   process.stdout.write(`PASS shared action create form: ${file}\n`);
 }
 
+for (const item of managedInlinePages) {
+  const source = requireFragments(item.file, item.fragments);
+
+  if (source.includes("<label")) {
+    throw new Error(
+      `${item.file} contains raw <label> markup. Use shared admin field primitives.`,
+    );
+  }
+
+  if (/<button[^>]*type=["']submit["']/.test(source)) {
+    throw new Error(
+      `${item.file} contains a raw submit button. Use AdminSubmitButton or AdminConfirmSubmitButton.`,
+    );
+  }
+
+  process.stdout.write(`PASS managed inline admin form: ${item.label}\n`);
+}
+
 for (const file of lightweightFilterPages) {
   const source = requireFragments(file, ["<AdminField"]);
 
@@ -313,5 +352,5 @@ for (const file of tabbedEditors) {
 }
 
 process.stdout.write(
-  `Admin form-system certification passed: ${newPages.length} recoverable shared create pages, ${tabbedEditors.length} tabbed editors, ${lightweightFilterPages.length} lightweight shared filter pages, ${sharedComponents.length} shared components, ${primitiveCoverage.length} specialized primitive coverage checks.\n`,
+  `Admin form-system certification passed: ${newPages.length} recoverable shared create pages, ${tabbedEditors.length} tabbed editors, ${managedInlinePages.length} managed inline pages, ${lightweightFilterPages.length} lightweight shared filter pages, ${sharedComponents.length} shared components, ${primitiveCoverage.length} specialized primitive coverage checks.\n`,
 );
