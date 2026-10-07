@@ -372,15 +372,16 @@ async function processRefundEvent(
       }
     });
   } else if (eventType === "refund.failed") {
-    if (refund.status !== "PROCESSED") {
-      await db.refund.update({
-        where: { id: refund.id },
-        data: {
-          status: "FAILED",
-          providerRefundId: refund.providerRefundId ?? refundId,
-        },
-      });
-    }
+    await db.refund.updateMany({
+      where: {
+        id: refund.id,
+        status: { not: "PROCESSED" },
+      },
+      data: {
+        status: "FAILED",
+        providerRefundId: refund.providerRefundId ?? refundId,
+      },
+    });
   }
 
   return null;
