@@ -14,6 +14,7 @@ import {
 } from "@/components/admin-form";
 import { AdminMoneyField } from "@/components/admin-money-field";
 import { AdminCurrencyField } from "@/components/admin-currency-field";
+import { AdminDateTimeRange } from "@/components/admin-date-time-range";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   isPricingBasis,
@@ -208,12 +209,16 @@ export default async function NewPricingRulePage() {
 
         <AdminFormSection title="Activation" description="Control when the pricing rule may participate in server-side fare selection.">
           <AdminFormGrid columns={3}>
-            <AdminField label="Active from" htmlFor="activeFrom">
-              <input id="activeFrom" type="datetime-local" name="activeFrom" />
-            </AdminField>
-            <AdminField label="Active to" htmlFor="activeTo">
-              <input id="activeTo" type="datetime-local" name="activeTo" />
-            </AdminField>
+            <AdminDateTimeRange
+              startName="activeFrom"
+              endName="activeTo"
+              startLabel="Active from"
+              endLabel="Active to"
+              startId="activeFrom"
+              endId="activeTo"
+              startHint="Leave blank to allow immediate activation."
+              endHint="Optional expiry for this pricing rule."
+            />
             <AdminField label="Status" htmlFor="status">
               <select id="status" name="status" defaultValue="DRAFT">
                 {pricingRuleStatuses.map((item) => (
