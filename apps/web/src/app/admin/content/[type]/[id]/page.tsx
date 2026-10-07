@@ -5,6 +5,7 @@ import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
+import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminStructuredContentEditor } from "@/components/admin-structured-content-editor";
 import { AdminMediaPicker } from "@/components/admin-media-picker";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
@@ -502,9 +503,10 @@ export default async function AdminContentEditorPage({
                   </AdminField>
                 </AdminFormGrid>
 
-                <button className="admin-primary-button" type="submit">
-                  Save Blog Details
-                </button>
+                <AdminSubmitButton
+                  label="Save Blog Details"
+                  pendingLabel="Saving Blog Details…"
+                />
               </form>
             ) : (
               <dl>
@@ -562,9 +564,10 @@ export default async function AdminContentEditorPage({
                   destination to a non-temple kind.
                 </p>
 
-                <button className="admin-primary-button" type="submit">
-                  Save Destination Details
-                </button>
+                <AdminSubmitButton
+                  label="Save Destination Details"
+                  pendingLabel="Saving Destination…"
+                />
               </form>
             ) : (
               <dl>
@@ -699,9 +702,10 @@ export default async function AdminContentEditorPage({
                     </AdminField>
                   </AdminFormGrid>
 
-                  <button className="admin-primary-button" type="submit">
-                    Save Temple Profile
-                  </button>
+                  <AdminSubmitButton
+                  label="Save Temple Profile"
+                  pendingLabel="Saving Temple Profile…"
+                />
                 </form>
 
                 {destinationDetails.templeProfile ? (
@@ -730,9 +734,10 @@ export default async function AdminContentEditorPage({
             {hasPermission(session.roles, "content.write") ? (
               <form action={saveBody}>
                 <AdminStructuredContentEditor initialValue={content.body} />
-                <button className="admin-primary-button" type="submit">
-                  Save Structured Content
-                </button>
+                <AdminSubmitButton
+                  label="Save Structured Content"
+                  pendingLabel="Saving Content…"
+                />
               </form>
             ) : (
               <pre>{stringifyStructuredBody(content.body)}</pre>
@@ -766,9 +771,10 @@ export default async function AdminContentEditorPage({
                     altText: asset.altText,
                   }))}
                 />
-                <button className="admin-primary-button" type="submit">
-                  Save Hero Image
-                </button>
+                <AdminSubmitButton
+                  label="Save Hero Image"
+                  pendingLabel="Saving Hero Image…"
+                />
               </form>
             ) : null}
           </section>
@@ -880,9 +886,10 @@ export default async function AdminContentEditorPage({
                   />
                 </div>
 
-                <button className="admin-primary-button" type="submit">
-                  Save SEO & Publishing
-                </button>
+                <AdminSubmitButton
+                  label="Save SEO & Publishing"
+                  pendingLabel="Saving SEO…"
+                />
               </form>
             ) : (
               <p>Your role has read-only content access.</p>
