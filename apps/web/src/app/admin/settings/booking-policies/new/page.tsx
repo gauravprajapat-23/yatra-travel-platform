@@ -4,13 +4,16 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell } from "@/components/admin-shell";
 import {
   AdminField,
-  AdminForm,
   AdminFormActions,
   AdminFormAsideCard,
   AdminFormCallout,
   AdminFormGrid,
   AdminFormSection,
 } from "@/components/admin-form";
+import {
+  AdminActionForm,
+  type AdminActionState,
+} from "@/components/admin-action-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import { AdminDateTimeRange } from "@/components/admin-date-time-range";
 import {
@@ -33,7 +36,10 @@ export default async function NewBookingPolicyPage() {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "settings.manage")) redirect("/admin");
 
-  async function create(formData: FormData) {
+  async function create(
+    _previousState: AdminActionState,
+    formData: FormData,
+  ): Promise<AdminActionState> {
     "use server";
 
     const currentSession = await requireAdminSession();
@@ -41,36 +47,50 @@ export default async function NewBookingPolicyPage() {
       redirect("/admin/settings/booking-policies");
     }
 
-    const code = String(formData.get("code") ?? "");
-    if (!isBookingPolicyCode(code)) {
-      throw new Error("Invalid booking policy code.");
+    let policyId: string;
+
+    try {
+      const code = String(formData.get("code") ?? "");
+      if (!isBookingPolicyCode(code)) {
+        throw new Error("Invalid booking policy code.");
+      }
+
+      const rawDocument = JSON.stringify({
+        cancellation: String(formData.get("cancellation") ?? "").trim(),
+        refundEligibility: String(
+          formData.get("refundEligibility") ?? "",
+        ).trim(),
+        rescheduling: String(formData.get("rescheduling") ?? "").trim(),
+        noShow: String(formData.get("noShow") ?? "").trim(),
+        customerResponsibilities: String(
+          formData.get("customerResponsibilities") ?? "",
+        ).trim(),
+        serviceLimitations: String(
+          formData.get("serviceLimitations") ?? "",
+        ).trim(),
+        bookingTerms: String(formData.get("bookingTerms") ?? "").trim(),
+      });
+
+      const policy = await createBookingPolicyDraft({
+        code,
+        rawDocument,
+        effectiveFrom: parseOptionalDate(formData.get("effectiveFrom")),
+        effectiveTo: parseOptionalDate(formData.get("effectiveTo")),
+        actorUserId: currentSession.userId,
+      });
+
+      policyId = policy.id;
+    } catch (error) {
+      return {
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to create booking policy draft.",
+      };
     }
 
-    const rawDocument = JSON.stringify({
-      cancellation: String(formData.get("cancellation") ?? "").trim(),
-      refundEligibility: String(
-        formData.get("refundEligibility") ?? "",
-      ).trim(),
-      rescheduling: String(formData.get("rescheduling") ?? "").trim(),
-      noShow: String(formData.get("noShow") ?? "").trim(),
-      customerResponsibilities: String(
-        formData.get("customerResponsibilities") ?? "",
-      ).trim(),
-      serviceLimitations: String(
-        formData.get("serviceLimitations") ?? "",
-      ).trim(),
-      bookingTerms: String(formData.get("bookingTerms") ?? "").trim(),
-    });
-
-    const policy = await createBookingPolicyDraft({
-      code,
-      rawDocument,
-      effectiveFrom: parseOptionalDate(formData.get("effectiveFrom")),
-      effectiveTo: parseOptionalDate(formData.get("effectiveTo")),
-      actorUserId: currentSession.userId,
-    });
-
-    redirect(`/admin/settings/booking-policies/${policy.id}`);
+    redirect(`/admin/settings/booking-policies/${policyId}`);
   }
 
   return (
@@ -87,8 +107,9 @@ export default async function NewBookingPolicyPage() {
         </Link>
       }
     >
-      <AdminForm
+      <AdminActionForm
         action={create}
+        className="admin-form"
         aside={
           <>
             <AdminFormAsideCard title="Policy lifecycle">
@@ -230,7 +251,7 @@ export default async function NewBookingPolicyPage() {
           cancelHref="/admin/settings/booking-policies"
           helper="Activation is a separate privileged action."
         />
-      </AdminForm>
+      </AdminActionForm>
     </AdminShell>
   );
 }
