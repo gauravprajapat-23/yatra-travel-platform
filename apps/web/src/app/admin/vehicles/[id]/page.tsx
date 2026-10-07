@@ -7,6 +7,7 @@ import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminMediaPicker } from "@/components/admin-media-picker";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
+import { AdminConfirmSubmitButton } from "@/components/admin-confirm-submit-button";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { AdminDateTimeRange } from "@/components/admin-date-time-range";
 import { requireAdminSession } from "@/lib/auth/session";
@@ -387,10 +388,10 @@ export default async function VehicleDetailPage({
                         {hasPermission(session.roles, "vehicle.write") ? (
                           <form action={removeBlock}>
                             <input type="hidden" name="blockId" value={block.id}/>
-                            <AdminSubmitButton
-                              className="admin-danger-button"
+                            <AdminConfirmSubmitButton
                               label="Delete"
                               pendingLabel="Deleting…"
+                              confirmMessage="Delete this vehicle availability block? This cannot be undone."
                             />
                           </form>
                         ) : "—"}
@@ -467,10 +468,10 @@ export default async function VehicleDetailPage({
                         ) : null}
                         <form action={detachMedia}>
                           <input type="hidden" name="mediaId" value={item.mediaId}/>
-                          <AdminSubmitButton
-                            className="admin-danger-button"
+                          <AdminConfirmSubmitButton
                             label="Detach"
                             pendingLabel="Detaching…"
+                            confirmMessage="Detach this media asset from the vehicle? The media file itself will remain in the library."
                           />
                         </form>
                       </>
