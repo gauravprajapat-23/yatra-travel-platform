@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
-import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminPanelHeading, AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
@@ -168,12 +168,14 @@ export default async function PricingRuleDetailPage({
       <div className="admin-editor-section-stack">
         {activeTab === "overview" ? (
           <section className="admin-panel admin-detail-card">
-            <div className="admin-panel-heading">
-              <h2>Rule Overview</h2>
-              <StatusPill tone={tone(rule.status)}>
+            <AdminPanelHeading
+              title="Rule Overview"
+              meta={
+                <StatusPill tone={tone(rule.status)}>
                 {rule.status.replaceAll("_", " ")}
               </StatusPill>
-            </div>
+              }
+            />
             <dl>
               <div><dt>Vehicle class</dt><dd>{rule.vehicleClass.name}</dd></div>
               <div><dt>Trip type</dt><dd>{rule.tripType.replaceAll("_", " ")}</dd></div>
