@@ -10,6 +10,7 @@ import { AdminMediaPicker } from "@/components/admin-media-picker";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminMultiSelectCards } from "@/components/admin-multi-select-cards";
 import { AdminMoneyField } from "@/components/admin-money-field";
+import { AdminTextareaField } from "@/components/admin-textarea-field";
 import { AdminCurrencyField } from "@/components/admin-currency-field";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
@@ -1130,20 +1131,16 @@ export default async function PackageDetailPage({
                     />
                   </AdminField>
 
-                  <AdminField
+                  <AdminTextareaField
+                    id="packageSummary"
+                    name="summary"
                     label="Summary"
-                    htmlFor="packageSummary"
+                    defaultValue={pkg.summary ?? ""}
+                    maxLength={1000}
+                    rows={5}
                     wide
                     hint="Short public description used across package surfaces."
-                  >
-                    <textarea
-                      id="packageSummary"
-                      name="summary"
-                      defaultValue={pkg.summary ?? ""}
-                      maxLength={1000}
-                      rows={5}
-                    />
-                  </AdminField>
+                  />
 
                   <AdminField label="Status" htmlFor="packageStatus" required>
                     <select
@@ -1190,20 +1187,16 @@ export default async function PackageDetailPage({
                     />
                   </AdminField>
 
-                  <AdminField
+                  <AdminTextareaField
+                    id="packageSeoDescription"
+                    name="seoDescription"
                     label="SEO description"
-                    htmlFor="packageSeoDescription"
+                    defaultValue={pkg.seoDescription ?? ""}
+                    maxLength={320}
+                    rows={4}
                     wide
-                    hint="Maximum 320 characters."
-                  >
-                    <textarea
-                      id="packageSeoDescription"
-                      name="seoDescription"
-                      defaultValue={pkg.seoDescription ?? ""}
-                      maxLength={320}
-                      rows={4}
-                    />
-                  </AdminField>
+                    hint="Search-result description for this package."
+                  />
 
                   <AdminField
                     label="Canonical URL"
