@@ -220,39 +220,41 @@ export function AdminMediaManager({
 
       <section className="admin-panel">
         <div className="admin-media-toolbar">
-          <label className="admin-field">
-            <span className="admin-field__label">Search media</span>
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Filename, alt text, caption or MIME type"
-            />
-          </label>
+          <AdminFormGrid columns={2}>
+            <AdminField label="Search media" htmlFor="mediaSearch">
+              <input
+                id="mediaSearch"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Filename, alt text, caption or MIME type"
+              />
+            </AdminField>
 
-          <label className="admin-field">
-            <span className="admin-field__label">Filter</span>
-            <select
-              value={filter}
-              onChange={(event) =>
-                setFilter(
-                  event.target.value as
-                    | "ALL"
-                    | "IMAGES"
-                    | "PDFS"
-                    | "REFERENCED"
-                    | "ORPHANED"
-                    | "MISSING_ALT",
-                )
-              }
-            >
-              <option value="ALL">All assets</option>
-              <option value="IMAGES">Images</option>
-              <option value="PDFS">PDFs</option>
-              <option value="REFERENCED">Referenced</option>
-              <option value="ORPHANED">Orphaned / unused</option>
-              <option value="MISSING_ALT">Images missing alt text</option>
-            </select>
-          </label>
+            <AdminField label="Filter" htmlFor="mediaFilter">
+              <select
+                id="mediaFilter"
+                value={filter}
+                onChange={(event) =>
+                  setFilter(
+                    event.target.value as
+                      | "ALL"
+                      | "IMAGES"
+                      | "PDFS"
+                      | "REFERENCED"
+                      | "ORPHANED"
+                      | "MISSING_ALT",
+                  )
+                }
+              >
+                <option value="ALL">All assets</option>
+                <option value="IMAGES">Images</option>
+                <option value="PDFS">PDFs</option>
+                <option value="REFERENCED">Referenced</option>
+                <option value="ORPHANED">Orphaned / unused</option>
+                <option value="MISSING_ALT">Images missing alt text</option>
+              </select>
+            </AdminField>
+          </AdminFormGrid>
 
           <span className="admin-media-toolbar__count">
             {filteredMedia.length} of {media.length} assets
