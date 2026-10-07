@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   isPricingBasis,
@@ -66,13 +67,21 @@ function localDateTime(value: Date | null): string {
 
 export default async function PricingRuleDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "settings.manage")) redirect("/admin");
 
   const { id } = await params;
+  const { tab: requestedTab } = await searchParams;
+  const activeTab = ["overview", "details", "activation"].includes(
+    requestedTab ?? "",
+  )
+    ? requestedTab!
+    : "overview";
   const db = getDb();
 
   const [rule, classes] = await Promise.all([
@@ -139,149 +148,135 @@ export default async function PricingRuleDetailPage({
       active="Offers"
       title={rule.name}
       subtitle="Server-authoritative pricing rule"
-      actions={
-        <Link className="admin-secondary-button" href="/admin/offers">
-          ← Pricing Rules
-        </Link>
-      }
+      actions={<Link className="admin-secondary-button" href="/admin/offers">← Pricing Rules</Link>}
     >
-      <div className="admin-detail-grid">
-        <section className="admin-panel admin-detail-card">
-          <div className="admin-panel-heading">
-            <h2>Rule Overview</h2>
-            <StatusPill tone={tone(rule.status)}>
-              {rule.status.replaceAll("_", " ")}
-            </StatusPill>
-          </div>
+      <AdminEditorTabs
+        basePath={`/admin/offers/${rule.id}`}
+        active={activeTab}
+        tabs={[
+          { key: "overview", label: "Overview", description: "Scope & status" },
+          { key: "details", label: "Rule Details", description: "Fare calculation" },
+          { key: "activation", label: "Activation", description: "Dates & status" },
+        ]}
+      />
 
-          <dl>
-            <div><dt>Vehicle class</dt><dd>{rule.vehicleClass.name}</dd></div>
-            <div><dt>Trip type</dt><dd>{rule.tripType.replaceAll("_", " ")}</dd></div>
-            <div><dt>Basis</dt><dd>{rule.basis.replaceAll("_", " ")}</dd></div>
-            <div><dt>Priority</dt><dd>{rule.priority}</dd></div>
-            <div><dt>Origin scope</dt><dd>{rule.originKey ?? "Wildcard"}</dd></div>
-            <div><dt>Destination scope</dt><dd>{rule.destinationKey ?? "Wildcard"}</dd></div>
-          </dl>
-        </section>
+      <div className="admin-editor-section-stack">
+        {activeTab === "overview" ? (
+          <section className="admin-panel admin-detail-card">
+            <div className="admin-panel-heading">
+              <h2>Rule Overview</h2>
+              <StatusPill tone={tone(rule.status)}>
+                {rule.status.replaceAll("_", " ")}
+              </StatusPill>
+            </div>
+            <dl>
+              <div><dt>Vehicle class</dt><dd>{rule.vehicleClass.name}</dd></div>
+              <div><dt>Trip type</dt><dd>{rule.tripType.replaceAll("_", " ")}</dd></div>
+              <div><dt>Basis</dt><dd>{rule.basis.replaceAll("_", " ")}</dd></div>
+              <div><dt>Priority</dt><dd>{rule.priority}</dd></div>
+              <div><dt>Origin scope</dt><dd>{rule.originKey ?? "Wildcard"}</dd></div>
+              <div><dt>Destination scope</dt><dd>{rule.destinationKey ?? "Wildcard"}</dd></div>
+            </dl>
+          </section>
+        ) : null}
 
-        <section className="admin-panel admin-detail-card">
-          <h2>Edit Pricing Rule</h2>
+        {activeTab === "details" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Rule Details</h2>
+            <form action={save}>
+              <input type="hidden" name="activeFrom" value={localDateTime(rule.activeFrom)}/>
+              <input type="hidden" name="activeTo" value={localDateTime(rule.activeTo)}/>
+              <input type="hidden" name="status" value={rule.status}/>
 
-          <form action={save}>
-            <label>
-              Rule name
-              <input name="name" defaultValue={rule.name} required minLength={2} maxLength={160}/>
-            </label>
+              <label>
+                Rule name
+                <input name="name" defaultValue={rule.name} required minLength={2} maxLength={160}/>
+              </label>
 
-            <label>
-              Vehicle class
-              <select name="vehicleClassId" defaultValue={rule.vehicleClassId}>
-                {classes.map((item) => (
-                  <option key={item.id} value={item.id}>{item.name}</option>
-                ))}
-              </select>
-            </label>
+              <label>
+                Vehicle class
+                <select name="vehicleClassId" defaultValue={rule.vehicleClassId}>
+                  {classes.map((item) => (
+                    <option key={item.id} value={item.id}>{item.name}</option>
+                  ))}
+                </select>
+              </label>
 
-            <label>
-              Trip type
-              <select name="tripType" defaultValue={rule.tripType}>
-                {tripTypes.map((item) => (
-                  <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
-                ))}
-              </select>
-            </label>
+              <label>
+                Trip type
+                <select name="tripType" defaultValue={rule.tripType}>
+                  {tripTypes.map((item) => (
+                    <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
+                  ))}
+                </select>
+              </label>
 
-            <label>
-              Pricing basis
-              <select name="basis" defaultValue={rule.basis}>
-                {pricingBases.map((item) => (
-                  <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
-                ))}
-              </select>
-            </label>
+              <label>
+                Pricing basis
+                <select name="basis" defaultValue={rule.basis}>
+                  {pricingBases.map((item) => (
+                    <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
+                  ))}
+                </select>
+              </label>
 
-            <label>
-              Currency
-              <input name="currency" defaultValue={rule.currency} maxLength={3} required/>
-            </label>
+              <label>Currency<input name="currency" defaultValue={rule.currency} maxLength={3} required/></label>
+              <label>Fixed base amount<input name="baseAmount" inputMode="decimal" defaultValue={decimal(rule.baseAmountMinor)}/></label>
+              <label>Per-km amount<input name="perKm" inputMode="decimal" defaultValue={decimal(rule.perKmMinor)}/></label>
+              <label>Minimum distance (km)<input type="number" name="minimumDistanceKm" min={0} defaultValue={rule.minimumDistanceKm ?? ""}/></label>
+              <label>Driver allowance / day<input name="driverAllowancePerDay" inputMode="decimal" defaultValue={decimal(rule.driverAllowancePerDayMinor)}/></label>
+              <label>Night allowance<input name="nightAllowance" inputMode="decimal" defaultValue={decimal(rule.nightAllowanceMinor)}/></label>
+              <label>Origin scope key<input name="originKey" defaultValue={rule.originKey ?? ""} maxLength={200}/></label>
+              <label>Destination scope key<input name="destinationKey" defaultValue={rule.destinationKey ?? ""} maxLength={200}/></label>
+              <label>Priority<input type="number" name="priority" defaultValue={rule.priority} min={-100000} max={100000}/></label>
 
-            <label>
-              Fixed base amount
-              <input name="baseAmount" inputMode="decimal" defaultValue={decimal(rule.baseAmountMinor)}/>
-            </label>
+              <button className="admin-primary-button" type="submit">
+                Save Rule Details
+              </button>
+            </form>
+          </section>
+        ) : null}
 
-            <label>
-              Per-km amount
-              <input name="perKm" inputMode="decimal" defaultValue={decimal(rule.perKmMinor)}/>
-            </label>
+        {activeTab === "activation" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Activation & Effective Dates</h2>
+            <form action={save}>
+              <input type="hidden" name="name" value={rule.name}/>
+              <input type="hidden" name="vehicleClassId" value={rule.vehicleClassId}/>
+              <input type="hidden" name="tripType" value={rule.tripType}/>
+              <input type="hidden" name="basis" value={rule.basis}/>
+              <input type="hidden" name="currency" value={rule.currency}/>
+              <input type="hidden" name="baseAmount" value={decimal(rule.baseAmountMinor)}/>
+              <input type="hidden" name="perKm" value={decimal(rule.perKmMinor)}/>
+              <input type="hidden" name="minimumDistanceKm" value={rule.minimumDistanceKm ?? ""}/>
+              <input type="hidden" name="driverAllowancePerDay" value={decimal(rule.driverAllowancePerDayMinor)}/>
+              <input type="hidden" name="nightAllowance" value={decimal(rule.nightAllowanceMinor)}/>
+              <input type="hidden" name="originKey" value={rule.originKey ?? ""}/>
+              <input type="hidden" name="destinationKey" value={rule.destinationKey ?? ""}/>
+              <input type="hidden" name="priority" value={rule.priority}/>
 
-            <label>
-              Minimum distance (km)
-              <input type="number" name="minimumDistanceKm" min={0} defaultValue={rule.minimumDistanceKm ?? ""}/>
-            </label>
+              <label>Active from<input type="datetime-local" name="activeFrom" defaultValue={localDateTime(rule.activeFrom)}/></label>
+              <label>Active to<input type="datetime-local" name="activeTo" defaultValue={localDateTime(rule.activeTo)}/></label>
+              <label>
+                Status
+                <select name="status" defaultValue={rule.status}>
+                  {pricingRuleStatuses.map((item) => (
+                    <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
+                  ))}
+                </select>
+              </label>
 
-            <label>
-              Driver allowance / day
-              <input
-                name="driverAllowancePerDay"
-                inputMode="decimal"
-                defaultValue={decimal(rule.driverAllowancePerDayMinor)}
-              />
-            </label>
+              <p>
+                Activating a rule is rejected if another active rule has the same
+                class, trip type, route scope, priority and overlapping dates.
+              </p>
 
-            <label>
-              Night allowance
-              <input
-                name="nightAllowance"
-                inputMode="decimal"
-                defaultValue={decimal(rule.nightAllowanceMinor)}
-              />
-            </label>
-
-            <label>
-              Origin scope key
-              <input name="originKey" defaultValue={rule.originKey ?? ""} maxLength={200}/>
-            </label>
-
-            <label>
-              Destination scope key
-              <input name="destinationKey" defaultValue={rule.destinationKey ?? ""} maxLength={200}/>
-            </label>
-
-            <label>
-              Priority
-              <input type="number" name="priority" defaultValue={rule.priority} min={-100000} max={100000}/>
-            </label>
-
-            <label>
-              Active from
-              <input type="datetime-local" name="activeFrom" defaultValue={localDateTime(rule.activeFrom)}/>
-            </label>
-
-            <label>
-              Active to
-              <input type="datetime-local" name="activeTo" defaultValue={localDateTime(rule.activeTo)}/>
-            </label>
-
-            <label>
-              Status
-              <select name="status" defaultValue={rule.status}>
-                {pricingRuleStatuses.map((item) => (
-                  <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
-                ))}
-              </select>
-            </label>
-
-            <p>
-              Activating a rule is rejected if another active rule has the same
-              class, trip type, route scope, priority and overlapping dates.
-            </p>
-
-            <button className="admin-primary-button" type="submit">
-              Save Pricing Rule
-            </button>
-          </form>
-        </section>
+              <button className="admin-primary-button" type="submit">
+                Save Activation
+              </button>
+            </form>
+          </section>
+        ) : null}
       </div>
     </AdminShell>
   );
