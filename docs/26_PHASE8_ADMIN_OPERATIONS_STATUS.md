@@ -42,15 +42,15 @@ Assignment writes continue to use the existing server-authoritative assignment s
 ## Remaining Phase 8 work
 
 ### Booking operations
-- [ ] Add richer operational filters for departure date and assignment state
+- [x] Add richer operational filters for departure date and assignment state
 - [ ] Add safe bulk operational actions where they do not weaken lifecycle validation
 - [ ] Improve booking timeline/event visibility
 - [ ] Add cancellation/refund operational summaries
-- [ ] Add printable/exportable booking operational summary
+- [x] Add permission-gated CSV booking export
 
 ### Dispatch
-- [ ] Add resource-specific schedule views for vehicles and drivers
-- [ ] Add explicit overlap/conflict indicators before assignment submission
+- [x] Add resource-specific schedule views for vehicles and drivers
+- [x] Add explicit overlap/conflict indicators before assignment submission
 - [ ] Add maintenance/document-expiry operational warnings when corresponding source data exists
 - [ ] Add configurable near-term departure alerts
 - [ ] Add package/tour operations handoff once package departure inventory exists
