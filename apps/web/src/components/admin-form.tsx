@@ -1,4 +1,5 @@
 import type { FormHTMLAttributes, ReactNode } from "react";
+import { AdminSubmitButton } from "@/components/admin-submit-button";
 
 type AdminFormProps = FormHTMLAttributes<HTMLFormElement> & {
   children: ReactNode;
@@ -184,9 +185,10 @@ export function AdminFormActions({
         <a className="admin-secondary-button" href={cancelHref}>
           Cancel
         </a>
-        <button className="admin-primary-button" type="submit">
-          {submitLabel}
-        </button>
+        <AdminSubmitButton
+          label={submitLabel}
+          pendingLabel="Saving…"
+        />
       </div>
     </footer>
   );
