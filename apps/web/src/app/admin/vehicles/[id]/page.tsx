@@ -432,9 +432,10 @@ export default async function VehicleDetailPage({
                   </AdminField>
                 </AdminFormGrid>
 
-                <button className="admin-primary-button" type="submit">
-                  Add Block
-                </button>
+                <AdminSubmitButton
+                  label="Add Block"
+                  pendingLabel="Adding Block…"
+                />
               </form>
             ) : null}
           </section>
