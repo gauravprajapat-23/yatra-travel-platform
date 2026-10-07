@@ -4,10 +4,7 @@ import { getDb, Prisma } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
 import { requireAdminSession } from "@/lib/auth/session";
-import {
-  vehicleStatuses,
-  type VehicleStatus,
-} from "@/modules/fleet/fleet-management-service";
+import { vehicleStatuses } from "@/modules/fleet/fleet-management-service";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +17,9 @@ function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
   return "gray";
 }
 
-function isVehicleStatus(value: string): value is VehicleStatus {
+type VehicleStatusValue = (typeof vehicleStatuses)[number];
+
+function isVehicleStatus(value: string): value is VehicleStatusValue {
   return (vehicleStatuses as readonly string[]).includes(value);
 }
 
@@ -39,7 +38,7 @@ export default async function AdminVehiclesPage({
   const params = await searchParams;
   const q = String(params.q ?? "").trim().slice(0, 120);
   const status = isVehicleStatus(String(params.status ?? ""))
-    ? (String(params.status) as VehicleStatus)
+    ? (String(params.status) as VehicleStatusValue)
     : null;
   const requestedPage = Number(params.page ?? "1");
   const page =
