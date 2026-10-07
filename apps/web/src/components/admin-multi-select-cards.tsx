@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
 export type AdminMultiSelectOption = {
   id: string;
@@ -17,6 +17,7 @@ export function AdminMultiSelectCards({
   options: AdminMultiSelectOption[];
   defaultValues?: string[];
 }) {
+  const searchId = useId();
   const [query, setQuery] = useState("");
   const selected = new Set(defaultValues);
   const needle = query.trim().toLowerCase();
@@ -30,16 +31,22 @@ export function AdminMultiSelectCards({
 
   return (
     <div className="admin-multi-select">
-      <label className="admin-field">
+      <label className="admin-field" htmlFor={searchId}>
         <span className="admin-field__label">Search</span>
         <input
+          id={searchId}
+          type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search options…"
         />
       </label>
 
-      <div className="admin-multi-select__grid">
+      <div
+        className="admin-multi-select__grid"
+        role="group"
+        aria-label="Selectable options"
+      >
         {options.map((option) => (
           <label
             className="admin-multi-select__item"
