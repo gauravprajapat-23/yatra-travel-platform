@@ -12,6 +12,7 @@ import {
   AdminFormGrid,
   AdminFormSection,
 } from "@/components/admin-form";
+import { AdminSlugFields } from "@/components/admin-slug-fields";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -111,12 +112,12 @@ export default async function NewDestinationPage() {
       >
         <AdminFormSection title="Destination identity" description="Public name, URL slug and destination category." badge="Required">
           <AdminFormGrid columns={2}>
-            <AdminField label="Destination name" htmlFor="name" required>
-              <input id="name" name="name" required minLength={2} maxLength={180} placeholder="Ujjain" />
-            </AdminField>
-            <AdminField label="Slug" htmlFor="slug" required hint="Use a short stable URL identifier.">
-              <input id="slug" name="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="ujjain" />
-            </AdminField>
+            <AdminSlugFields
+              sourceLabel="Destination name"
+              sourceName="name"
+              sourcePlaceholder="Ujjain"
+              slugPlaceholder="ujjain"
+            />
             <AdminField label="Kind" htmlFor="kind" required>
               <select id="kind" name="kind" defaultValue="CITY">
                 {destinationKinds.map((kind) => (
