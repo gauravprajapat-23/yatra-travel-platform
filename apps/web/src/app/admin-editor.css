@@ -554,3 +554,31 @@
   color: #c55e18;
   outline: none;
 }
+
+
+.admin-assignment-conflicts {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.admin-assignment-conflicts > div {
+  display: grid;
+  gap: 5px;
+  padding: 10px 11px;
+  border: 1px solid #ead9c7;
+  border-radius: 9px;
+  background: #fff9f3;
+}
+
+.admin-assignment-conflicts strong {
+  color: #7d4e26;
+  font-size: .64rem;
+}
+
+.admin-assignment-conflicts small {
+  display: block;
+  color: #735f4f;
+  font-size: .58rem;
+  line-height: 1.45;
+}
