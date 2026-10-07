@@ -3,6 +3,17 @@ import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell } from "@/components/admin-shell";
+import {
+  AdminCheckbox,
+  AdminCheckboxGrid,
+  AdminField,
+  AdminForm,
+  AdminFormActions,
+  AdminFormAsideCard,
+  AdminFormCallout,
+  AdminFormGrid,
+  AdminFormSection,
+} from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import { createVehicle } from "@/modules/fleet/fleet-management-service";
 
@@ -62,67 +73,74 @@ export default async function NewVehiclePage() {
     <AdminShell
       active="Fleet Management"
       title="New Vehicle"
-      subtitle="Create a fleet record that can be used by pricing and booking assignment."
-      actions={
-        <Link className="admin-secondary-button" href="/admin/vehicles">
-          ← Vehicles
-        </Link>
-      }
+      subtitle="Add a fleet vehicle with assignment capacity, public visibility and operational details."
+      actions={<Link className="admin-secondary-button" href="/admin/vehicles">← Vehicles</Link>}
     >
-      <section className="admin-panel admin-detail-card">
-        <form action={create}>
-          <label>
-            Vehicle name
-            <input name="displayName" required minLength={2} maxLength={120} />
-          </label>
+      <AdminForm
+        action={create}
+        aside={
+          <>
+            <AdminFormAsideCard title="Fleet checklist">
+              <ul>
+                <li>Use the exact registration number.</li>
+                <li>Choose the correct vehicle class.</li>
+                <li>Set realistic seat and luggage capacity.</li>
+                <li>Feature only vehicles suitable for public promotion.</li>
+              </ul>
+            </AdminFormAsideCard>
+            <AdminFormAsideCard title="Booking impact">
+              <p>Vehicle class and capacity are used by quoting and booking assignment, so operational values must be accurate.</p>
+            </AdminFormAsideCard>
+          </>
+        }
+      >
+        <AdminFormSection title="Vehicle identity" description="Core fleet identity used throughout operations and assignment." badge="Required">
+          <AdminFormGrid columns={2}>
+            <AdminField label="Vehicle name" htmlFor="displayName" required>
+              <input id="displayName" name="displayName" required minLength={2} maxLength={120} placeholder="Toyota Innova Crysta" />
+            </AdminField>
+            <AdminField label="Registration number" htmlFor="registrationNumber" required>
+              <input id="registrationNumber" name="registrationNumber" required maxLength={30} placeholder="MP 09 AB 1234" />
+            </AdminField>
+            <AdminField label="Vehicle class" htmlFor="vehicleClassId" required hint="Controls pricing and driver qualification compatibility.">
+              <select id="vehicleClassId" name="vehicleClassId" required defaultValue="">
+                <option value="" disabled>Select class</option>
+                {classes.map((item) => (
+                  <option key={item.id} value={item.id}>{item.name}</option>
+                ))}
+              </select>
+            </AdminField>
+          </AdminFormGrid>
+        </AdminFormSection>
 
-          <label>
-            Registration number
-            <input name="registrationNumber" required maxLength={30} />
-          </label>
+        <AdminFormSection title="Capacity & amenities" description="Operational capacity and public-facing vehicle features.">
+          <AdminFormGrid columns={2}>
+            <AdminField label="Seats" htmlFor="seats" required>
+              <input id="seats" type="number" name="seats" min={1} max={80} required />
+            </AdminField>
+            <AdminField label="Luggage capacity" htmlFor="luggage" hint="Optional bag count/capacity indicator.">
+              <input id="luggage" type="number" name="luggage" min={0} max={100} />
+            </AdminField>
+          </AdminFormGrid>
+          <AdminCheckboxGrid>
+            <AdminCheckbox name="airConditioned" defaultChecked label="Air conditioned" description="Show this vehicle as AC-equipped." />
+            <AdminCheckbox name="isFeatured" label="Featured vehicle" description="Allow this vehicle to appear prominently on public fleet pages." />
+          </AdminCheckboxGrid>
+        </AdminFormSection>
 
-          <label>
-            Vehicle class
-            <select name="vehicleClassId" required defaultValue="">
-              <option value="" disabled>Select class</option>
-              {classes.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-          </label>
+        <AdminFormSection title="Description" description="Optional public and operational context for this fleet vehicle.">
+          <AdminFormGrid columns={1}>
+            <AdminField label="Vehicle description" htmlFor="description" hint="Maximum 2,000 characters.">
+              <textarea id="description" name="description" maxLength={2000} rows={6} placeholder="Describe comfort, suitability, luggage space and common trip use." />
+            </AdminField>
+          </AdminFormGrid>
+          <AdminFormCallout title="Next step">
+            After creation you can add media, update operational status and manage availability from the vehicle detail page.
+          </AdminFormCallout>
+        </AdminFormSection>
 
-          <label>
-            Seats
-            <input type="number" name="seats" min={1} max={80} required />
-          </label>
+        <AdminFormActions submitLabel="Create Vehicle" cancelHref="/admin/vehicles" helper="Creates an operational fleet record." />
+      </AdminForm>
 
-          <label>
-            Luggage capacity
-            <input type="number" name="luggage" min={0} max={100} />
-          </label>
-
-          <label>
-            Description
-            <textarea name="description" maxLength={2000} />
-          </label>
-
-          <label>
-            <input type="checkbox" name="airConditioned" defaultChecked />
-            Air conditioned
-          </label>
-
-          <label>
-            <input type="checkbox" name="isFeatured" />
-            Featured on public fleet pages
-          </label>
-
-          <button className="admin-primary-button" type="submit">
-            Create Vehicle
-          </button>
-        </form>
-      </section>
-    </AdminShell>
   );
 }
