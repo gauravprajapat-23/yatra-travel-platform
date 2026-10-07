@@ -322,10 +322,43 @@ export default async function DriverDetailPage({
             {hasPermission(session.roles, "driver.write") ? (
               <form action={addBlock}>
                 <h3>Add Availability Block</h3>
-                <label>Starts<input type="datetime-local" name="startsAt" required/></label>
-                <label>Ends<input type="datetime-local" name="endsAt" required/></label>
-                <label>Reason<textarea name="reason" maxLength={500}/></label>
-                <button className="admin-primary-button" type="submit">Add Block</button>
+                <AdminFormGrid columns={2}>
+                  <AdminField label="Starts" htmlFor="driverBlockStarts" required>
+                    <input
+                      id="driverBlockStarts"
+                      type="datetime-local"
+                      name="startsAt"
+                      required
+                    />
+                  </AdminField>
+
+                  <AdminField label="Ends" htmlFor="driverBlockEnds" required>
+                    <input
+                      id="driverBlockEnds"
+                      type="datetime-local"
+                      name="endsAt"
+                      required
+                    />
+                  </AdminField>
+
+                  <AdminField
+                    label="Reason"
+                    htmlFor="driverBlockReason"
+                    wide
+                    hint="Leave, training or another operational reason."
+                  >
+                    <textarea
+                      id="driverBlockReason"
+                      name="reason"
+                      maxLength={500}
+                      rows={4}
+                    />
+                  </AdminField>
+                </AdminFormGrid>
+
+                <button className="admin-primary-button" type="submit">
+                  Add Block
+                </button>
               </form>
             ) : null}
           </section>
