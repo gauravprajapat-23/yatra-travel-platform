@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminMetric, AdminShell } from "@/components/admin-shell";
+import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -231,6 +232,14 @@ export default async function ReportsPage({
       ? `${from || "…"} → ${to || "…"} (IST)`
       : "All-time activity";
 
+  const exportParams = new URLSearchParams();
+  if (from) exportParams.set("from", from);
+  if (to) exportParams.set("to", to);
+  const exportQuery = exportParams.toString();
+  const exportHref = exportQuery
+    ? `/api/admin/reports/export?${exportQuery}`
+    : "/api/admin/reports/export";
+
   const dayKey = (value: Date) =>
     value.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
 
@@ -313,18 +322,33 @@ export default async function ReportsPage({
       active="Reports"
       title="Reports"
       subtitle="Live operational and financial summary from Neon."
+      actions={
+        <Link className="admin-primary-button" href={exportHref}>
+          Export CSV
+        </Link>
+      }
     >
       <section className="admin-panel admin-card-body">
         <form className="admin-table-query admin-table-query--compact" method="get">
-          <label>
-            <span>From date (IST)</span>
-            <input type="date" name="from" defaultValue={from} />
-          </label>
+          <AdminFormGrid columns={2}>
+            <AdminField label="From date (IST)" htmlFor="reportFrom">
+              <input
+                id="reportFrom"
+                type="date"
+                name="from"
+                defaultValue={from}
+              />
+            </AdminField>
 
-          <label>
-            <span>To date (IST)</span>
-            <input type="date" name="to" defaultValue={to} />
-          </label>
+            <AdminField label="To date (IST)" htmlFor="reportTo">
+              <input
+                id="reportTo"
+                type="date"
+                name="to"
+                defaultValue={to}
+              />
+            </AdminField>
+          </AdminFormGrid>
 
           <button className="admin-primary-button" type="submit">
             Apply Range
