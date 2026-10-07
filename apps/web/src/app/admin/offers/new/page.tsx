@@ -184,6 +184,7 @@ export default async function NewPricingRulePage() {
               name="nightAllowance"
               label="Night allowance"
               currency="INR"
+              currencyInputId="currency"
             />
           </AdminFormGrid>
         </AdminFormSection>
