@@ -67,10 +67,10 @@ Assignment writes continue to use the existing server-authoritative assignment s
 - [ ] Add document-compliance lifecycle if introduced in the data model
 
 ### Admin QA
-- [~] Admin runtime certification started: unauthenticated route-protection suite is wired into Application CI; authenticated workflow E2E remains
+- [~] Admin runtime certification now covers unauthenticated protection plus authenticated login/session/protected-page/export/logout flows against a migrated CI Postgres database; browser-level interaction E2E remains
 - [ ] Verify mobile table/dispatch usability
 - [ ] Verify keyboard/focus behavior
-- [~] Permission/audit certification in progress; bulk booking mutations are permission checked, lifecycle validated and audited
+- [~] Permission/audit certification in progress; role-permission matrix tests are locked in CI, login success/failure audit persistence is runtime-certified, and bulk booking mutations are permission checked, lifecycle validated and audited
 - [ ] Final production build / CI certification
 
 ## Phase 8 acceptance rule
