@@ -5,7 +5,6 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell } from "@/components/admin-shell";
 import {
   AdminField,
-  AdminForm,
   AdminFormActions,
   AdminFormAsideCard,
   AdminFormCallout,
@@ -14,6 +13,10 @@ import {
 } from "@/components/admin-form";
 import { AdminSlugFields } from "@/components/admin-slug-fields";
 import { AdminTextareaField } from "@/components/admin-textarea-field";
+import {
+  AdminActionForm,
+  type AdminActionState,
+} from "@/components/admin-action-form";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -36,64 +39,81 @@ export default async function NewCmsPage() {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "content.write")) redirect("/admin/cms");
 
-  async function createPage(formData: FormData) {
+  async function createPage(
+    _previousState: AdminActionState,
+    formData: FormData,
+  ): Promise<AdminActionState> {
     "use server";
 
-    const currentSession = await requireAdminSession();
-    if (!hasPermission(currentSession.roles, "content.write")) {
-      redirect("/admin/cms");
-    }
+    let createdId: string;
 
-    const db = getDb();
-    const title = String(formData.get("title") ?? "").trim();
-    const slug = normalizeSlug(String(formData.get("slug") ?? ""));
-    const excerpt = String(formData.get("excerpt") ?? "").trim();
+    try {
+      const currentSession = await requireAdminSession();
+      if (!hasPermission(currentSession.roles, "content.write")) {
+        redirect("/admin/cms");
+      }
 
-    if (title.length < 2 || title.length > 180) {
-      throw new Error("Title must be between 2 and 180 characters.");
-    }
+      const db = getDb();
+      const title = String(formData.get("title") ?? "").trim();
+      const slug = normalizeSlug(String(formData.get("slug") ?? ""));
+      const excerpt = String(formData.get("excerpt") ?? "").trim();
 
-    assertSlug(slug);
+      if (title.length < 2 || title.length > 180) {
+        throw new Error("Title must be between 2 and 180 characters.");
+      }
 
-    const existing = await db.cmsPage.findUnique({
-      where: { slug },
-      select: { id: true },
-    });
+      assertSlug(slug);
 
-    if (existing) {
-      throw new Error("A CMS page with this slug already exists.");
-    }
-
-    const page = await db.$transaction(async (tx) => {
-      const created = await tx.cmsPage.create({
-        data: {
-          slug,
-          title,
-          excerpt: excerpt || null,
-          body: [],
-          status: "DRAFT",
-          robotsIndex: false,
-          robotsFollow: false,
-        },
+      const existing = await db.cmsPage.findUnique({
+        where: { slug },
+        select: { id: true },
       });
 
-      await tx.auditLog.create({
-        data: {
-          actorUserId: currentSession.userId,
-          action: "CMS_PAGE_CREATED",
-          entityType: "CmsPage",
-          entityId: created.id,
-          metadata: {
+      if (existing) {
+        throw new Error("A CMS page with this slug already exists.");
+      }
+
+      const page = await db.$transaction(async (tx) => {
+        const created = await tx.cmsPage.create({
+          data: {
             slug,
             title,
+            excerpt: excerpt || null,
+            body: [],
+            status: "DRAFT",
+            robotsIndex: false,
+            robotsFollow: false,
           },
-        },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            actorUserId: currentSession.userId,
+            action: "CMS_PAGE_CREATED",
+            entityType: "CmsPage",
+            entityId: created.id,
+            metadata: {
+              slug,
+              title,
+            },
+          },
+        });
+
+        return created;
       });
 
-      return created;
-    });
+      createdId = page.id;
+    } catch (error) {
+      return {
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to create CMS page.",
+      };
+    }
 
-    redirect(`/admin/content/cms/${page.id}`);
+    redirect(`/admin/content/cms/${createdId}`);
   }
 
   return (
@@ -103,8 +123,9 @@ export default async function NewCmsPage() {
       subtitle="Create the page identity and summary first, then complete structured content, media, SEO and publishing."
       actions={<Link className="admin-secondary-button" href="/admin/cms">← CMS Pages</Link>}
     >
-      <AdminForm
+      <AdminActionForm
         action={createPage}
+        className="admin-form"
         aside={
           <>
             <AdminFormAsideCard title="CMS workflow">
@@ -151,7 +172,7 @@ export default async function NewCmsPage() {
         </AdminFormSection>
 
         <AdminFormActions submitLabel="Create Draft Page" cancelHref="/admin/cms" helper="Creates a non-indexed CMS draft." />
-      </AdminForm>
+      </AdminActionForm>
     </AdminShell>
   );
 }
