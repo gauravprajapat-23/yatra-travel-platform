@@ -4,10 +4,7 @@ import { getDb, Prisma } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
 import { requireAdminSession } from "@/lib/auth/session";
-import {
-  contentStatuses,
-  type ContentStatus,
-} from "@/modules/content/admin-content-service";
+import { contentStatuses } from "@/modules/content/admin-content-service";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +26,9 @@ function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
   return "gray";
 }
 
-function isContentStatus(value: string): value is ContentStatus {
+type ContentStatusValue = (typeof contentStatuses)[number];
+
+function isContentStatus(value: string): value is ContentStatusValue {
   return (contentStatuses as readonly string[]).includes(value);
 }
 
@@ -48,7 +47,7 @@ export default async function PackagesPage({
   const params = await searchParams;
   const q = String(params.q ?? "").trim().slice(0, 120);
   const status = isContentStatus(String(params.status ?? ""))
-    ? (String(params.status) as ContentStatus)
+    ? (String(params.status) as ContentStatusValue)
     : null;
   const requestedPage = Number(params.page ?? "1");
   const page =
