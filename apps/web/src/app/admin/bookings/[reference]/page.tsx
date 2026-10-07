@@ -190,6 +190,19 @@ export default async function BookingDetailPage({
               qualifications: {
                 some: { vehicleClassId: booking.vehicleClassId },
               },
+              OR: [
+                { licenseExpiry: null },
+                {
+                  licenseExpiry: {
+                    gte:
+                      booking.endsAt ??
+                      new Date(
+                        booking.startsAt.getTime() +
+                          12 * 60 * 60 * 1000,
+                      ),
+                  },
+                },
+              ],
             },
             orderBy: { displayName: "asc" },
             select: {
