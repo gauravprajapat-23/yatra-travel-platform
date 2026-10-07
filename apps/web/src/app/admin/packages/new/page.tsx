@@ -12,6 +12,7 @@ import {
   AdminFormGrid,
   AdminFormSection,
 } from "@/components/admin-form";
+import { AdminSlugFields } from "@/components/admin-slug-fields";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -120,17 +121,12 @@ export default async function NewPackagePage() {
           badge="Required"
         >
           <AdminFormGrid columns={2}>
-            <AdminField label="Package title" htmlFor="title" required>
-              <input id="title" name="title" required minLength={2} maxLength={180} placeholder="Mahakal & Omkareshwar Spiritual Circuit" />
-            </AdminField>
-            <AdminField
-              label="Slug"
-              htmlFor="slug"
-              required
-              hint="Lowercase letters, numbers and single hyphens only."
-            >
-              <input id="slug" name="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="ujjain-omkareshwar-3d2n" />
-            </AdminField>
+            <AdminSlugFields
+              sourceLabel="Package title"
+              sourceName="title"
+              sourcePlaceholder="Mahakal & Omkareshwar Spiritual Circuit"
+              slugPlaceholder="ujjain-omkareshwar-3d2n"
+            />
           </AdminFormGrid>
         </AdminFormSection>
 
