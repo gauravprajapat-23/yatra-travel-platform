@@ -5,6 +5,7 @@ import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
+import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
@@ -337,9 +338,10 @@ export default async function PricingRuleDetailPage({
                 </AdminField>
               </AdminFormGrid>
 
-              <button className="admin-primary-button" type="submit">
-                Save Rule Details
-              </button>
+              <AdminSubmitButton
+                label="Save Rule Details"
+                pendingLabel="Saving Rule…"
+              />
             </form>
           </section>
         ) : null}
@@ -406,9 +408,10 @@ export default async function PricingRuleDetailPage({
                 class, trip type, route scope, priority and overlapping dates.
               </p>
 
-              <button className="admin-primary-button" type="submit">
-                Save Activation
-              </button>
+              <AdminSubmitButton
+                label="Save Activation"
+                pendingLabel="Saving Activation…"
+              />
             </form>
           </section>
         ) : null}
