@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
-import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminPanelHeading, AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminMediaPicker } from "@/components/admin-media-picker";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
@@ -249,10 +249,12 @@ export default async function VehicleDetailPage({
       <div className="admin-editor-section-stack">
         {activeTab === "overview" ? (
           <section className="admin-panel admin-detail-card">
-            <div className="admin-panel-heading">
-              <h2>Vehicle Overview</h2>
-              <StatusPill tone={tone(vehicle.status)}>{vehicle.status.replaceAll("_", " ")}</StatusPill>
-            </div>
+            <AdminPanelHeading
+              title="Vehicle Overview"
+              meta={
+                <StatusPill tone={tone(vehicle.status)}>{vehicle.status.replaceAll("_", " ")}</StatusPill>
+              }
+            />
             <dl>
               <div><dt>Class</dt><dd>{vehicle.vehicleClass.name}</dd></div>
               <div><dt>Seats</dt><dd>{vehicle.seats}</dd></div>
