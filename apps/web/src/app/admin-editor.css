@@ -961,3 +961,19 @@
     width: 100%;
   }
 }
+
+
+.admin-panel-heading__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 700px) {
+  .admin-panel-heading__actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+}
