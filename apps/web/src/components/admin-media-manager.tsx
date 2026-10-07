@@ -165,24 +165,50 @@ export function AdminMediaManager({
         <section className="admin-panel admin-card-body">
           <h2>Upload Media</h2>
           <form action={upload}>
-            <label>
-              File
-              <input
-                type="file"
-                name="file"
-                accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
-                required
-              />
-            </label>
-            <label>
-              Alt text
-              <input name="altText" maxLength={300} placeholder="Describe the asset for accessibility"/>
-            </label>
-            <label>
-              Caption
-              <textarea name="caption" maxLength={500} placeholder="Optional internal/public caption"/>
-            </label>
-            <button className="admin-primary-button" type="submit" disabled={uploading}>
+            <AdminFormGrid columns={2}>
+              <AdminField label="File" htmlFor="mediaFile" required wide>
+                <input
+                  id="mediaFile"
+                  type="file"
+                  name="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
+                  required
+                />
+              </AdminField>
+
+              <AdminField
+                label="Alt text"
+                htmlFor="mediaAltText"
+                hint="Required for meaningful public images whenever possible."
+              >
+                <input
+                  id="mediaAltText"
+                  name="altText"
+                  maxLength={300}
+                  placeholder="Describe the asset for accessibility"
+                />
+              </AdminField>
+
+              <AdminField
+                label="Caption"
+                htmlFor="mediaCaption"
+                hint="Optional public/internal caption."
+              >
+                <textarea
+                  id="mediaCaption"
+                  name="caption"
+                  maxLength={500}
+                  rows={4}
+                  placeholder="Optional caption"
+                />
+              </AdminField>
+            </AdminFormGrid>
+
+            <button
+              className="admin-primary-button"
+              type="submit"
+              disabled={uploading}
+            >
               {uploading ? "Uploading…" : "Upload File"}
             </button>
           </form>
