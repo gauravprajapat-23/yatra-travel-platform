@@ -4,8 +4,6 @@ import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell } from "@/components/admin-shell";
 import {
-  AdminCheckbox,
-  AdminCheckboxGrid,
   AdminField,
   AdminForm,
   AdminFormActions,
