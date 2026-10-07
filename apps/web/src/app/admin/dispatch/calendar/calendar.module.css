@@ -1,0 +1,72 @@
+.scroll {
+  overflow-x: auto;
+  padding: 0 14px 14px;
+}
+
+.grid {
+  display: grid;
+  min-width: max-content;
+  border-top: 1px solid #e7e0d6;
+  border-left: 1px solid #e7e0d6;
+}
+
+.grid > * {
+  min-width: 0;
+  padding: 9px 10px;
+  border-right: 1px solid #e7e0d6;
+  border-bottom: 1px solid #e7e0d6;
+}
+
+.corner,
+.day {
+  background: #f8f3ec;
+  color: #5e6963;
+  font-size: .61rem;
+  font-weight: 800;
+}
+
+.resource {
+  display: grid;
+  gap: 2px;
+  background: #fffdfa;
+}
+
+.resource a {
+  color: #32473e;
+  font-size: .65rem;
+  font-weight: 800;
+}
+
+.resource small {
+  color: #8a908c;
+  font-size: .56rem;
+}
+
+.cell {
+  display: grid;
+  min-height: 42px;
+  place-items: center;
+  text-align: center;
+  font-size: .56rem;
+  font-weight: 800;
+}
+
+.free {
+  background: #f3faf6;
+  color: #26784d;
+}
+
+.busy {
+  background: #eef5fb;
+  color: #2e6691;
+}
+
+.blocked {
+  background: #fff6eb;
+  color: #aa651b;
+}
+
+.cell a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
