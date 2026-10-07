@@ -3,6 +3,15 @@ import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell } from "@/components/admin-shell";
+import {
+  AdminField,
+  AdminForm,
+  AdminFormActions,
+  AdminFormAsideCard,
+  AdminFormCallout,
+  AdminFormGrid,
+  AdminFormSection,
+} from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -84,34 +93,81 @@ export default async function NewPackagePage() {
     <AdminShell
       active="Tours & Packages"
       title="New Package"
-      subtitle="Create a draft package, then configure destinations, body, itinerary, pricing, hero media and SEO."
+      subtitle="Create the package foundation first. Itinerary, destinations, pricing, media and SEO can be completed after the draft exists."
       actions={<Link className="admin-secondary-button" href="/admin/packages">← Packages</Link>}
     >
-      <section className="admin-panel admin-detail-card">
-        <form action={createPackage}>
-          <label>
-            Package title
-            <input name="title" required minLength={2} maxLength={180}/>
-          </label>
-          <label>
-            Slug
-            <input name="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="ujjain-omkareshwar-3d2n"/>
-          </label>
-          <label>
-            Duration days
-            <input type="number" name="durationDays" min={1} max={365} required/>
-          </label>
-          <label>
-            Duration nights
-            <input type="number" name="durationNights" min={0} max={365} required/>
-          </label>
-          <label>
-            Summary
-            <textarea name="summary" maxLength={1000}/>
-          </label>
-          <button className="admin-primary-button" type="submit">Create Draft Package</button>
-        </form>
-      </section>
-    </AdminShell>
+      <AdminForm
+        action={createPackage}
+        aside={
+          <>
+            <AdminFormAsideCard title="Package workflow">
+              <ul>
+                <li>Create the basic draft.</li>
+                <li>Add destinations and itinerary.</li>
+                <li>Configure price options and media.</li>
+                <li>Review SEO before publishing.</li>
+              </ul>
+            </AdminFormAsideCard>
+            <AdminFormAsideCard title="Draft safety">
+              <p>New packages are created as non-indexed drafts, so incomplete content cannot appear publicly.</p>
+            </AdminFormAsideCard>
+          </>
+        }
+      >
+        <AdminFormSection
+          title="Package identity"
+          description="The public-facing name and URL identity for this tour package."
+          badge="Required"
+        >
+          <AdminFormGrid columns={2}>
+            <AdminField label="Package title" htmlFor="title" required>
+              <input id="title" name="title" required minLength={2} maxLength={180} placeholder="Mahakal & Omkareshwar Spiritual Circuit" />
+            </AdminField>
+            <AdminField
+              label="Slug"
+              htmlFor="slug"
+              required
+              hint="Lowercase letters, numbers and single hyphens only."
+            >
+              <input id="slug" name="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="ujjain-omkareshwar-3d2n" />
+            </AdminField>
+          </AdminFormGrid>
+        </AdminFormSection>
+
+        <AdminFormSection
+          title="Trip duration"
+          description="Set the advertised duration. Detailed day-by-day itinerary is added after creation."
+        >
+          <AdminFormGrid columns={2}>
+            <AdminField label="Duration days" htmlFor="durationDays" required>
+              <input id="durationDays" type="number" name="durationDays" min={1} max={365} required />
+            </AdminField>
+            <AdminField label="Duration nights" htmlFor="durationNights" required>
+              <input id="durationNights" type="number" name="durationNights" min={0} max={365} required />
+            </AdminField>
+          </AdminFormGrid>
+        </AdminFormSection>
+
+        <AdminFormSection
+          title="Package summary"
+          description="A concise internal/public summary. Rich body content is managed in the full editor."
+        >
+          <AdminFormGrid columns={1}>
+            <AdminField label="Summary" htmlFor="summary" hint="Maximum 1,000 characters.">
+              <textarea id="summary" name="summary" maxLength={1000} rows={5} placeholder="Describe the core experience, destinations and traveller value." />
+            </AdminField>
+          </AdminFormGrid>
+          <AdminFormCallout title="What happens next">
+            After creation you will be redirected to the complete package editor for destinations, itinerary, pricing, hero media, publication and SEO.
+          </AdminFormCallout>
+        </AdminFormSection>
+
+        <AdminFormActions
+          submitLabel="Create Draft Package"
+          cancelHref="/admin/packages"
+          helper="Creates a safe non-indexed draft."
+        />
+      </AdminForm>
+
   );
 }
