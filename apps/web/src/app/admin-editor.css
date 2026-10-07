@@ -645,3 +645,30 @@
     grid-column: auto;
   }
 }
+
+
+.admin-policy-readonly {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-policy-readonly > section {
+  padding: 12px 13px;
+  border: 1px solid #e5ded3;
+  border-radius: 9px;
+  background: #fffdfa;
+}
+
+.admin-policy-readonly h3 {
+  margin: 0 0 5px;
+  color: #33483f;
+  font-size: .7rem;
+}
+
+.admin-policy-readonly p {
+  margin: 0;
+  color: #66716b;
+  font-size: .65rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
