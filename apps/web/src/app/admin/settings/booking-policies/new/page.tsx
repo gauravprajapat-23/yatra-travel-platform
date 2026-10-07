@@ -16,6 +16,7 @@ import {
 } from "@/components/admin-action-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import { AdminDateTimeRange } from "@/components/admin-date-time-range";
+import { AdminTextareaField } from "@/components/admin-textarea-field";
 import {
   bookingPolicyCodes,
   createBookingPolicyDraft,
@@ -163,41 +164,37 @@ export default async function NewBookingPolicyPage() {
           description="Define what customers can cancel, when refunds apply, and how changes are handled."
         >
           <AdminFormGrid columns={1}>
-            <AdminField label="Cancellation policy" htmlFor="cancellation">
-              <textarea
-                id="cancellation"
-                name="cancellation"
-                rows={5}
-                placeholder="Explain cancellation windows, charges and exceptions."
-              />
-            </AdminField>
+            <AdminTextareaField
+                      id="cancellation"
+                      name="cancellation"
+                      label="Cancellation policy"
+                      rows={5}
+                      placeholder="Explain cancellation windows, charges and exceptions."
+                    />
 
-            <AdminField label="Refund eligibility" htmlFor="refundEligibility">
-              <textarea
-                id="refundEligibility"
-                name="refundEligibility"
-                rows={5}
-                placeholder="Explain when refunds are available and any exclusions."
-              />
-            </AdminField>
+            <AdminTextareaField
+                      id="refundEligibility"
+                      name="refundEligibility"
+                      label="Refund eligibility"
+                      rows={5}
+                      placeholder="Explain when refunds are available and any exclusions."
+                    />
 
-            <AdminField label="Rescheduling policy" htmlFor="rescheduling">
-              <textarea
-                id="rescheduling"
-                name="rescheduling"
-                rows={5}
-                placeholder="Explain date/time change rules, notice periods and charges."
-              />
-            </AdminField>
+            <AdminTextareaField
+                      id="rescheduling"
+                      name="rescheduling"
+                      label="Rescheduling policy"
+                      rows={5}
+                      placeholder="Explain date/time change rules, notice periods and charges."
+                    />
 
-            <AdminField label="No-show policy" htmlFor="noShow">
-              <textarea
-                id="noShow"
-                name="noShow"
-                rows={4}
-                placeholder="Explain how missed pickup/check-in is handled."
-              />
-            </AdminField>
+            <AdminTextareaField
+                      id="noShow"
+                      name="noShow"
+                      label="No-show policy"
+                      rows={4}
+                      placeholder="Explain how missed pickup/check-in is handled."
+                    />
           </AdminFormGrid>
         </AdminFormSection>
 
@@ -206,38 +203,29 @@ export default async function NewBookingPolicyPage() {
           description="Set customer obligations and operational boundaries clearly."
         >
           <AdminFormGrid columns={1}>
-            <AdminField
-              label="Customer responsibilities"
-              htmlFor="customerResponsibilities"
-            >
-              <textarea
-                id="customerResponsibilities"
-                name="customerResponsibilities"
-                rows={5}
-                placeholder="Required IDs, punctuality, accurate traveller details, conduct, etc."
-              />
-            </AdminField>
+            <AdminTextareaField
+                      id="customerResponsibilities"
+                      name="customerResponsibilities"
+                      label="Customer responsibilities"
+                      rows={5}
+                      placeholder="Required IDs, punctuality, accurate traveller details, conduct, etc."
+                    />
 
-            <AdminField
-              label="Service limitations"
-              htmlFor="serviceLimitations"
-            >
-              <textarea
-                id="serviceLimitations"
-                name="serviceLimitations"
-                rows={5}
-                placeholder="Weather, road restrictions, availability, force majeure and other limitations."
-              />
-            </AdminField>
+            <AdminTextareaField
+                      id="serviceLimitations"
+                      name="serviceLimitations"
+                      label="Service limitations"
+                      rows={5}
+                      placeholder="Weather, road restrictions, availability, force majeure and other limitations."
+                    />
 
-            <AdminField label="Booking terms" htmlFor="bookingTerms">
-              <textarea
-                id="bookingTerms"
-                name="bookingTerms"
-                rows={6}
-                placeholder="General booking terms that apply to this policy version."
-              />
-            </AdminField>
+            <AdminTextareaField
+                      id="bookingTerms"
+                      name="bookingTerms"
+                      label="Booking terms"
+                      rows={6}
+                      placeholder="General booking terms that apply to this policy version."
+                    />
           </AdminFormGrid>
 
           <AdminFormCallout tone="warning" title="Activation validation">
