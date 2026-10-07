@@ -43,9 +43,9 @@ Assignment writes continue to use the existing server-authoritative assignment s
 
 ### Booking operations
 - [x] Add richer operational filters for departure date and assignment state
-- [ ] Add safe bulk operational actions where they do not weaken lifecycle validation
-- [ ] Improve booking timeline/event visibility
-- [ ] Add cancellation/refund operational summaries
+- [x] Add safe bulk operational actions where they do not weaken lifecycle validation
+- [x] Improve booking timeline/event visibility
+- [x] Add cancellation/refund operational summaries
 - [x] Add permission-gated CSV booking export
 
 ### Dispatch
@@ -56,9 +56,9 @@ Assignment writes continue to use the existing server-authoritative assignment s
 - [ ] Add package/tour operations handoff once package departure inventory exists
 
 ### Dashboard and reporting
-- [ ] Add trend charts and date-aware operational KPIs
-- [ ] Add revenue/refund/booking trend views
-- [ ] Add route and package performance summaries
+- [x] Add trend charts and date-aware operational KPIs
+- [x] Add revenue/refund/booking trend views
+- [x] Add route and package performance summaries
 - [ ] Add CSV/Excel exports where operationally useful
 
 ### Fleet operations
