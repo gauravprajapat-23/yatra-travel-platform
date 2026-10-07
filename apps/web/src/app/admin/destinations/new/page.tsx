@@ -140,6 +140,6 @@ export default async function NewDestinationPage() {
 
         <AdminFormActions submitLabel="Create Draft Destination" cancelHref="/admin/destinations" helper="Creates a non-indexed destination draft." />
       </AdminForm>
-
+    </AdminShell>
   );
 }
