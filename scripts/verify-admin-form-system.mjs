@@ -267,6 +267,12 @@ for (const file of tabbedEditors) {
     "admin-editor-section-stack",
   ]);
 
+  if (source.includes("<label")) {
+    throw new Error(
+      `${file} contains raw <label> markup. Use shared admin field primitives.`,
+    );
+  }
+
   if (/<button[^>]*type=["']submit["']/.test(source)) {
     throw new Error(
       `${file} contains a raw submit button. Use AdminSubmitButton or AdminConfirmSubmitButton.`,
