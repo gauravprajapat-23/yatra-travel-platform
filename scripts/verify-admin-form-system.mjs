@@ -18,6 +18,14 @@ const newPages = [
 
 const actionNewPages = [];
 
+const lightweightFilterPages = [
+  "apps/web/src/app/admin/dispatch/page.tsx",
+  "apps/web/src/app/admin/dispatch/calendar/page.tsx",
+  "apps/web/src/app/admin/dispatch/resources/page.tsx",
+  "apps/web/src/app/admin/reports/page.tsx",
+  "apps/web/src/app/admin/seo/page.tsx",
+];
+
 const tabbedEditors = [
   "apps/web/src/app/admin/bookings/[reference]/page.tsx",
   "apps/web/src/app/admin/content/[type]/[id]/page.tsx",
@@ -271,6 +279,18 @@ for (const file of actionNewPages) {
   process.stdout.write(`PASS shared action create form: ${file}\n`);
 }
 
+for (const file of lightweightFilterPages) {
+  const source = requireFragments(file, ["<AdminField"]);
+
+  if (source.includes("<label")) {
+    throw new Error(
+      `${file} contains raw filter labels. Use AdminField while keeping the GET toolbar lightweight.`,
+    );
+  }
+
+  process.stdout.write(`PASS lightweight shared filter form: ${file}\n`);
+}
+
 for (const file of tabbedEditors) {
   const source = requireFragments(file, [
     "<AdminEditorTabs",
@@ -293,5 +313,5 @@ for (const file of tabbedEditors) {
 }
 
 process.stdout.write(
-  `Admin form-system certification passed: ${newPages.length} recoverable shared create pages, ${tabbedEditors.length} tabbed editors, ${sharedComponents.length} shared components, ${primitiveCoverage.length} specialized primitive coverage checks.\n`,
+  `Admin form-system certification passed: ${newPages.length} recoverable shared create pages, ${tabbedEditors.length} tabbed editors, ${lightweightFilterPages.length} lightweight shared filter pages, ${sharedComponents.length} shared components, ${primitiveCoverage.length} specialized primitive coverage checks.\n`,
 );
