@@ -186,24 +186,63 @@ export default async function FaqDetailPage({
               <form action={save}>
                 <input type="hidden" name="question" value={faq.question}/>
                 <input type="hidden" name="answer" value={faq.answer}/>
-                <label>
-                  Scope
-                  <select name="scope" defaultValue={faq.scope}>
-                    {faqScopes.map((scope) => (
-                      <option key={scope} value={scope}>{scope.replaceAll("_", " ")}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>Sort order<input type="number" name="sortOrder" defaultValue={faq.sortOrder} min={-100000} max={100000}/></label>
-                <label>
-                  Status
-                  <select name="status" defaultValue={faq.status}>
-                    {faqStatuses.map((status) => (
-                      <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>Schedule date<input type="datetime-local" name="scheduledFor" defaultValue={localDateTime(faq.scheduledFor)}/></label>
+                <AdminFormGrid columns={2}>
+                  <AdminField label="Scope" htmlFor="faqScope" required>
+                    <select
+                      id="faqScope"
+                      name="scope"
+                      defaultValue={faq.scope}
+                    >
+                      {faqScopes.map((scope) => (
+                        <option key={scope} value={scope}>
+                          {scope.replaceAll("_", " ")}
+                        </option>
+                      ))}
+                    </select>
+                  </AdminField>
+
+                  <AdminField
+                    label="Sort order"
+                    htmlFor="faqSortOrder"
+                    hint="Lower values appear earlier."
+                  >
+                    <input
+                      id="faqSortOrder"
+                      type="number"
+                      name="sortOrder"
+                      defaultValue={faq.sortOrder}
+                      min={-100000}
+                      max={100000}
+                    />
+                  </AdminField>
+
+                  <AdminField label="Status" htmlFor="faqStatus" required>
+                    <select
+                      id="faqStatus"
+                      name="status"
+                      defaultValue={faq.status}
+                    >
+                      {faqStatuses.map((status) => (
+                        <option key={status} value={status}>
+                          {status.replaceAll("_", " ")}
+                        </option>
+                      ))}
+                    </select>
+                  </AdminField>
+
+                  <AdminField
+                    label="Schedule date"
+                    htmlFor="faqScheduledFor"
+                    hint="Only used when the status is scheduled."
+                  >
+                    <input
+                      id="faqScheduledFor"
+                      type="datetime-local"
+                      name="scheduledFor"
+                      defaultValue={localDateTime(faq.scheduledFor)}
+                    />
+                  </AdminField>
+                </AdminFormGrid>
                 <button className="admin-primary-button" type="submit">Save Publishing</button>
               </form>
             ) : <p>Your role has read-only content access.</p>}
