@@ -610,38 +610,31 @@ export default async function AdminContentEditorPage({
                       />
                     </AdminField>
 
-                    <AdminField
+                    <AdminTextareaField
+                      id="darshanNotes"
+                      name="darshanNotes"
                       label="Darshan notes"
-                      htmlFor="darshanNotes"
+                      maxLength={3000}
+                      rows={6}
                       wide
+                      defaultValue={
+                        destinationDetails.templeProfile?.darshanNotes ?? ""
+                      }
                       hint="Timings, queue guidance, special access and visitor expectations."
-                    >
-                      <textarea
-                        id="darshanNotes"
-                        name="darshanNotes"
-                        maxLength={3000}
-                        rows={6}
-                        defaultValue={
-                          destinationDetails.templeProfile?.darshanNotes ?? ""
-                        }
-                      />
-                    </AdminField>
+                    />
 
-                    <AdminField
+                    <AdminTextareaField
+                      id="dressCode"
+                      name="dressCode"
                       label="Dress code"
-                      htmlFor="dressCode"
+                      maxLength={1000}
+                      rows={4}
                       wide
-                    >
-                      <textarea
-                        id="dressCode"
-                        name="dressCode"
-                        maxLength={1000}
-                        rows={4}
-                        defaultValue={
-                          destinationDetails.templeProfile?.dressCode ?? ""
-                        }
-                      />
-                    </AdminField>
+                      defaultValue={
+                        destinationDetails.templeProfile?.dressCode ?? ""
+                      }
+                      hint="Temple-specific clothing or entry requirements."
+                    />
 
                     <AdminField
                       label="Opening hours JSON"
