@@ -160,6 +160,11 @@ export default async function StaffPage({
       active="Staff / Roles"
       title="Staff / Roles"
       subtitle="Live admin users and their assigned RBAC roles."
+      actions={
+        <Link className="admin-primary-button" href="/admin/staff/new">
+          ＋ Invite Staff
+        </Link>
+      }
       metrics={[
         {
           label: "Matching Staff",
