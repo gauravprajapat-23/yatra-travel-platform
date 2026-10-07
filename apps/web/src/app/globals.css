@@ -5988,6 +5988,27 @@ body:has(.admin-root) {
   background: #f3fbf6;
 }
 
+.admin-action-feedback {
+  padding: 10px 12px;
+  border: 1px solid;
+  border-radius: 8px;
+  font-size: .64rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.admin-action-feedback--success {
+  border-color: #c9e5d4;
+  background: #f2faf5;
+  color: #246b46;
+}
+
+.admin-action-feedback--error {
+  border-color: #efc8c3;
+  background: #fff7f6;
+  color: #a53f34;
+}
+
 .admin-form-aside {
   position: sticky;
   top: 86px;
