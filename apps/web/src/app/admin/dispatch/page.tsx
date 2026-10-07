@@ -8,10 +8,16 @@ import { requireAdminSession } from "@/lib/auth/session";
 export const dynamic = "force-dynamic";
 
 const allowedWindows = new Set([7, 14, 30]);
+const allowedAlertHours = new Set([6, 12, 24, 48]);
 
 function parseWindow(value: string | undefined) {
   const parsed = Number(value ?? "14");
   return allowedWindows.has(parsed) ? parsed : 14;
+}
+
+function parseAlertHours(value: string | undefined) {
+  const parsed = Number(value ?? "24");
+  return allowedAlertHours.has(parsed) ? parsed : 24;
 }
 
 function formatDateTime(value: Date) {
@@ -32,13 +38,14 @@ function bookingTone(status: string): "green" | "orange" | "red" | "blue" | "gra
 export default async function DispatchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string }>;
+  searchParams: Promise<{ days?: string; alertHours?: string }>;
 }) {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "booking.read")) redirect("/admin");
 
   const params = await searchParams;
   const days = parseWindow(params.days);
+  const alertHours = parseAlertHours(params.alertHours);
   const now = new Date();
   const horizon = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
   const licenseAlertThrough = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -159,6 +166,26 @@ export default async function DispatchPage({
     db.driver.count({ where: { status: "ACTIVE" } }),
   ]);
 
+  const alertThrough = new Date(now.getTime() + alertHours * 60 * 60 * 1000);
+  const nearDepartures = [
+    ...unassigned.map((booking) => ({
+      reference: booking.reference,
+      startsAt: booking.startsAt,
+      route: `${booking.originText} → ${booking.destinationText}`,
+      readiness: "Needs assignment",
+      tone: "orange" as const,
+    })),
+    ...upcomingAssigned.map((booking) => ({
+      reference: booking.reference,
+      startsAt: booking.startsAt,
+      route: `${booking.originText} → ${booking.destinationText}`,
+      readiness: "Assigned",
+      tone: "green" as const,
+    })),
+  ]
+    .filter((booking) => booking.startsAt <= alertThrough)
+    .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+
   const operationalAlerts = [
     ...(unassigned.length > 0
       ? [{
@@ -193,6 +220,9 @@ export default async function DispatchPage({
           <Link className="admin-secondary-button" href="/admin/dispatch/resources">
             Resource Schedule
           </Link>
+          <Link className="admin-secondary-button" href="/admin/dispatch/calendar">
+            Availability Calendar
+          </Link>
           <Link className="admin-secondary-button" href="/admin/bookings">
             All Bookings
           </Link>
@@ -207,6 +237,15 @@ export default async function DispatchPage({
               <option value="7">Next 7 days</option>
               <option value="14">Next 14 days</option>
               <option value="30">Next 30 days</option>
+            </select>
+          </label>
+          <label>
+            <span>Departure alert</span>
+            <select name="alertHours" defaultValue={alertHours.toString()}>
+              <option value="6">Next 6 hours</option>
+              <option value="12">Next 12 hours</option>
+              <option value="24">Next 24 hours</option>
+              <option value="48">Next 48 hours</option>
             </select>
           </label>
           <button className="admin-primary-button" type="submit">
@@ -257,6 +296,39 @@ export default async function DispatchPage({
               </p>
             ))
           )}
+        </div>
+      </section>
+
+      <section className="admin-panel" id="near-departures">
+        <div className="admin-panel-heading">
+          <h2>Near-Term Departures</h2>
+          <small>Trips leaving within the next {alertHours} hours</small>
+        </div>
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Departure</th>
+                <th>Booking</th>
+                <th>Route</th>
+                <th>Readiness</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {nearDepartures.length === 0 ? (
+                <tr><td colSpan={5}>No departures within the selected alert window.</td></tr>
+              ) : nearDepartures.map((booking) => (
+                <tr key={booking.reference}>
+                  <td>{formatDateTime(booking.startsAt)}</td>
+                  <td><Link href={`/admin/bookings/${booking.reference}`}>{booking.reference}</Link></td>
+                  <td>{booking.route}</td>
+                  <td><StatusPill tone={booking.tone}>{booking.readiness}</StatusPill></td>
+                  <td><Link href={`/admin/bookings/${booking.reference}`}>Review →</Link></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 
