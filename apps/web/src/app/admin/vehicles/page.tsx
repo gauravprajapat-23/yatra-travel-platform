@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getDb } from "@yatra/db/client";
+import { getDb, Prisma } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
 import { requireAdminSession } from "@/lib/auth/session";
+import {
+  vehicleStatuses,
+  type VehicleStatus,
+} from "@/modules/fleet/fleet-management-service";
 
 export const dynamic = "force-dynamic";
+
+const PAGE_SIZE = 25;
 
 function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
   if (status === "ACTIVE") return "green";
@@ -14,21 +20,75 @@ function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
   return "gray";
 }
 
-export default async function AdminVehiclesPage() {
+function isVehicleStatus(value: string): value is VehicleStatus {
+  return (vehicleStatuses as readonly string[]).includes(value);
+}
+
+export default async function AdminVehiclesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    page?: string;
+  }>;
+}) {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "vehicle.read")) redirect("/admin");
 
+  const params = await searchParams;
+  const q = String(params.q ?? "").trim().slice(0, 120);
+  const status = isVehicleStatus(String(params.status ?? ""))
+    ? (String(params.status) as VehicleStatus)
+    : null;
+  const requestedPage = Number(params.page ?? "1");
+  const page =
+    Number.isInteger(requestedPage) && requestedPage > 0
+      ? requestedPage
+      : 1;
+
   const db = getDb();
-  const [vehicles, total, active, maintenance, inactive] = await Promise.all([
+
+  const baseWhere: Prisma.VehicleWhereInput = q
+    ? {
+        OR: [
+          { registrationNumber: { contains: q, mode: "insensitive" } },
+          { displayName: { contains: q, mode: "insensitive" } },
+          {
+            vehicleClass: {
+              name: { contains: q, mode: "insensitive" },
+            },
+          },
+        ],
+      }
+    : {};
+
+  const where: Prisma.VehicleWhereInput = {
+    ...baseWhere,
+    ...(status ? { status } : {}),
+  };
+
+  const total = await db.vehicle.count({ where });
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const skip = (safePage - 1) * PAGE_SIZE;
+
+  const [vehicles, active, maintenance, inactive] = await Promise.all([
     db.vehicle.findMany({
+      where,
       orderBy: [{ status: "asc" }, { displayName: "asc" }],
       include: { vehicleClass: { select: { name: true } } },
-      take: 100,
+      skip,
+      take: PAGE_SIZE,
     }),
-    db.vehicle.count(),
-    db.vehicle.count({ where: { status: "ACTIVE" } }),
-    db.vehicle.count({ where: { status: "MAINTENANCE" } }),
-    db.vehicle.count({ where: { status: { in: ["INACTIVE", "RETIRED"] } } }),
+    db.vehicle.count({ where: { ...baseWhere, status: "ACTIVE" } }),
+    db.vehicle.count({ where: { ...baseWhere, status: "MAINTENANCE" } }),
+    db.vehicle.count({
+      where: {
+        ...baseWhere,
+        status: { in: ["INACTIVE", "RETIRED"] },
+      },
+    }),
   ]);
 
   const rows = vehicles.map((vehicle) => [
@@ -46,6 +106,18 @@ export default async function AdminVehiclesPage() {
     vehicle.isFeatured ? "Featured" : "—",
   ]);
 
+  function pageHref(targetPage: number) {
+    const next = new URLSearchParams();
+    if (q) next.set("q", q);
+    if (status) next.set("status", status);
+    if (targetPage > 1) next.set("page", targetPage.toString());
+    const query = next.toString();
+    return query ? `/admin/vehicles?${query}` : "/admin/vehicles";
+  }
+
+  const firstShown = total === 0 ? 0 : skip + 1;
+  const lastShown = Math.min(skip + vehicles.length, total);
+
   return (
     <AdminTablePage
       active="Fleet Management"
@@ -59,14 +131,108 @@ export default async function AdminVehiclesPage() {
         ) : null
       }
       metrics={[
-        { label: "Total Vehicles", value: total.toString(), meta: "all fleet records", tone: "blue" },
-        { label: "Active", value: active.toString(), meta: "eligible for assignment", tone: "green" },
-        { label: "Maintenance", value: maintenance.toString(), meta: "temporarily unavailable", tone: "orange" },
-        { label: "Inactive / Retired", value: inactive.toString(), meta: "not assignable", tone: "red" },
+        {
+          label: "Matching Vehicles",
+          value: total.toString(),
+          meta: "current filters",
+          tone: "blue",
+        },
+        {
+          label: "Active",
+          value: active.toString(),
+          meta: "current search",
+          tone: "green",
+        },
+        {
+          label: "Maintenance",
+          value: maintenance.toString(),
+          meta: "current search",
+          tone: "orange",
+        },
+        {
+          label: "Inactive / Retired",
+          value: inactive.toString(),
+          meta: "current search",
+          tone: "red",
+        },
       ]}
-      filters={["Latest 100"]}
-      columns={["Vehicle No.", "Vehicle", "Class", "Seats", "Luggage", "Status", "Comfort", "Featured"]}
+      filters={[
+        status ? status.replaceAll("_", " ") : "All statuses",
+        q ? `Search: ${q}` : "All vehicles",
+      ]}
+      toolbar={
+        <form className="admin-table-query admin-table-query--compact" method="get">
+          <label>
+            <span>Search</span>
+            <input
+              name="q"
+              defaultValue={q}
+              placeholder="Registration, vehicle name or class"
+            />
+          </label>
+
+          <label>
+            <span>Status</span>
+            <select name="status" defaultValue={status ?? ""}>
+              <option value="">All statuses</option>
+              {vehicleStatuses.map((item) => (
+                <option key={item} value={item}>
+                  {item.replaceAll("_", " ")}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <button className="admin-primary-button" type="submit">
+            Apply
+          </button>
+
+          {(q || status) ? (
+            <Link className="admin-secondary-button" href="/admin/vehicles">
+              Reset
+            </Link>
+          ) : null}
+        </form>
+      }
+      columns={[
+        "Vehicle No.",
+        "Vehicle",
+        "Class",
+        "Seats",
+        "Luggage",
+        "Status",
+        "Comfort",
+        "Featured",
+      ]}
       rows={rows}
+      footer={
+        <>
+          <span>
+            Showing {firstShown}–{lastShown} of {total}
+          </span>
+          <div className="admin-table-pager">
+            {safePage > 1 ? (
+              <Link
+                className="admin-secondary-button"
+                href={pageHref(safePage - 1)}
+              >
+                ← Previous
+              </Link>
+            ) : null}
+            <small>
+              Page {safePage} of {totalPages}
+            </small>
+            {safePage < totalPages ? (
+              <Link
+                className="admin-secondary-button"
+                href={pageHref(safePage + 1)}
+              >
+                Next →
+              </Link>
+            ) : null}
+          </div>
+        </>
+      }
     />
   );
 }
