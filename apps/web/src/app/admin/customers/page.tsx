@@ -65,22 +65,69 @@ export default async function CustomersPage({
 
   const db = getDb();
 
-  const [carGroups, packageGroups] = await Promise.all([
+  const [
+    guestCarGroups,
+    guestPackageGroups,
+    accountCarGroups,
+    accountPackageGroups,
+  ] = await Promise.all([
     db.carBooking.groupBy({
       by: ["guestEmail", "guestName", "currency"],
-      where: { guestEmail: { not: null } },
+      where: {
+        customerUserId: null,
+        guestEmail: { not: null },
+      },
       _count: { _all: true },
       _sum: { totalMinor: true },
       _max: { createdAt: true },
     }),
     db.packageBooking.groupBy({
       by: ["guestEmail", "guestName", "currency"],
-      where: { guestEmail: { not: null } },
+      where: {
+        customerUserId: null,
+        guestEmail: { not: null },
+      },
+      _count: { _all: true },
+      _sum: { totalMinor: true },
+      _max: { createdAt: true },
+    }),
+    db.carBooking.groupBy({
+      by: ["customerUserId", "currency"],
+      where: { customerUserId: { not: null } },
+      _count: { _all: true },
+      _sum: { totalMinor: true },
+      _max: { createdAt: true },
+    }),
+    db.packageBooking.groupBy({
+      by: ["customerUserId", "currency"],
+      where: { customerUserId: { not: null } },
       _count: { _all: true },
       _sum: { totalMinor: true },
       _max: { createdAt: true },
     }),
   ]);
+
+  const accountIds = [
+    ...new Set(
+      [...accountCarGroups, ...accountPackageGroups]
+        .map((group) => group.customerUserId)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  ];
+
+  const accountUsers = accountIds.length
+    ? await db.user.findMany({
+        where: { id: { in: accountIds } },
+        select: {
+          id: true,
+          email: true,
+          emailNormalized: true,
+          name: true,
+          status: true,
+        },
+      })
+    : [];
+  const accountById = new Map(accountUsers.map((user) => [user.id, user]));
 
   const merged = new Map<
     string,
@@ -90,40 +137,84 @@ export default async function CustomersPage({
       bookings: number;
       lifetimeByCurrency: Map<string, bigint>;
       lastBookingAt: Date | null;
+      registered: boolean;
+      active: boolean;
     }
   >();
 
-  for (const group of [...carGroups, ...packageGroups]) {
-    if (!group.guestEmail) continue;
-
-    const key = group.guestEmail.toLowerCase();
+  function mergeCustomer(input: {
+    email: string;
+    name: string;
+    currency: string;
+    amount: bigint;
+    bookings: number;
+    lastBookingAt: Date | null;
+    registered: boolean;
+    active: boolean;
+  }) {
+    const key = input.email.toLowerCase();
     const current = merged.get(key);
-    const amount = group._sum.totalMinor ?? 0n;
 
     if (!current) {
       merged.set(key, {
         email: key,
-        name: group.guestName ?? "Guest customer",
-        bookings: group._count._all,
-        lifetimeByCurrency: new Map([[group.currency, amount]]),
-        lastBookingAt: group._max.createdAt,
+        name: input.name,
+        bookings: input.bookings,
+        lifetimeByCurrency: new Map([[input.currency, input.amount]]),
+        lastBookingAt: input.lastBookingAt,
+        registered: input.registered,
+        active: input.active,
       });
-      continue;
+      return;
     }
 
-    current.bookings += group._count._all;
+    current.bookings += input.bookings;
     current.lifetimeByCurrency.set(
-      group.currency,
-      (current.lifetimeByCurrency.get(group.currency) ?? 0n) + amount,
+      input.currency,
+      (current.lifetimeByCurrency.get(input.currency) ?? 0n) + input.amount,
     );
+    current.registered = current.registered || input.registered;
+    current.active = current.active || input.active;
 
     if (
-      group._max.createdAt &&
-      (!current.lastBookingAt || group._max.createdAt > current.lastBookingAt)
+      input.lastBookingAt &&
+      (!current.lastBookingAt || input.lastBookingAt > current.lastBookingAt)
     ) {
-      current.lastBookingAt = group._max.createdAt;
-      if (group.guestName) current.name = group.guestName;
+      current.lastBookingAt = input.lastBookingAt;
+      current.name = input.name || current.name;
     }
+  }
+
+  for (const group of [...guestCarGroups, ...guestPackageGroups]) {
+    if (!group.guestEmail) continue;
+
+    mergeCustomer({
+      email: group.guestEmail,
+      name: group.guestName ?? "Guest customer",
+      currency: group.currency,
+      amount: group._sum.totalMinor ?? 0n,
+      bookings: group._count._all,
+      lastBookingAt: group._max.createdAt,
+      registered: false,
+      active: true,
+    });
+  }
+
+  for (const group of [...accountCarGroups, ...accountPackageGroups]) {
+    if (!group.customerUserId) continue;
+    const account = accountById.get(group.customerUserId);
+    if (!account) continue;
+
+    mergeCustomer({
+      email: account.emailNormalized,
+      name: account.name ?? account.email,
+      currency: group.currency,
+      amount: group._sum.totalMinor ?? 0n,
+      bookings: group._count._all,
+      lastBookingAt: group._max.createdAt,
+      registered: true,
+      active: account.status === "ACTIVE",
+    });
   }
 
   const allCustomers = [...merged.values()].sort((a, b) => {
@@ -176,8 +267,15 @@ export default async function CustomersPage({
     customer.bookings.toString(),
     formatCurrencyTotals(customer.lifetimeByCurrency),
     segmentFor(customer.bookings).replaceAll("_", " "),
-    <StatusPill key={customer.email} tone="green">
-      Active
+    <StatusPill
+      key={customer.email}
+      tone={customer.active ? "green" : "red"}
+    >
+      {customer.registered
+        ? customer.active
+          ? "Registered"
+          : "Account inactive"
+        : "Guest"}
     </StatusPill>,
     <Link
       key={`${customer.email}-view`}
@@ -203,7 +301,7 @@ export default async function CustomersPage({
     <AdminTablePage
       active="Customers"
       title="Customers"
-      subtitle="Live guest-customer rollup from car and package bookings."
+      subtitle="Live registered and guest customer rollup from car and package bookings."
       metrics={[
         {
           label: "Matching Customers",
