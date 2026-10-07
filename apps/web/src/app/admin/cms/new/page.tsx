@@ -12,6 +12,7 @@ import {
   AdminFormGrid,
   AdminFormSection,
 } from "@/components/admin-form";
+import { AdminSlugFields } from "@/components/admin-slug-fields";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -121,12 +122,12 @@ export default async function NewCmsPage() {
       >
         <AdminFormSection title="Page identity" description="Primary page title and canonical URL slug." badge="Required">
           <AdminFormGrid columns={2}>
-            <AdminField label="Page title" htmlFor="title" required>
-              <input id="title" name="title" required minLength={2} maxLength={180} placeholder="Privacy Policy" />
-            </AdminField>
-            <AdminField label="Slug" htmlFor="slug" required hint="Reserved application paths cannot be used.">
-              <input id="slug" name="slug" required placeholder="privacy-policy" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" />
-            </AdminField>
+            <AdminSlugFields
+              sourceLabel="Page title"
+              sourceName="title"
+              sourcePlaceholder="Privacy Policy"
+              slugPlaceholder="privacy-policy"
+            />
           </AdminFormGrid>
         </AdminFormSection>
 
