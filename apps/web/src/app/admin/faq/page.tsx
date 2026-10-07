@@ -211,6 +211,26 @@ export default async function AdminFaqPage({
         "Published",
         "Updated",
       ]}
+      emptyTitle={
+        q || scope || status
+          ? "No FAQs match these filters"
+          : "No FAQs yet"
+      }
+      emptyMessage={
+        q || scope || status
+          ? "Clear or adjust the current search, scope or status filters."
+          : "Create the first FAQ to start building reusable customer answers."
+      }
+      emptyAction={
+        !q &&
+        !scope &&
+        !status &&
+        hasPermission(session.roles, "content.write") ? (
+          <Link className="admin-primary-button" href="/admin/faq/new">
+            ＋ Create First FAQ
+          </Link>
+        ) : null
+      }
       rows={rows}
       footer={
         <>
