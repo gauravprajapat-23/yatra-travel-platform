@@ -7,6 +7,7 @@ import {
   AdminCheckbox,
   AdminCheckboxGrid,
   AdminField,
+  AdminFormActions,
   AdminFormAsideCard,
   AdminFormCallout,
   AdminFormGrid,
@@ -16,7 +17,6 @@ import {
   AdminActionForm,
   type AdminActionState,
 } from "@/components/admin-action-form";
-import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   adminRoleKeys,
@@ -106,8 +106,31 @@ export default async function NewStaffPage() {
         </Link>
       }
     >
-      <div className="admin-form-layout">
-        <AdminActionForm action={invite} className="admin-form">
+      <AdminActionForm
+        action={invite}
+        className="admin-form"
+        aside={
+          <>
+
+          <AdminFormAsideCard title="Invite security">
+            <ul>
+              <li>The raw token is shown once and never stored.</li>
+              <li>Only a SHA-256 token hash is persisted.</li>
+              <li>The user cannot log in while status is INVITED.</li>
+              <li>Acceptance activates the account atomically.</li>
+            </ul>
+          </AdminFormAsideCard>
+
+          <AdminFormAsideCard title="Existing email">
+            <p>
+              Existing customer or staff accounts are rejected instead of being
+              silently elevated into an admin role.
+            </p>
+          </AdminFormAsideCard>
+
+          </>
+        }
+      >
           <AdminFormSection
             title="Staff identity"
             description="The invite is bound to this email address and cannot be used for an existing account."
@@ -179,43 +202,13 @@ export default async function NewStaffPage() {
             </AdminFormCallout>
           </AdminFormSection>
 
-          <footer className="admin-form-actions">
-            <div className="admin-form-actions__meta">
-              <small>
-                The account remains INVITED and cannot sign in until password
-                setup is completed.
-              </small>
-            </div>
-            <div className="admin-form-actions__buttons">
-              <Link className="admin-secondary-button" href="/admin/staff">
-                Cancel
-              </Link>
-              <AdminSubmitButton
-                label="Create Staff Invite"
-                pendingLabel="Creating Invite…"
-              />
-            </div>
-          </footer>
+          <AdminFormActions
+            submitLabel="Create Staff Invite"
+            cancelHref="/admin/staff"
+            helper="The account remains INVITED until password setup is completed."
+          />
+
         </AdminActionForm>
-
-        <aside className="admin-form-aside">
-          <AdminFormAsideCard title="Invite security">
-            <ul>
-              <li>The raw token is shown once and never stored.</li>
-              <li>Only a SHA-256 token hash is persisted.</li>
-              <li>The user cannot log in while status is INVITED.</li>
-              <li>Acceptance activates the account atomically.</li>
-            </ul>
-          </AdminFormAsideCard>
-
-          <AdminFormAsideCard title="Existing email">
-            <p>
-              Existing customer or staff accounts are rejected instead of being
-              silently elevated into an admin role.
-            </p>
-          </AdminFormAsideCard>
-        </aside>
-      </div>
     </AdminShell>
   );
 }
