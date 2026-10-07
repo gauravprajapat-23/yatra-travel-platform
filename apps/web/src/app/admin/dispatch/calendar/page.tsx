@@ -4,6 +4,7 @@ import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminMetric, AdminShell } from "@/components/admin-shell";
 import { requireAdminSession } from "@/lib/auth/session";
+import styles from "./calendar.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -138,21 +139,21 @@ export default async function FleetAvailabilityCalendarPage({
           <h2>Vehicle Calendar</h2>
           <small>Free, booked and blocked by IST day</small>
         </div>
-        <div className="admin-availability-calendar">
+        <div className={styles.scroll}>
           <div
-            className="admin-availability-calendar__grid"
+            className={styles.grid}
             style={{ gridTemplateColumns: `minmax(190px, 1.6fr) repeat(${days}, minmax(76px, 1fr))` }}
           >
-            <div className="admin-availability-calendar__corner">Vehicle</div>
+            <div className={styles.corner}>Vehicle</div>
             {dayStarts.map((day) => (
-              <div className="admin-availability-calendar__day" key={day.key}>
+              <div className={styles.day} key={day.key}>
                 {day.label}
               </div>
             ))}
 
             {vehicles.map((vehicle) => (
               <>
-                <div className="admin-availability-calendar__resource" key={`${vehicle.id}-resource`}>
+                <div className={styles.resource} key={`${vehicle.id}-resource`}>
                   <Link href={`/admin/vehicles/${vehicle.id}?tab=availability`}>
                     {vehicle.displayName}
                   </Link>
@@ -170,7 +171,7 @@ export default async function FleetAvailabilityCalendarPage({
 
                   return (
                     <div
-                      className={`admin-availability-calendar__cell admin-availability-calendar__cell--${state}`}
+                      className={`${styles.cell} ${state === "blocked" ? styles.blocked : state === "busy" ? styles.busy : styles.free}`}
                       key={`${vehicle.id}-${day.key}`}
                       title={block?.reason ?? booking?.reference ?? "Free"}
                     >
