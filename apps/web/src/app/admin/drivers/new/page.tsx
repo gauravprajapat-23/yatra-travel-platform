@@ -3,6 +3,17 @@ import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell } from "@/components/admin-shell";
+import {
+  AdminCheckbox,
+  AdminCheckboxGrid,
+  AdminField,
+  AdminForm,
+  AdminFormActions,
+  AdminFormAsideCard,
+  AdminFormCallout,
+  AdminFormGrid,
+  AdminFormSection,
+} from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import { createDriver } from "@/modules/fleet/fleet-management-service";
 
@@ -53,75 +64,65 @@ export default async function NewDriverPage() {
     <AdminShell
       active="Drivers & Staff"
       title="New Driver"
-      subtitle="Create a non-sensitive driver profile and assign vehicle-class qualifications."
-      actions={
-        <Link className="admin-secondary-button" href="/admin/drivers">
-          ← Drivers
-        </Link>
-      }
+      subtitle="Create an operational driver profile, secure private details and assign eligible vehicle classes."
+      actions={<Link className="admin-secondary-button" href="/admin/drivers">← Drivers</Link>}
     >
-      <section className="admin-panel admin-detail-card">
-        <form action={create}>
-          <label>
-            Driver name
-            <input name="displayName" required minLength={2} maxLength={120}/>
-          </label>
+      <AdminForm
+        action={create}
+        aside={
+          <>
+            <AdminFormAsideCard title="Private information">
+              <p>Phone and license numbers are encrypted before persistence and are excluded from audit metadata.</p>
+            </AdminFormAsideCard>
+            <AdminFormAsideCard title="Assignment eligibility">
+              <p>A driver can only be assigned to vehicle classes selected under Qualifications.</p>
+            </AdminFormAsideCard>
+          </>
+        }
+      >
+        <AdminFormSection title="Driver identity" description="Operational profile details for booking and fleet assignment." badge="Required">
+          <AdminFormGrid columns={2}>
+            <AdminField label="Driver name" htmlFor="displayName" required>
+              <input id="displayName" name="displayName" required minLength={2} maxLength={120} placeholder="Rajesh Sharma" />
+            </AdminField>
+            <AdminField label="Phone number" htmlFor="phoneNumber" hint="Encrypted at rest.">
+              <input id="phoneNumber" name="phoneNumber" inputMode="tel" autoComplete="off" placeholder="+91 98765 43210" maxLength={40} />
+            </AdminField>
+          </AdminFormGrid>
+        </AdminFormSection>
 
-          <label>
-            Phone number
-            <input
-              name="phoneNumber"
-              inputMode="tel"
-              autoComplete="off"
-              placeholder="+91 98765 43210"
-              maxLength={40}
-            />
-          </label>
+        <AdminFormSection title="License details" description="Optional license data used for operational verification.">
+          <AdminFormGrid columns={2}>
+            <AdminField label="License number" htmlFor="licenseNumber" hint="Encrypted at rest.">
+              <input id="licenseNumber" name="licenseNumber" autoComplete="off" maxLength={80} />
+            </AdminField>
+            <AdminField label="License expiry" htmlFor="licenseExpiry">
+              <input id="licenseExpiry" type="date" name="licenseExpiry" />
+            </AdminField>
+          </AdminFormGrid>
+          <AdminFormCallout tone="success" title="Encrypted storage">
+            Sensitive driver phone and license values use AES-256-GCM before database persistence.
+          </AdminFormCallout>
+        </AdminFormSection>
 
-          <label>
-            License number
-            <input
-              name="licenseNumber"
-              autoComplete="off"
-              maxLength={80}
-            />
-          </label>
-
-          <label>
-            License expiry
-            <input type="date" name="licenseExpiry"/>
-          </label>
-
-          <fieldset>
-            <legend>Qualified vehicle classes</legend>
+        <AdminFormSection title="Vehicle qualifications" description="Select every vehicle class this driver is approved to operate.">
+          <AdminCheckboxGrid>
             {classes.map((item) => (
-              <label key={item.id}>
-                <input
-                  type="checkbox"
-                  name="qualificationIds"
-                  value={item.id}
-                />
-                {item.name}
-              </label>
+              <AdminCheckbox key={item.id} name="qualificationIds" value={item.id} label={item.name} description="Eligible for booking assignment." />
             ))}
-          </fieldset>
+          </AdminCheckboxGrid>
+        </AdminFormSection>
 
-          <label>
-            Internal notes
-            <textarea name="internalNotes" maxLength={1000}/>
-          </label>
+        <AdminFormSection title="Internal notes" description="Private operational context. Do not add unnecessary sensitive information.">
+          <AdminFormGrid columns={1}>
+            <AdminField label="Notes" htmlFor="internalNotes" hint="Maximum 1,000 characters.">
+              <textarea id="internalNotes" name="internalNotes" maxLength={1000} rows={5} placeholder="Shift preferences, operational notes, or non-sensitive instructions." />
+            </AdminField>
+          </AdminFormGrid>
+        </AdminFormSection>
 
-          <p>
-            Phone and license numbers are encrypted with AES-256-GCM before
-            they are written to the database. They are never written to audit
-            metadata.
-          </p>
+        <AdminFormActions submitLabel="Create Driver" cancelHref="/admin/drivers" helper="Sensitive fields are encrypted before storage." />
+      </AdminForm>
 
-          <button className="admin-primary-button" type="submit">
-            Create Driver
-          </button>
-        </form>
-      </section>
-    </AdminShell>
   );
 }
