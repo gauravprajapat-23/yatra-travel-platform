@@ -199,9 +199,11 @@ export default async function BookingPolicyDetailPage({
 
           {policy.status === "ACTIVE" ? (
             <form action={retire}>
-              <button className="admin-danger-button" type="submit">
-                Retire Active Version
-              </button>
+              <AdminSubmitButton
+                className="admin-danger-button"
+                label="Retire Active Version"
+                pendingLabel="Retiring…"
+              />
             </form>
           ) : null}
         </section>
