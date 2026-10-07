@@ -242,7 +242,15 @@ Do not add pending behavior to simple GET search/filter forms.
 
 ## Dedicated Create-Page Coverage
 
-Every dedicated `/admin/**/new` page currently uses the common form primitives:
+Every dedicated `/admin/**/new` page currently uses the common form primitives and recoverable `AdminActionForm` state.
+
+Create actions must:
+- re-check authorization server-side before the recoverable validation block
+- return an inline `AdminActionState` error for business/validation failures
+- keep framework redirects outside broad `try/catch` blocks
+- redirect only after a successful mutation
+
+Current dedicated create coverage:
 
 - Blog Post
 - CMS Page
@@ -254,7 +262,7 @@ Every dedicated `/admin/**/new` page currently uses the common form primitives:
 - Booking Policy Version
 - Vehicle
 
-New dedicated create pages should not ship with raw label/input stacks unless there is a documented exception.
+New dedicated create pages should not ship with raw label/input stacks or error-boundary-only validation unless there is a documented exception.
 
 ## Editor Navigation
 
