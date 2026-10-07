@@ -8,9 +8,16 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function AdminLoginPage() {
+export default async function AdminLoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ invite?: string }>;
+}) {
   const session = await getAdminSession();
   if (session) redirect("/admin");
+
+  const params = await searchParams;
+  const inviteAccepted = params.invite === "accepted";
 
   return (
     <div className="admin-root admin-login-page">
@@ -30,6 +37,11 @@ export default async function AdminLoginPage() {
       </section>
 
       <section className="admin-login-form-wrap">
+        {inviteAccepted ? (
+          <p className="admin-notice" role="status">
+            Staff account activated successfully. Sign in with your new password.
+          </p>
+        ) : null}
         <AdminLoginForm />
       </section>
     </div>
