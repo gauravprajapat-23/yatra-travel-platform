@@ -446,7 +446,8 @@ Rules:
 - form grids collapse to one column
 - touch controls must remain comfortably tappable
 - sticky actions must not cover fields
-- horizontal editor tabs may scroll
+- sticky action bars must respect mobile safe-area insets
+- horizontal editor tabs may scroll with touch momentum and contained overscroll
 - media and card selectors collapse cleanly
 - no critical action should require hover
 
@@ -460,6 +461,7 @@ Rules:
 - form errors/feedback should use appropriate live/alert semantics
 - recoverable server-action feedback should be focusable and brought into view
 - field-level errors should be linked to their controls with `aria-describedby`
+- validation-feedback scrolling must respect `prefers-reduced-motion`
 - do not rely on color alone for state
 
 ## Data / Security Rules
