@@ -13,6 +13,18 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 25;
 
+function parseDateStart(value: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const parsed = new Date(`${value}T00:00:00.000+05:30`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function parseDateEnd(value: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const parsed = new Date(`${value}T23:59:59.999+05:30`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 function money(minor: bigint, currency: string) {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -46,6 +58,9 @@ export default async function AdminBookingsPage({
     q?: string;
     status?: string;
     type?: string;
+    assignment?: string;
+    from?: string;
+    to?: string;
     page?: string;
   }>;
 }) {
@@ -61,6 +76,22 @@ export default async function AdminBookingsPage({
     params.type === "CAR" || params.type === "PACKAGE"
       ? params.type
       : "ALL";
+  const assignment =
+    params.assignment === "ASSIGNED" || params.assignment === "UNASSIGNED"
+      ? params.assignment
+      : "ALL";
+  const from = String(params.from ?? "").trim();
+  const to = String(params.to ?? "").trim();
+  const fromDate = parseDateStart(from);
+  const toDate = parseDateEnd(to);
+  const travelRange =
+    fromDate || toDate
+      ? {
+          ...(fromDate ? { gte: fromDate } : {}),
+          ...(toDate ? { lte: toDate } : {}),
+        }
+      : undefined;
+
   const requestedPage = Number(params.page ?? "1");
   const page =
     Number.isInteger(requestedPage) && requestedPage > 0
@@ -71,6 +102,12 @@ export default async function AdminBookingsPage({
 
   const carWhere: Prisma.CarBookingWhereInput = {
     ...(status ? { status } : {}),
+    ...(travelRange ? { startsAt: travelRange } : {}),
+    ...(assignment === "ASSIGNED"
+      ? { selectedVehicleId: { not: null }, assignedDriverId: { not: null } }
+      : assignment === "UNASSIGNED"
+        ? { OR: [{ selectedVehicleId: null }, { assignedDriverId: null }] }
+        : {}),
     ...(q
       ? {
           OR: [
@@ -86,6 +123,7 @@ export default async function AdminBookingsPage({
 
   const packageWhere: Prisma.PackageBookingWhereInput = {
     ...(status ? { status } : {}),
+    ...(travelRange ? { travelStartAt: travelRange } : {}),
     ...(q
       ? {
           OR: [
@@ -215,6 +253,9 @@ export default async function AdminBookingsPage({
     if (q) next.set("q", q);
     if (status) next.set("status", status);
     if (type !== "ALL") next.set("type", type);
+    if (assignment !== "ALL") next.set("assignment", assignment);
+    if (from) next.set("from", from);
+    if (to) next.set("to", to);
     if (targetPage > 1) next.set("page", targetPage.toString());
     const query = next.toString();
     return query ? `/admin/bookings?${query}` : "/admin/bookings";
@@ -257,6 +298,8 @@ export default async function AdminBookingsPage({
       filters={[
         type === "ALL" ? "All booking types" : type.replaceAll("_", " "),
         status ? status.replaceAll("_", " ") : "All statuses",
+        assignment === "ALL" ? "All assignments" : assignment.replaceAll("_", " "),
+        from || to ? `${from || "…"} → ${to || "…"}` : "All travel dates",
       ]}
       toolbar={
         <form className="admin-table-query" method="get">
@@ -290,11 +333,44 @@ export default async function AdminBookingsPage({
             </select>
           </label>
 
+          <label>
+            <span>Assignment</span>
+            <select name="assignment" defaultValue={assignment}>
+              <option value="ALL">All assignments</option>
+              <option value="ASSIGNED">Assigned</option>
+              <option value="UNASSIGNED">Needs assignment</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Travel from</span>
+            <input type="date" name="from" defaultValue={from} />
+          </label>
+
+          <label>
+            <span>Travel to</span>
+            <input type="date" name="to" defaultValue={to} />
+          </label>
+
           <button className="admin-primary-button" type="submit">
             Apply
           </button>
 
-          {(q || status || type !== "ALL") ? (
+          <Link
+            className="admin-secondary-button"
+            href={`/api/admin/bookings/export?${new URLSearchParams({
+              ...(q ? { q } : {}),
+              ...(status ? { status } : {}),
+              ...(type !== "ALL" ? { type } : {}),
+              ...(assignment !== "ALL" ? { assignment } : {}),
+              ...(from ? { from } : {}),
+              ...(to ? { to } : {}),
+            }).toString()}`}
+          >
+            Export CSV
+          </Link>
+
+          {(q || status || type !== "ALL" || assignment !== "ALL" || from || to) ? (
             <Link className="admin-secondary-button" href="/admin/bookings">
               Reset
             </Link>
