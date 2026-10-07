@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -139,14 +140,23 @@ export default async function LeadDetailPage({
           <h2>Update Status</h2>
           {hasPermission(session.roles, "lead.write") ? (
             <form action={updateLeadStatus}>
-              <label>
-                Lead status
-                <select name="status" defaultValue={lead.status}>
+              <AdminField
+                label="Lead status"
+                htmlFor="leadStatus"
+                hint="Move the enquiry through qualification, closure or spam review."
+              >
+                <select
+                  id="leadStatus"
+                  name="status"
+                  defaultValue={lead.status}
+                >
                   {leadStatuses.map((status) => (
-                    <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
+                    <option key={status} value={status}>
+                      {status.replaceAll("_", " ")}
+                    </option>
                   ))}
                 </select>
-              </label>
+              </AdminField>
               <button className="admin-primary-button" type="submit">Save Lead Status</button>
             </form>
           ) : (
