@@ -180,8 +180,8 @@ export default async function StaffDetailPage({
       actorUserId: currentSession.userId,
     });
 
-    revalidatePath(`/admin/staff/${targetUserId}`);
     revalidatePath("/admin/staff");
+    redirect("/admin/staff");
   }
 
   async function saveAccess(formData: FormData) {
@@ -307,7 +307,7 @@ export default async function StaffDetailPage({
               <form action={cancelInvite}>
                 <AdminSubmitButton
                   className="admin-danger-button"
-                  label="Cancel Invite & Disable Account"
+                  label="Cancel Invite & Remove Pending Account"
                   pendingLabel="Cancelling Invite…"
                 />
               </form>
