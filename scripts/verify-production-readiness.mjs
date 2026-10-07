@@ -135,7 +135,7 @@ check(
   String(health.leadFormsReady),
 );
 
-if (["car", "payments", "full"].includes(mode)) {
+if (["car", "full"].includes(mode)) {
   check(
     "active vehicles available",
     Number(health.activeVehicles) > 0,
@@ -192,17 +192,43 @@ if (["payments", "full"].includes(mode)) {
     health.paymentWriteEnabled === true,
     String(health.paymentWriteEnabled),
   );
-  check(
-    "payment flow ready",
-    health.paymentReady === true,
-    String(health.paymentReady),
-  );
+
+  if (mode === "payments") {
+    check(
+      "at least one payment channel ready",
+      health.paymentReady === true,
+      `car=${String(health.carPaymentReady)} package=${String(health.packagePaymentReady)}`,
+    );
+  }
+
+  if (mode === "full") {
+    check(
+      "all booking channels ready",
+      health.fullBookingReady === true,
+      String(health.fullBookingReady),
+    );
+    check(
+      "car payment channel ready",
+      health.carPaymentReady === true,
+      String(health.carPaymentReady),
+    );
+    check(
+      "package payment channel ready",
+      health.packagePaymentReady === true,
+      String(health.packagePaymentReady),
+    );
+    check(
+      "all payment channels ready",
+      health.fullPaymentReady === true,
+      String(health.fullPaymentReady),
+    );
+  }
 
   if (has("--require-refunds") || mode === "full") {
     check(
-      "refund writes enabled",
-      health.refundWriteEnabled === true,
-      String(health.refundWriteEnabled),
+      "refund flow ready",
+      health.refundReady === true,
+      `write=${String(health.refundWriteEnabled)} provider=${String(health.razorpayConfigured)}`,
     );
   }
 }
