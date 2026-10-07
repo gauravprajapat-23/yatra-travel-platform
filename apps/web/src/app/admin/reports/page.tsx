@@ -56,6 +56,11 @@ export default async function ReportsPage({
 
   const db = getDb();
   const now = new Date();
+  const trendEnd = toDate ?? now;
+  const trendStartFloor = new Date(trendEnd.getTime() - 13 * 24 * 60 * 60 * 1000);
+  const trendStart =
+    fromDate && fromDate > trendStartFloor ? fromDate : trendStartFloor;
+  const trendRange = { gte: trendStart, lte: trendEnd };
 
   const createdRange =
     fromDate || toDate
@@ -75,6 +80,11 @@ export default async function ReportsPage({
     activeVehicles,
     assignedTrips,
     packageGroups,
+    trendCars,
+    trendPackages,
+    trendPayments,
+    trendRefunds,
+    routeBookings,
   ] = await Promise.all([
     db.carBooking.count({
       where: createdRange ? { createdAt: createdRange } : undefined,
@@ -125,6 +135,46 @@ export default async function ReportsPage({
       _sum: { totalMinor: true },
       orderBy: { _count: { packageId: "desc" } },
       take: 10,
+    }),
+    db.carBooking.findMany({
+      where: { createdAt: trendRange },
+      select: { createdAt: true },
+    }),
+    db.packageBooking.findMany({
+      where: { createdAt: trendRange },
+      select: { createdAt: true },
+    }),
+    db.paymentIntent.findMany({
+      where: {
+        status: { in: ["CAPTURED", "PARTIALLY_REFUNDED", "REFUNDED"] },
+        capturedAt: trendRange,
+      },
+      select: {
+        capturedAt: true,
+        currency: true,
+        amountPaidMinor: true,
+      },
+    }),
+    db.refund.findMany({
+      where: {
+        status: "PROCESSED",
+        processedAt: trendRange,
+      },
+      select: {
+        processedAt: true,
+        currency: true,
+        amountMinor: true,
+      },
+    }),
+    db.carBooking.findMany({
+      where: createdRange ? { createdAt: createdRange } : undefined,
+      select: {
+        originText: true,
+        destinationText: true,
+        currency: true,
+        totalMinor: true,
+      },
+      take: 5000,
     }),
   ]);
 
@@ -180,6 +230,83 @@ export default async function ReportsPage({
     from || to
       ? `${from || "…"} → ${to || "…"} (IST)`
       : "All-time activity";
+
+  const dayKey = (value: Date) =>
+    value.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+
+  const trendBuckets = new Map<string, {
+    date: string;
+    bookings: number;
+    captured: Map<string, bigint>;
+    refunded: Map<string, bigint>;
+  }>();
+
+  for (
+    let cursor = new Date(trendStart);
+    cursor <= trendEnd;
+    cursor = new Date(cursor.getTime() + 24 * 60 * 60 * 1000)
+  ) {
+    const key = dayKey(cursor);
+    trendBuckets.set(key, {
+      date: key,
+      bookings: 0,
+      captured: new Map(),
+      refunded: new Map(),
+    });
+  }
+
+  for (const booking of [...trendCars, ...trendPackages]) {
+    const bucket = trendBuckets.get(dayKey(booking.createdAt));
+    if (bucket) bucket.bookings += 1;
+  }
+
+  for (const payment of trendPayments) {
+    if (!payment.capturedAt) continue;
+    const bucket = trendBuckets.get(dayKey(payment.capturedAt));
+    if (!bucket) continue;
+    bucket.captured.set(
+      payment.currency,
+      (bucket.captured.get(payment.currency) ?? 0n) + payment.amountPaidMinor,
+    );
+  }
+
+  for (const refund of trendRefunds) {
+    if (!refund.processedAt) continue;
+    const bucket = trendBuckets.get(dayKey(refund.processedAt));
+    if (!bucket) continue;
+    bucket.refunded.set(
+      refund.currency,
+      (bucket.refunded.get(refund.currency) ?? 0n) + refund.amountMinor,
+    );
+  }
+
+  const trends = [...trendBuckets.values()];
+  const maxBookings = Math.max(1, ...trends.map((item) => item.bookings));
+
+  const routeMap = new Map<string, {
+    route: string;
+    bookings: number;
+    values: Map<string, bigint>;
+  }>();
+
+  for (const booking of routeBookings) {
+    const route = `${booking.originText} → ${booking.destinationText}`;
+    const current = routeMap.get(route) ?? {
+      route,
+      bookings: 0,
+      values: new Map<string, bigint>(),
+    };
+    current.bookings += 1;
+    current.values.set(
+      booking.currency,
+      (current.values.get(booking.currency) ?? 0n) + booking.totalMinor,
+    );
+    routeMap.set(route, current);
+  }
+
+  const topRoutes = [...routeMap.values()]
+    .sort((a, b) => b.bookings - a.bookings)
+    .slice(0, 10);
 
   return (
     <AdminShell
@@ -239,7 +366,54 @@ export default async function ReportsPage({
         />
       </div>
 
+      <section className="admin-panel">
+        <div className="admin-panel-heading">
+          <h2>14-Day Booking / Revenue Trend</h2>
+          <small>Daily activity in IST ending {trendEnd.toLocaleDateString("en-IN")}</small>
+        </div>
+        <div className="admin-report-trend">
+          {trends.map((item) => (
+            <div className="admin-report-trend__row" key={item.date}>
+              <strong>{new Date(`${item.date}T12:00:00+05:30`).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</strong>
+              <div className="admin-report-trend__bar-track" aria-label={`${item.bookings} bookings`}>
+                <span style={{ width: `${Math.max(4, Math.round((item.bookings / maxBookings) * 100))}%` }} />
+              </div>
+              <span>{item.bookings} bookings</span>
+              <span>Captured {formatCurrencyMap(item.captured)}</span>
+              <span>Refunded {formatCurrencyMap(item.refunded)}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <div className="admin-report-bottom">
+        <section className="admin-panel">
+          <div className="admin-panel-heading">
+            <h2>Top Car Routes</h2>
+          </div>
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Route</th>
+                <th>Bookings</th>
+                <th>Booked Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {topRoutes.length === 0 ? (
+                <tr><td colSpan={3}>No car bookings in this period.</td></tr>
+              ) : topRoutes.map((item) => (
+                <tr key={item.route}>
+                  <td>{item.route}</td>
+                  <td>{item.bookings}</td>
+                  <td>{formatCurrencyMap(item.values)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+
         <section className="admin-panel">
           <div className="admin-panel-heading">
             <h2>Top Packages by Bookings</h2>
