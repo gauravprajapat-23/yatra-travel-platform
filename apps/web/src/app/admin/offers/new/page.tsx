@@ -211,6 +211,6 @@ export default async function NewPricingRulePage() {
 
         <AdminFormActions submitLabel="Create Pricing Rule" cancelHref="/admin/offers" helper="Pricing remains server-authoritative." />
       </AdminForm>
-
+    </AdminShell>
   );
 }
