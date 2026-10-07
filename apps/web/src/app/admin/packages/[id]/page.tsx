@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   contentStatuses,
@@ -62,13 +63,31 @@ function optionalPositiveInt(value: FormDataEntryValue | null): number | null {
 
 export default async function PackageDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "package.read")) redirect("/admin");
 
   const { id } = await params;
+  const { tab: requestedTab } = await searchParams;
+  const validTabs = [
+    "overview",
+    "destinations",
+    "itinerary",
+    "pricing",
+    "content",
+    "media",
+    "publishing",
+  ] as const;
+  const activeTab = validTabs.includes(
+    requestedTab as (typeof validTabs)[number],
+  )
+    ? (requestedTab as (typeof validTabs)[number])
+    : "overview";
+
   const db = getDb();
 
   const [pkg, heroOptions, vehicleClasses, allDestinations] = await Promise.all([
@@ -620,402 +639,375 @@ export default async function PackageDetailPage({
         </Link>
       }
     >
-      <div className="admin-detail-grid">
-        <section className="admin-panel admin-detail-card">
-          <div className="admin-panel-heading">
-            <h2>Package Overview</h2>
-            <StatusPill tone={tone(pkg.status)}>
-              {pkg.status.replaceAll("_", " ")}
-            </StatusPill>
-          </div>
-          <p>{pkg.summary ?? "No summary provided."}</p>
-          <dl>
-            <div><dt>Destinations</dt><dd>{pkg.destinations.map((item) => item.destination.name).join(", ") || "—"}</dd></div>
-            <div><dt>Published</dt><dd>{pkg.publishedAt?.toLocaleString("en-IN") ?? "Not published"}</dd></div>
-            <div><dt>Updated</dt><dd>{pkg.updatedAt.toLocaleString("en-IN")}</dd></div>
-          </dl>
-        </section>
+      <AdminEditorTabs
+        basePath={`/admin/packages/${packageId}`}
+        active={activeTab}
+        tabs={[
+          { key: "overview", label: "Overview", description: "Status & summary" },
+          { key: "destinations", label: "Destinations", description: "Route coverage" },
+          { key: "itinerary", label: "Itinerary", description: "Day-by-day plan" },
+          { key: "pricing", label: "Pricing", description: "Fare options" },
+          { key: "content", label: "Content", description: "Structured body" },
+          { key: "media", label: "Media", description: "Hero image" },
+          { key: "publishing", label: "SEO & Publishing", description: "Visibility & metadata" },
+        ]}
+      />
 
-        <section className="admin-panel admin-detail-card">
-          <h2>Destinations</h2>
-          {hasPermission(session.roles, "package.write") ? (
-            <form action={saveDestinations}>
-              <fieldset>
-                <legend>Package destinations</legend>
-                {allDestinations.length === 0 ? (
-                  <p>No destinations exist yet. Create destinations first.</p>
-                ) : allDestinations.map((destination) => (
-                  <label key={destination.id}>
-                    <input
-                      type="checkbox"
-                      name="destinationIds"
-                      value={destination.id}
-                      defaultChecked={pkg.destinations.some(
-                        (item) => item.destinationId === destination.id,
-                      )}
-                    />
-                    {destination.name} · {destination.status.replaceAll("_", " ")}
-                  </label>
-                ))}
-              </fieldset>
-              <p>
-                Selected destinations are stored in the order shown here.
-              </p>
-              <button className="admin-secondary-button" type="submit">
-                Save Destinations
-              </button>
-            </form>
-          ) : (
-            <p>
-              {pkg.destinations.map((item) => item.destination.name).join(", ") || "No destinations assigned."}
-            </p>
-          )}
-        </section>
-
-        <section className="admin-panel admin-detail-card">
-          <h2>Hero Media</h2>
-          {pkg.heroMedia?.publicUrl ? (
-            <img
-              src={pkg.heroMedia.publicUrl}
-              alt={pkg.heroMedia.altText ?? pkg.title}
-              loading="lazy"
-            />
-          ) : (
-            <p>No hero image assigned.</p>
-          )}
-          {hasPermission(session.roles, "package.write") ? (
-            <form action={saveHero}>
-              <label>
-                Hero image
-                <select name="heroMediaId" defaultValue={pkg.heroMediaId ?? ""}>
-                  <option value="">No hero image</option>
-                  {heroOptions.map((asset) => (
-                    <option key={asset.id} value={asset.id}>
-                      {asset.altText ?? asset.objectKey.split("/").pop() ?? asset.objectKey}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button className="admin-secondary-button" type="submit">
-                Save Hero Image
-              </button>
-            </form>
-          ) : null}
-        </section>
-
-        <section className="admin-panel admin-detail-card">
-          <h2>Structured Body</h2>
-          <p>
-            Long-form package content is stored as safe structured blocks. Raw HTML/script is rejected.
-          </p>
-          {hasPermission(session.roles, "package.write") ? (
-            <form action={saveBody}>
-              <label>
-                Structured JSON
-                <textarea
-                  name="body"
-                  defaultValue={stringifyStructuredBody(pkg.body)}
-                  rows={18}
-                  spellCheck={false}
-                />
-              </label>
-              <button className="admin-primary-button" type="submit">
-                Save Package Body
-              </button>
-            </form>
-          ) : (
-            <pre>{stringifyStructuredBody(pkg.body)}</pre>
-          )}
-        </section>
-
-        <section className="admin-panel admin-detail-card">
-          <h2>Itinerary</h2>
-          {pkg.itinerary.length === 0 ? (
-            <p>No itinerary days configured.</p>
-          ) : (
-            <div className="admin-timeline">
-              {pkg.itinerary.map((day) => (
-                <div key={day.id}>
-                  <span>{day.dayNumber}</span>
-                  <div>
-                    <strong>Day {day.dayNumber}: {day.title}</strong>
-                    {day.description ? <p>{day.description}</p> : null}
-                    {hasPermission(session.roles, "package.write") ? (
-                      <form action={deleteItineraryDay}>
-                        <input type="hidden" name="itineraryId" value={day.id}/>
-                        <button className="admin-danger-button" type="submit">
-                          Delete Day
-                        </button>
-                      </form>
-                    ) : null}
-                  </div>
-                </div>
-              ))}
+      <div className="admin-editor-section-stack">
+        {activeTab === "overview" ? (
+          <section className="admin-panel admin-detail-card">
+            <div className="admin-panel-heading">
+              <h2>Package Overview</h2>
+              <StatusPill tone={tone(pkg.status)}>
+                {pkg.status.replaceAll("_", " ")}
+              </StatusPill>
             </div>
-          )}
+            <p>{pkg.summary ?? "No summary provided."}</p>
+            <dl>
+              <div><dt>Duration</dt><dd>{packageDurationDays}D / {pkg.durationNights}N</dd></div>
+              <div><dt>Destinations</dt><dd>{pkg.destinations.map((item) => item.destination.name).join(", ") || "—"}</dd></div>
+              <div><dt>Price options</dt><dd>{pkg.priceOptions.length}</dd></div>
+              <div><dt>Itinerary days</dt><dd>{pkg.itinerary.length}</dd></div>
+              <div><dt>Published</dt><dd>{pkg.publishedAt?.toLocaleString("en-IN") ?? "Not published"}</dd></div>
+              <div><dt>Updated</dt><dd>{pkg.updatedAt.toLocaleString("en-IN")}</dd></div>
+            </dl>
+          </section>
+        ) : null}
 
-          {hasPermission(session.roles, "package.write") ? (
-            <form action={saveItineraryDay}>
-              <h3>Add or Update Day</h3>
-              <label>
-                Day number
-                <input
-                  type="number"
-                  name="dayNumber"
-                  min={1}
-                  max={packageDurationDays}
-                  required
-                />
-              </label>
-              <label>
-                Title
-                <input name="title" required minLength={2} maxLength={180}/>
-              </label>
-              <label>
-                Description
-                <textarea name="description" maxLength={3000}/>
-              </label>
-              <button className="admin-primary-button" type="submit">
-                Save Itinerary Day
-              </button>
-            </form>
-          ) : null}
-        </section>
+        {activeTab === "destinations" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Destinations</h2>
+            {hasPermission(session.roles, "package.write") ? (
+              <form action={saveDestinations}>
+                <fieldset>
+                  <legend>Package destinations</legend>
+                  {allDestinations.length === 0 ? (
+                    <p>No destinations exist yet. Create destinations first.</p>
+                  ) : allDestinations.map((destination) => (
+                    <label key={destination.id}>
+                      <input
+                        type="checkbox"
+                        name="destinationIds"
+                        value={destination.id}
+                        defaultChecked={pkg.destinations.some(
+                          (item) => item.destinationId === destination.id,
+                        )}
+                      />
+                      {destination.name} · {destination.status.replaceAll("_", " ")}
+                    </label>
+                  ))}
+                </fieldset>
+                <p>Selected destinations are stored in the order shown here.</p>
+                <button className="admin-primary-button" type="submit">
+                  Save Destinations
+                </button>
+              </form>
+            ) : (
+              <p>{pkg.destinations.map((item) => item.destination.name).join(", ") || "No destinations assigned."}</p>
+            )}
+          </section>
+        ) : null}
 
-        <section className="admin-panel admin-detail-card">
-          <h2>Pricing</h2>
-          {pkg.priceOptions.length === 0 ? (
-            <p>No package pricing options configured.</p>
-          ) : (
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Mode</th>
-                  <th>Price</th>
-                  <th>Travellers</th>
-                  <th>Vehicle Class</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pkg.priceOptions.map((option) => (
-                  <tr key={option.id}>
-                    <td>{option.mode.replaceAll("_", " ")}</td>
-                    <td>{money(option.amountMinor, option.currency)}</td>
-                    <td>{option.minTravellers ?? "—"} – {option.maxTravellers ?? "—"}</td>
-                    <td>
-                      {option.vehicleClassId
-                        ? vehicleClasses.find((item) => item.id === option.vehicleClassId)?.name ?? "Unknown"
-                        : "—"}
-                    </td>
-                    <td>{option.isActive ? "Active" : "Inactive"}</td>
-                    <td>
+        {activeTab === "itinerary" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Itinerary</h2>
+            {pkg.itinerary.length === 0 ? (
+              <p>No itinerary days configured.</p>
+            ) : (
+              <div className="admin-timeline">
+                {pkg.itinerary.map((day) => (
+                  <div key={day.id}>
+                    <span>{day.dayNumber}</span>
+                    <div>
+                      <strong>Day {day.dayNumber}: {day.title}</strong>
+                      {day.description ? <p>{day.description}</p> : null}
                       {hasPermission(session.roles, "package.write") ? (
-                        <form action={togglePriceOption}>
-                          <input type="hidden" name="optionId" value={option.id}/>
-                          <button className="admin-secondary-button" type="submit">
-                            {option.isActive ? "Deactivate" : "Activate"}
+                        <form action={deleteItineraryDay}>
+                          <input type="hidden" name="itineraryId" value={day.id}/>
+                          <button className="admin-danger-button" type="submit">
+                            Delete Day
                           </button>
                         </form>
-                      ) : "—"}
-                    </td>
-                  </tr>
+                      ) : null}
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          )}
+              </div>
+            )}
 
-          {hasPermission(session.roles, "package.write") ? (
-            <>
-              <h3>Add Price Option</h3>
-              <form action={savePriceOption}>
+            {hasPermission(session.roles, "package.write") ? (
+              <form action={saveItineraryDay}>
+                <h3>Add or Update Day</h3>
                 <label>
-                  Mode
-                  <select name="mode" defaultValue="PER_PERSON">
-                    {packagePriceModes.map((mode) => (
-                      <option key={mode} value={mode}>{mode.replaceAll("_", " ")}</option>
-                    ))}
-                  </select>
+                  Day number
+                  <input type="number" name="dayNumber" min={1} max={packageDurationDays} required/>
                 </label>
                 <label>
-                  Price
-                  <input
-                    name="amount"
-                    inputMode="decimal"
-                    placeholder="14000"
-                    required
-                  />
+                  Title
+                  <input name="title" required minLength={2} maxLength={180}/>
                 </label>
                 <label>
-                  Currency
-                  <input name="currency" defaultValue="INR" maxLength={3} required/>
+                  Description
+                  <textarea name="description" maxLength={3000}/>
                 </label>
+                <button className="admin-primary-button" type="submit">
+                  Save Itinerary Day
+                </button>
+              </form>
+            ) : null}
+          </section>
+        ) : null}
+
+        {activeTab === "pricing" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Pricing</h2>
+            {pkg.priceOptions.length === 0 ? (
+              <p>No package pricing options configured.</p>
+            ) : (
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Mode</th>
+                    <th>Price</th>
+                    <th>Travellers</th>
+                    <th>Vehicle Class</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pkg.priceOptions.map((option) => (
+                    <tr key={option.id}>
+                      <td>{option.mode.replaceAll("_", " ")}</td>
+                      <td>{money(option.amountMinor, option.currency)}</td>
+                      <td>{option.minTravellers ?? "—"} – {option.maxTravellers ?? "—"}</td>
+                      <td>{option.vehicleClassId ? vehicleClasses.find((item) => item.id === option.vehicleClassId)?.name ?? "Unknown" : "—"}</td>
+                      <td>{option.isActive ? "Active" : "Inactive"}</td>
+                      <td>
+                        {hasPermission(session.roles, "package.write") ? (
+                          <form action={togglePriceOption}>
+                            <input type="hidden" name="optionId" value={option.id}/>
+                            <button className="admin-secondary-button" type="submit">
+                              {option.isActive ? "Deactivate" : "Activate"}
+                            </button>
+                          </form>
+                        ) : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            {hasPermission(session.roles, "package.write") ? (
+              <>
+                <h3>Add Price Option</h3>
+                <form action={savePriceOption}>
+                  <label>
+                    Mode
+                    <select name="mode" defaultValue="PER_PERSON">
+                      {packagePriceModes.map((mode) => (
+                        <option key={mode} value={mode}>{mode.replaceAll("_", " ")}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Price
+                    <input name="amount" inputMode="decimal" placeholder="14000" required/>
+                  </label>
+                  <label>
+                    Currency
+                    <input name="currency" defaultValue="INR" maxLength={3} required/>
+                  </label>
+                  <label>
+                    Minimum travellers
+                    <input type="number" name="minTravellers" min={1}/>
+                  </label>
+                  <label>
+                    Maximum travellers
+                    <input type="number" name="maxTravellers" min={1}/>
+                  </label>
+                  <label>
+                    Vehicle class
+                    <select name="vehicleClassId" defaultValue="">
+                      <option value="">Not applicable</option>
+                      {vehicleClasses.map((vehicleClass) => (
+                        <option key={vehicleClass.id} value={vehicleClass.id}>{vehicleClass.name}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Sort order
+                    <input type="number" name="sortOrder" defaultValue={0}/>
+                  </label>
+                  <button className="admin-primary-button" type="submit">
+                    Add Price Option
+                  </button>
+                </form>
+
+                {pkg.priceOptions.map((option) => (
+                  <form action={savePriceOption} key={`edit-${option.id}`}>
+                    <input type="hidden" name="optionId" value={option.id}/>
+                    <strong>{option.mode.replaceAll("_", " ")} · {money(option.amountMinor, option.currency)}</strong>
+                    <label>
+                      Mode
+                      <select name="mode" defaultValue={option.mode}>
+                        {packagePriceModes.map((mode) => (
+                          <option key={mode} value={mode}>{mode.replaceAll("_", " ")}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Price
+                      <input name="amount" defaultValue={(Number(option.amountMinor) / 100).toFixed(2)} inputMode="decimal" required/>
+                    </label>
+                    <label>
+                      Currency
+                      <input name="currency" defaultValue={option.currency} maxLength={3} required/>
+                    </label>
+                    <label>
+                      Minimum travellers
+                      <input type="number" name="minTravellers" min={1} defaultValue={option.minTravellers ?? ""}/>
+                    </label>
+                    <label>
+                      Maximum travellers
+                      <input type="number" name="maxTravellers" min={1} defaultValue={option.maxTravellers ?? ""}/>
+                    </label>
+                    <label>
+                      Vehicle class
+                      <select name="vehicleClassId" defaultValue={option.vehicleClassId ?? ""}>
+                        <option value="">Not applicable</option>
+                        {vehicleClasses.map((vehicleClass) => (
+                          <option key={vehicleClass.id} value={vehicleClass.id}>{vehicleClass.name}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Sort order
+                      <input type="number" name="sortOrder" defaultValue={option.sortOrder}/>
+                    </label>
+                    <button className="admin-secondary-button" type="submit">
+                      Update Price Option
+                    </button>
+                  </form>
+                ))}
+              </>
+            ) : null}
+          </section>
+        ) : null}
+
+        {activeTab === "content" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Structured Body</h2>
+            <p>Long-form package content is stored as safe structured blocks. Raw HTML/script is rejected.</p>
+            {hasPermission(session.roles, "package.write") ? (
+              <form action={saveBody}>
                 <label>
-                  Minimum travellers
-                  <input type="number" name="minTravellers" min={1}/>
+                  Structured JSON
+                  <textarea name="body" defaultValue={stringifyStructuredBody(pkg.body)} rows={22} spellCheck={false}/>
                 </label>
+                <small>Use structured blocks for headings, paragraphs, galleries, CTAs, FAQs and route highlights.</small>
+                <button className="admin-primary-button" type="submit">
+                  Save Package Body
+                </button>
+              </form>
+            ) : (
+              <pre>{stringifyStructuredBody(pkg.body)}</pre>
+            )}
+          </section>
+        ) : null}
+
+        {activeTab === "media" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Hero Media</h2>
+            {pkg.heroMedia?.publicUrl ? (
+              <img src={pkg.heroMedia.publicUrl} alt={pkg.heroMedia.altText ?? pkg.title} loading="lazy"/>
+            ) : (
+              <p>No hero image assigned.</p>
+            )}
+            {hasPermission(session.roles, "package.write") ? (
+              <form action={saveHero}>
                 <label>
-                  Maximum travellers
-                  <input type="number" name="maxTravellers" min={1}/>
-                </label>
-                <label>
-                  Vehicle class
-                  <select name="vehicleClassId" defaultValue="">
-                    <option value="">Not applicable</option>
-                    {vehicleClasses.map((vehicleClass) => (
-                      <option key={vehicleClass.id} value={vehicleClass.id}>
-                        {vehicleClass.name}
+                  Hero image
+                  <select name="heroMediaId" defaultValue={pkg.heroMediaId ?? ""}>
+                    <option value="">No hero image</option>
+                    {heroOptions.map((asset) => (
+                      <option key={asset.id} value={asset.id}>
+                        {asset.altText ?? asset.objectKey.split("/").pop() ?? asset.objectKey}
                       </option>
                     ))}
                   </select>
                 </label>
-                <label>
-                  Sort order
-                  <input type="number" name="sortOrder" defaultValue={0}/>
-                </label>
                 <button className="admin-primary-button" type="submit">
-                  Add Price Option
+                  Save Hero Image
                 </button>
               </form>
+            ) : null}
+          </section>
+        ) : null}
 
-              {pkg.priceOptions.length ? (
-                <>
-                  <h3>Edit Existing Price Option</h3>
-                  {pkg.priceOptions.map((option) => (
-                    <form action={savePriceOption} key={`edit-${option.id}`}>
-                      <input type="hidden" name="optionId" value={option.id}/>
-                      <strong>{option.mode.replaceAll("_", " ")} · {money(option.amountMinor, option.currency)}</strong>
-                      <label>
-                        Mode
-                        <select name="mode" defaultValue={option.mode}>
-                          {packagePriceModes.map((mode) => (
-                            <option key={mode} value={mode}>{mode.replaceAll("_", " ")}</option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        Price
-                        <input
-                          name="amount"
-                          defaultValue={(Number(option.amountMinor) / 100).toFixed(2)}
-                          inputMode="decimal"
-                          required
-                        />
-                      </label>
-                      <label>
-                        Currency
-                        <input name="currency" defaultValue={option.currency} maxLength={3} required/>
-                      </label>
-                      <label>
-                        Minimum travellers
-                        <input
-                          type="number"
-                          name="minTravellers"
-                          min={1}
-                          defaultValue={option.minTravellers ?? ""}
-                        />
-                      </label>
-                      <label>
-                        Maximum travellers
-                        <input
-                          type="number"
-                          name="maxTravellers"
-                          min={1}
-                          defaultValue={option.maxTravellers ?? ""}
-                        />
-                      </label>
-                      <label>
-                        Vehicle class
-                        <select name="vehicleClassId" defaultValue={option.vehicleClassId ?? ""}>
-                          <option value="">Not applicable</option>
-                          {vehicleClasses.map((vehicleClass) => (
-                            <option key={vehicleClass.id} value={vehicleClass.id}>
-                              {vehicleClass.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        Sort order
-                        <input type="number" name="sortOrder" defaultValue={option.sortOrder}/>
-                      </label>
-                      <button className="admin-secondary-button" type="submit">
-                        Update Price Option
-                      </button>
-                    </form>
-                  ))}
-                </>
-              ) : null}
-            </>
-          ) : null}
-        </section>
-
-        <section className="admin-panel admin-detail-card">
-          <h2>Edit Package Metadata</h2>
-          {hasPermission(session.roles, "package.write") ? (
-            <form action={saveMetadata}>
-              <label>
-                Title
-                <input name="title" defaultValue={pkg.title} required minLength={2} maxLength={180}/>
-              </label>
-              <label>
-                Summary
-                <textarea name="summary" defaultValue={pkg.summary ?? ""} maxLength={1000}/>
-              </label>
-              <label>
-                Status
-                <select name="status" defaultValue={pkg.status}>
-                  {contentStatuses.map((status) => (
-                    <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Schedule date
-                <input
-                  type="datetime-local"
-                  name="scheduledFor"
-                  defaultValue={
-                    pkg.scheduledFor
-                      ? new Date(
-                          pkg.scheduledFor.getTime() -
-                            pkg.scheduledFor.getTimezoneOffset() * 60_000,
-                        )
-                          .toISOString()
-                          .slice(0, 16)
-                      : ""
-                  }
-                />
-              </label>
-              <label>
-                SEO title
-                <input name="seoTitle" defaultValue={pkg.seoTitle ?? ""} maxLength={120}/>
-              </label>
-              <label>
-                SEO description
-                <textarea name="seoDescription" defaultValue={pkg.seoDescription ?? ""} maxLength={320}/>
-              </label>
-              <label>
-                Canonical URL
-                <input name="canonicalUrl" defaultValue={pkg.canonicalUrl ?? ""} maxLength={500}/>
-              </label>
-              <label>
-                <input type="checkbox" name="robotsIndex" defaultChecked={pkg.robotsIndex}/>
-                Allow search indexing
-              </label>
-              <label>
-                <input type="checkbox" name="robotsFollow" defaultChecked={pkg.robotsFollow}/>
-                Allow link following
-              </label>
-              <button className="admin-primary-button" type="submit">
-                Save Package
-              </button>
-            </form>
-          ) : (
-            <p>Your role has read-only package access.</p>
-          )}
-        </section>
+        {activeTab === "publishing" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>SEO & Publishing</h2>
+            {hasPermission(session.roles, "package.write") ? (
+              <form action={saveMetadata}>
+                <label>
+                  Title
+                  <input name="title" defaultValue={pkg.title} required minLength={2} maxLength={180}/>
+                </label>
+                <label>
+                  Summary
+                  <textarea name="summary" defaultValue={pkg.summary ?? ""} maxLength={1000}/>
+                </label>
+                <label>
+                  Status
+                  <select name="status" defaultValue={pkg.status}>
+                    {contentStatuses.map((status) => (
+                      <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Schedule date
+                  <input
+                    type="datetime-local"
+                    name="scheduledFor"
+                    defaultValue={
+                      pkg.scheduledFor
+                        ? new Date(pkg.scheduledFor.getTime() - pkg.scheduledFor.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
+                        : ""
+                    }
+                  />
+                </label>
+                <label>
+                  SEO title
+                  <input name="seoTitle" defaultValue={pkg.seoTitle ?? ""} maxLength={120}/>
+                </label>
+                <label>
+                  SEO description
+                  <textarea name="seoDescription" defaultValue={pkg.seoDescription ?? ""} maxLength={320}/>
+                </label>
+                <label>
+                  Canonical URL
+                  <input name="canonicalUrl" defaultValue={pkg.canonicalUrl ?? ""} maxLength={500}/>
+                </label>
+                <label>
+                  <input type="checkbox" name="robotsIndex" defaultChecked={pkg.robotsIndex}/>
+                  Allow search indexing
+                </label>
+                <label>
+                  <input type="checkbox" name="robotsFollow" defaultChecked={pkg.robotsFollow}/>
+                  Allow link following
+                </label>
+                <button className="admin-primary-button" type="submit">
+                  Save SEO & Publishing
+                </button>
+              </form>
+            ) : (
+              <p>Your role has read-only package access.</p>
+            )}
+          </section>
+        ) : null}
       </div>
     </AdminShell>
   );
