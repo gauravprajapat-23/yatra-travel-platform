@@ -4,6 +4,7 @@ import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminMetric, AdminShell, StatusPill } from "@/components/admin-shell";
 import { requireAdminSession } from "@/lib/auth/session";
+import { checkoutSessionSigningConfigured } from "@/lib/checkout-session";
 
 export const dynamic = "force-dynamic";
 
@@ -106,6 +107,7 @@ export default async function SettingsPage() {
       process.env.STORAGE_PUBLIC_BASE_URL,
   );
   const appUrlConfigured = Boolean(process.env.NEXT_PUBLIC_APP_URL);
+  const checkoutSigningConfigured = checkoutSessionSigningConfigured();
   const schedulerConfigured = Boolean(
     process.env.CRON_SECRET && process.env.CRON_SECRET.trim().length >= 16,
   );
@@ -140,20 +142,37 @@ export default async function SettingsPage() {
   const legalReady = legalPages === 3;
   const carReady =
     bookingWriteEnabled &&
+    checkoutSigningConfigured &&
     carPolicies > 0 &&
     activePricingRules > 0 &&
     activeVehicles > 0;
   const packageReady =
     packageBookingWriteEnabled &&
+    checkoutSigningConfigured &&
     packagePolicies > 0;
-  const paymentReady =
+  const fullBookingReady = carReady && packageReady;
+
+  const carPaymentReady =
+    carReady &&
     paymentWriteEnabled &&
     razorpayConfigured &&
-    legalReady &&
-    (carReady || packageReady);
+    legalReady;
+  const packagePaymentReady =
+    packageReady &&
+    paymentWriteEnabled &&
+    razorpayConfigured &&
+    legalReady;
+  const paymentReady = carPaymentReady || packagePaymentReady;
+  const fullPaymentReady = carPaymentReady && packagePaymentReady;
+  const refundReady = refundWriteEnabled && razorpayConfigured;
 
   const configRows = [
     ["Application URL", yesNo(appUrlConfigured), "NEXT_PUBLIC_APP_URL"],
+    [
+      "Checkout Session Signing",
+      yesNo(checkoutSigningConfigured),
+      "AUTH_SECRET with at least 32 characters",
+    ],
     ["Razorpay", yesNo(razorpayConfigured), "Key ID + secret + webhook secret"],
     ["S3 Storage", yesNo(storageConfigured), "Bucket, endpoint, credentials, public base URL"],
     ["Field Encryption", yesNo(fieldEncryptionConfigured), "32-byte AES-256-GCM key for driver phone/license fields"],
@@ -197,22 +216,38 @@ export default async function SettingsPage() {
     >
       <div className="admin-metric-grid">
         <AdminMetric
-          label="Payment Readiness"
-          value={paymentReady ? "Ready" : "Blocked"}
-          meta="requires checkout + Razorpay + legal readiness"
-          tone={paymentReady ? "green" : "red"}
+          label="Booking Channels"
+          value={
+            fullBookingReady
+              ? "Both Ready"
+              : carReady
+                ? "Car Only"
+                : packageReady
+                  ? "Package Only"
+                  : "Blocked"
+          }
+          meta="write gate + signed checkout + active policy prerequisites"
+          tone={fullBookingReady ? "green" : carReady || packageReady ? "orange" : "red"}
         />
         <AdminMetric
-          label="Car Booking"
-          value={carReady ? "Ready" : "Blocked"}
-          meta="writes + policy + pricing + fleet"
-          tone={carReady ? "green" : "orange"}
+          label="Payment Channels"
+          value={
+            fullPaymentReady
+              ? "Both Ready"
+              : carPaymentReady
+                ? "Car Only"
+                : packagePaymentReady
+                  ? "Package Only"
+                  : "Blocked"
+          }
+          meta="channel readiness + Razorpay + legal + payment write gate"
+          tone={fullPaymentReady ? "green" : paymentReady ? "orange" : "red"}
         />
         <AdminMetric
-          label="Package Booking"
-          value={packageReady ? "Ready" : "Blocked"}
-          meta="writes + active policy"
-          tone={packageReady ? "green" : "orange"}
+          label="Refunds"
+          value={refundReady ? "Ready" : "Blocked"}
+          meta="refund write gate + Razorpay configuration"
+          tone={refundReady ? "green" : "orange"}
         />
         <AdminMetric
           label="Admin Staff"
