@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   contentStatuses,
@@ -44,13 +45,16 @@ function backPath(type: "cms" | "blog" | "destination") {
 
 export default async function AdminContentEditorPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ type: string; id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "content.read")) redirect("/admin");
 
   const { type: rawType, id } = await params;
+  const { tab: requestedTab } = await searchParams;
   if (!isAdminContentType(rawType)) notFound();
 
   const type = rawType;
@@ -211,6 +215,21 @@ export default async function AdminContentEditorPage({
   const contentId = content.id;
   const contentSlug = content.slug;
   const contentType = type;
+
+  const availableTabs = [
+    "overview",
+    ...(type === "blog" || type === "destination" ? ["details"] : []),
+    ...(type === "destination" && destinationDetails?.kind === "TEMPLE"
+      ? ["temple"]
+      : []),
+    "content",
+    "media",
+    "publishing",
+  ];
+
+  const activeTab = availableTabs.includes(requestedTab ?? "")
+    ? requestedTab!
+    : "overview";
 
   async function saveBlogSpecifics(formData: FormData) {
     "use server";
@@ -405,74 +424,77 @@ export default async function AdminContentEditorPage({
         </Link>
       }
     >
-      <div className="admin-detail-grid">
-        <section className="admin-panel admin-detail-card">
-          <div className="admin-panel-heading">
-            <h2>Publication</h2>
-            <StatusPill tone={tone(content.status)}>
-              {content.status.replaceAll("_", " ")}
-            </StatusPill>
-          </div>
-          <dl>
-            <div><dt>Slug</dt><dd>{content.slug}</dd></div>
-            <div><dt>Published</dt><dd>{content.publishedAt?.toLocaleString("en-IN") ?? "Not published"}</dd></div>
-            <div><dt>Updated</dt><dd>{content.updatedAt.toLocaleString("en-IN")}</dd></div>
-          </dl>
-        </section>
+      <AdminEditorTabs
+        basePath={`/admin/content/${type}/${contentId}`}
+        active={activeTab}
+        tabs={[
+          { key: "overview", label: "Overview", description: "Status & identity" },
+          ...(type === "blog"
+            ? [{ key: "details", label: "Blog Details", description: "Category & excerpt" }]
+            : []),
+          ...(type === "destination"
+            ? [{ key: "details", label: "Destination", description: "Kind & summary" }]
+            : []),
+          ...(type === "destination" && destinationDetails?.kind === "TEMPLE"
+            ? [{ key: "temple", label: "Temple Profile", description: "Darshan & practical info" }]
+            : []),
+          { key: "content", label: "Content", description: "Structured body" },
+          { key: "media", label: "Media", description: "Hero image" },
+          { key: "publishing", label: "SEO & Publishing", description: "Metadata & visibility" },
+        ]}
+      />
 
-        {type === "blog" && blogDetails ? (
+      <div className="admin-editor-section-stack">
+        {activeTab === "overview" ? (
+          <section className="admin-panel admin-detail-card">
+            <div className="admin-panel-heading">
+              <h2>Publication Overview</h2>
+              <StatusPill tone={tone(content.status)}>
+                {content.status.replaceAll("_", " ")}
+              </StatusPill>
+            </div>
+            <dl>
+              <div><dt>Slug</dt><dd>{content.slug}</dd></div>
+              <div><dt>Type</dt><dd>{type.replaceAll("_", " ").toUpperCase()}</dd></div>
+              <div><dt>Published</dt><dd>{content.publishedAt?.toLocaleString("en-IN") ?? "Not published"}</dd></div>
+              <div><dt>Updated</dt><dd>{content.updatedAt.toLocaleString("en-IN")}</dd></div>
+              <div><dt>Search indexing</dt><dd>{content.robotsIndex ? "Allowed" : "Blocked"}</dd></div>
+            </dl>
+          </section>
+        ) : null}
+
+        {activeTab === "details" && type === "blog" && blogDetails ? (
           <section className="admin-panel admin-detail-card">
             <h2>Blog Details</h2>
             {hasPermission(session.roles, "content.write") ? (
               <form action={saveBlogSpecifics}>
                 <label>
                   Category
-                  <select
-                    name="categoryId"
-                    defaultValue={blogDetails.categoryId ?? ""}
-                  >
+                  <select name="categoryId" defaultValue={blogDetails.categoryId ?? ""}>
                     <option value="">Uncategorized</option>
                     {blogCategories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
+                      <option key={category.id} value={category.id}>{category.name}</option>
                     ))}
                   </select>
                 </label>
-
                 <label>
                   Excerpt
-                  <textarea
-                    name="excerpt"
-                    defaultValue={blogDetails.excerpt ?? ""}
-                    maxLength={500}
-                  />
+                  <textarea name="excerpt" defaultValue={blogDetails.excerpt ?? ""} maxLength={500}/>
                 </label>
-
-                <button className="admin-secondary-button" type="submit">
+                <button className="admin-primary-button" type="submit">
                   Save Blog Details
                 </button>
               </form>
             ) : (
               <dl>
-                <div>
-                  <dt>Category</dt>
-                  <dd>
-                    {blogCategories.find(
-                      (item) => item.id === blogDetails.categoryId,
-                    )?.name ?? "Uncategorized"}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Excerpt</dt>
-                  <dd>{blogDetails.excerpt ?? "—"}</dd>
-                </div>
+                <div><dt>Category</dt><dd>{blogCategories.find((item) => item.id === blogDetails.categoryId)?.name ?? "Uncategorized"}</dd></div>
+                <div><dt>Excerpt</dt><dd>{blogDetails.excerpt ?? "—"}</dd></div>
               </dl>
             )}
           </section>
         ) : null}
 
-        {type === "destination" && destinationDetails ? (
+        {activeTab === "details" && type === "destination" && destinationDetails ? (
           <section className="admin-panel admin-detail-card">
             <h2>Destination Details</h2>
             {hasPermission(session.roles, "content.write") ? (
@@ -481,37 +503,22 @@ export default async function AdminContentEditorPage({
                   Kind
                   <select name="kind" defaultValue={destinationDetails.kind}>
                     {destinationKinds.map((kind) => (
-                      <option key={kind} value={kind}>
-                        {kind.replaceAll("_", " ")}
-                      </option>
+                      <option key={kind} value={kind}>{kind.replaceAll("_", " ")}</option>
                     ))}
                   </select>
                 </label>
-
                 <label>
                   Summary
-                  <textarea
-                    name="summary"
-                    defaultValue={destinationDetails.summary ?? ""}
-                    maxLength={700}
-                  />
+                  <textarea name="summary" defaultValue={destinationDetails.summary ?? ""} maxLength={700}/>
                 </label>
-
                 <label>
-                  <input
-                    type="checkbox"
-                    name="isFeatured"
-                    defaultChecked={destinationDetails.isFeatured}
-                  />
+                  <input type="checkbox" name="isFeatured" defaultChecked={destinationDetails.isFeatured}/>
                   Featured destination
                 </label>
-
                 <p>
-                  A destination with an existing Temple Profile must have that
-                  profile removed before changing to a non-temple kind.
+                  Remove an existing Temple Profile before changing this destination to a non-temple kind.
                 </p>
-
-                <button className="admin-secondary-button" type="submit">
+                <button className="admin-primary-button" type="submit">
                   Save Destination Details
                 </button>
               </form>
@@ -525,11 +532,11 @@ export default async function AdminContentEditorPage({
           </section>
         ) : null}
 
-        {type === "destination" &&
+        {activeTab === "temple" &&
+        type === "destination" &&
         destinationDetails?.kind === "TEMPLE" ? (
           <section className="admin-panel admin-detail-card">
             <h2>Temple Profile</h2>
-
             {hasPermission(session.roles, "content.write") ? (
               <>
                 <form action={saveTemple}>
@@ -540,79 +547,33 @@ export default async function AdminContentEditorPage({
                       required
                       minLength={2}
                       maxLength={180}
-                      defaultValue={
-                        destinationDetails.templeProfile?.templeName ?? content.title
-                      }
+                      defaultValue={destinationDetails.templeProfile?.templeName ?? content.title}
                     />
                   </label>
-
                   <label>
                     Deity
-                    <input
-                      name="deity"
-                      maxLength={180}
-                      defaultValue={destinationDetails.templeProfile?.deity ?? ""}
-                    />
+                    <input name="deity" maxLength={180} defaultValue={destinationDetails.templeProfile?.deity ?? ""}/>
                   </label>
-
                   <label>
                     Darshan notes
-                    <textarea
-                      name="darshanNotes"
-                      maxLength={3000}
-                      defaultValue={
-                        destinationDetails.templeProfile?.darshanNotes ?? ""
-                      }
-                    />
+                    <textarea name="darshanNotes" maxLength={3000} defaultValue={destinationDetails.templeProfile?.darshanNotes ?? ""}/>
                   </label>
-
                   <label>
                     Dress code
-                    <textarea
-                      name="dressCode"
-                      maxLength={1000}
-                      defaultValue={
-                        destinationDetails.templeProfile?.dressCode ?? ""
-                      }
-                    />
+                    <textarea name="dressCode" maxLength={1000} defaultValue={destinationDetails.templeProfile?.dressCode ?? ""}/>
                   </label>
-
                   <label>
                     Opening hours JSON
-                    <textarea
-                      name="openingHours"
-                      rows={8}
-                      spellCheck={false}
-                      defaultValue={stringifyOptionalJson(
-                        destinationDetails.templeProfile?.openingHours,
-                      )}
-                    />
+                    <textarea name="openingHours" rows={8} spellCheck={false} defaultValue={stringifyOptionalJson(destinationDetails.templeProfile?.openingHours)}/>
                   </label>
-
                   <label>
                     Nearby places JSON
-                    <textarea
-                      name="nearbyPlaces"
-                      rows={8}
-                      spellCheck={false}
-                      defaultValue={stringifyOptionalJson(
-                        destinationDetails.templeProfile?.nearbyPlaces,
-                      )}
-                    />
+                    <textarea name="nearbyPlaces" rows={8} spellCheck={false} defaultValue={stringifyOptionalJson(destinationDetails.templeProfile?.nearbyPlaces)}/>
                   </label>
-
                   <label>
                     Practical notes JSON
-                    <textarea
-                      name="practicalNotes"
-                      rows={8}
-                      spellCheck={false}
-                      defaultValue={stringifyOptionalJson(
-                        destinationDetails.templeProfile?.practicalNotes,
-                      )}
-                    />
+                    <textarea name="practicalNotes" rows={8} spellCheck={false} defaultValue={stringifyOptionalJson(destinationDetails.templeProfile?.practicalNotes)}/>
                   </label>
-
                   <button className="admin-primary-button" type="submit">
                     Save Temple Profile
                   </button>
@@ -637,143 +598,119 @@ export default async function AdminContentEditorPage({
           </section>
         ) : null}
 
-        <section className="admin-panel admin-detail-card">
-          <h2>Hero Media</h2>
-          {currentHero?.publicUrl ? (
-            <>
-              <img
-                src={currentHero.publicUrl}
-                alt={currentHero.altText ?? content.title}
-                loading="lazy"
-              />
-              <p>{currentHero.altText ?? currentHero.objectKey}</p>
-            </>
-          ) : (
-            <p>No hero media assigned.</p>
-          )}
-          {hasPermission(session.roles, "content.write") ? (
-            <form action={saveHero}>
-              <label>
-                Hero image
-                <select name="heroMediaId" defaultValue={content.heroMediaId ?? ""}>
-                  <option value="">No hero image</option>
-                  {heroOptions.map((asset) => (
-                    <option key={asset.id} value={asset.id}>
-                      {asset.altText ?? asset.objectKey.split("/").pop() ?? asset.objectKey}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button className="admin-secondary-button" type="submit">
-                Save Hero Image
-              </button>
-            </form>
-          ) : null}
-        </section>
+        {activeTab === "content" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Structured Content</h2>
+            <p>Body content uses safe structured blocks. Raw HTML and scripts are rejected.</p>
+            {hasPermission(session.roles, "content.write") ? (
+              <form action={saveBody}>
+                <label>
+                  Structured JSON
+                  <textarea name="body" defaultValue={stringifyStructuredBody(content.body)} rows={22} spellCheck={false}/>
+                </label>
+                <small>
+                  Supported blocks include paragraph, heading, image, gallery, quote, callout, CTA, list, route highlights, itinerary summary and FAQ groups.
+                </small>
+                <button className="admin-primary-button" type="submit">
+                  Save Structured Content
+                </button>
+              </form>
+            ) : (
+              <pre>{stringifyStructuredBody(content.body)}</pre>
+            )}
+          </section>
+        ) : null}
 
-        <section className="admin-panel admin-detail-card">
-          <h2>Structured Body</h2>
-          <p>
-            Body content is stored as safe structured blocks. Raw HTML/script is not accepted.
-          </p>
-          {hasPermission(session.roles, "content.write") ? (
-            <form action={saveBody}>
-              <label>
-                Structured JSON
-                <textarea
-                  name="body"
-                  defaultValue={stringifyStructuredBody(content.body)}
-                  rows={18}
-                  spellCheck={false}
-                />
-              </label>
-              <small>
-                Supported block types: paragraph, heading, image, gallery, quote, callout, cta, list, routeHighlights, itinerarySummary, faqGroup.
-              </small>
-              <button className="admin-primary-button" type="submit">
-                Save Structured Body
-              </button>
-            </form>
-          ) : (
-            <pre>{stringifyStructuredBody(content.body)}</pre>
-          )}
-        </section>
+        {activeTab === "media" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Hero Media</h2>
+            {currentHero?.publicUrl ? (
+              <>
+                <img src={currentHero.publicUrl} alt={currentHero.altText ?? content.title} loading="lazy"/>
+                <p>{currentHero.altText ?? currentHero.objectKey}</p>
+              </>
+            ) : (
+              <p>No hero media assigned.</p>
+            )}
+            {hasPermission(session.roles, "content.write") ? (
+              <form action={saveHero}>
+                <label>
+                  Hero image
+                  <select name="heroMediaId" defaultValue={content.heroMediaId ?? ""}>
+                    <option value="">No hero image</option>
+                    {heroOptions.map((asset) => (
+                      <option key={asset.id} value={asset.id}>
+                        {asset.altText ?? asset.objectKey.split("/").pop() ?? asset.objectKey}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button className="admin-primary-button" type="submit">
+                  Save Hero Image
+                </button>
+              </form>
+            ) : null}
+          </section>
+        ) : null}
 
-        <section className="admin-panel admin-detail-card">
-          <h2>Edit Metadata</h2>
-          {hasPermission(session.roles, "content.write") ? (
-            <form action={save}>
-              <label>
-                Title
-                <input name="title" defaultValue={content.title} required minLength={2} maxLength={180}/>
-              </label>
-
-              <label>
-                Status
-                <select name="status" defaultValue={content.status}>
-                  {contentStatuses.map((status) => (
-                    <option key={status} value={status}>
-                      {status.replaceAll("_", " ")}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Schedule date
-                <input
-                  name="scheduledFor"
-                  type="datetime-local"
-                  defaultValue={
-                    content.scheduledFor
-                      ? new Date(
-                          content.scheduledFor.getTime() -
-                            content.scheduledFor.getTimezoneOffset() * 60_000,
-                        )
-                          .toISOString()
-                          .slice(0, 16)
-                      : ""
-                  }
-                />
-              </label>
-
-              <label>
-                SEO title
-                <input name="seoTitle" defaultValue={content.seoTitle ?? ""} maxLength={120}/>
-              </label>
-
-              <label>
-                SEO description
-                <textarea
-                  name="seoDescription"
-                  defaultValue={content.seoDescription ?? ""}
-                  maxLength={320}
-                />
-              </label>
-
-              <label>
-                Canonical URL
-                <input name="canonicalUrl" defaultValue={content.canonicalUrl ?? ""} maxLength={500}/>
-              </label>
-
-              <label>
-                <input type="checkbox" name="robotsIndex" defaultChecked={content.robotsIndex}/>
-                Allow search indexing
-              </label>
-
-              <label>
-                <input type="checkbox" name="robotsFollow" defaultChecked={content.robotsFollow}/>
-                Allow link following
-              </label>
-
-              <button className="admin-primary-button" type="submit">
-                Save Content Metadata
-              </button>
-            </form>
-          ) : (
-            <p>Your role has read-only content access.</p>
-          )}
-        </section>
+        {activeTab === "publishing" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>SEO & Publishing</h2>
+            {hasPermission(session.roles, "content.write") ? (
+              <form action={save}>
+                <label>
+                  Title
+                  <input name="title" defaultValue={content.title} required minLength={2} maxLength={180}/>
+                </label>
+                <label>
+                  Status
+                  <select name="status" defaultValue={content.status}>
+                    {contentStatuses.map((status) => (
+                      <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Schedule date
+                  <input
+                    name="scheduledFor"
+                    type="datetime-local"
+                    defaultValue={
+                      content.scheduledFor
+                        ? new Date(content.scheduledFor.getTime() - content.scheduledFor.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
+                        : ""
+                    }
+                  />
+                </label>
+                <label>
+                  SEO title
+                  <input name="seoTitle" defaultValue={content.seoTitle ?? ""} maxLength={120}/>
+                </label>
+                <label>
+                  SEO description
+                  <textarea name="seoDescription" defaultValue={content.seoDescription ?? ""} maxLength={320}/>
+                </label>
+                <label>
+                  Canonical URL
+                  <input name="canonicalUrl" defaultValue={content.canonicalUrl ?? ""} maxLength={500}/>
+                </label>
+                <label>
+                  <input type="checkbox" name="robotsIndex" defaultChecked={content.robotsIndex}/>
+                  Allow search indexing
+                </label>
+                <label>
+                  <input type="checkbox" name="robotsFollow" defaultChecked={content.robotsFollow}/>
+                  Allow link following
+                </label>
+                <button className="admin-primary-button" type="submit">
+                  Save SEO & Publishing
+                </button>
+              </form>
+            ) : (
+              <p>Your role has read-only content access.</p>
+            )}
+          </section>
+        ) : null}
       </div>
     </AdminShell>
   );
