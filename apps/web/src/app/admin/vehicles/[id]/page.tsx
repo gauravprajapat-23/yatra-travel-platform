@@ -5,6 +5,7 @@ import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
+import { AdminMediaPicker } from "@/components/admin-media-picker";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   addVehicleAvailabilityBlock,
@@ -91,6 +92,7 @@ export default async function VehicleDetailPage({
       select: {
         id: true,
         objectKey: true,
+        publicUrl: true,
         altText: true,
       },
     }),
@@ -363,19 +365,26 @@ export default async function VehicleDetailPage({
             {hasPermission(session.roles, "vehicle.write") ? (
               <form action={attachMedia}>
                 <h3>Attach Media</h3>
+                <AdminMediaPicker
+                  name="mediaId"
+                  allowNone={false}
+                  options={mediaOptions.map((asset) => ({
+                    id: asset.id,
+                    publicUrl: asset.publicUrl,
+                    label:
+                      asset.altText ??
+                      asset.objectKey.split("/").pop() ??
+                      asset.objectKey,
+                    altText: asset.altText,
+                  }))}
+                />
                 <label>
-                  Image
-                  <select name="mediaId" required defaultValue="">
-                    <option value="" disabled>Select media asset</option>
-                    {mediaOptions.map((asset) => (
-                      <option key={asset.id} value={asset.id}>
-                        {asset.altText ?? asset.objectKey.split("/").pop() ?? asset.objectKey}
-                      </option>
-                    ))}
-                  </select>
+                  <input type="checkbox" name="isPrimary"/>
+                  Use as primary fleet image
                 </label>
-                <label><input type="checkbox" name="isPrimary"/>Use as primary fleet image</label>
-                <button className="admin-primary-button" type="submit">Attach Image</button>
+                <button className="admin-primary-button" type="submit">
+                  Attach Image
+                </button>
               </form>
             ) : null}
           </section>
