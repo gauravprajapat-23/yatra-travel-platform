@@ -9,6 +9,7 @@ import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminStructuredContentEditor } from "@/components/admin-structured-content-editor";
 import { AdminMediaPicker } from "@/components/admin-media-picker";
 import { AdminTextareaField } from "@/components/admin-textarea-field";
+import { AdminTextInputField } from "@/components/admin-text-input-field";
 import { AdminPublicationFields } from "@/components/admin-publication-fields";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
@@ -804,14 +805,15 @@ export default async function AdminContentEditorPage({
                     scheduleId="contentScheduledFor"
                   />
 
-                  <AdminField label="SEO title" htmlFor="contentSeoTitle" wide>
-                    <input
-                      id="contentSeoTitle"
-                      name="seoTitle"
-                      defaultValue={content.seoTitle ?? ""}
-                      maxLength={120}
-                    />
-                  </AdminField>
+                  <AdminTextInputField
+                    id="contentSeoTitle"
+                    name="seoTitle"
+                    label="SEO title"
+                    defaultValue={content.seoTitle ?? ""}
+                    maxLength={120}
+                    wide
+                    hint="Search-result title for this content."
+                  />
 
                   <AdminTextareaField
                     id="contentSeoDescription"
