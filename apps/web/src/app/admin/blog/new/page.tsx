@@ -12,6 +12,7 @@ import {
   AdminFormGrid,
   AdminFormSection,
 } from "@/components/admin-form";
+import { AdminSlugFields } from "@/components/admin-slug-fields";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -125,12 +126,12 @@ export default async function NewBlogPage() {
       >
         <AdminFormSection title="Article identity" description="Core article metadata used by editors and the public URL." badge="Required">
           <AdminFormGrid columns={2}>
-            <AdminField label="Title" htmlFor="title" required>
-              <input id="title" name="title" required minLength={2} maxLength={180} placeholder="Ujjain Travel Guide: Temples, Food & Best Time to Visit" />
-            </AdminField>
-            <AdminField label="Slug" htmlFor="slug" required hint="Lowercase letters, numbers and single hyphens only.">
-              <input id="slug" name="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="ujjain-travel-guide" />
-            </AdminField>
+            <AdminSlugFields
+              sourceLabel="Title"
+              sourceName="title"
+              sourcePlaceholder="Ujjain Travel Guide: Temples, Food & Best Time to Visit"
+              slugPlaceholder="ujjain-travel-guide"
+            />
             <AdminField label="Category" htmlFor="categoryId">
               <select id="categoryId" name="categoryId" defaultValue="">
                 <option value="">Uncategorized</option>
