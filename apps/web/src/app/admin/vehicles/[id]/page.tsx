@@ -396,10 +396,43 @@ export default async function VehicleDetailPage({
             {hasPermission(session.roles, "vehicle.write") ? (
               <form action={addBlock}>
                 <h3>Add Availability Block</h3>
-                <label>Starts<input type="datetime-local" name="startsAt" required/></label>
-                <label>Ends<input type="datetime-local" name="endsAt" required/></label>
-                <label>Reason<textarea name="reason" maxLength={500}/></label>
-                <button className="admin-primary-button" type="submit">Add Block</button>
+                <AdminFormGrid columns={2}>
+                  <AdminField label="Starts" htmlFor="vehicleBlockStarts" required>
+                    <input
+                      id="vehicleBlockStarts"
+                      type="datetime-local"
+                      name="startsAt"
+                      required
+                    />
+                  </AdminField>
+
+                  <AdminField label="Ends" htmlFor="vehicleBlockEnds" required>
+                    <input
+                      id="vehicleBlockEnds"
+                      type="datetime-local"
+                      name="endsAt"
+                      required
+                    />
+                  </AdminField>
+
+                  <AdminField
+                    label="Reason"
+                    htmlFor="vehicleBlockReason"
+                    wide
+                    hint="Maintenance, reserved hold, inspection or another operational reason."
+                  >
+                    <textarea
+                      id="vehicleBlockReason"
+                      name="reason"
+                      maxLength={500}
+                      rows={4}
+                    />
+                  </AdminField>
+                </AdminFormGrid>
+
+                <button className="admin-primary-button" type="submit">
+                  Add Block
+                </button>
               </form>
             ) : null}
           </section>
