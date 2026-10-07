@@ -12,6 +12,7 @@ import {
   AdminFormSection,
 } from "@/components/admin-form";
 import { AdminTextareaField } from "@/components/admin-textarea-field";
+import { AdminPublicationFields } from "@/components/admin-publication-fields";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   createFaq,
@@ -130,16 +131,15 @@ export default async function NewFaqPage() {
 
         <AdminFormSection title="Publication" description="Control whether this FAQ remains a draft, publishes now, or publishes on schedule.">
           <AdminFormGrid columns={2}>
-            <AdminField label="Status" htmlFor="status">
-              <select id="status" name="status" defaultValue="DRAFT">
-                {faqStatuses.map((status) => (
-                  <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
-                ))}
-              </select>
-            </AdminField>
-            <AdminField label="Schedule date" htmlFor="scheduledFor" hint="Required only when using scheduled publication.">
-              <input id="scheduledFor" type="datetime-local" name="scheduledFor" />
-            </AdminField>
+            <AdminPublicationFields
+              statuses={faqStatuses.map((status) => ({
+                value: status,
+                label: status.replaceAll("_", " "),
+              }))}
+              defaultStatus="DRAFT"
+              statusId="status"
+              scheduleId="scheduledFor"
+            />
           </AdminFormGrid>
           <AdminFormCallout title="Publishing">
             Use DRAFT while reviewing. Scheduled entries depend on the scheduled publisher heartbeat shown in Admin Settings.
