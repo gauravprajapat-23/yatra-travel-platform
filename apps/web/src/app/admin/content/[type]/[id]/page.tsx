@@ -9,6 +9,7 @@ import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminStructuredContentEditor } from "@/components/admin-structured-content-editor";
 import { AdminMediaPicker } from "@/components/admin-media-picker";
 import { AdminTextareaField } from "@/components/admin-textarea-field";
+import { AdminPublicationFields } from "@/components/admin-publication-fields";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
@@ -783,41 +784,25 @@ export default async function AdminContentEditorPage({
                     />
                   </AdminField>
 
-                  <AdminField label="Status" htmlFor="contentStatus" required>
-                    <select
-                      id="contentStatus"
-                      name="status"
-                      defaultValue={content.status}
-                    >
-                      {contentStatuses.map((status) => (
-                        <option key={status} value={status}>
-                          {status.replaceAll("_", " ")}
-                        </option>
-                      ))}
-                    </select>
-                  </AdminField>
-
-                  <AdminField
-                    label="Schedule date"
-                    htmlFor="contentScheduledFor"
-                    hint="Only used when the status is scheduled."
-                  >
-                    <input
-                      id="contentScheduledFor"
-                      name="scheduledFor"
-                      type="datetime-local"
-                      defaultValue={
-                        content.scheduledFor
-                          ? new Date(
-                              content.scheduledFor.getTime() -
-                                content.scheduledFor.getTimezoneOffset() * 60_000,
-                            )
-                              .toISOString()
-                              .slice(0, 16)
-                          : ""
-                      }
-                    />
-                  </AdminField>
+                  <AdminPublicationFields
+                    statuses={contentStatuses.map((status) => ({
+                      value: status,
+                      label: status.replaceAll("_", " "),
+                    }))}
+                    defaultStatus={content.status}
+                    defaultScheduledFor={
+                      content.scheduledFor
+                        ? new Date(
+                            content.scheduledFor.getTime() -
+                              content.scheduledFor.getTimezoneOffset() * 60_000,
+                          )
+                            .toISOString()
+                            .slice(0, 16)
+                        : ""
+                    }
+                    statusId="contentStatus"
+                    scheduleId="contentScheduledFor"
+                  />
 
                   <AdminField label="SEO title" htmlFor="contentSeoTitle" wide>
                     <input
