@@ -12,6 +12,15 @@ function money(minor: bigint, currency = "INR") {
   }).format(Number(minor) / 100);
 }
 
+function formatCurrencyMap(values: ReadonlyMap<string, bigint>): string {
+  const rendered = [...values.entries()]
+    .filter(([, amount]) => amount !== 0n)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([currency, amount]) => money(amount, currency));
+
+  return rendered.length > 0 ? rendered.join(" · ") : "—";
+}
+
 function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
   if (["CONFIRMED", "COMPLETED"].includes(status)) return "green";
   if (["PENDING_PAYMENT", "PENDING_REVIEW", "REFUND_PENDING"].includes(status)) return "orange";
@@ -31,6 +40,7 @@ export default async function AdminDashboardPage() {
     activePackages,
     pendingLeads,
     capturedPayments,
+    processedRefunds,
     recentCars,
     recentPackages,
   ] = await Promise.all([
@@ -43,9 +53,15 @@ export default async function AdminDashboardPage() {
       where: { status: { in: ["CONFIRMED", "DRIVER_ASSIGNED", "IN_PROGRESS"] } },
     }),
     db.lead.count({ where: { status: { in: ["NEW", "IN_PROGRESS"] } } }),
-    db.paymentIntent.aggregate({
+    db.paymentIntent.groupBy({
+      by: ["currency"],
       where: { status: { in: ["CAPTURED", "PARTIALLY_REFUNDED", "REFUNDED"] } },
       _sum: { amountPaidMinor: true },
+    }),
+    db.refund.groupBy({
+      by: ["currency"],
+      where: { status: "PROCESSED" },
+      _sum: { amountMinor: true },
     }),
     db.carBooking.findMany({
       orderBy: { createdAt: "desc" },
@@ -99,7 +115,30 @@ export default async function AdminDashboardPage() {
 
   const totalBookings = carCount + packageCount;
   const activeTrips = activeCars + activePackages;
-  const revenueMinor = capturedPayments._sum.amountPaidMinor ?? 0n;
+  const capturedByCurrency = new Map<string, bigint>(
+    capturedPayments.map((group) => [
+      group.currency,
+      group._sum.amountPaidMinor ?? 0n,
+    ]),
+  );
+  const refundedByCurrency = new Map<string, bigint>(
+    processedRefunds.map((group) => [
+      group.currency,
+      group._sum.amountMinor ?? 0n,
+    ]),
+  );
+  const netCapturedByCurrency = new Map<string, bigint>();
+  const currencies = new Set([
+    ...capturedByCurrency.keys(),
+    ...refundedByCurrency.keys(),
+  ]);
+  for (const currency of currencies) {
+    netCapturedByCurrency.set(
+      currency,
+      (capturedByCurrency.get(currency) ?? 0n) -
+        (refundedByCurrency.get(currency) ?? 0n),
+    );
+  }
 
   return (
     <AdminShell
@@ -109,7 +148,12 @@ export default async function AdminDashboardPage() {
     >
       <div className="admin-metric-grid">
         <AdminMetric label="Total Bookings" value={totalBookings.toString()} meta="car + package" tone="green"/>
-        <AdminMetric label="Captured Revenue" value={money(revenueMinor)} meta="verified payments" tone="orange"/>
+        <AdminMetric
+          label="Net Captured"
+          value={formatCurrencyMap(netCapturedByCurrency)}
+          meta="verified captures less processed refunds"
+          tone="orange"
+        />
         <AdminMetric label="Active Trips" value={activeTrips.toString()} meta="confirmed / assigned / in progress" tone="green"/>
         <AdminMetric label="Pending Leads" value={pendingLeads.toString()} meta="new + in progress" tone="red"/>
       </div>
