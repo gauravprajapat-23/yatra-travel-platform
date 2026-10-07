@@ -13,6 +13,7 @@ import {
   AdminFormSection,
 } from "@/components/admin-form";
 import { AdminSlugFields } from "@/components/admin-slug-fields";
+import { AdminTextareaField } from "@/components/admin-textarea-field";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -150,9 +151,15 @@ export default async function NewPackagePage() {
           description="A concise internal/public summary. Rich body content is managed in the full editor."
         >
           <AdminFormGrid columns={1}>
-            <AdminField label="Summary" htmlFor="summary" hint="Maximum 1,000 characters.">
-              <textarea id="summary" name="summary" maxLength={1000} rows={5} placeholder="Describe the core experience, destinations and traveller value." />
-            </AdminField>
+            <AdminTextareaField
+              id="summary"
+              name="summary"
+              label="Summary"
+              maxLength={1000}
+              rows={5}
+              placeholder="Describe the core experience, destinations and traveller value."
+              hint="Concise public summary for cards and package discovery."
+            />
           </AdminFormGrid>
           <AdminFormCallout title="What happens next">
             After creation you will be redirected to the complete package editor for destinations, itinerary, pricing, hero media, publication and SEO.
