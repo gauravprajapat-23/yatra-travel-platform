@@ -139,6 +139,23 @@ Current uses include:
 
 Only show a counter when a real product/server limit exists. Do not invent arbitrary max lengths just for UI consistency.
 
+
+### `AdminPublicationFields`
+
+Use for content workflows that combine publication status with an optional schedule date.
+
+Behavior:
+- owns the `status` and `scheduledFor` form fields
+- only shows the schedule date when status is `SCHEDULED`
+- requires a schedule date when scheduling is selected
+- clears stale schedule values when switching back to a non-scheduled status
+- keeps server-side status/date validation authoritative
+
+Current uses:
+- Package SEO & Publishing
+- CMS/Blog/Destination SEO & Publishing
+- FAQ create/edit publishing
+
 ### `AdminCheckbox`
 Use for standalone boolean choices.
 
