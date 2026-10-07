@@ -70,14 +70,26 @@ export async function AdminShell({
 
       <div className="admin-workspace">
         <header className="admin-topbar">
-          <label className="admin-search">
-            <span>⌕</span>
-            <input aria-label="Admin search" placeholder="Search bookings, customers, tours..." />
-          </label>
+          <form className="admin-search" action="/admin/search" method="get">
+            <span aria-hidden="true">⌕</span>
+            <input
+              aria-label="Admin search"
+              name="q"
+              placeholder="Search bookings, leads, tours, content…"
+              minLength={2}
+              maxLength={120}
+            />
+          </form>
 
           <div className="admin-topbar__right">
-            <button aria-label="Notifications" type="button">♢</button>
-            <span className="admin-avatar">AA</span>
+            <span className="admin-avatar">
+              {(session.name ?? "Admin")
+                .split(/\s+/)
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((part) => part[0]?.toUpperCase())
+                .join("") || "A"}
+            </span>
             <strong>{session.name ?? "Admin"}</strong>
             <form action="/api/admin-auth/logout" method="post">
               <button className="admin-logout-button" type="submit">Logout</button>
