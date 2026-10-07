@@ -10,6 +10,7 @@ import {
 } from "@yatra/domain/booking/status-machine";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
+import { AdminActionForm, type AdminActionState } from "@/components/admin-action-form";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
@@ -220,7 +221,10 @@ export default async function BookingDetailPage({
   const bookingReference = booking.reference;
   const bookingType = booking.type;
 
-  async function assignResources(formData: FormData) {
+  async function assignResources(
+    _previousState: AdminActionState,
+    formData: FormData,
+  ): Promise<AdminActionState> {
     "use server";
 
     const currentSession = await requireAdminSession();
@@ -229,39 +233,58 @@ export default async function BookingDetailPage({
     }
 
     if (bookingType !== "CAR") {
-      throw new Error("Vehicle and driver assignment is only available for car bookings.");
+      return {
+        status: "error",
+        message: "Vehicle and driver assignment is only available for car bookings.",
+      };
     }
 
     const vehicleId = String(formData.get("vehicleId") ?? "");
     const driverId = String(formData.get("driverId") ?? "");
 
     if (!vehicleId || !driverId) {
-      throw new Error("Vehicle and driver are required.");
+      return {
+        status: "error",
+        message: "Select both a vehicle and a driver.",
+      };
     }
 
-    const result = await assignCarBookingResources({
-      bookingId,
-      vehicleId,
-      driverId,
-      actorUserId: currentSession.userId,
-    });
-
-    await db.auditLog.create({
-      data: {
+    try {
+      const result = await assignCarBookingResources({
+        bookingId,
+        vehicleId,
+        driverId,
         actorUserId: currentSession.userId,
-        action: "BOOKING_RESOURCES_ASSIGNED",
-        entityType: "CarBooking",
-        entityId: bookingId,
-        metadata: {
-          reference: bookingReference,
-          vehicleName: result.vehicleName,
-          driverName: result.driverName,
+      });
+
+      await db.auditLog.create({
+        data: {
+          actorUserId: currentSession.userId,
+          action: "BOOKING_RESOURCES_ASSIGNED",
+          entityType: "CarBooking",
+          entityId: bookingId,
+          metadata: {
+            reference: bookingReference,
+            vehicleName: result.vehicleName,
+            driverName: result.driverName,
+          },
         },
-      },
-    });
+      });
+    } catch {
+      return {
+        status: "error",
+        message:
+          "Unable to assign those resources. They may no longer be available for this trip window.",
+      };
+    }
 
     revalidatePath(`/admin/bookings/${bookingReference}`);
     revalidatePath("/admin/bookings");
+
+    return {
+      status: "success",
+      message: "Vehicle and driver assigned successfully.",
+    };
   }
 
   async function refundRemainingPayment(formData: FormData) {
@@ -372,7 +395,10 @@ export default async function BookingDetailPage({
     revalidatePath("/admin/payments");
   }
 
-  async function updateStatus(formData: FormData) {
+  async function updateStatus(
+    _previousState: AdminActionState,
+    formData: FormData,
+  ): Promise<AdminActionState> {
     "use server";
 
     const currentSession = await requireAdminSession();
@@ -384,41 +410,57 @@ export default async function BookingDetailPage({
     const reason = String(formData.get("reason") ?? "").trim();
 
     if (!isBookingStatus(toStatusValue)) {
-      throw new Error("Invalid booking status.");
+      return {
+        status: "error",
+        message: "Select a valid next booking status.",
+      };
     }
 
-    if (booking.type === "CAR") {
-      await transitionCarBookingStatus({
-        bookingId: booking.id,
-        toStatus: toStatusValue,
-        actorUserId: currentSession.userId,
-        reason,
-      });
-    } else {
-      await transitionPackageBookingStatus({
-        bookingId: booking.id,
-        toStatus: toStatusValue,
-        actorUserId: currentSession.userId,
-        reason,
-      });
-    }
-
-    await db.auditLog.create({
-      data: {
-        actorUserId: currentSession.userId,
-        action: "BOOKING_STATUS_CHANGED",
-        entityType: booking.type === "CAR" ? "CarBooking" : "PackageBooking",
-        entityId: booking.id,
-        metadata: {
-          reference: booking.reference,
+    try {
+      if (booking.type === "CAR") {
+        await transitionCarBookingStatus({
+          bookingId: booking.id,
           toStatus: toStatusValue,
-          reason: reason || null,
+          actorUserId: currentSession.userId,
+          reason,
+        });
+      } else {
+        await transitionPackageBookingStatus({
+          bookingId: booking.id,
+          toStatus: toStatusValue,
+          actorUserId: currentSession.userId,
+          reason,
+        });
+      }
+
+      await db.auditLog.create({
+        data: {
+          actorUserId: currentSession.userId,
+          action: "BOOKING_STATUS_CHANGED",
+          entityType: booking.type === "CAR" ? "CarBooking" : "PackageBooking",
+          entityId: booking.id,
+          metadata: {
+            reference: booking.reference,
+            toStatus: toStatusValue,
+            reason: reason || null,
+          },
         },
-      },
-    });
+      });
+    } catch {
+      return {
+        status: "error",
+        message:
+          "Unable to update the booking status. Refresh the booking and try the transition again.",
+      };
+    }
 
     revalidatePath(`/admin/bookings/${booking.reference}`);
     revalidatePath("/admin/bookings");
+
+    return {
+      status: "success",
+      message: `Booking moved to ${toStatusValue.replaceAll("_", " ")}.`,
+    };
   }
 
   return (
@@ -504,7 +546,7 @@ export default async function BookingDetailPage({
           <article className="admin-panel admin-detail-card">
             <h2>Change Status</h2>
             {hasPermission(session.roles, "booking.write") && nextStatuses.length > 0 ? (
-              <form action={updateStatus}>
+              <AdminActionForm action={updateStatus}>
                 <AdminFormGrid columns={1}>
                   <AdminField label="Next status" htmlFor="bookingNextStatus" required>
                     <select
@@ -541,7 +583,7 @@ export default async function BookingDetailPage({
                   label="Update Status"
                   pendingLabel="Updating Status…"
                 />
-              </form>
+              </AdminActionForm>
             ) : (
               <p>No manual status transition is available for your role or the current state.</p>
             )}
@@ -553,7 +595,7 @@ export default async function BookingDetailPage({
               {hasPermission(session.roles, "booking.assign") &&
               assignableVehicles.length > 0 &&
               assignableDrivers.length > 0 ? (
-                <form action={assignResources}>
+                <AdminActionForm action={assignResources}>
                   <AdminFormGrid columns={1}>
                     <AdminField label="Vehicle" htmlFor="bookingVehicle" required>
                       <select
@@ -593,7 +635,7 @@ export default async function BookingDetailPage({
                     label="Assign Resources"
                     pendingLabel="Assigning Resources…"
                   />
-                </form>
+                </AdminActionForm>
               ) : (
                 <p>No assignable resources are available, or your role cannot assign bookings.</p>
               )}
