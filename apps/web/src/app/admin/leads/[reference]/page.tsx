@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminActionForm, type AdminActionState } from "@/components/admin-action-form";
 import { AdminField } from "@/components/admin-form";
@@ -36,14 +37,22 @@ function renderTripData(value: unknown): Array<[string, string]> {
 
 export default async function LeadDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ reference: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "lead.read")) redirect("/admin");
 
   const { reference: rawReference } = await params;
+  const { tab: requestedTab } = await searchParams;
   const reference = rawReference.trim().toUpperCase();
+  const activeTab = ["overview", "trip", "status"].includes(
+    requestedTab ?? "",
+  )
+    ? requestedTab!
+    : "overview";
   const db = getDb();
 
   const lead = await db.lead.findUnique({ where: { reference } });
@@ -119,73 +128,97 @@ export default async function LeadDetailPage({
       subtitle={`${lead.type.replaceAll("_", " ")} enquiry · created ${lead.createdAt.toLocaleString("en-IN")}`}
       actions={<Link className="admin-secondary-button" href="/admin/leads">← All Leads</Link>}
     >
-      <div className="admin-detail-grid">
-        <section className="admin-panel admin-detail-card">
-          <div className="admin-panel-heading">
-            <h2>Lead Details</h2>
-            <StatusPill tone={tone(lead.status)}>{lead.status.replaceAll("_", " ")}</StatusPill>
-          </div>
-          <dl>
-            <div><dt>Name</dt><dd>{lead.name}</dd></div>
-            <div><dt>Email</dt><dd>{lead.email}</dd></div>
-            <div><dt>Phone</dt><dd>{lead.phone ?? "Not provided"}</dd></div>
-            <div><dt>Source</dt><dd>{lead.sourcePath ?? "Website"}</dd></div>
-            <div><dt>Type</dt><dd>{lead.type.replaceAll("_", " ")}</dd></div>
-          </dl>
-          {lead.message ? (
-            <>
-              <h3>Message</h3>
-              <p>{lead.message}</p>
-            </>
-          ) : null}
-        </section>
+      <AdminEditorTabs
+        basePath={`/admin/leads/${leadReference}`}
+        active={activeTab}
+        tabs={[
+          { key: "overview", label: "Overview", description: "Contact & message" },
+          { key: "trip", label: "Trip Data", description: "Captured enquiry details" },
+          { key: "status", label: "Status", description: "Qualification workflow" },
+        ]}
+      />
 
-        <section className="admin-panel admin-detail-card">
-          <h2>Trip Data</h2>
-          {tripData.length === 0 ? (
-            <p>No structured trip details were captured.</p>
-          ) : (
+      <div className="admin-editor-section-stack">
+        {activeTab === "overview" ? (
+          <section className="admin-panel admin-detail-card">
+            <div className="admin-panel-heading">
+              <h2>Lead Details</h2>
+              <StatusPill tone={tone(lead.status)}>
+                {lead.status.replaceAll("_", " ")}
+              </StatusPill>
+            </div>
             <dl>
-              {tripData.map(([key, value]) => (
-                <div key={key}>
-                  <dt>{key.replaceAll("_", " ")}</dt>
-                  <dd>{value}</dd>
-                </div>
-              ))}
+              <div><dt>Name</dt><dd>{lead.name}</dd></div>
+              <div><dt>Email</dt><dd>{lead.email}</dd></div>
+              <div><dt>Phone</dt><dd>{lead.phone ?? "Not provided"}</dd></div>
+              <div><dt>Source</dt><dd>{lead.sourcePath ?? "Website"}</dd></div>
+              <div><dt>Type</dt><dd>{lead.type.replaceAll("_", " ")}</dd></div>
+              <div><dt>Updated</dt><dd>{lead.updatedAt.toLocaleString("en-IN")}</dd></div>
             </dl>
-          )}
-        </section>
+            {lead.message ? (
+              <>
+                <h3>Message</h3>
+                <p>{lead.message}</p>
+              </>
+            ) : null}
+          </section>
+        ) : null}
 
-        <section className="admin-panel admin-detail-card">
-          <h2>Update Status</h2>
-          {hasPermission(session.roles, "lead.write") ? (
-            <AdminActionForm action={updateLeadStatus}>
-              <AdminField
-                label="Lead status"
-                htmlFor="leadStatus"
-                hint="Move the enquiry through qualification, closure or spam review."
-              >
-                <select
-                  id="leadStatus"
-                  name="status"
-                  defaultValue={lead.status}
+        {activeTab === "trip" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Trip Data</h2>
+            {tripData.length === 0 ? (
+              <p>No structured trip details were captured.</p>
+            ) : (
+              <dl>
+                {tripData.map(([key, value]) => (
+                  <div key={key}>
+                    <dt>{key.replaceAll("_", " ")}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+          </section>
+        ) : null}
+
+        {activeTab === "status" ? (
+          <section className="admin-panel admin-detail-card">
+            <div className="admin-panel-heading">
+              <h2>Update Status</h2>
+              <StatusPill tone={tone(lead.status)}>
+                {lead.status.replaceAll("_", " ")}
+              </StatusPill>
+            </div>
+            {hasPermission(session.roles, "lead.write") ? (
+              <AdminActionForm action={updateLeadStatus}>
+                <AdminField
+                  label="Lead status"
+                  htmlFor="leadStatus"
+                  hint="Move the enquiry through qualification, closure or spam review."
                 >
-                  {leadStatuses.map((status) => (
-                    <option key={status} value={status}>
-                      {status.replaceAll("_", " ")}
-                    </option>
-                  ))}
-                </select>
-              </AdminField>
-              <AdminSubmitButton
-                label="Save Lead Status"
-                pendingLabel="Saving Status…"
-              />
-            </AdminActionForm>
-          ) : (
-            <p>Your role has read-only access to leads.</p>
-          )}
-        </section>
+                  <select
+                    id="leadStatus"
+                    name="status"
+                    defaultValue={lead.status}
+                  >
+                    {leadStatuses.map((status) => (
+                      <option key={status} value={status}>
+                        {status.replaceAll("_", " ")}
+                      </option>
+                    ))}
+                  </select>
+                </AdminField>
+                <AdminSubmitButton
+                  label="Save Lead Status"
+                  pendingLabel="Saving Status…"
+                />
+              </AdminActionForm>
+            ) : (
+              <p>Your role has read-only access to leads.</p>
+            )}
+          </section>
+        ) : null}
       </div>
     </AdminShell>
   );
