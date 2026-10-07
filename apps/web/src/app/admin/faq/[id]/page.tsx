@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   faqScopes,
@@ -41,13 +42,21 @@ function parseOptionalDate(value: FormDataEntryValue | null): Date | null {
 
 export default async function FaqDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "content.read")) redirect("/admin");
 
   const { id } = await params;
+  const { tab: requestedTab } = await searchParams;
+  const activeTab = ["overview", "content", "publishing"].includes(
+    requestedTab ?? "",
+  )
+    ? requestedTab!
+    : "overview";
   const db = getDb();
 
   const faq = await db.faq.findUnique({ where: { id } });
@@ -90,102 +99,88 @@ export default async function FaqDetailPage({
       active="FAQs"
       title={faq.question}
       subtitle={faq.scope.replaceAll("_", " ")}
-      actions={
-        <Link className="admin-secondary-button" href="/admin/faq">
-          ← FAQs
-        </Link>
-      }
+      actions={<Link className="admin-secondary-button" href="/admin/faq">← FAQs</Link>}
     >
-      <div className="admin-detail-grid">
-        <section className="admin-panel admin-detail-card">
-          <div className="admin-panel-heading">
-            <h2>FAQ Overview</h2>
-            <StatusPill tone={tone(faq.status)}>
-              {faq.status.replaceAll("_", " ")}
-            </StatusPill>
-          </div>
-          <dl>
-            <div><dt>Scope</dt><dd>{faq.scope.replaceAll("_", " ")}</dd></div>
-            <div><dt>Sort order</dt><dd>{faq.sortOrder}</dd></div>
-            <div><dt>Published</dt><dd>{faq.publishedAt?.toLocaleString("en-IN") ?? "—"}</dd></div>
-            <div><dt>Scheduled</dt><dd>{faq.scheduledFor?.toLocaleString("en-IN") ?? "—"}</dd></div>
-            <div><dt>Updated</dt><dd>{faq.updatedAt.toLocaleString("en-IN")}</dd></div>
-          </dl>
-        </section>
+      <AdminEditorTabs
+        basePath={`/admin/faq/${faq.id}`}
+        active={activeTab}
+        tabs={[
+          { key: "overview", label: "Overview", description: "Status & placement" },
+          { key: "content", label: "Content", description: "Question & answer" },
+          { key: "publishing", label: "Publishing", description: "Scope & schedule" },
+        ]}
+      />
 
-        <section className="admin-panel admin-detail-card">
-          <h2>Edit FAQ</h2>
-          {hasPermission(session.roles, "content.write") ? (
-            <form action={save}>
-              <label>
-                Scope
-                <select name="scope" defaultValue={faq.scope}>
-                  {faqScopes.map((scope) => (
-                    <option key={scope} value={scope}>{scope.replaceAll("_", " ")}</option>
-                  ))}
-                </select>
-              </label>
+      <div className="admin-editor-section-stack">
+        {activeTab === "overview" ? (
+          <section className="admin-panel admin-detail-card">
+            <div className="admin-panel-heading">
+              <h2>FAQ Overview</h2>
+              <StatusPill tone={tone(faq.status)}>{faq.status.replaceAll("_", " ")}</StatusPill>
+            </div>
+            <dl>
+              <div><dt>Scope</dt><dd>{faq.scope.replaceAll("_", " ")}</dd></div>
+              <div><dt>Sort order</dt><dd>{faq.sortOrder}</dd></div>
+              <div><dt>Published</dt><dd>{faq.publishedAt?.toLocaleString("en-IN") ?? "—"}</dd></div>
+              <div><dt>Scheduled</dt><dd>{faq.scheduledFor?.toLocaleString("en-IN") ?? "—"}</dd></div>
+              <div><dt>Updated</dt><dd>{faq.updatedAt.toLocaleString("en-IN")}</dd></div>
+            </dl>
+          </section>
+        ) : null}
 
-              <label>
-                Question
-                <textarea
-                  name="question"
-                  defaultValue={faq.question}
-                  required
-                  minLength={5}
-                  maxLength={500}
-                />
-              </label>
+        {activeTab === "content" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Question & Answer</h2>
+            {hasPermission(session.roles, "content.write") ? (
+              <form action={save}>
+                <input type="hidden" name="scope" value={faq.scope}/>
+                <input type="hidden" name="sortOrder" value={faq.sortOrder}/>
+                <input type="hidden" name="status" value={faq.status}/>
+                <input type="hidden" name="scheduledFor" value={localDateTime(faq.scheduledFor)}/>
+                <label>
+                  Question
+                  <textarea name="question" defaultValue={faq.question} required minLength={5} maxLength={500}/>
+                </label>
+                <label>
+                  Answer
+                  <textarea name="answer" defaultValue={faq.answer} required minLength={5} maxLength={5000} rows={12}/>
+                </label>
+                <button className="admin-primary-button" type="submit">Save FAQ Content</button>
+              </form>
+            ) : <p>Your role has read-only content access.</p>}
+          </section>
+        ) : null}
 
-              <label>
-                Answer
-                <textarea
-                  name="answer"
-                  defaultValue={faq.answer}
-                  required
-                  minLength={5}
-                  maxLength={5000}
-                  rows={12}
-                />
-              </label>
-
-              <label>
-                Sort order
-                <input
-                  type="number"
-                  name="sortOrder"
-                  defaultValue={faq.sortOrder}
-                  min={-100000}
-                  max={100000}
-                />
-              </label>
-
-              <label>
-                Status
-                <select name="status" defaultValue={faq.status}>
-                  {faqStatuses.map((status) => (
-                    <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Schedule date
-                <input
-                  type="datetime-local"
-                  name="scheduledFor"
-                  defaultValue={localDateTime(faq.scheduledFor)}
-                />
-              </label>
-
-              <button className="admin-primary-button" type="submit">
-                Save FAQ
-              </button>
-            </form>
-          ) : (
-            <p>Your role has read-only content access.</p>
-          )}
-        </section>
+        {activeTab === "publishing" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Placement & Publishing</h2>
+            {hasPermission(session.roles, "content.write") ? (
+              <form action={save}>
+                <input type="hidden" name="question" value={faq.question}/>
+                <input type="hidden" name="answer" value={faq.answer}/>
+                <label>
+                  Scope
+                  <select name="scope" defaultValue={faq.scope}>
+                    {faqScopes.map((scope) => (
+                      <option key={scope} value={scope}>{scope.replaceAll("_", " ")}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>Sort order<input type="number" name="sortOrder" defaultValue={faq.sortOrder} min={-100000} max={100000}/></label>
+                <label>
+                  Status
+                  <select name="status" defaultValue={faq.status}>
+                    {faqStatuses.map((status) => (
+                      <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>Schedule date<input type="datetime-local" name="scheduledFor" defaultValue={localDateTime(faq.scheduledFor)}/></label>
+                <button className="admin-primary-button" type="submit">Save Publishing</button>
+              </form>
+            ) : <p>Your role has read-only content access.</p>}
+          </section>
+        ) : null}
       </div>
     </AdminShell>
   );
