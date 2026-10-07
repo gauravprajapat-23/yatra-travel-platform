@@ -131,6 +131,6 @@ export default async function NewFaqPage() {
 
         <AdminFormActions submitLabel="Create FAQ" cancelHref="/admin/faq" helper="Publication behavior is validated server-side." />
       </AdminForm>
-
+    </AdminShell>
   );
 }
