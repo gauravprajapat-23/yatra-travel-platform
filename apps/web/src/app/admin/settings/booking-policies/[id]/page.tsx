@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminSubmitButton } from "@/components/admin-submit-button";
 import {
   AdminField,
   AdminFormCallout,
@@ -189,9 +190,10 @@ export default async function BookingPolicyDetailPage({
 
           {policy.status === "DRAFT" ? (
             <form action={activate}>
-              <button className="admin-primary-button" type="submit">
-                Activate This Version
-              </button>
+              <AdminSubmitButton
+                label="Activate This Version"
+                pendingLabel="Activating…"
+              />
             </form>
           ) : null}
 
@@ -328,9 +330,10 @@ export default async function BookingPolicyDetailPage({
                 </AdminFormCallout>
               </AdminFormSection>
 
-              <button className="admin-primary-button" type="submit">
-                Save Draft Policy
-              </button>
+              <AdminSubmitButton
+                label="Save Draft Policy"
+                pendingLabel="Saving Draft…"
+              />
             </form>
           ) : (
             <div className="admin-policy-readonly">
