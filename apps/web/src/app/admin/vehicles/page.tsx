@@ -203,6 +203,23 @@ export default async function AdminVehiclesPage({
         "Comfort",
         "Featured",
       ]}
+      emptyTitle={
+        q || status ? "No vehicles match these filters" : "No fleet vehicles yet"
+      }
+      emptyMessage={
+        q || status
+          ? "Clear or change the current fleet filters to see more vehicles."
+          : "Add the first fleet vehicle before configuring assignments and availability."
+      }
+      emptyAction={
+        !q &&
+        !status &&
+        hasPermission(session.roles, "vehicle.write") ? (
+          <Link className="admin-primary-button" href="/admin/vehicles/new">
+            ＋ Add First Vehicle
+          </Link>
+        ) : null
+      }
       rows={rows}
       footer={
         <>
