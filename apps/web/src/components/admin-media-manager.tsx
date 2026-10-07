@@ -192,13 +192,57 @@ export function AdminMediaManager({
       {message ? <p className="admin-notice">{message}</p> : null}
 
       <section className="admin-panel">
+        <div className="admin-media-toolbar">
+          <label className="admin-field">
+            <span className="admin-field__label">Search media</span>
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Filename, alt text, caption or MIME type"
+            />
+          </label>
+
+          <label className="admin-field">
+            <span className="admin-field__label">Filter</span>
+            <select
+              value={filter}
+              onChange={(event) =>
+                setFilter(
+                  event.target.value as
+                    | "ALL"
+                    | "IMAGES"
+                    | "PDFS"
+                    | "REFERENCED"
+                    | "ORPHANED"
+                    | "MISSING_ALT",
+                )
+              }
+            >
+              <option value="ALL">All assets</option>
+              <option value="IMAGES">Images</option>
+              <option value="PDFS">PDFs</option>
+              <option value="REFERENCED">Referenced</option>
+              <option value="ORPHANED">Orphaned / unused</option>
+              <option value="MISSING_ALT">Images missing alt text</option>
+            </select>
+          </label>
+
+          <span className="admin-media-toolbar__count">
+            {filteredMedia.length} of {media.length} assets
+          </span>
+        </div>
+
         {media.length === 0 ? (
           <div className="admin-card-body">
             <p>No media assets have been uploaded yet.</p>
           </div>
+        ) : filteredMedia.length === 0 ? (
+          <div className="admin-card-body">
+            <p>No media assets match the current search/filter.</p>
+          </div>
         ) : (
           <div className="admin-media-grid">
-            {media.map((asset) => (
+            {filteredMedia.map((asset) => (
               <article className="admin-media-card" key={asset.id}>
                 {asset.mimeType.startsWith("image/") && asset.publicUrl ? (
                   <img
