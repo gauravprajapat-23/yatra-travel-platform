@@ -11,6 +11,7 @@ import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminMultiSelectCards } from "@/components/admin-multi-select-cards";
 import { AdminMoneyField } from "@/components/admin-money-field";
 import { AdminTextareaField } from "@/components/admin-textarea-field";
+import { AdminPublicationFields } from "@/components/admin-publication-fields";
 import { AdminCurrencyField } from "@/components/admin-currency-field";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
@@ -1142,41 +1143,25 @@ export default async function PackageDetailPage({
                     hint="Short public description used across package surfaces."
                   />
 
-                  <AdminField label="Status" htmlFor="packageStatus" required>
-                    <select
-                      id="packageStatus"
-                      name="status"
-                      defaultValue={pkg.status}
-                    >
-                      {contentStatuses.map((status) => (
-                        <option key={status} value={status}>
-                          {status.replaceAll("_", " ")}
-                        </option>
-                      ))}
-                    </select>
-                  </AdminField>
-
-                  <AdminField
-                    label="Schedule date"
-                    htmlFor="packageScheduledFor"
-                    hint="Only used when the status is scheduled."
-                  >
-                    <input
-                      id="packageScheduledFor"
-                      type="datetime-local"
-                      name="scheduledFor"
-                      defaultValue={
-                        pkg.scheduledFor
-                          ? new Date(
-                              pkg.scheduledFor.getTime() -
-                                pkg.scheduledFor.getTimezoneOffset() * 60_000,
-                            )
-                              .toISOString()
-                              .slice(0, 16)
-                          : ""
-                      }
-                    />
-                  </AdminField>
+                  <AdminPublicationFields
+                    statuses={contentStatuses.map((status) => ({
+                      value: status,
+                      label: status.replaceAll("_", " "),
+                    }))}
+                    defaultStatus={pkg.status}
+                    defaultScheduledFor={
+                      pkg.scheduledFor
+                        ? new Date(
+                            pkg.scheduledFor.getTime() -
+                              pkg.scheduledFor.getTimezoneOffset() * 60_000,
+                          )
+                            .toISOString()
+                            .slice(0, 16)
+                        : ""
+                    }
+                    statusId="packageStatus"
+                    scheduleId="packageScheduledFor"
+                  />
 
                   <AdminField label="SEO title" htmlFor="packageSeoTitle" wide>
                     <input
