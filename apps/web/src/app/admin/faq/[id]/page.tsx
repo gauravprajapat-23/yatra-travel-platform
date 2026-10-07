@@ -138,14 +138,41 @@ export default async function FaqDetailPage({
                 <input type="hidden" name="sortOrder" value={faq.sortOrder}/>
                 <input type="hidden" name="status" value={faq.status}/>
                 <input type="hidden" name="scheduledFor" value={localDateTime(faq.scheduledFor)}/>
-                <label>
-                  Question
-                  <textarea name="question" defaultValue={faq.question} required minLength={5} maxLength={500}/>
-                </label>
-                <label>
-                  Answer
-                  <textarea name="answer" defaultValue={faq.answer} required minLength={5} maxLength={5000} rows={12}/>
-                </label>
+                <AdminFormGrid columns={1}>
+                  <AdminField
+                    label="Question"
+                    htmlFor="faqQuestion"
+                    required
+                    hint="Keep the question clear and specific."
+                  >
+                    <textarea
+                      id="faqQuestion"
+                      name="question"
+                      defaultValue={faq.question}
+                      required
+                      minLength={5}
+                      maxLength={500}
+                      rows={4}
+                    />
+                  </AdminField>
+
+                  <AdminField
+                    label="Answer"
+                    htmlFor="faqAnswer"
+                    required
+                    hint="Maximum 5,000 characters."
+                  >
+                    <textarea
+                      id="faqAnswer"
+                      name="answer"
+                      defaultValue={faq.answer}
+                      required
+                      minLength={5}
+                      maxLength={5000}
+                      rows={12}
+                    />
+                  </AdminField>
+                </AdminFormGrid>
                 <button className="admin-primary-button" type="submit">Save FAQ Content</button>
               </form>
             ) : <p>Your role has read-only content access.</p>}
