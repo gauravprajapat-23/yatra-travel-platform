@@ -118,6 +118,23 @@ Current uses:
 Server-side date/order validation remains authoritative.
 
 
+
+### `AdminTextInputField`
+
+Use for bounded single-line text where editors should see the character budget.
+
+Behavior:
+- supports required/min/max length and normal input submission
+- shows live `current/max` count
+- supports hints, placeholders, autocomplete and full-width layout
+- shares the same counter styles as `AdminTextareaField`
+
+Current uses include:
+- Package/content SEO titles
+- Media Library alt text
+
+As with textarea counters, only use a visible limit when the product/server contract has a real max length.
+
 ### `AdminTextareaField`
 
 Use for bounded multi-line text where editors benefit from seeing the remaining size budget.
