@@ -489,19 +489,15 @@ export default async function AdminContentEditorPage({
                     </select>
                   </AdminField>
 
-                  <AdminField
+                  <AdminTextareaField
+                    id="blogExcerpt"
+                    name="excerpt"
                     label="Excerpt"
-                    htmlFor="blogExcerpt"
+                    defaultValue={blogDetails.excerpt ?? ""}
+                    maxLength={500}
+                    rows={5}
                     hint="Short summary shown in blog listings and previews."
-                  >
-                    <textarea
-                      id="blogExcerpt"
-                      name="excerpt"
-                      defaultValue={blogDetails.excerpt ?? ""}
-                      maxLength={500}
-                      rows={5}
-                    />
-                  </AdminField>
+                  />
                 </AdminFormGrid>
 
                 <AdminSubmitButton
@@ -538,19 +534,15 @@ export default async function AdminContentEditorPage({
                     </select>
                   </AdminField>
 
-                  <AdminField
+                  <AdminTextareaField
+                    id="destinationSummary"
+                    name="summary"
                     label="Summary"
-                    htmlFor="destinationSummary"
+                    defaultValue={destinationDetails.summary ?? ""}
+                    maxLength={700}
+                    rows={5}
                     hint="Short public description of this destination."
-                  >
-                    <textarea
-                      id="destinationSummary"
-                      name="summary"
-                      defaultValue={destinationDetails.summary ?? ""}
-                      maxLength={700}
-                      rows={5}
-                    />
-                  </AdminField>
+                  />
                 </AdminFormGrid>
 
                 <AdminCheckbox
