@@ -5,7 +5,6 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell } from "@/components/admin-shell";
 import {
   AdminField,
-  AdminForm,
   AdminFormActions,
   AdminFormAsideCard,
   AdminFormCallout,
@@ -14,6 +13,10 @@ import {
 } from "@/components/admin-form";
 import { AdminSlugFields } from "@/components/admin-slug-fields";
 import { AdminTextareaField } from "@/components/admin-textarea-field";
+import {
+  AdminActionForm,
+  type AdminActionState,
+} from "@/components/admin-action-form";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +36,10 @@ export default async function NewDestinationPage() {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "content.write")) redirect("/admin/destinations");
 
-  async function createDestination(formData: FormData) {
+  async function createDestination(
+    _previousState: AdminActionState,
+    formData: FormData,
+  ): Promise<AdminActionState> {
     "use server";
 
     const currentSession = await requireAdminSession();
@@ -41,54 +47,76 @@ export default async function NewDestinationPage() {
       redirect("/admin/destinations");
     }
 
-    const db = getDb();
-    const name = String(formData.get("name") ?? "").trim();
-    const slug = normalizeSlug(String(formData.get("slug") ?? ""));
-    const kind = String(formData.get("kind") ?? "");
-    const summary = String(formData.get("summary") ?? "").trim();
+    let destinationId: string;
 
-    if (name.length < 2 || name.length > 180) {
-      throw new Error("Destination name must be between 2 and 180 characters.");
-    }
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
-      throw new Error("Slug must use lowercase letters, numbers and single hyphens.");
-    }
-    if (!isDestinationKind(kind)) throw new Error("Invalid destination kind.");
+    try {
+      const db = getDb();
+      const name = String(formData.get("name") ?? "").trim();
+      const slug = normalizeSlug(String(formData.get("slug") ?? ""));
+      const kind = String(formData.get("kind") ?? "");
+      const summary = String(formData.get("summary") ?? "").trim();
 
-    const existing = await db.destination.findUnique({
-      where: { slug },
-      select: { id: true },
-    });
-    if (existing) throw new Error("A destination with this slug already exists.");
+      if (name.length < 2 || name.length > 180) {
+        throw new Error(
+          "Destination name must be between 2 and 180 characters.",
+        );
+      }
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+        throw new Error(
+          "Slug must use lowercase letters, numbers and single hyphens.",
+        );
+      }
+      if (!isDestinationKind(kind)) {
+        throw new Error("Invalid destination kind.");
+      }
 
-    const destination = await db.$transaction(async (tx) => {
-      const created = await tx.destination.create({
-        data: {
-          slug,
-          name,
-          kind,
-          summary: summary || null,
-          body: [],
-          status: "DRAFT",
-          robotsIndex: false,
-          robotsFollow: false,
-        },
+      const existing = await db.destination.findUnique({
+        where: { slug },
+        select: { id: true },
+      });
+      if (existing) {
+        throw new Error("A destination with this slug already exists.");
+      }
+
+      const destination = await db.$transaction(async (tx) => {
+        const created = await tx.destination.create({
+          data: {
+            slug,
+            name,
+            kind,
+            summary: summary || null,
+            body: [],
+            status: "DRAFT",
+            robotsIndex: false,
+            robotsFollow: false,
+          },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            actorUserId: currentSession.userId,
+            action: "DESTINATION_CREATED",
+            entityType: "Destination",
+            entityId: created.id,
+            metadata: { slug, name, kind },
+          },
+        });
+
+        return created;
       });
 
-      await tx.auditLog.create({
-        data: {
-          actorUserId: currentSession.userId,
-          action: "DESTINATION_CREATED",
-          entityType: "Destination",
-          entityId: created.id,
-          metadata: { slug, name, kind },
-        },
-      });
+      destinationId = destination.id;
+    } catch (error) {
+      return {
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to create destination.",
+      };
+    }
 
-      return created;
-    });
-
-    redirect(`/admin/content/destination/${destination.id}`);
+    redirect(`/admin/content/destination/${destinationId}`);
   }
 
   return (
@@ -98,8 +126,9 @@ export default async function NewDestinationPage() {
       subtitle="Create a destination foundation, then complete rich content, media, SEO and publishing in the editor."
       actions={<Link className="admin-secondary-button" href="/admin/destinations">← Destinations</Link>}
     >
-      <AdminForm
+      <AdminActionForm
         action={createDestination}
+        className="admin-form"
         aside={
           <>
             <AdminFormAsideCard title="Destination types">
@@ -148,7 +177,7 @@ export default async function NewDestinationPage() {
         </AdminFormSection>
 
         <AdminFormActions submitLabel="Create Draft Destination" cancelHref="/admin/destinations" helper="Creates a non-indexed destination draft." />
-      </AdminForm>
+      </AdminActionForm>
     </AdminShell>
   );
 }
