@@ -12,6 +12,7 @@ import {
   AdminFormSection,
 } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { AdminDateTimeRange } from "@/components/admin-date-time-range";
 import {
   bookingPolicyCodes,
   createBookingPolicyDraft,
@@ -123,21 +124,16 @@ export default async function NewBookingPolicyPage() {
               </select>
             </AdminField>
 
-            <AdminField
-              label="Effective from"
-              htmlFor="effectiveFrom"
-              hint="Leave blank for immediate eligibility after activation."
-            >
-              <input id="effectiveFrom" type="datetime-local" name="effectiveFrom"/>
-            </AdminField>
-
-            <AdminField
-              label="Effective to"
-              htmlFor="effectiveTo"
-              hint="Optional expiry for time-bound policy versions."
-            >
-              <input id="effectiveTo" type="datetime-local" name="effectiveTo"/>
-            </AdminField>
+            <AdminDateTimeRange
+              startName="effectiveFrom"
+              endName="effectiveTo"
+              startLabel="Effective from"
+              endLabel="Effective to"
+              startId="effectiveFrom"
+              endId="effectiveTo"
+              startHint="Leave blank for immediate eligibility after activation."
+              endHint="Optional expiry for time-bound policy versions."
+            />
           </AdminFormGrid>
         </AdminFormSection>
 
