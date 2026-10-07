@@ -5,6 +5,7 @@ import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
+import { AdminTextareaField } from "@/components/admin-textarea-field";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
@@ -140,39 +141,29 @@ export default async function FaqDetailPage({
                 <input type="hidden" name="status" value={faq.status}/>
                 <input type="hidden" name="scheduledFor" value={localDateTime(faq.scheduledFor)}/>
                 <AdminFormGrid columns={1}>
-                  <AdminField
+                  <AdminTextareaField
+                    id="faqQuestion"
+                    name="question"
                     label="Question"
-                    htmlFor="faqQuestion"
+                    defaultValue={faq.question}
                     required
+                    minLength={5}
+                    maxLength={500}
+                    rows={4}
                     hint="Keep the question clear and specific."
-                  >
-                    <textarea
-                      id="faqQuestion"
-                      name="question"
-                      defaultValue={faq.question}
-                      required
-                      minLength={5}
-                      maxLength={500}
-                      rows={4}
-                    />
-                  </AdminField>
+                  />
 
-                  <AdminField
+                  <AdminTextareaField
+                    id="faqAnswer"
+                    name="answer"
                     label="Answer"
-                    htmlFor="faqAnswer"
+                    defaultValue={faq.answer}
                     required
-                    hint="Maximum 5,000 characters."
-                  >
-                    <textarea
-                      id="faqAnswer"
-                      name="answer"
-                      defaultValue={faq.answer}
-                      required
-                      minLength={5}
-                      maxLength={5000}
-                      rows={12}
-                    />
-                  </AdminField>
+                    minLength={5}
+                    maxLength={5000}
+                    rows={12}
+                    hint="Answer directly, then add only the detail customers need."
+                  />
                 </AdminFormGrid>
                 <AdminSubmitButton
                   label="Save FAQ Content"
