@@ -6123,9 +6123,10 @@ body:has(.admin-root) {
   }
 
   .admin-form-actions {
-    bottom: 8px;
+    bottom: max(8px, env(safe-area-inset-bottom));
     align-items: stretch;
     flex-direction: column;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
 
   .admin-form-actions__buttons {
@@ -6314,10 +6315,13 @@ body:has(.admin-root) {
 @media (max-width: 700px) {
   .admin-editor-tabs {
     margin-inline: -2px;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .admin-editor-tab {
     min-width: 118px;
+    min-height: 48px;
     padding: 9px 10px;
   }
 }
