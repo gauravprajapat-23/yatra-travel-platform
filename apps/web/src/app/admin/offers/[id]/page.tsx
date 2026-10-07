@@ -362,16 +362,44 @@ export default async function PricingRuleDetailPage({
               <input type="hidden" name="destinationKey" value={rule.destinationKey ?? ""}/>
               <input type="hidden" name="priority" value={rule.priority}/>
 
-              <label>Active from<input type="datetime-local" name="activeFrom" defaultValue={localDateTime(rule.activeFrom)}/></label>
-              <label>Active to<input type="datetime-local" name="activeTo" defaultValue={localDateTime(rule.activeTo)}/></label>
-              <label>
-                Status
-                <select name="status" defaultValue={rule.status}>
-                  {pricingRuleStatuses.map((item) => (
-                    <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
-                  ))}
-                </select>
-              </label>
+              <AdminFormGrid columns={2}>
+                <AdminField label="Active from" htmlFor="activeFrom">
+                  <input
+                    id="activeFrom"
+                    type="datetime-local"
+                    name="activeFrom"
+                    defaultValue={localDateTime(rule.activeFrom)}
+                  />
+                </AdminField>
+
+                <AdminField label="Active to" htmlFor="activeTo">
+                  <input
+                    id="activeTo"
+                    type="datetime-local"
+                    name="activeTo"
+                    defaultValue={localDateTime(rule.activeTo)}
+                  />
+                </AdminField>
+
+                <AdminField
+                  label="Status"
+                  htmlFor="ruleStatus"
+                  wide
+                  hint="Keep the rule in draft until fare scope and amounts are reviewed."
+                >
+                  <select
+                    id="ruleStatus"
+                    name="status"
+                    defaultValue={rule.status}
+                  >
+                    {pricingRuleStatuses.map((item) => (
+                      <option key={item} value={item}>
+                        {item.replaceAll("_", " ")}
+                      </option>
+                    ))}
+                  </select>
+                </AdminField>
+              </AdminFormGrid>
 
               <p>
                 Activating a rule is rejected if another active rule has the same
