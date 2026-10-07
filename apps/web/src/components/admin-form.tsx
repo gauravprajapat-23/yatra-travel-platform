@@ -68,6 +68,7 @@ export function AdminField({
   hint,
   required,
   wide,
+  error,
   children,
 }: {
   label: string;
@@ -75,11 +76,20 @@ export function AdminField({
   hint?: string;
   required?: boolean;
   wide?: boolean;
+  error?: string;
   children: ReactNode;
 }) {
+  const className = [
+    "admin-field",
+    wide ? "admin-field--wide" : "",
+    error ? "admin-field--error" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <label
-      className={wide ? "admin-field admin-field--wide" : "admin-field"}
+      className={className}
       htmlFor={htmlFor}
     >
       <span className="admin-field__label">
@@ -87,7 +97,17 @@ export function AdminField({
         {required ? <b aria-hidden="true">*</b> : null}
       </span>
       {children}
-      {hint ? <small className="admin-field__hint">{hint}</small> : null}
+      {error ? (
+        <small
+          className="admin-field__error"
+          id={htmlFor ? `${htmlFor}-error` : undefined}
+          role="alert"
+        >
+          {error}
+        </small>
+      ) : hint ? (
+        <small className="admin-field__hint">{hint}</small>
+      ) : null}
     </label>
   );
 }
