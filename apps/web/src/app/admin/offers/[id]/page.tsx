@@ -189,47 +189,153 @@ export default async function PricingRuleDetailPage({
               <input type="hidden" name="activeTo" value={localDateTime(rule.activeTo)}/>
               <input type="hidden" name="status" value={rule.status}/>
 
-              <label>
-                Rule name
-                <input name="name" defaultValue={rule.name} required minLength={2} maxLength={160}/>
-              </label>
+              <AdminFormGrid columns={2}>
+                <AdminField label="Rule name" htmlFor="ruleName" required wide>
+                  <input
+                    id="ruleName"
+                    name="name"
+                    defaultValue={rule.name}
+                    required
+                    minLength={2}
+                    maxLength={160}
+                  />
+                </AdminField>
 
-              <label>
-                Vehicle class
-                <select name="vehicleClassId" defaultValue={rule.vehicleClassId}>
-                  {classes.map((item) => (
-                    <option key={item.id} value={item.id}>{item.name}</option>
-                  ))}
-                </select>
-              </label>
+                <AdminField label="Vehicle class" htmlFor="vehicleClassId" required>
+                  <select
+                    id="vehicleClassId"
+                    name="vehicleClassId"
+                    defaultValue={rule.vehicleClassId}
+                  >
+                    {classes.map((item) => (
+                      <option key={item.id} value={item.id}>{item.name}</option>
+                    ))}
+                  </select>
+                </AdminField>
 
-              <label>
-                Trip type
-                <select name="tripType" defaultValue={rule.tripType}>
-                  {tripTypes.map((item) => (
-                    <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
-                  ))}
-                </select>
-              </label>
+                <AdminField label="Trip type" htmlFor="tripType" required>
+                  <select id="tripType" name="tripType" defaultValue={rule.tripType}>
+                    {tripTypes.map((item) => (
+                      <option key={item} value={item}>
+                        {item.replaceAll("_", " ")}
+                      </option>
+                    ))}
+                  </select>
+                </AdminField>
 
-              <label>
-                Pricing basis
-                <select name="basis" defaultValue={rule.basis}>
-                  {pricingBases.map((item) => (
-                    <option key={item} value={item}>{item.replaceAll("_", " ")}</option>
-                  ))}
-                </select>
-              </label>
+                <AdminField label="Pricing basis" htmlFor="basis" required>
+                  <select id="basis" name="basis" defaultValue={rule.basis}>
+                    {pricingBases.map((item) => (
+                      <option key={item} value={item}>
+                        {item.replaceAll("_", " ")}
+                      </option>
+                    ))}
+                  </select>
+                </AdminField>
 
-              <label>Currency<input name="currency" defaultValue={rule.currency} maxLength={3} required/></label>
-              <label>Fixed base amount<input name="baseAmount" inputMode="decimal" defaultValue={decimal(rule.baseAmountMinor)}/></label>
-              <label>Per-km amount<input name="perKm" inputMode="decimal" defaultValue={decimal(rule.perKmMinor)}/></label>
-              <label>Minimum distance (km)<input type="number" name="minimumDistanceKm" min={0} defaultValue={rule.minimumDistanceKm ?? ""}/></label>
-              <label>Driver allowance / day<input name="driverAllowancePerDay" inputMode="decimal" defaultValue={decimal(rule.driverAllowancePerDayMinor)}/></label>
-              <label>Night allowance<input name="nightAllowance" inputMode="decimal" defaultValue={decimal(rule.nightAllowanceMinor)}/></label>
-              <label>Origin scope key<input name="originKey" defaultValue={rule.originKey ?? ""} maxLength={200}/></label>
-              <label>Destination scope key<input name="destinationKey" defaultValue={rule.destinationKey ?? ""} maxLength={200}/></label>
-              <label>Priority<input type="number" name="priority" defaultValue={rule.priority} min={-100000} max={100000}/></label>
+                <AdminField label="Currency" htmlFor="currency" required>
+                  <input
+                    id="currency"
+                    name="currency"
+                    defaultValue={rule.currency}
+                    maxLength={3}
+                    required
+                  />
+                </AdminField>
+
+                <AdminField label="Fixed base amount" htmlFor="baseAmount">
+                  <input
+                    id="baseAmount"
+                    name="baseAmount"
+                    inputMode="decimal"
+                    defaultValue={decimal(rule.baseAmountMinor)}
+                  />
+                </AdminField>
+
+                <AdminField label="Per-km amount" htmlFor="perKm">
+                  <input
+                    id="perKm"
+                    name="perKm"
+                    inputMode="decimal"
+                    defaultValue={decimal(rule.perKmMinor)}
+                  />
+                </AdminField>
+
+                <AdminField
+                  label="Minimum distance (km)"
+                  htmlFor="minimumDistanceKm"
+                >
+                  <input
+                    id="minimumDistanceKm"
+                    type="number"
+                    name="minimumDistanceKm"
+                    min={0}
+                    defaultValue={rule.minimumDistanceKm ?? ""}
+                  />
+                </AdminField>
+
+                <AdminField
+                  label="Driver allowance / day"
+                  htmlFor="driverAllowancePerDay"
+                >
+                  <input
+                    id="driverAllowancePerDay"
+                    name="driverAllowancePerDay"
+                    inputMode="decimal"
+                    defaultValue={decimal(rule.driverAllowancePerDayMinor)}
+                  />
+                </AdminField>
+
+                <AdminField label="Night allowance" htmlFor="nightAllowance">
+                  <input
+                    id="nightAllowance"
+                    name="nightAllowance"
+                    inputMode="decimal"
+                    defaultValue={decimal(rule.nightAllowanceMinor)}
+                  />
+                </AdminField>
+
+                <AdminField
+                  label="Origin scope key"
+                  htmlFor="originKey"
+                  hint="Leave blank to match any origin."
+                >
+                  <input
+                    id="originKey"
+                    name="originKey"
+                    defaultValue={rule.originKey ?? ""}
+                    maxLength={200}
+                  />
+                </AdminField>
+
+                <AdminField
+                  label="Destination scope key"
+                  htmlFor="destinationKey"
+                  hint="Leave blank to match any destination."
+                >
+                  <input
+                    id="destinationKey"
+                    name="destinationKey"
+                    defaultValue={rule.destinationKey ?? ""}
+                    maxLength={200}
+                  />
+                </AdminField>
+
+                <AdminField
+                  label="Priority"
+                  htmlFor="priority"
+                  hint="Higher values win among otherwise matching rules."
+                >
+                  <input
+                    id="priority"
+                    type="number"
+                    name="priority"
+                    defaultValue={rule.priority}
+                    min={-100000}
+                    max={100000}
+                  />
+                </AdminField>
+              </AdminFormGrid>
 
               <button className="admin-primary-button" type="submit">
                 Save Rule Details
