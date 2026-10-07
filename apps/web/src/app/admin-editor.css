@@ -178,3 +178,59 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+.admin-itinerary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.admin-itinerary-edit {
+  flex: 1 1 360px;
+  min-width: 0;
+  border: 1px solid #e5ddd3;
+  border-radius: 9px;
+  background: #fffaf4;
+}
+
+.admin-itinerary-edit summary {
+  padding: 9px 11px;
+  color: #86582f;
+  font-size: .63rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-itinerary-edit form {
+  display: grid;
+  gap: 12px;
+  padding: 0 11px 11px;
+}
+
+.admin-itinerary-create {
+  margin-top: 18px;
+  padding: 15px;
+  border: 1px dashed #d8cabc;
+  border-radius: 10px;
+  background: #fffdf9;
+}
+
+.admin-itinerary-create > h3 {
+  margin: 0;
+  color: #2e433a;
+  font-size: .78rem;
+}
+
+.admin-itinerary-create > p {
+  margin: 4px 0 12px;
+  color: #818984;
+  font-size: .63rem;
+  line-height: 1.5;
+}
+
+.admin-itinerary-create form {
+  display: grid;
+  gap: 12px;
+}
