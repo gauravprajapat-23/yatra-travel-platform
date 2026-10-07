@@ -185,6 +185,15 @@ export default async function BookingDetailPage({
   );
   const netPaidMinor = paidMinor - processedRefundMinor;
 
+  type TimelineTone = "green" | "orange" | "red" | "blue" | "gray";
+  type TimelineEvent = {
+    key: string;
+    at: Date;
+    title: string;
+    detail: string;
+    tone: TimelineTone;
+  };
+
   const timelineEvents = [
     ...booking.history.map((entry) => ({
       key: `status-${entry.id.toString()}`,
@@ -194,12 +203,12 @@ export default async function BookingDetailPage({
       tone: tone(entry.toStatus),
     })),
     ...booking.paymentIntents.flatMap((intent) => {
-      const paymentEvents = [{
+      const paymentEvents: TimelineEvent[] = [{
         key: `payment-created-${intent.id}`,
         at: intent.createdAt,
         title: "PAYMENT INTENT CREATED",
         detail: `${money(intent.amountMinor, intent.currency)} · ${intent.providerOrderId ?? "provider order pending"}`,
-        tone: "orange" as const,
+        tone: "orange",
       }];
 
       if (intent.capturedAt) {
