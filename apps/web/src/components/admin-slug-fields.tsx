@@ -22,6 +22,7 @@ export function AdminSlugFields({
   sourceMaxLength = 180,
   sourceDefaultValue = "",
   slugDefaultValue = "",
+  pathPrefix = "",
 }: {
   sourceLabel: string;
   sourceName: string;
@@ -31,6 +32,7 @@ export function AdminSlugFields({
   sourceMaxLength?: number;
   sourceDefaultValue?: string;
   slugDefaultValue?: string;
+  pathPrefix?: string;
 }) {
   const [source, setSource] = useState(sourceDefaultValue);
   const [slug, setSlug] = useState(slugDefaultValue);
@@ -81,6 +83,11 @@ export function AdminSlugFields({
         />
         <small className="admin-field__hint">
           Auto-generated from {sourceLabel.toLowerCase()}; edit if needed.
+          {slug ? (
+            <>
+              {" "}Public path: <code>{`${pathPrefix}/${slug}`.replace(/\/+/g, "/")}</code>
+            </>
+          ) : null}
         </small>
       </label>
     </>
