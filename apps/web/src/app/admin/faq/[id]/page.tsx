@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
-import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminPanelHeading, AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminTextareaField } from "@/components/admin-textarea-field";
 import { AdminPublicationFields } from "@/components/admin-publication-fields";
@@ -118,10 +118,12 @@ export default async function FaqDetailPage({
       <div className="admin-editor-section-stack">
         {activeTab === "overview" ? (
           <section className="admin-panel admin-detail-card">
-            <div className="admin-panel-heading">
-              <h2>FAQ Overview</h2>
-              <StatusPill tone={tone(faq.status)}>{faq.status.replaceAll("_", " ")}</StatusPill>
-            </div>
+            <AdminPanelHeading
+              title="FAQ Overview"
+              meta={
+                <StatusPill tone={tone(faq.status)}>{faq.status.replaceAll("_", " ")}</StatusPill>
+              }
+            />
             <dl>
               <div><dt>Scope</dt><dd>{faq.scope.replaceAll("_", " ")}</dd></div>
               <div><dt>Sort order</dt><dd>{faq.sortOrder}</dd></div>
