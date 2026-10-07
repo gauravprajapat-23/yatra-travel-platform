@@ -713,7 +713,14 @@ export default async function PackageDetailPage({
 
         {activeTab === "itinerary" ? (
           <section className="admin-panel admin-detail-card">
-            <h2>Itinerary</h2>
+            <div className="admin-panel-heading">
+              <div>
+                <h2>Itinerary</h2>
+                <p>Manage the package day-by-day plan within the advertised duration.</p>
+              </div>
+              <span>{pkg.itinerary.length}/{packageDurationDays} days</span>
+            </div>
+
             {pkg.itinerary.length === 0 ? (
               <p>No itinerary days configured.</p>
             ) : (
@@ -724,13 +731,52 @@ export default async function PackageDetailPage({
                     <div>
                       <strong>Day {day.dayNumber}: {day.title}</strong>
                       {day.description ? <p>{day.description}</p> : null}
+
                       {hasPermission(session.roles, "package.write") ? (
-                        <form action={deleteItineraryDay}>
-                          <input type="hidden" name="itineraryId" value={day.id}/>
-                          <button className="admin-danger-button" type="submit">
-                            Delete Day
-                          </button>
-                        </form>
+                        <div className="admin-itinerary-actions">
+                          <details className="admin-itinerary-edit">
+                            <summary>Edit day</summary>
+                            <form action={saveItineraryDay}>
+                              <input
+                                type="hidden"
+                                name="dayNumber"
+                                value={day.dayNumber}
+                              />
+
+                              <label className="admin-field">
+                                <span className="admin-field__label">Title</span>
+                                <input
+                                  name="title"
+                                  defaultValue={day.title}
+                                  required
+                                  minLength={2}
+                                  maxLength={180}
+                                />
+                              </label>
+
+                              <label className="admin-field">
+                                <span className="admin-field__label">Description</span>
+                                <textarea
+                                  name="description"
+                                  defaultValue={day.description ?? ""}
+                                  maxLength={3000}
+                                  rows={5}
+                                />
+                              </label>
+
+                              <button className="admin-primary-button" type="submit">
+                                Save Day {day.dayNumber}
+                              </button>
+                            </form>
+                          </details>
+
+                          <form action={deleteItineraryDay}>
+                            <input type="hidden" name="itineraryId" value={day.id}/>
+                            <button className="admin-danger-button" type="submit">
+                              Delete Day
+                            </button>
+                          </form>
+                        </div>
                       ) : null}
                     </div>
                   </div>
@@ -739,24 +785,50 @@ export default async function PackageDetailPage({
             )}
 
             {hasPermission(session.roles, "package.write") ? (
-              <form action={saveItineraryDay}>
-                <h3>Add or Update Day</h3>
-                <label>
-                  Day number
-                  <input type="number" name="dayNumber" min={1} max={packageDurationDays} required/>
-                </label>
-                <label>
-                  Title
-                  <input name="title" required minLength={2} maxLength={180}/>
-                </label>
-                <label>
-                  Description
-                  <textarea name="description" maxLength={3000}/>
-                </label>
-                <button className="admin-primary-button" type="submit">
-                  Save Itinerary Day
-                </button>
-              </form>
+              <section className="admin-itinerary-create">
+                <h3>Add New Day</h3>
+                <p>Choose a day number from 1 to {packageDurationDays}. Existing day numbers will be updated instead of duplicated.</p>
+
+                <form action={saveItineraryDay}>
+                  <div className="admin-form-grid admin-form-grid--2">
+                    <label className="admin-field">
+                      <span className="admin-field__label">Day number</span>
+                      <input
+                        type="number"
+                        name="dayNumber"
+                        min={1}
+                        max={packageDurationDays}
+                        required
+                      />
+                    </label>
+
+                    <label className="admin-field">
+                      <span className="admin-field__label">Title</span>
+                      <input
+                        name="title"
+                        required
+                        minLength={2}
+                        maxLength={180}
+                        placeholder="Arrival and local sightseeing"
+                      />
+                    </label>
+
+                    <label className="admin-field admin-field--wide">
+                      <span className="admin-field__label">Description</span>
+                      <textarea
+                        name="description"
+                        maxLength={3000}
+                        rows={6}
+                        placeholder="Describe transfers, sightseeing, meals, stays and key activities."
+                      />
+                    </label>
+                  </div>
+
+                  <button className="admin-primary-button" type="submit">
+                    Add Itinerary Day
+                  </button>
+                </form>
+              </section>
             ) : null}
           </section>
         ) : null}
