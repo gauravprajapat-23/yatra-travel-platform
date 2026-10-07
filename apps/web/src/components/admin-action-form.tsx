@@ -5,6 +5,10 @@ import { useActionState, type ReactNode } from "react";
 export type AdminActionState = {
   status: "idle" | "success" | "error";
   message: string;
+  details?: {
+    label: string;
+    value: string;
+  };
 };
 
 const initialState: AdminActionState = {
@@ -26,6 +30,11 @@ export function AdminActionForm({
 }) {
   const [state, formAction] = useActionState(action, initialState);
 
+  async function copyDetails() {
+    if (!state.details?.value) return;
+    await navigator.clipboard.writeText(state.details.value);
+  }
+
   return (
     <form action={formAction} className={className}>
       {state.status !== "idle" && state.message ? (
@@ -41,6 +50,28 @@ export function AdminActionForm({
           {state.message}
         </div>
       ) : null}
+
+      {state.status === "success" && state.details ? (
+        <div className="admin-action-details">
+          <label>
+            <span>{state.details.label}</span>
+            <input
+              readOnly
+              value={state.details.value}
+              onFocus={(event) => event.currentTarget.select()}
+              aria-label={state.details.label}
+            />
+          </label>
+          <button
+            className="admin-secondary-button"
+            type="button"
+            onClick={copyDetails}
+          >
+            Copy
+          </button>
+        </div>
+      ) : null}
+
       {children}
     </form>
   );
