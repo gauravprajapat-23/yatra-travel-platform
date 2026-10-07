@@ -7,6 +7,7 @@ import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
+import { AdminMoneyField } from "@/components/admin-money-field";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   isPricingBasis,
@@ -244,23 +245,19 @@ export default async function PricingRuleDetailPage({
                   />
                 </AdminField>
 
-                <AdminField label="Fixed base amount" htmlFor="baseAmount">
-                  <input
-                    id="baseAmount"
-                    name="baseAmount"
-                    inputMode="decimal"
-                    defaultValue={decimal(rule.baseAmountMinor)}
-                  />
-                </AdminField>
+                <AdminMoneyField
+                  name="baseAmount"
+                  label="Fixed base amount"
+                  currency={rule.currency}
+                  defaultValue={decimal(rule.baseAmountMinor)}
+                />
 
-                <AdminField label="Per-km amount" htmlFor="perKm">
-                  <input
-                    id="perKm"
-                    name="perKm"
-                    inputMode="decimal"
-                    defaultValue={decimal(rule.perKmMinor)}
-                  />
-                </AdminField>
+                <AdminMoneyField
+                  name="perKm"
+                  label="Per-km amount"
+                  currency={rule.currency}
+                  defaultValue={decimal(rule.perKmMinor)}
+                />
 
                 <AdminField
                   label="Minimum distance (km)"
@@ -275,26 +272,19 @@ export default async function PricingRuleDetailPage({
                   />
                 </AdminField>
 
-                <AdminField
+                <AdminMoneyField
+                  name="driverAllowancePerDay"
                   label="Driver allowance / day"
-                  htmlFor="driverAllowancePerDay"
-                >
-                  <input
-                    id="driverAllowancePerDay"
-                    name="driverAllowancePerDay"
-                    inputMode="decimal"
-                    defaultValue={decimal(rule.driverAllowancePerDayMinor)}
-                  />
-                </AdminField>
+                  currency={rule.currency}
+                  defaultValue={decimal(rule.driverAllowancePerDayMinor)}
+                />
 
-                <AdminField label="Night allowance" htmlFor="nightAllowance">
-                  <input
-                    id="nightAllowance"
-                    name="nightAllowance"
-                    inputMode="decimal"
-                    defaultValue={decimal(rule.nightAllowanceMinor)}
-                  />
-                </AdminField>
+                <AdminMoneyField
+                  name="nightAllowance"
+                  label="Night allowance"
+                  currency={rule.currency}
+                  defaultValue={decimal(rule.nightAllowanceMinor)}
+                />
 
                 <AdminField
                   label="Origin scope key"
