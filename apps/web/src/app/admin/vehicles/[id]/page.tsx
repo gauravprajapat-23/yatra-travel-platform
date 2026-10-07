@@ -386,7 +386,11 @@ export default async function VehicleDetailPage({
                         {hasPermission(session.roles, "vehicle.write") ? (
                           <form action={removeBlock}>
                             <input type="hidden" name="blockId" value={block.id}/>
-                            <button className="admin-danger-button" type="submit">Delete</button>
+                            <AdminSubmitButton
+                              className="admin-danger-button"
+                              label="Delete"
+                              pendingLabel="Deleting…"
+                            />
                           </form>
                         ) : "—"}
                       </td>
@@ -469,7 +473,11 @@ export default async function VehicleDetailPage({
                         ) : null}
                         <form action={detachMedia}>
                           <input type="hidden" name="mediaId" value={item.mediaId}/>
-                          <button className="admin-danger-button" type="submit">Detach</button>
+                          <AdminSubmitButton
+                            className="admin-danger-button"
+                            label="Detach"
+                            pendingLabel="Detaching…"
+                          />
                         </form>
                       </>
                     ) : null}
