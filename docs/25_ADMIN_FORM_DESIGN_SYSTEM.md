@@ -16,6 +16,20 @@ Supports:
 - consistent vertical rhythm
 - optional guidance sidebar
 
+### `AdminActionForm`
+
+Use for create/edit server-action forms that can return recoverable validation or business-rule errors.
+
+Behavior:
+- uses React action state
+- keeps validation/service errors on the current form
+- supports the same main/aside layout as `AdminForm`
+- renders accessible alert/status feedback
+- focuses and scrolls returned feedback into view for long forms
+- keeps framework redirects outside broad recoverable-error `try/catch` blocks
+
+All dedicated admin create pages currently use `AdminActionForm`.
+
 ### `AdminFormSection`
 Use to split forms into meaningful business sections.
 
@@ -46,7 +60,7 @@ Provide:
 - `wide` for fields that should span the form grid
 - `error` for field-level validation feedback when a form uses recoverable action state
 
-When `error` is present, the shared field renders an alert-style message and error styling.
+When `error` is present, the shared field renders an alert-style message and error styling. It also marks the child control with `aria-invalid` and links the control to the error text through `aria-describedby` when an `htmlFor`/id is available.
 
 
 ### `AdminSlugFields`
@@ -146,6 +160,7 @@ Behavior:
 - highlights the counter when the configured limit is reached
 
 Current uses include:
+- Booking Policy guided sections
 - Package summary
 - CMS short description
 - Destination summary
@@ -442,6 +457,8 @@ Rules:
 - icon-only controls need `aria-label`
 - selected cards should expose selection semantics
 - form errors/feedback should use appropriate live/alert semantics
+- recoverable server-action feedback should be focusable and brought into view
+- field-level errors should be linked to their controls with `aria-describedby`
 - do not rely on color alone for state
 
 ## Data / Security Rules
