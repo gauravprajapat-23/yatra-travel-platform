@@ -492,3 +492,31 @@
     align-items: flex-start;
   }
 }
+
+
+.admin-multi-select__item:has(input:checked) {
+  border-color: #f26717;
+  background: #fff8f1;
+  box-shadow: 0 0 0 2px rgba(242,103,23,.08);
+}
+
+.admin-multi-select__item:has(input:focus-visible) {
+  outline: 3px solid rgba(242,103,23,.16);
+  outline-offset: 2px;
+}
+
+.admin-multi-select__item,
+.admin-media-picker__item {
+  min-height: 44px;
+}
+
+.admin-media-picker__item:focus-visible {
+  outline: 3px solid rgba(242,103,23,.16);
+  outline-offset: 2px;
+}
+
+@media (max-width: 700px) {
+  .admin-form-actions {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}
