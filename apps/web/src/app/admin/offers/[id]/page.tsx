@@ -9,6 +9,7 @@ import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { AdminMoneyField } from "@/components/admin-money-field";
 import { AdminCurrencyField } from "@/components/admin-currency-field";
+import { AdminDateTimeRange } from "@/components/admin-date-time-range";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   isPricingBasis,
@@ -356,23 +357,18 @@ export default async function PricingRuleDetailPage({
               <input type="hidden" name="priority" value={rule.priority}/>
 
               <AdminFormGrid columns={2}>
-                <AdminField label="Active from" htmlFor="activeFrom">
-                  <input
-                    id="activeFrom"
-                    type="datetime-local"
-                    name="activeFrom"
-                    defaultValue={localDateTime(rule.activeFrom)}
-                  />
-                </AdminField>
-
-                <AdminField label="Active to" htmlFor="activeTo">
-                  <input
-                    id="activeTo"
-                    type="datetime-local"
-                    name="activeTo"
-                    defaultValue={localDateTime(rule.activeTo)}
-                  />
-                </AdminField>
+                <AdminDateTimeRange
+                  startName="activeFrom"
+                  endName="activeTo"
+                  startLabel="Active from"
+                  endLabel="Active to"
+                  startId="activeFrom"
+                  endId="activeTo"
+                  defaultStart={localDateTime(rule.activeFrom)}
+                  defaultEnd={localDateTime(rule.activeTo)}
+                  startHint="Leave blank to allow immediate activation."
+                  endHint="Optional expiry for this pricing rule."
+                />
 
                 <AdminField
                   label="Status"
