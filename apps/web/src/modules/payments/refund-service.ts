@@ -10,7 +10,8 @@ export class RefundServiceError extends Error {
       | "PAYMENT_NOT_REFUNDABLE"
       | "INVALID_REFUND_AMOUNT"
       | "IDEMPOTENCY_CONFLICT"
-      | "PROVIDER_ERROR",
+      | "PROVIDER_ERROR"
+      | "RECONCILIATION_PENDING",
     public readonly httpStatus: number,
   ) {
     super(message);
@@ -115,8 +116,10 @@ export async function createRefundRequest(input: {
     },
   });
 
+  let providerRefund;
+
   try {
-    const providerRefund = await createRazorpayRefund({
+    providerRefund = await createRazorpayRefund({
       paymentId: paymentIntent.providerPaymentId,
       amountMinor: refund.amountMinor,
       notes: {
@@ -124,24 +127,39 @@ export async function createRefundRequest(input: {
         paymentIntentId: paymentIntent.id,
       },
     });
+  } catch {
+    await db.refund.update({
+      where: { id: refund.id },
+      data: { status: "FAILED" },
+    });
 
-    if (
-      providerRefund.payment_id !== paymentIntent.providerPaymentId ||
-      BigInt(providerRefund.amount) !== refund.amountMinor ||
-      providerRefund.currency !== refund.currency
-    ) {
-      await db.refund.update({
-        where: { id: refund.id },
-        data: { status: "FAILED" },
-      });
+    throw new RefundServiceError(
+      "Razorpay refund request failed.",
+      "PROVIDER_ERROR",
+      502,
+    );
+  }
 
-      throw new RefundServiceError(
-        "Provider refund response did not match the request.",
-        "PROVIDER_ERROR",
-        502,
-      );
-    }
+  if (
+    providerRefund.payment_id !== paymentIntent.providerPaymentId ||
+    BigInt(providerRefund.amount) !== refund.amountMinor ||
+    providerRefund.currency !== refund.currency
+  ) {
+    await db.refund.update({
+      where: { id: refund.id },
+      data: {
+        providerRefundId: providerRefund.id,
+      },
+    }).catch(() => undefined);
 
+    throw new RefundServiceError(
+      "Provider refund response did not match the request. Reconciliation is required.",
+      "RECONCILIATION_PENDING",
+      502,
+    );
+  }
+
+  try {
     const updated = await db.refund.update({
       where: { id: refund.id },
       data: {
@@ -157,20 +175,10 @@ export async function createRefundRequest(input: {
       amountMinor: updated.amountMinor.toString(),
       currency: updated.currency,
     };
-  } catch (error) {
-    if (error instanceof RefundServiceError) {
-      throw error;
-    }
-
-    await db.refund.update({
-      where: { id: refund.id },
-      data: { status: "FAILED" },
-    });
-
+  } catch {
     throw new RefundServiceError(
-      "Razorpay refund request failed.",
-      "PROVIDER_ERROR",
-      502,
+      "Refund was accepted by Razorpay but local reconciliation is still pending.",
+      "RECONCILIATION_PENDING",
+      503,
     );
-  }
-}
+  }}
