@@ -131,6 +131,7 @@ export default async function NewBlogPage() {
               sourceName="title"
               sourcePlaceholder="Ujjain Travel Guide: Temples, Food & Best Time to Visit"
               slugPlaceholder="ujjain-travel-guide"
+              pathPrefix="/blog"
             />
             <AdminField label="Category" htmlFor="categoryId">
               <select id="categoryId" name="categoryId" defaultValue="">
