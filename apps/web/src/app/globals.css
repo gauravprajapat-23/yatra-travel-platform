@@ -6267,3 +6267,180 @@ body:has(.admin-root) {
     padding: 9px 10px;
   }
 }
+
+
+/* === Guided structured content editor === */
+.admin-block-editor {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-block-editor__toolbar,
+.admin-block-editor__add {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 13px;
+  border: 1px solid #e5ded3;
+  border-radius: 10px;
+  background: #fffdf9;
+}
+
+.admin-block-editor__toolbar > div {
+  display: grid;
+  gap: 2px;
+}
+
+.admin-block-editor__toolbar strong {
+  color: #283d35;
+  font-size: .73rem;
+}
+
+.admin-block-editor__toolbar small {
+  color: #818983;
+  font-size: .61rem;
+}
+
+.admin-block-editor__json {
+  min-height: 420px !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: .68rem !important;
+}
+
+.admin-block-editor__empty {
+  padding: 28px 18px;
+  border: 1px dashed #d8cfc3;
+  border-radius: 10px;
+  background: #fffdfa;
+  text-align: center;
+}
+
+.admin-block-editor__empty strong {
+  display: block;
+  color: #35483f;
+  font-size: .78rem;
+}
+
+.admin-block-editor__empty p {
+  margin: 5px auto 0;
+  max-width: 520px;
+  color: #858b87;
+  font-size: .64rem;
+}
+
+.admin-block-editor__list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-block-card {
+  overflow: hidden;
+  border: 1px solid #e3ddd2;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 2px 9px rgba(25,43,36,.025);
+}
+
+.admin-block-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee7de;
+  background: linear-gradient(180deg,#fffdf9,#fff);
+}
+
+.admin-block-card__header > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-block-card__header > div:first-child > span {
+  display: grid;
+  width: 23px;
+  height: 23px;
+  place-items: center;
+  border-radius: 6px;
+  background: #f5eee4;
+  color: #8b6c4e;
+  font-size: .6rem;
+  font-weight: 900;
+}
+
+.admin-block-card__header strong {
+  color: #31463d;
+  font-size: .7rem;
+}
+
+.admin-block-card__actions {
+  display: flex;
+  gap: 5px;
+}
+
+.admin-block-card__actions button {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  place-items: center;
+  border: 1px solid #ded7cd;
+  border-radius: 7px;
+  background: #fff;
+  color: #6e7772;
+  cursor: pointer;
+  font: inherit;
+  font-size: .72rem;
+}
+
+.admin-block-card__actions button:hover:not(:disabled) {
+  border-color: #e4a06a;
+  color: #d96718;
+  background: #fff8f1;
+}
+
+.admin-block-card__actions button:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+}
+
+.admin-block-card__body {
+  padding: 14px;
+}
+
+.admin-block-editor__add {
+  justify-content: flex-start;
+}
+
+.admin-block-editor__add .admin-field {
+  min-width: 230px;
+  max-width: 320px;
+}
+
+.admin-block-editor__add .admin-secondary-button {
+  min-height: 43px;
+}
+
+@media (max-width: 700px) {
+  .admin-block-editor__toolbar,
+  .admin-block-editor__add {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-block-editor__add .admin-field {
+    max-width: none;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .admin-block-editor__toolbar .admin-secondary-button,
+  .admin-block-editor__add .admin-secondary-button {
+    width: 100%;
+  }
+
+  .admin-block-card__header {
+    align-items: flex-start;
+  }
+}
