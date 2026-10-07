@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { FormHTMLAttributes, ReactNode } from "react";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 
@@ -182,9 +183,9 @@ export function AdminFormActions({
         {helper ? <small>{helper}</small> : null}
       </div>
       <div className="admin-form-actions__buttons">
-        <a className="admin-secondary-button" href={cancelHref}>
+        <Link className="admin-secondary-button" href={cancelHref}>
           Cancel
-        </a>
+        </Link>
         <AdminSubmitButton
           label={submitLabel}
           pendingLabel="Saving…"
