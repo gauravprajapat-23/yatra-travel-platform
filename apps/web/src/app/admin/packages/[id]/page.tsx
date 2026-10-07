@@ -917,6 +917,7 @@ export default async function PackageDetailPage({
                                 name="amount"
                                 label="Price"
                                 currency={option.currency}
+                                currencyInputId={`price-currency-${option.id}`}
                                 defaultValue={(Number(option.amountMinor) / 100).toFixed(2)}
                                 required
                               />
@@ -1020,6 +1021,7 @@ export default async function PackageDetailPage({
                       name="amount"
                       label="Price"
                       currency="INR"
+                      currencyInputId="newPriceCurrency"
                       placeholder="14000"
                       required
                     />
