@@ -48,6 +48,30 @@ function requireFragments(file, fragments) {
   return source;
 }
 
+
+const sharedComponents = [
+  "apps/web/src/components/admin-form.tsx",
+  "apps/web/src/components/admin-editor-tabs.tsx",
+  "apps/web/src/components/admin-submit-button.tsx",
+  "apps/web/src/components/admin-slug-fields.tsx",
+  "apps/web/src/components/admin-money-field.tsx",
+  "apps/web/src/components/admin-currency-field.tsx",
+  "apps/web/src/components/admin-date-time-range.tsx",
+  "apps/web/src/components/admin-textarea-field.tsx",
+  "apps/web/src/components/admin-media-picker.tsx",
+  "apps/web/src/components/admin-multi-select-cards.tsx",
+  "apps/web/src/components/admin-structured-content-editor.tsx",
+];
+
+for (const file of sharedComponents) {
+  const fullPath = path.join(root, file);
+  if (!fs.existsSync(fullPath)) {
+    throw new Error(`Required admin form-system component is missing: ${file}`);
+  }
+
+  process.stdout.write(`PASS shared form component: ${file}\n`);
+}
+
 for (const file of newPages) {
   const source = requireFragments(file, [
     "<AdminForm",
@@ -91,4 +115,6 @@ for (const file of tabbedEditors) {
   process.stdout.write(`PASS tabbed editor: ${file}\n`);
 }
 
-process.stdout.write("Admin form-system certification passed.\n");
+process.stdout.write(
+  `Admin form-system certification passed: ${newPages.length} shared create pages, ${actionNewPages.length} action-create pages, ${tabbedEditors.length} tabbed editors, ${sharedComponents.length} shared components.\n`,
+);
