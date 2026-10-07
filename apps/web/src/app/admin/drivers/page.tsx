@@ -215,6 +215,23 @@ export default async function AdminDriversPage({
         "Documents",
         "Notes",
       ]}
+      emptyTitle={
+        q || status ? "No drivers match these filters" : "No drivers yet"
+      }
+      emptyMessage={
+        q || status
+          ? "Clear or change the current driver filters to see more records."
+          : "Add the first driver profile before assigning bookings and vehicle classes."
+      }
+      emptyAction={
+        !q &&
+        !status &&
+        hasPermission(session.roles, "driver.write") ? (
+          <Link className="admin-primary-button" href="/admin/drivers/new">
+            ＋ Add First Driver
+          </Link>
+        ) : null
+      }
       rows={rows}
       footer={
         <>
