@@ -6,6 +6,10 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminMetric, AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
+import {
+  AdminActionForm,
+  type AdminActionState,
+} from "@/components/admin-action-form";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -78,66 +82,92 @@ export default async function SeoPage({
 
   const db = getDb();
 
-  async function saveRedirect(formData: FormData) {
+  async function saveRedirect(
+    _previousState: AdminActionState,
+    formData: FormData,
+  ): Promise<AdminActionState> {
     "use server";
 
     const currentSession = await requireAdminSession();
     if (!hasPermission(currentSession.roles, "seo.manage")) redirect("/admin");
 
-    const sourcePath = String(formData.get("sourcePath") ?? "").trim();
-    const destinationPath = String(formData.get("destinationPath") ?? "").trim();
-    const statusCode = Number(formData.get("statusCode") ?? 301);
+    try {
+      const sourcePath = String(formData.get("sourcePath") ?? "").trim();
+      const destinationPath = String(
+        formData.get("destinationPath") ?? "",
+      ).trim();
+      const statusCode = Number(formData.get("statusCode") ?? 301);
 
-    if (
-      !sourcePath.startsWith("/") ||
-      sourcePath.startsWith("//") ||
-      sourcePath.length > 500
-    ) {
-      throw new Error("Source path must be a same-origin path beginning with /.");
+      if (
+        !sourcePath.startsWith("/") ||
+        sourcePath.startsWith("//") ||
+        sourcePath.length > 500
+      ) {
+        throw new Error(
+          "Source path must be a same-origin path beginning with /.",
+        );
+      }
+
+      if (
+        !destinationPath.startsWith("/") ||
+        destinationPath.startsWith("//") ||
+        destinationPath.length > 500
+      ) {
+        throw new Error(
+          "Destination path must be a same-origin path beginning with /.",
+        );
+      }
+
+      if (sourcePath === destinationPath) {
+        throw new Error(
+          "Source and destination paths must be different.",
+        );
+      }
+
+      if (![301, 302, 307, 308].includes(statusCode)) {
+        throw new Error("Unsupported redirect status code.");
+      }
+
+      const item = await db.seoRedirect.upsert({
+        where: { sourcePath },
+        update: {
+          destinationPath,
+          statusCode,
+          isActive: true,
+        },
+        create: {
+          sourcePath,
+          destinationPath,
+          statusCode,
+          isActive: true,
+        },
+      });
+
+      await db.auditLog.create({
+        data: {
+          actorUserId: currentSession.userId,
+          action: "SEO_REDIRECT_SAVED",
+          entityType: "SeoRedirect",
+          entityId: item.id,
+          metadata: { sourcePath, destinationPath, statusCode },
+        },
+      });
+
+      revalidatePath("/admin/seo");
+
+      return {
+        status: "success",
+        message: "SEO redirect saved.",
+      };
+    } catch (error) {
+      return {
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to save SEO redirect.",
+      };
     }
-
-    if (
-      !destinationPath.startsWith("/") ||
-      destinationPath.startsWith("//") ||
-      destinationPath.length > 500
-    ) {
-      throw new Error("Destination path must be a same-origin path beginning with /.");
-    }
-
-    if (sourcePath === destinationPath) {
-      throw new Error("Source and destination paths must be different.");
-    }
-
-    if (![301, 302, 307, 308].includes(statusCode)) {
-      throw new Error("Unsupported redirect status code.");
-    }
-
-    const item = await db.seoRedirect.upsert({
-      where: { sourcePath },
-      update: {
-        destinationPath,
-        statusCode,
-        isActive: true,
-      },
-      create: {
-        sourcePath,
-        destinationPath,
-        statusCode,
-        isActive: true,
-      },
-    });
-
-    await db.auditLog.create({
-      data: {
-        actorUserId: currentSession.userId,
-        action: "SEO_REDIRECT_SAVED",
-        entityType: "SeoRedirect",
-        entityId: item.id,
-        metadata: { sourcePath, destinationPath, statusCode },
-      },
-    });
-
-    revalidatePath("/admin/seo");
   }
 
   async function toggleRedirect(formData: FormData) {
@@ -433,34 +463,36 @@ export default async function SeoPage({
       <section className="admin-panel">
         <div className="admin-table-toolbar">
           <form className="admin-table-query" method="get">
-            <label>
-              <span>Search</span>
+            <AdminField label="Search" htmlFor="seoSearch">
               <input
+                id="seoSearch"
                 name="q"
                 defaultValue={q}
                 placeholder="Title, slug or SEO metadata"
               />
-            </label>
+            </AdminField>
 
-            <label>
-              <span>Type</span>
-              <select name="type" defaultValue={type}>
+            <AdminField label="Type" htmlFor="seoType">
+              <select id="seoType" name="type" defaultValue={type}>
                 <option value="ALL">All types</option>
                 <option value="CMS">CMS</option>
                 <option value="Blog">Blog</option>
                 <option value="Destination">Destination</option>
                 <option value="Package">Package</option>
               </select>
-            </label>
+            </AdminField>
 
-            <label>
-              <span>Indexing</span>
-              <select name="indexing" defaultValue={indexing}>
+            <AdminField label="Indexing" htmlFor="seoIndexing">
+              <select
+                id="seoIndexing"
+                name="indexing"
+                defaultValue={indexing}
+              >
                 <option value="ALL">All</option>
                 <option value="INDEX">Index</option>
                 <option value="NOINDEX">Noindex</option>
               </select>
-            </label>
+            </AdminField>
 
             <button className="admin-primary-button" type="submit">
               Apply
@@ -562,7 +594,7 @@ export default async function SeoPage({
           <span>{redirects.length} loaded</span>
         </div>
 
-        <form action={saveRedirect}>
+        <AdminActionForm action={saveRedirect} className="admin-form">
           <AdminFormGrid columns={3}>
             <AdminField
               label="Source path"
@@ -607,7 +639,7 @@ export default async function SeoPage({
             label="Save Redirect"
             pendingLabel="Saving Redirect…"
           />
-        </form>
+        </AdminActionForm>
 
         <div className="admin-table-wrap">
           <table className="admin-table">
@@ -640,9 +672,13 @@ export default async function SeoPage({
                           name="isActive"
                           value={item.isActive ? "true" : "false"}
                         />
-                        <button className="admin-secondary-button" type="submit">
-                          {item.isActive ? "Disable" : "Enable"}
-                        </button>
+                        <AdminSubmitButton
+                          className="admin-secondary-button"
+                          label={item.isActive ? "Disable" : "Enable"}
+                          pendingLabel={
+                            item.isActive ? "Disabling…" : "Enabling…"
+                          }
+                        />
                       </form>
                     </td>
                   </tr>
