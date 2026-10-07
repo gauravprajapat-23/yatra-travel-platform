@@ -556,6 +556,24 @@ For sensitive values such as driver phone/license:
 - preserve the existing encrypted value if blank
 - encrypt replacements server-side
 
+## Automated Certification
+
+`npm run verify:admin-forms` is part of Application CI.
+
+It certifies:
+- required shared components exist
+- dedicated create pages use recoverable shared form patterns
+- tabbed editors use shared tabs and shared submit/confirmation controls
+- inline management pages remain on shared primitives
+- lightweight filters use `AdminField`
+- specialized controls remain present where required
+- contextual empty-state and danger-zone contracts
+- shared panel-heading coverage
+- mobile/accessibility form primitives
+- global raw-label audit across every `apps/web/src/app/admin/**/page.tsx`
+
+The global raw-label audit intentionally rejects hand-written `<label>` markup in admin pages. Use `AdminField`, `AdminCheckbox`, or another approved shared primitive instead.
+
 ## New Form Checklist
 
 Before merging a new admin form:
