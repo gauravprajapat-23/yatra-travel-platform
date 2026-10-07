@@ -4,7 +4,6 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell } from "@/components/admin-shell";
 import {
   AdminField,
-  AdminForm,
   AdminFormActions,
   AdminFormAsideCard,
   AdminFormCallout,
@@ -13,6 +12,10 @@ import {
 } from "@/components/admin-form";
 import { AdminTextareaField } from "@/components/admin-textarea-field";
 import { AdminPublicationFields } from "@/components/admin-publication-fields";
+import {
+  AdminActionForm,
+  type AdminActionState,
+} from "@/components/admin-action-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   createFaq,
@@ -36,7 +39,10 @@ export default async function NewFaqPage() {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "content.write")) redirect("/admin/faq");
 
-  async function create(formData: FormData) {
+  async function create(
+    _previousState: AdminActionState,
+    formData: FormData,
+  ): Promise<AdminActionState> {
     "use server";
 
     const currentSession = await requireAdminSession();
@@ -44,23 +50,37 @@ export default async function NewFaqPage() {
       redirect("/admin/faq");
     }
 
-    const scope = String(formData.get("scope") ?? "");
-    const status = String(formData.get("status") ?? "DRAFT");
+    let faqId: string;
 
-    if (!isFaqScope(scope)) throw new Error("Invalid FAQ scope.");
-    if (!isFaqStatus(status)) throw new Error("Invalid FAQ status.");
+    try {
+      const scope = String(formData.get("scope") ?? "");
+      const status = String(formData.get("status") ?? "DRAFT");
 
-    const faq = await createFaq({
-      scope,
-      question: String(formData.get("question") ?? ""),
-      answer: String(formData.get("answer") ?? ""),
-      sortOrder: Number(formData.get("sortOrder") ?? 0),
-      status,
-      scheduledFor: parseOptionalDate(formData.get("scheduledFor")),
-      actorUserId: currentSession.userId,
-    });
+      if (!isFaqScope(scope)) throw new Error("Invalid FAQ scope.");
+      if (!isFaqStatus(status)) throw new Error("Invalid FAQ status.");
 
-    redirect(`/admin/faq/${faq.id}`);
+      const faq = await createFaq({
+        scope,
+        question: String(formData.get("question") ?? ""),
+        answer: String(formData.get("answer") ?? ""),
+        sortOrder: Number(formData.get("sortOrder") ?? 0),
+        status,
+        scheduledFor: parseOptionalDate(formData.get("scheduledFor")),
+        actorUserId: currentSession.userId,
+      });
+
+      faqId = faq.id;
+    } catch (error) {
+      return {
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to create FAQ.",
+      };
+    }
+
+    redirect(`/admin/faq/${faqId}`);
   }
 
   return (
@@ -70,8 +90,9 @@ export default async function NewFaqPage() {
       subtitle="Create a reusable answer, choose where it appears, and control draft, scheduled or published state."
       actions={<Link className="admin-secondary-button" href="/admin/faq">← FAQs</Link>}
     >
-      <AdminForm
+      <AdminActionForm
         action={create}
+        className="admin-form"
         aside={
           <>
             <AdminFormAsideCard title="FAQ guidance">
@@ -147,7 +168,7 @@ export default async function NewFaqPage() {
         </AdminFormSection>
 
         <AdminFormActions submitLabel="Create FAQ" cancelHref="/admin/faq" helper="Publication behavior is validated server-side." />
-      </AdminForm>
+      </AdminActionForm>
     </AdminShell>
   );
 }
