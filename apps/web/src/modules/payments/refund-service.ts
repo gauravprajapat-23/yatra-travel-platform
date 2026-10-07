@@ -1,6 +1,7 @@
 import { getDb, Prisma } from "@yatra/db/client";
 import {
   createRazorpayRefund,
+  RazorpayApiError,
   type RazorpayRefund,
 } from "@yatra/providers/payments/razorpay-client";
 
@@ -234,17 +235,34 @@ export async function createRefundRequest(input: {
         paymentIntentId,
       },
     });
-  } catch {
-    await db.refund.update({
-      where: { id: refund.id },
-      data: { status: "FAILED" },
-    });
+  } catch (error) {
+    if (
+      error instanceof RazorpayApiError &&
+      error.status >= 400 &&
+      error.status < 500
+    ) {
+      await db.refund.update({
+        where: { id: refund.id },
+        data: { status: "FAILED" },
+      });
 
-    throw new RefundServiceError(
-      "Razorpay refund request failed.",
-      "PROVIDER_ERROR",
-      502,
-    );
+      throw new RefundServiceError(
+        "Razorpay rejected the refund request.",
+        "PROVIDER_ERROR",
+        502,
+      );
+    }
+
+    return {
+      replayed: false,
+      refundId: refund.id,
+      status: "PENDING" as const,
+      providerRefundId: null,
+      amountMinor: refund.amountMinor.toString(),
+      currency: refund.currency,
+      reconciliationPending: true,
+      providerOutcomeUnknown: true,
+    };
   }
 
   if (
