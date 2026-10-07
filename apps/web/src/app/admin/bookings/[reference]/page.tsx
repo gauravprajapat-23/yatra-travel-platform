@@ -8,6 +8,11 @@ import {
   canTransitionBooking,
   type BookingStatus,
 } from "@yatra/domain/booking/status-machine";
+import {
+  bookingTimeWindow,
+  credentialValidThrough,
+  windowsOverlap,
+} from "@yatra/domain/fleet/availability";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminActionForm, type AdminActionState } from "@/components/admin-action-form";
@@ -169,9 +174,15 @@ export default async function BookingDetailPage({
       ),
   );
 
-  const [assignableVehicles, assignableDrivers] =
+  const assignmentWindow =
+    booking.type === "CAR"
+      ? bookingTimeWindow(booking.startsAt, booking.endsAt)
+      : null;
+
+  const [vehicleCandidates, driverCandidates] =
     booking.type === "CAR" &&
     booking.vehicleClassId &&
+    assignmentWindow &&
     ["CONFIRMED", "DRIVER_ASSIGNED"].includes(booking.status)
       ? await Promise.all([
           db.vehicle.findMany({
@@ -184,6 +195,25 @@ export default async function BookingDetailPage({
               id: true,
               displayName: true,
               registrationNumber: true,
+              availability: {
+                where: {
+                  startsAt: { lt: assignmentWindow.endsAt },
+                  endsAt: { gt: assignmentWindow.startsAt },
+                },
+                select: { id: true, reason: true },
+              },
+              bookings: {
+                where: {
+                  id: { not: booking.id },
+                  status: { in: ["CONFIRMED", "DRIVER_ASSIGNED", "IN_PROGRESS"] },
+                  startsAt: { lt: assignmentWindow.endsAt },
+                },
+                select: {
+                  reference: true,
+                  startsAt: true,
+                  endsAt: true,
+                },
+              },
             },
           }),
           db.driver.findMany({
@@ -192,19 +222,6 @@ export default async function BookingDetailPage({
               qualifications: {
                 some: { vehicleClassId: booking.vehicleClassId },
               },
-              OR: [
-                { licenseExpiry: null },
-                {
-                  licenseExpiry: {
-                    gte:
-                      booking.endsAt ??
-                      new Date(
-                        booking.startsAt.getTime() +
-                          12 * 60 * 60 * 1000,
-                      ),
-                  },
-                },
-              ],
             },
             orderBy: { displayName: "asc" },
             select: {
@@ -212,10 +229,87 @@ export default async function BookingDetailPage({
               displayName: true,
               phoneLast4: true,
               licenseExpiry: true,
+              availability: {
+                where: {
+                  startsAt: { lt: assignmentWindow.endsAt },
+                  endsAt: { gt: assignmentWindow.startsAt },
+                },
+                select: { id: true, reason: true },
+              },
+              bookings: {
+                where: {
+                  id: { not: booking.id },
+                  status: { in: ["CONFIRMED", "DRIVER_ASSIGNED", "IN_PROGRESS"] },
+                  startsAt: { lt: assignmentWindow.endsAt },
+                },
+                select: {
+                  reference: true,
+                  startsAt: true,
+                  endsAt: true,
+                },
+              },
             },
           }),
         ])
       : [[], []];
+
+  const vehicleAvailability = vehicleCandidates.map((vehicle) => {
+    const conflictingBooking = assignmentWindow
+      ? vehicle.bookings.find((other) =>
+          windowsOverlap(
+            assignmentWindow,
+            bookingTimeWindow(other.startsAt, other.endsAt),
+          ),
+        )
+      : undefined;
+    const reason = vehicle.availability[0]?.reason
+      ? `Blocked: ${vehicle.availability[0].reason}`
+      : vehicle.availability.length > 0
+        ? "Blocked by an availability window"
+        : conflictingBooking
+          ? `Overlaps booking ${conflictingBooking.reference}`
+          : null;
+
+    return { ...vehicle, conflictReason: reason };
+  });
+
+  const driverAvailability = driverCandidates.map((driver) => {
+    const conflictingBooking = assignmentWindow
+      ? driver.bookings.find((other) =>
+          windowsOverlap(
+            assignmentWindow,
+            bookingTimeWindow(other.startsAt, other.endsAt),
+          ),
+        )
+      : undefined;
+    const licenseInvalid =
+      assignmentWindow &&
+      !credentialValidThrough(driver.licenseExpiry, assignmentWindow.endsAt);
+    const reason = licenseInvalid
+      ? "License does not remain valid through this trip"
+      : driver.availability[0]?.reason
+        ? `Blocked: ${driver.availability[0].reason}`
+        : driver.availability.length > 0
+          ? "Blocked by an availability window"
+          : conflictingBooking
+            ? `Overlaps booking ${conflictingBooking.reference}`
+            : null;
+
+    return { ...driver, conflictReason: reason };
+  });
+
+  const assignableVehicles = vehicleAvailability.filter(
+    (vehicle) => !vehicle.conflictReason,
+  );
+  const unavailableVehicles = vehicleAvailability.filter(
+    (vehicle) => Boolean(vehicle.conflictReason),
+  );
+  const assignableDrivers = driverAvailability.filter(
+    (driver) => !driver.conflictReason,
+  );
+  const unavailableDrivers = driverAvailability.filter(
+    (driver) => Boolean(driver.conflictReason),
+  );
 
   const bookingId = booking.id;
   const bookingReference = booking.reference;
@@ -592,6 +686,34 @@ export default async function BookingDetailPage({
           {booking.type === "CAR" ? (
             <article className="admin-panel admin-detail-card">
               <h2>Vehicle & Driver Assignment</h2>
+              <p>
+                Availability is previewed for this trip window before submission.
+                The assignment transaction re-checks all conflicts server-side.
+              </p>
+              {unavailableVehicles.length > 0 || unavailableDrivers.length > 0 ? (
+                <div className="admin-assignment-conflicts">
+                  {unavailableVehicles.length > 0 ? (
+                    <div>
+                      <strong>Unavailable vehicles</strong>
+                      {unavailableVehicles.map((vehicle) => (
+                        <small key={vehicle.id}>
+                          {vehicle.displayName} · {vehicle.registrationNumber} — {vehicle.conflictReason}
+                        </small>
+                      ))}
+                    </div>
+                  ) : null}
+                  {unavailableDrivers.length > 0 ? (
+                    <div>
+                      <strong>Unavailable drivers</strong>
+                      {unavailableDrivers.map((driver) => (
+                        <small key={driver.id}>
+                          {driver.displayName} — {driver.conflictReason}
+                        </small>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
               {hasPermission(session.roles, "booking.assign") &&
               assignableVehicles.length > 0 &&
               assignableDrivers.length > 0 ? (
