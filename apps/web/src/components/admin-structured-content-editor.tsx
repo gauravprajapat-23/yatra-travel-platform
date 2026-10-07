@@ -149,6 +149,124 @@ function newBlock(type: ContentBlockType): Block {
   };
 }
 
+function previewText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function BlockPreview({ block }: { block: Block }) {
+  const data = block.data;
+
+  if (block.type === "heading") {
+    const value = previewText(data.text);
+    if (!value) return <p className="admin-block-preview__empty">Heading is empty.</p>;
+    return Number(data.level) === 3 ? <h3>{value}</h3> : <h2>{value}</h2>;
+  }
+
+  if (block.type === "paragraph") {
+    const value = previewText(data.text);
+    return value ? <p>{value}</p> : <p className="admin-block-preview__empty">Paragraph is empty.</p>;
+  }
+
+  if (block.type === "quote") {
+    const value = previewText(data.text);
+    const attribution = previewText(data.attribution);
+    return value ? (
+      <blockquote>
+        <p>{value}</p>
+        {attribution ? <cite>{attribution}</cite> : null}
+      </blockquote>
+    ) : <p className="admin-block-preview__empty">Quote is empty.</p>;
+  }
+
+  if (block.type === "callout") {
+    const title = previewText(data.title);
+    const value = previewText(data.text);
+    return title || value ? (
+      <aside className="admin-block-preview__callout">
+        {title ? <strong>{title}</strong> : null}
+        {value ? <p>{value}</p> : null}
+      </aside>
+    ) : <p className="admin-block-preview__empty">Callout is empty.</p>;
+  }
+
+  if (block.type === "cta") {
+    const label = previewText(data.label);
+    const value = previewText(data.text);
+    const href = previewText(data.href);
+    return (
+      <div className="admin-block-preview__cta">
+        {value ? <p>{value}</p> : null}
+        <span>{label || "CTA label"}{href ? ` · ${href}` : ""}</span>
+      </div>
+    );
+  }
+
+  if (
+    block.type === "list" ||
+    block.type === "routeHighlights" ||
+    block.type === "itinerarySummary"
+  ) {
+    const items = stringList(data.items);
+    return items.length ? (
+      <ul>{items.map((item, index) => <li key={`${block.id}-preview-${index}`}>{item}</li>)}</ul>
+    ) : <p className="admin-block-preview__empty">No list items.</p>;
+  }
+
+  if (block.type === "image") {
+    const url = previewText(data.url);
+    const alt = previewText(data.alt);
+    const caption = previewText(data.caption);
+    return url ? (
+      <figure>
+        <img src={url} alt={alt} />
+        {caption ? <figcaption>{caption}</figcaption> : null}
+      </figure>
+    ) : <p className="admin-block-preview__empty">Image URL is missing.</p>;
+  }
+
+  if (block.type === "gallery") {
+    const items = Array.isArray(data.items) ? data.items : [];
+    return items.length ? (
+      <div className="admin-block-preview__gallery">
+        {items.map((item, index) => {
+          const source =
+            typeof item === "object" && item !== null && !Array.isArray(item)
+              ? (item as Record<string, unknown>)
+              : {};
+          const url = previewText(source.url);
+          if (!url) return null;
+          return <img key={`${block.id}-gallery-${index}`} src={url} alt={previewText(source.alt)} />;
+        })}
+      </div>
+    ) : <p className="admin-block-preview__empty">No gallery images.</p>;
+  }
+
+  if (block.type === "faqGroup") {
+    const items = Array.isArray(data.items) ? data.items : [];
+    return items.length ? (
+      <div className="admin-block-preview__faq">
+        {items.map((item, index) => {
+          const source =
+            typeof item === "object" && item !== null && !Array.isArray(item)
+              ? (item as Record<string, unknown>)
+              : {};
+          const question = previewText(source.question);
+          const answer = previewText(source.answer);
+          if (!question && !answer) return null;
+          return (
+            <div key={`${block.id}-faq-${index}`}>
+              <strong>{question || "Untitled question"}</strong>
+              {answer ? <p>{answer}</p> : null}
+            </div>
+          );
+        })}
+      </div>
+    ) : <p className="admin-block-preview__empty">No FAQ items.</p>;
+  }
+
+  return null;
+}
+
 export function AdminStructuredContentEditor({
   name = "body",
   initialValue,
@@ -163,6 +281,7 @@ export function AdminStructuredContentEditor({
   const [blocks, setBlocks] = useState<Block[]>(initialBlocks);
   const [addType, setAddType] = useState<ContentBlockType>("paragraph");
   const [advanced, setAdvanced] = useState(false);
+  const [preview, setPreview] = useState(false);
   const [advancedJson, setAdvancedJson] = useState(
     JSON.stringify(initialBlocks, null, 2),
   );
@@ -233,13 +352,24 @@ export function AdminStructuredContentEditor({
             Build safe structured content without editing JSON manually.
           </small>
         </div>
-        <button
-          className="admin-secondary-button"
-          type="button"
-          onClick={toggleAdvanced}
-        >
-          {advanced ? "Return to Guided Editor" : "Advanced JSON"}
-        </button>
+        <div className="admin-block-editor__toolbar-actions">
+          {!advanced ? (
+            <button
+              className="admin-secondary-button"
+              type="button"
+              onClick={() => setPreview((value) => !value)}
+            >
+              {preview ? "Hide Preview" : "Preview Content"}
+            </button>
+          ) : null}
+          <button
+            className="admin-secondary-button"
+            type="button"
+            onClick={toggleAdvanced}
+          >
+            {advanced ? "Return to Guided Editor" : "Advanced JSON"}
+          </button>
+        </div>
       </div>
 
       {advanced ? (
@@ -566,6 +696,26 @@ export function AdminStructuredContentEditor({
               </section>
             ))}
           </div>
+
+          {preview ? (
+            <section className="admin-block-preview">
+              <header>
+                <strong>Content Preview</strong>
+                <small>{blocks.length} block{blocks.length === 1 ? "" : "s"}</small>
+              </header>
+              <div className="admin-block-preview__body">
+                {blocks.length === 0 ? (
+                  <p className="admin-block-preview__empty">Nothing to preview yet.</p>
+                ) : (
+                  blocks.map((block) => (
+                    <div className="admin-block-preview__block" key={`preview-${block.id}`}>
+                      <BlockPreview block={block} />
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
+          ) : null}
 
           <div className="admin-block-editor__add">
             <label className="admin-field">
