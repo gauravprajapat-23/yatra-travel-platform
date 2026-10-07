@@ -13,6 +13,7 @@ import {
   AdminFormSection,
 } from "@/components/admin-form";
 import { AdminSlugFields } from "@/components/admin-slug-fields";
+import { AdminTextareaField } from "@/components/admin-textarea-field";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -131,9 +132,15 @@ export default async function NewDestinationPage() {
 
         <AdminFormSection title="Editorial summary" description="Short overview before building the complete destination story.">
           <AdminFormGrid columns={1}>
-            <AdminField label="Summary" htmlFor="summary" hint="Maximum 700 characters.">
-              <textarea id="summary" name="summary" maxLength={700} rows={5} placeholder="Describe why travellers visit, what makes it special and the main experience." />
-            </AdminField>
+            <AdminTextareaField
+              id="summary"
+              name="summary"
+              label="Summary"
+              maxLength={700}
+              rows={5}
+              placeholder="Describe why travellers visit, what makes it special and the main experience."
+              hint="Short destination overview used across discovery surfaces."
+            />
           </AdminFormGrid>
           <AdminFormCallout title="Next step">
             The full editor adds structured body content, hero media, SEO metadata and publication scheduling.
