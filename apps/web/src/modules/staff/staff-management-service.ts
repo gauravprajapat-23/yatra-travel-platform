@@ -54,6 +54,18 @@ export async function updateStaffAccess(input: {
 
       if (!target) throw new Error("Staff user not found.");
 
+      if (input.status === "ACTIVE" && !target.passwordHash) {
+        throw new Error(
+          "Invited staff must complete password setup before activation.",
+        );
+      }
+
+      if (input.status === "INVITED" && target.status !== "INVITED") {
+        throw new Error(
+          "Existing staff accounts cannot be moved back to INVITED.",
+        );
+      }
+
       const currentRoles = target.roles
         .map((entry) => entry.role.key as RoleKey)
         .filter((role) => role !== "CUSTOMER");
@@ -557,4 +569,97 @@ export async function revokeStaffInvite(input: {
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
   );
+}
+
+
+export async function renewStaffInvite(input: {
+  targetUserId: string;
+  actorUserId: string;
+  expiresInHours?: number;
+}) {
+  const expiresInHours = input.expiresInHours ?? 48;
+
+  if (
+    !Number.isInteger(expiresInHours) ||
+    expiresInHours < 1 ||
+    expiresInHours > 168
+  ) {
+    throw new Error("Invite expiry must be between 1 and 168 hours.");
+  }
+
+  const rawToken = randomBytes(32).toString("base64url");
+  const tokenHash = hashInviteToken(rawToken);
+  const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
+  const db = getDb();
+
+  const result = await db.$transaction(
+    async (tx) => {
+      const target = await tx.user.findUnique({
+        where: { id: input.targetUserId },
+        include: {
+          roles: {
+            include: { role: true },
+          },
+          staffInvite: true,
+        },
+      });
+
+      if (!target || target.status !== "INVITED" || target.passwordHash) {
+        throw new Error("Only pending invited staff can receive a new invite.");
+      }
+
+      const adminRoles = target.roles
+        .map((entry) => entry.role.key as RoleKey)
+        .filter((role) => role !== "CUSTOMER");
+
+      if (adminRoles.length === 0) {
+        throw new Error("Invited account has no admin roles.");
+      }
+
+      const invite = target.staffInvite
+        ? await tx.staffInvite.update({
+            where: { id: target.staffInvite.id },
+            data: {
+              tokenHash,
+              expiresAt,
+              acceptedAt: null,
+              revokedAt: null,
+              createdById: input.actorUserId,
+              createdAt: new Date(),
+            },
+            select: { id: true, expiresAt: true },
+          })
+        : await tx.staffInvite.create({
+            data: {
+              userId: target.id,
+              tokenHash,
+              expiresAt,
+              createdById: input.actorUserId,
+            },
+            select: { id: true, expiresAt: true },
+          });
+
+      await tx.auditLog.create({
+        data: {
+          actorUserId: input.actorUserId,
+          action: "STAFF_INVITE_REGENERATED",
+          entityType: "User",
+          entityId: target.id,
+          metadata: {
+            inviteId: invite.id,
+            roles: adminRoles,
+            expiresAt: invite.expiresAt.toISOString(),
+          },
+        },
+      });
+
+      return invite;
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
+
+  return {
+    invite: result,
+    token: rawToken,
+  };
 }
