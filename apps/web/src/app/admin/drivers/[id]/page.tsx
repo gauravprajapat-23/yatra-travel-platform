@@ -8,6 +8,7 @@ import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminMultiSelectCards } from "@/components/admin-multi-select-cards";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
+import { AdminDateTimeRange } from "@/components/admin-date-time-range";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   addDriverAvailabilityBlock,
@@ -331,23 +332,16 @@ export default async function DriverDetailPage({
               <form action={addBlock}>
                 <h3>Add Availability Block</h3>
                 <AdminFormGrid columns={2}>
-                  <AdminField label="Starts" htmlFor="driverBlockStarts" required>
-                    <input
-                      id="driverBlockStarts"
-                      type="datetime-local"
-                      name="startsAt"
-                      required
-                    />
-                  </AdminField>
-
-                  <AdminField label="Ends" htmlFor="driverBlockEnds" required>
-                    <input
-                      id="driverBlockEnds"
-                      type="datetime-local"
-                      name="endsAt"
-                      required
-                    />
-                  </AdminField>
+                  <AdminDateTimeRange
+                    startName="startsAt"
+                    endName="endsAt"
+                    startLabel="Starts"
+                    endLabel="Ends"
+                    startId="driverBlockStarts"
+                    endId="driverBlockEnds"
+                    startRequired
+                    endRequired
+                  />
 
                   <AdminField
                     label="Reason"
