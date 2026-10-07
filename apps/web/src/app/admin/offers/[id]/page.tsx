@@ -8,6 +8,7 @@ import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { AdminMoneyField } from "@/components/admin-money-field";
+import { AdminCurrencyField } from "@/components/admin-currency-field";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   isPricingBasis,
@@ -235,15 +236,11 @@ export default async function PricingRuleDetailPage({
                   </select>
                 </AdminField>
 
-                <AdminField label="Currency" htmlFor="currency" required>
-                  <input
-                    id="currency"
-                    name="currency"
-                    defaultValue={rule.currency}
-                    maxLength={3}
-                    required
-                  />
-                </AdminField>
+                <AdminCurrencyField
+                  id="currency"
+                  name="currency"
+                  defaultValue={rule.currency}
+                />
 
                 <AdminMoneyField
                   name="baseAmount"
