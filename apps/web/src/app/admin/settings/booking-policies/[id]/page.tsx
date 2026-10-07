@@ -5,6 +5,7 @@ import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
+import { AdminDateTimeRange } from "@/components/admin-date-time-range";
 import {
   AdminField,
   AdminFormCallout,
@@ -218,23 +219,18 @@ export default async function BookingPolicyDetailPage({
                 description="Optional dates controlling when this version is eligible after activation."
               >
                 <AdminFormGrid columns={2}>
-                  <AdminField label="Effective from" htmlFor="effectiveFrom">
-                    <input
-                      id="effectiveFrom"
-                      type="datetime-local"
-                      name="effectiveFrom"
-                      defaultValue={localDateTime(policy.effectiveFrom)}
-                    />
-                  </AdminField>
-
-                  <AdminField label="Effective to" htmlFor="effectiveTo">
-                    <input
-                      id="effectiveTo"
-                      type="datetime-local"
-                      name="effectiveTo"
-                      defaultValue={localDateTime(policy.effectiveTo)}
-                    />
-                  </AdminField>
+                  <AdminDateTimeRange
+                    startName="effectiveFrom"
+                    endName="effectiveTo"
+                    startLabel="Effective from"
+                    endLabel="Effective to"
+                    startId="effectiveFrom"
+                    endId="effectiveTo"
+                    defaultStart={localDateTime(policy.effectiveFrom)}
+                    defaultEnd={localDateTime(policy.effectiveTo)}
+                    startHint="Leave blank for immediate eligibility after activation."
+                    endHint="Optional expiry for this policy version."
+                  />
                 </AdminFormGrid>
               </AdminFormSection>
 
