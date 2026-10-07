@@ -117,6 +117,28 @@ Current uses:
 
 Server-side date/order validation remains authoritative.
 
+
+### `AdminTextareaField`
+
+Use for bounded multi-line text where editors benefit from seeing the remaining size budget.
+
+Behavior:
+- preserves the normal textarea submission contract
+- shows a live `current/max` character count
+- supports required/min/max length, hints, placeholders and full-width layout
+- highlights the counter when the configured limit is reached
+
+Current uses include:
+- Package summary
+- CMS short description
+- Destination summary
+- Blog excerpt
+- Package/content SEO descriptions
+- FAQ question/answer
+- Temple darshan notes and dress code
+
+Only show a counter when a real product/server limit exists. Do not invent arbitrary max lengths just for UI consistency.
+
 ### `AdminCheckbox`
 Use for standalone boolean choices.
 
