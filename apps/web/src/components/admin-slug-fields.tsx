@@ -34,6 +34,8 @@ export function AdminSlugFields({
 }) {
   const [source, setSource] = useState(sourceDefaultValue);
   const [slug, setSlug] = useState(slugDefaultValue);
+  const sourceId = `admin-${sourceName}`;
+  const slugId = `admin-${slugName}`;
   const [slugTouched, setSlugTouched] = useState(Boolean(slugDefaultValue));
 
   function updateSource(value: string) {
@@ -43,12 +45,13 @@ export function AdminSlugFields({
 
   return (
     <>
-      <label className="admin-field">
+      <label className="admin-field" htmlFor={sourceId}>
         <span className="admin-field__label">
           {sourceLabel}
           <b aria-hidden="true">*</b>
         </span>
         <input
+          id={sourceId}
           name={sourceName}
           value={source}
           onChange={(event) => updateSource(event.target.value)}
@@ -59,12 +62,13 @@ export function AdminSlugFields({
         />
       </label>
 
-      <label className="admin-field">
+      <label className="admin-field" htmlFor={slugId}>
         <span className="admin-field__label">
           Slug
           <b aria-hidden="true">*</b>
         </span>
         <input
+          id={slugId}
           name={slugName}
           value={slug}
           onChange={(event) => {
