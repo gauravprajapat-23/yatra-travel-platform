@@ -23,7 +23,7 @@ export function AdminMediaPicker({
   const [selected, setSelected] = useState(defaultValue);
 
   return (
-    <div className="admin-media-picker">
+    <div className="admin-media-picker" role="group" aria-label="Media choices">
       <input type="hidden" name={name} value={selected} />
 
       {allowNone ? (
@@ -34,6 +34,7 @@ export function AdminMediaPicker({
               : "admin-media-picker__item"
           }
           type="button"
+          aria-pressed={selected === ""}
           onClick={() => setSelected("")}
         >
           <span className="admin-media-picker__empty">No image</span>
@@ -51,6 +52,7 @@ export function AdminMediaPicker({
               : "admin-media-picker__item"
           }
           type="button"
+          aria-pressed={selected === option.id}
           onClick={() => setSelected(option.id)}
         >
           {option.publicUrl ? (
