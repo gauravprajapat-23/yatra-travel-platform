@@ -13,6 +13,7 @@ import {
   AdminFormSection,
 } from "@/components/admin-form";
 import { AdminSlugFields } from "@/components/admin-slug-fields";
+import { AdminTextareaField } from "@/components/admin-textarea-field";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -134,9 +135,15 @@ export default async function NewCmsPage() {
 
         <AdminFormSection title="Content summary" description="Short description used by editors and suitable for later SEO refinement.">
           <AdminFormGrid columns={1}>
-            <AdminField label="Short description" htmlFor="excerpt" hint="Maximum 500 characters.">
-              <textarea id="excerpt" name="excerpt" maxLength={500} rows={5} placeholder="Briefly explain what this page covers." />
-            </AdminField>
+            <AdminTextareaField
+              id="excerpt"
+              name="excerpt"
+              label="Short description"
+              maxLength={500}
+              rows={5}
+              placeholder="Briefly explain what this page covers."
+              hint="Used by editors and suitable for later SEO refinement."
+            />
           </AdminFormGrid>
           <AdminFormCallout title="Safe by default">
             The page is created as a DRAFT with robots indexing disabled. Structured body, hero media, SEO metadata and publication are completed in the editor.
