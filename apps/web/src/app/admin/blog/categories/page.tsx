@@ -201,12 +201,11 @@ export default async function BlogCategoriesPage() {
                             </AdminField>
                           </AdminFormGrid>
 
-                          <button
+                          <AdminSubmitButton
                             className="admin-secondary-button"
-                            type="submit"
-                          >
-                            Save
-                          </button>
+                            label="Save"
+                            pendingLabel="Saving…"
+                          />
                         </form>
                       ) : "—"}
                     </td>
