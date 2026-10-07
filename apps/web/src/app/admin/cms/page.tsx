@@ -1,11 +1,19 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getDb } from "@yatra/db/client";
+import { getDb, Prisma } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
 import { requireAdminSession } from "@/lib/auth/session";
+import { contentStatuses } from "@/modules/content/admin-content-service";
 
 export const dynamic = "force-dynamic";
+
+const PAGE_SIZE = 25;
+type ContentStatusValue = (typeof contentStatuses)[number];
+
+function isContentStatus(value: string): value is ContentStatusValue {
+  return (contentStatuses as readonly string[]).includes(value);
+}
 
 function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
   if (status === "PUBLISHED") return "green";
@@ -15,36 +23,89 @@ function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
   return "gray";
 }
 
-export default async function CmsPage() {
+export default async function CmsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
+}) {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "content.read")) redirect("/admin");
 
+  const params = await searchParams;
+  const q = String(params.q ?? "").trim().slice(0, 120);
+  const status = isContentStatus(String(params.status ?? ""))
+    ? (String(params.status) as ContentStatusValue)
+    : null;
+  const requestedPage = Number(params.page ?? "1");
+  const page =
+    Number.isInteger(requestedPage) && requestedPage > 0
+      ? requestedPage
+      : 1;
+
   const db = getDb();
 
-  const [pages, total, published, drafts, scheduled] = await Promise.all([
+  const baseWhere: Prisma.CmsPageWhereInput = q
+    ? {
+        OR: [
+          { title: { contains: q, mode: "insensitive" } },
+          { slug: { contains: q, mode: "insensitive" } },
+          { seoTitle: { contains: q, mode: "insensitive" } },
+          { seoDescription: { contains: q, mode: "insensitive" } },
+        ],
+      }
+    : {};
+
+  const where: Prisma.CmsPageWhereInput = {
+    ...baseWhere,
+    ...(status ? { status } : {}),
+  };
+
+  const total = await db.cmsPage.count({ where });
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const skip = (safePage - 1) * PAGE_SIZE;
+
+  const [pages, published, drafts, scheduled] = await Promise.all([
     db.cmsPage.findMany({
+      where,
       orderBy: { updatedAt: "desc" },
-      take: 100,
+      skip,
+      take: PAGE_SIZE,
     }),
-    db.cmsPage.count(),
-    db.cmsPage.count({ where: { status: "PUBLISHED" } }),
-    db.cmsPage.count({ where: { status: { in: ["DRAFT", "REVIEW"] } } }),
-    db.cmsPage.count({ where: { status: "SCHEDULED" } }),
+    db.cmsPage.count({ where: { ...baseWhere, status: "PUBLISHED" } }),
+    db.cmsPage.count({
+      where: { ...baseWhere, status: { in: ["DRAFT", "REVIEW"] } },
+    }),
+    db.cmsPage.count({ where: { ...baseWhere, status: "SCHEDULED" } }),
   ]);
 
-  const rows = pages.map((page) => [
-    <Link key={page.id} href={`/admin/content/cms/${page.id}`}>
-      {page.title}
+  const rows = pages.map((pageRecord) => [
+    <Link key={pageRecord.id} href={`/admin/content/cms/${pageRecord.id}`}>
+      {pageRecord.title}
     </Link>,
-    page.slug === "/" ? "/" : `/${page.slug.replace(/^\//, "")}`,
-    page.seoTitle ? "SEO ready" : "SEO missing",
-    page.robotsIndex ? "Index" : "Noindex",
-    <StatusPill key={page.id} tone={tone(page.status)}>
-      {page.status.replaceAll("_", " ")}
+    pageRecord.slug === "/"
+      ? "/"
+      : `/${pageRecord.slug.replace(/^\//, "")}`,
+    pageRecord.seoTitle ? "SEO ready" : "SEO missing",
+    pageRecord.robotsIndex ? "Index" : "Noindex",
+    <StatusPill key={pageRecord.id} tone={tone(pageRecord.status)}>
+      {pageRecord.status.replaceAll("_", " ")}
     </StatusPill>,
-    page.publishedAt?.toLocaleDateString("en-IN") ?? "—",
-    page.updatedAt.toLocaleDateString("en-IN"),
+    pageRecord.publishedAt?.toLocaleDateString("en-IN") ?? "—",
+    pageRecord.updatedAt.toLocaleDateString("en-IN"),
   ]);
+
+  function pageHref(targetPage: number) {
+    const next = new URLSearchParams();
+    if (q) next.set("q", q);
+    if (status) next.set("status", status);
+    if (targetPage > 1) next.set("page", targetPage.toString());
+    const query = next.toString();
+    return query ? `/admin/cms?${query}` : "/admin/cms";
+  }
+
+  const firstShown = total === 0 ? 0 : skip + 1;
+  const lastShown = Math.min(skip + pages.length, total);
 
   return (
     <AdminTablePage
@@ -59,14 +120,98 @@ export default async function CmsPage() {
         ) : null
       }
       metrics={[
-        { label: "All Pages", value: total.toString(), meta: "all records", tone: "blue" },
-        { label: "Published", value: published.toString(), meta: "visible publicly", tone: "green" },
-        { label: "Draft / Review", value: drafts.toString(), meta: "work in progress", tone: "orange" },
-        { label: "Scheduled", value: scheduled.toString(), meta: "future publish", tone: "blue" },
+        {
+          label: "Matching Pages",
+          value: total.toString(),
+          meta: "current filters",
+          tone: "blue",
+        },
+        {
+          label: "Published",
+          value: published.toString(),
+          meta: "current search",
+          tone: "green",
+        },
+        {
+          label: "Draft / Review",
+          value: drafts.toString(),
+          meta: "current search",
+          tone: "orange",
+        },
+        {
+          label: "Scheduled",
+          value: scheduled.toString(),
+          meta: "current search",
+          tone: "blue",
+        },
       ]}
-      filters={["Latest 100"]}
-      columns={["Page Title", "Slug", "SEO", "Indexing", "Status", "Published", "Updated"]}
+      filters={[
+        status ? status.replaceAll("_", " ") : "All statuses",
+        q ? `Search: ${q}` : "All CMS pages",
+      ]}
+      toolbar={
+        <form className="admin-table-query admin-table-query--compact" method="get">
+          <label>
+            <span>Search</span>
+            <input
+              name="q"
+              defaultValue={q}
+              placeholder="Page title, slug or SEO metadata"
+            />
+          </label>
+          <label>
+            <span>Status</span>
+            <select name="status" defaultValue={status ?? ""}>
+              <option value="">All statuses</option>
+              {contentStatuses.map((item) => (
+                <option key={item} value={item}>
+                  {item.replaceAll("_", " ")}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="admin-primary-button" type="submit">
+            Apply
+          </button>
+          {(q || status) ? (
+            <Link className="admin-secondary-button" href="/admin/cms">
+              Reset
+            </Link>
+          ) : null}
+        </form>
+      }
+      columns={[
+        "Page Title",
+        "Slug",
+        "SEO",
+        "Indexing",
+        "Status",
+        "Published",
+        "Updated",
+      ]}
       rows={rows}
+      footer={
+        <>
+          <span>
+            Showing {firstShown}–{lastShown} of {total}
+          </span>
+          <div className="admin-table-pager">
+            {safePage > 1 ? (
+              <Link className="admin-secondary-button" href={pageHref(safePage - 1)}>
+                ← Previous
+              </Link>
+            ) : null}
+            <small>
+              Page {safePage} of {totalPages}
+            </small>
+            {safePage < totalPages ? (
+              <Link className="admin-secondary-button" href={pageHref(safePage + 1)}>
+                Next →
+              </Link>
+            ) : null}
+          </div>
+        </>
+      }
     />
   );
 }
