@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { AdminFileUploadField } from "@/components/admin-file-upload-field";
 import { AdminTextareaField } from "@/components/admin-textarea-field";
+import { AdminTextInputField } from "@/components/admin-text-input-field";
 
 type MediaItem = {
   id: string;
@@ -178,18 +179,14 @@ export function AdminMediaManager({
                 hint="JPEG, PNG, WebP, GIF or PDF. Maximum 10 MB."
               />
 
-              <AdminField
+              <AdminTextInputField
+                id="mediaAltText"
+                name="altText"
                 label="Alt text"
-                htmlFor="mediaAltText"
+                maxLength={300}
+                placeholder="Describe the asset for accessibility"
                 hint="Required for meaningful public images whenever possible."
-              >
-                <input
-                  id="mediaAltText"
-                  name="altText"
-                  maxLength={300}
-                  placeholder="Describe the asset for accessibility"
-                />
-              </AdminField>
+              />
 
               <AdminTextareaField
                 id="mediaCaption"
@@ -292,14 +289,14 @@ export function AdminMediaManager({
                 {canWrite && editingId === asset.id ? (
                   <form action={(formData) => updateMetadata(asset, formData)}>
                     <AdminFormGrid columns={1}>
-                      <AdminField label="Alt text" htmlFor={`alt-${asset.id}`}>
-                        <input
-                          id={`alt-${asset.id}`}
-                          name="altText"
-                          defaultValue={asset.altText ?? ""}
-                          maxLength={300}
-                        />
-                      </AdminField>
+                      <AdminTextInputField
+                        id={`alt-${asset.id}`}
+                        name="altText"
+                        label="Alt text"
+                        defaultValue={asset.altText ?? ""}
+                        maxLength={300}
+                        hint="Describe meaningful visual content for accessibility."
+                      />
 
                       <AdminTextareaField
                         id={`caption-${asset.id}`}
