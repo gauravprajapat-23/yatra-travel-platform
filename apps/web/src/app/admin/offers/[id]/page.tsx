@@ -249,6 +249,7 @@ export default async function PricingRuleDetailPage({
                   name="baseAmount"
                   label="Fixed base amount"
                   currency={rule.currency}
+                  currencyInputId="currency"
                   defaultValue={decimal(rule.baseAmountMinor)}
                 />
 
@@ -256,6 +257,7 @@ export default async function PricingRuleDetailPage({
                   name="perKm"
                   label="Per-km amount"
                   currency={rule.currency}
+                  currencyInputId="currency"
                   defaultValue={decimal(rule.perKmMinor)}
                 />
 
@@ -276,6 +278,7 @@ export default async function PricingRuleDetailPage({
                   name="driverAllowancePerDay"
                   label="Driver allowance / day"
                   currency={rule.currency}
+                  currencyInputId="currency"
                   defaultValue={decimal(rule.driverAllowancePerDayMinor)}
                 />
 
@@ -283,6 +286,7 @@ export default async function PricingRuleDetailPage({
                   name="nightAllowance"
                   label="Night allowance"
                   currency={rule.currency}
+                  currencyInputId="currency"
                   defaultValue={decimal(rule.nightAllowanceMinor)}
                 />
 
