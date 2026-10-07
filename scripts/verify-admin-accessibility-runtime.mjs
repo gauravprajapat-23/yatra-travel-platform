@@ -66,10 +66,27 @@ for (const path of [
   }
 
   if (html.includes("<form")) {
-    const controls = (html.match(/<(input|select|textarea)\b/g) ?? []).length;
-    const labels = (html.match(/<label\b/g) ?? []).length;
-    if (controls > 0 && labels === 0) {
-      throw new Error(`${path} renders form controls without labels.`);
+    const controls =
+      html.match(/<(input|select|textarea)\b[^>]*>/g) ?? [];
+
+    const visibleControls = controls.filter(
+      (control) => !/type=["']hidden["']/i.test(control),
+    );
+
+    const labelCount = (html.match(/<label\b/g) ?? []).length;
+    const explicitlyNamedControls = visibleControls.filter((control) =>
+      /\baria-label=["'][^"']+["']/i.test(control) ||
+      /\baria-labelledby=["'][^"']+["']/i.test(control),
+    ).length;
+
+    if (
+      visibleControls.length > 0 &&
+      labelCount === 0 &&
+      explicitlyNamedControls !== visibleControls.length
+    ) {
+      throw new Error(
+        `${path} renders visible form controls without accessible names.`,
+      );
     }
   }
 
