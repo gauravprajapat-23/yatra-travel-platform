@@ -123,6 +123,6 @@ export default async function NewDriverPage() {
 
         <AdminFormActions submitLabel="Create Driver" cancelHref="/admin/drivers" helper="Sensitive fields are encrypted before storage." />
       </AdminForm>
-
+    </AdminShell>
   );
 }
