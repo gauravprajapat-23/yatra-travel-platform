@@ -555,25 +555,24 @@ export async function revokeStaffInvite(input: {
         data: { revokedAt: now },
       });
 
-      await tx.user.update({
-        where: { id: input.targetUserId },
-        data: { status: "DISABLED" },
-      });
-
       await tx.auditLog.create({
         data: {
           actorUserId: input.actorUserId,
-          action: "STAFF_INVITE_REVOKED",
+          action: "STAFF_INVITE_CANCELLED",
           entityType: "User",
           entityId: input.targetUserId,
           metadata: {
             inviteId: invite.id,
-            accountDisabled: true,
+            invitedAccountDeleted: true,
           },
         },
       });
 
-      return { revokedAt: now, accountDisabled: true };
+      await tx.user.delete({
+        where: { id: input.targetUserId },
+      });
+
+      return { revokedAt: now, invitedAccountDeleted: true };
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
   );
