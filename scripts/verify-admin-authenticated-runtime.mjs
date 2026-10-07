@@ -90,6 +90,37 @@ if (!(exportResponse.headers.get("content-type") ?? "").includes("text/csv")) {
 }
 process.stdout.write("PASS authenticated booking CSV export\n");
 
+const reportExportResponse = await fetch(
+  `${baseUrl}/api/admin/reports/export`,
+  {
+    redirect: "manual",
+    headers: { cookie },
+  },
+);
+if (reportExportResponse.status !== 200) {
+  throw new Error(
+    `Authenticated report export expected 200, received ${reportExportResponse.status}`,
+  );
+}
+if (
+  !(reportExportResponse.headers.get("content-type") ?? "").includes(
+    "text/csv",
+  )
+) {
+  throw new Error("Authenticated report export did not return CSV.");
+}
+
+const reportCsv = await reportExportResponse.text();
+if (
+  !reportCsv.includes('"Section","Metric","Dimension","Currency","Value"') ||
+  !reportCsv.includes('"Summary","Total bookings"')
+) {
+  throw new Error(
+    "Authenticated report export did not contain the expected management CSV structure.",
+  );
+}
+process.stdout.write("PASS authenticated management report CSV export\n");
+
 const db = new Client({ connectionString: databaseUrl });
 await db.connect();
 
