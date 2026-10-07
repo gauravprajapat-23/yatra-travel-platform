@@ -23,3 +23,37 @@ export function windowsOverlap(a: TimeWindow, b: TimeWindow): boolean {
 
   return a.startsAt < b.endsAt && b.startsAt < a.endsAt;
 }
+
+
+export const DEFAULT_OPEN_ENDED_TRIP_MS = 12 * 60 * 60 * 1000;
+
+export function bookingTimeWindow(
+  startsAt: Date,
+  endsAt: Date | null,
+): TimeWindow {
+  const window = {
+    startsAt,
+    endsAt:
+      endsAt ??
+      new Date(startsAt.getTime() + DEFAULT_OPEN_ENDED_TRIP_MS),
+  };
+
+  assertValidWindow(window);
+  return window;
+}
+
+export function credentialValidThrough(
+  expiresAt: Date | null,
+  requiredUntil: Date,
+): boolean {
+  if (!expiresAt) return true;
+  if (
+    !(requiredUntil instanceof Date) ||
+    Number.isNaN(requiredUntil.getTime()) ||
+    Number.isNaN(expiresAt.getTime())
+  ) {
+    return false;
+  }
+
+  return expiresAt >= requiredUntil;
+}
