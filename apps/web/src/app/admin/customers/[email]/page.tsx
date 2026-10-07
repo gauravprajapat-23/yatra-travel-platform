@@ -15,6 +15,15 @@ function money(minor: bigint, currency = "INR") {
   }).format(Number(minor) / 100);
 }
 
+function formatCurrencyTotals(totals: ReadonlyMap<string, bigint>): string {
+  const values = [...totals.entries()]
+    .filter(([, amount]) => amount !== 0n)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([currency, amount]) => money(amount, currency));
+
+  return values.length > 0 ? values.join(" · ") : "—";
+}
+
 function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
   if (["CONFIRMED", "COMPLETED"].includes(status)) return "green";
   if (["PENDING_PAYMENT", "PENDING_REVIEW", "REFUND_PENDING"].includes(status)) return "orange";
@@ -102,7 +111,13 @@ export default async function CustomerDetailPage({
     })),
   ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-  const lifetimeMinor = bookings.reduce((sum, booking) => sum + booking.totalMinor, 0n);
+  const lifetimeByCurrency = new Map<string, bigint>();
+  for (const booking of bookings) {
+    lifetimeByCurrency.set(
+      booking.currency,
+      (lifetimeByCurrency.get(booking.currency) ?? 0n) + booking.totalMinor,
+    );
+  }
   const latest = bookings[0];
 
   return (
@@ -119,7 +134,7 @@ export default async function CustomerDetailPage({
         </article>
         <article className="admin-metric">
           <small>Booked Value</small>
-          <strong>{money(lifetimeMinor, latest?.currency ?? "INR")}</strong>
+          <strong>{formatCurrencyTotals(lifetimeByCurrency)}</strong>
         </article>
         <article className="admin-metric">
           <small>Last Booking</small>
