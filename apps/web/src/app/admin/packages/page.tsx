@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getDb } from "@yatra/db/client";
+import { getDb, Prisma } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
 import { requireAdminSession } from "@/lib/auth/session";
+import {
+  contentStatuses,
+  type ContentStatus,
+} from "@/modules/content/admin-content-service";
 
 export const dynamic = "force-dynamic";
+
+const PAGE_SIZE = 25;
 
 function money(minor: bigint, currency = "INR") {
   return new Intl.NumberFormat("en-IN", {
@@ -23,14 +29,58 @@ function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
   return "gray";
 }
 
-export default async function PackagesPage() {
+function isContentStatus(value: string): value is ContentStatus {
+  return (contentStatuses as readonly string[]).includes(value);
+}
+
+export default async function PackagesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    page?: string;
+  }>;
+}) {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "package.read")) redirect("/admin");
 
+  const params = await searchParams;
+  const q = String(params.q ?? "").trim().slice(0, 120);
+  const status = isContentStatus(String(params.status ?? ""))
+    ? (String(params.status) as ContentStatus)
+    : null;
+  const requestedPage = Number(params.page ?? "1");
+  const page =
+    Number.isInteger(requestedPage) && requestedPage > 0
+      ? requestedPage
+      : 1;
+
   const db = getDb();
 
-  const [packages, total, published, drafts, scheduled] = await Promise.all([
+  const baseWhere: Prisma.TourPackageWhereInput = q
+    ? {
+        OR: [
+          { title: { contains: q, mode: "insensitive" } },
+          { slug: { contains: q, mode: "insensitive" } },
+          { summary: { contains: q, mode: "insensitive" } },
+        ],
+      }
+    : {};
+
+  const where: Prisma.TourPackageWhereInput = {
+    ...baseWhere,
+    ...(status ? { status } : {}),
+  };
+
+  const total = await db.tourPackage.count({ where });
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const skip = (safePage - 1) * PAGE_SIZE;
+
+  const [packages, published, drafts, scheduled] = await Promise.all([
     db.tourPackage.findMany({
+      where,
       orderBy: { updatedAt: "desc" },
       include: {
         priceOptions: {
@@ -42,23 +92,32 @@ export default async function PackagesPage() {
           orderBy: { sortOrder: "asc" },
         },
       },
-      take: 100,
+      skip,
+      take: PAGE_SIZE,
     }),
-    db.tourPackage.count(),
-    db.tourPackage.count({ where: { status: "PUBLISHED" } }),
-    db.tourPackage.count({ where: { status: { in: ["DRAFT", "REVIEW"] } } }),
-    db.tourPackage.count({ where: { status: "SCHEDULED" } }),
+    db.tourPackage.count({
+      where: { ...baseWhere, status: "PUBLISHED" },
+    }),
+    db.tourPackage.count({
+      where: { ...baseWhere, status: { in: ["DRAFT", "REVIEW"] } },
+    }),
+    db.tourPackage.count({
+      where: { ...baseWhere, status: "SCHEDULED" },
+    }),
   ]);
 
   const rows = packages.map((pkg) => {
     const firstPrice = pkg.priceOptions[0];
+
     return [
       <Link key={pkg.id} href={`/admin/packages/${pkg.id}`}>
         {pkg.title}
       </Link>,
       pkg.destinations.map((item) => item.destination.name).join(", ") || "—",
       `${pkg.durationDays}D / ${pkg.durationNights}N`,
-      firstPrice ? `From ${money(firstPrice.amountMinor, firstPrice.currency)}` : "Quote only",
+      firstPrice
+        ? `From ${money(firstPrice.amountMinor, firstPrice.currency)}`
+        : "Quote only",
       <StatusPill key={pkg.id} tone={tone(pkg.status)}>
         {pkg.status.replaceAll("_", " ")}
       </StatusPill>,
@@ -66,6 +125,18 @@ export default async function PackagesPage() {
       pkg.slug,
     ];
   });
+
+  function pageHref(targetPage: number) {
+    const next = new URLSearchParams();
+    if (q) next.set("q", q);
+    if (status) next.set("status", status);
+    if (targetPage > 1) next.set("page", targetPage.toString());
+    const query = next.toString();
+    return query ? `/admin/packages?${query}` : "/admin/packages";
+  }
+
+  const firstShown = total === 0 ? 0 : skip + 1;
+  const lastShown = Math.min(skip + packages.length, total);
 
   return (
     <AdminTablePage
@@ -80,14 +151,107 @@ export default async function PackagesPage() {
         ) : null
       }
       metrics={[
-        { label: "Total Packages", value: total.toString(), meta: "all records", tone: "orange" },
-        { label: "Published", value: published.toString(), meta: "visible publicly", tone: "green" },
-        { label: "Draft / Review", value: drafts.toString(), meta: "not public", tone: "blue" },
-        { label: "Scheduled", value: scheduled.toString(), meta: "future publication", tone: "orange" },
+        {
+          label: "Matching Packages",
+          value: total.toString(),
+          meta: "current filters",
+          tone: "orange",
+        },
+        {
+          label: "Published",
+          value: published.toString(),
+          meta: "current search",
+          tone: "green",
+        },
+        {
+          label: "Draft / Review",
+          value: drafts.toString(),
+          meta: "current search",
+          tone: "blue",
+        },
+        {
+          label: "Scheduled",
+          value: scheduled.toString(),
+          meta: "current search",
+          tone: "orange",
+        },
       ]}
-      filters={["Latest 100"]}
-      columns={["Package", "Destinations", "Duration", "Price", "Status", "Published", "Slug"]}
+      filters={[
+        status ? status.replaceAll("_", " ") : "All statuses",
+        q ? `Search: ${q}` : "All packages",
+      ]}
+      toolbar={
+        <form className="admin-table-query admin-table-query--compact" method="get">
+          <label>
+            <span>Search</span>
+            <input
+              name="q"
+              defaultValue={q}
+              placeholder="Package title, slug or summary"
+            />
+          </label>
+
+          <label>
+            <span>Status</span>
+            <select name="status" defaultValue={status ?? ""}>
+              <option value="">All statuses</option>
+              {contentStatuses.map((item) => (
+                <option key={item} value={item}>
+                  {item.replaceAll("_", " ")}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <button className="admin-primary-button" type="submit">
+            Apply
+          </button>
+
+          {(q || status) ? (
+            <Link className="admin-secondary-button" href="/admin/packages">
+              Reset
+            </Link>
+          ) : null}
+        </form>
+      }
+      columns={[
+        "Package",
+        "Destinations",
+        "Duration",
+        "Price",
+        "Status",
+        "Published",
+        "Slug",
+      ]}
       rows={rows}
+      footer={
+        <>
+          <span>
+            Showing {firstShown}–{lastShown} of {total}
+          </span>
+          <div className="admin-table-pager">
+            {safePage > 1 ? (
+              <Link
+                className="admin-secondary-button"
+                href={pageHref(safePage - 1)}
+              >
+                ← Previous
+              </Link>
+            ) : null}
+            <small>
+              Page {safePage} of {totalPages}
+            </small>
+            {safePage < totalPages ? (
+              <Link
+                className="admin-secondary-button"
+                href={pageHref(safePage + 1)}
+              >
+                Next →
+              </Link>
+            ) : null}
+          </div>
+        </>
+      }
     />
   );
 }
