@@ -10,6 +10,7 @@ import { AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminConfirmSubmitButton } from "@/components/admin-confirm-submit-button";
+import { AdminDangerZone } from "@/components/admin-danger-zone";
 import {
   AdminActionForm,
   type AdminActionState,
@@ -305,13 +306,18 @@ export default async function StaffDetailPage({
             ) : null}
 
             {user.status === "INVITED" ? (
-              <form action={cancelInvite}>
-                <AdminConfirmSubmitButton
-                  label="Cancel Invite & Remove Pending Account"
-                  pendingLabel="Cancelling Invite…"
-                  confirmMessage="Cancel this invite and remove the pending staff account? This cannot be undone."
-                />
-              </form>
+              <AdminDangerZone
+                title="Cancel Pending Invite"
+                description="Cancelling removes the pending staff account and invalidates the invite link."
+              >
+                <form action={cancelInvite}>
+                  <AdminConfirmSubmitButton
+                    label="Cancel Invite & Remove Pending Account"
+                    pendingLabel="Cancelling Invite…"
+                    confirmMessage="Cancel this invite and remove the pending staff account? This cannot be undone."
+                  />
+                </form>
+              </AdminDangerZone>
             ) : null}
 
             {isSelf ? (
@@ -320,13 +326,18 @@ export default async function StaffDetailPage({
                 prevent accidental lockout.
               </p>
             ) : activeSessions > 0 ? (
-              <form action={revokeSessions}>
-                <AdminConfirmSubmitButton
-                  label="Revoke All Active Sessions"
-                  pendingLabel="Revoking Sessions…"
-                  confirmMessage="Revoke all active sessions for this staff account? They will need to sign in again."
-                />
-              </form>
+              <AdminDangerZone
+                title="Revoke Active Sessions"
+                description="This signs the staff member out everywhere and forces a fresh login."
+              >
+                <form action={revokeSessions}>
+                  <AdminConfirmSubmitButton
+                    label="Revoke All Active Sessions"
+                    pendingLabel="Revoking Sessions…"
+                    confirmMessage="Revoke all active sessions for this staff account? They will need to sign in again."
+                  />
+                </form>
+              </AdminDangerZone>
             ) : (
               <p>No active sessions to revoke.</p>
             )}
@@ -423,13 +434,18 @@ export default async function StaffDetailPage({
             )}
 
             {!isSelf && activeSessions > 0 ? (
-              <form action={revokeSessions}>
-                <AdminConfirmSubmitButton
-                  label="Revoke All Active Sessions"
-                  pendingLabel="Revoking Sessions…"
-                  confirmMessage="Revoke all active sessions for this staff account? They will need to sign in again."
-                />
-              </form>
+              <AdminDangerZone
+                title="Revoke Active Sessions"
+                description="Use this when access should be terminated immediately on every active device."
+              >
+                <form action={revokeSessions}>
+                  <AdminConfirmSubmitButton
+                    label="Revoke All Active Sessions"
+                    pendingLabel="Revoking Sessions…"
+                    confirmMessage="Revoke all active sessions for this staff account? They will need to sign in again."
+                  />
+                </form>
+              </AdminDangerZone>
             ) : null}
           </section>
         ) : null}
