@@ -54,6 +54,7 @@ const sharedComponents = [
   "apps/web/src/components/admin-action-form.tsx",
   "apps/web/src/components/admin-editor-tabs.tsx",
   "apps/web/src/components/admin-submit-button.tsx",
+  "apps/web/src/components/admin-confirm-submit-button.tsx",
   "apps/web/src/components/admin-slug-fields.tsx",
   "apps/web/src/components/admin-money-field.tsx",
   "apps/web/src/components/admin-currency-field.tsx",
@@ -165,6 +166,26 @@ const primitiveCoverage = [
     file: "apps/web/src/app/admin/settings/booking-policies/[id]/page.tsx",
     fragments: ["<AdminDateTimeRange", "<AdminTextareaField"],
     label: "booking policy editor guided policy/date primitives",
+  },
+  {
+    file: "apps/web/src/app/admin/packages/[id]/page.tsx",
+    fragments: ["<AdminConfirmSubmitButton"],
+    label: "package destructive-action confirmation",
+  },
+  {
+    file: "apps/web/src/app/admin/staff/[id]/page.tsx",
+    fragments: ["<AdminConfirmSubmitButton"],
+    label: "staff destructive-action confirmation",
+  },
+  {
+    file: "apps/web/src/app/admin/vehicles/[id]/page.tsx",
+    fragments: ["<AdminConfirmSubmitButton"],
+    label: "vehicle destructive-action confirmation",
+  },
+  {
+    file: "apps/web/src/app/admin/drivers/[id]/page.tsx",
+    fragments: ["<AdminConfirmSubmitButton"],
+    label: "driver destructive-action confirmation",
   },
   {
     file: "apps/web/src/components/admin-media-manager.tsx",
