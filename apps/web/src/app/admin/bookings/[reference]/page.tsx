@@ -163,6 +163,83 @@ export default async function BookingDetailPage({
       intent.amountPaidMinor >= booking.totalMinor,
   );
 
+  const paidMinor = booking.paymentIntents.reduce(
+    (sum, intent) => sum + intent.amountPaidMinor,
+    0n,
+  );
+  const pendingRefundMinor = booking.paymentIntents.reduce(
+    (sum, intent) =>
+      sum +
+      intent.refunds
+        .filter((refund) => refund.status === "PENDING")
+        .reduce((refundSum, refund) => refundSum + refund.amountMinor, 0n),
+    0n,
+  );
+  const processedRefundMinor = booking.paymentIntents.reduce(
+    (sum, intent) =>
+      sum +
+      intent.refunds
+        .filter((refund) => refund.status === "PROCESSED")
+        .reduce((refundSum, refund) => refundSum + refund.amountMinor, 0n),
+    0n,
+  );
+  const netPaidMinor = paidMinor - processedRefundMinor;
+
+  const timelineEvents = [
+    ...booking.history.map((entry) => ({
+      key: `status-${entry.id.toString()}`,
+      at: entry.createdAt,
+      title: entry.toStatus.replaceAll("_", " "),
+      detail: entry.reason ?? "Booking status updated.",
+      tone: tone(entry.toStatus),
+    })),
+    ...booking.paymentIntents.flatMap((intent) => {
+      const paymentEvents = [{
+        key: `payment-created-${intent.id}`,
+        at: intent.createdAt,
+        title: "PAYMENT INTENT CREATED",
+        detail: `${money(intent.amountMinor, intent.currency)} · ${intent.providerOrderId ?? "provider order pending"}`,
+        tone: "orange" as const,
+      }];
+
+      if (intent.capturedAt) {
+        paymentEvents.push({
+          key: `payment-captured-${intent.id}`,
+          at: intent.capturedAt,
+          title: "PAYMENT CAPTURED",
+          detail: money(intent.amountPaidMinor, intent.currency),
+          tone: "green",
+        });
+      }
+
+      if (intent.failedAt) {
+        paymentEvents.push({
+          key: `payment-failed-${intent.id}`,
+          at: intent.failedAt,
+          title: "PAYMENT FAILED",
+          detail: intent.providerOrderId ?? "Payment provider failure",
+          tone: "red",
+        });
+      }
+
+      return [
+        ...paymentEvents,
+        ...intent.refunds.map((refund) => ({
+          key: `refund-${refund.id}`,
+          at: refund.processedAt ?? refund.createdAt,
+          title: `REFUND ${refund.status.replaceAll("_", " ")}`,
+          detail: `${money(refund.amountMinor, refund.currency)}${refund.reason ? ` · ${refund.reason}` : ""}`,
+          tone:
+            refund.status === "PROCESSED"
+              ? ("green" as const)
+              : refund.status === "FAILED"
+                ? ("red" as const)
+                : ("orange" as const),
+        })),
+      ];
+    }),
+  ].sort((a, b) => b.at.getTime() - a.at.getTime());
+
   const nextStatuses = bookingStatuses.filter(
     (status) =>
       canTransitionBooking(booking.status, status) &&
@@ -595,6 +672,27 @@ export default async function BookingDetailPage({
           </article>
 
           <article className="admin-panel admin-detail-card">
+            <h2>Financial & Cancellation Summary</h2>
+            <dl>
+              <div><dt>Booking total</dt><dd>{money(booking.totalMinor, booking.currency)}</dd></div>
+              <div><dt>Captured / paid</dt><dd>{money(paidMinor, booking.currency)}</dd></div>
+              <div><dt>Pending refunds</dt><dd>{money(pendingRefundMinor, booking.currency)}</dd></div>
+              <div><dt>Processed refunds</dt><dd>{money(processedRefundMinor, booking.currency)}</dd></div>
+              <div><dt>Net paid</dt><dd>{money(netPaidMinor, booking.currency)}</dd></div>
+              <div><dt>Cancellation state</dt><dd>{booking.status === "CANCELLED" ? "Cancelled" : "Not cancelled"}</dd></div>
+            </dl>
+            {booking.status === "CANCELLED" && processedRefundMinor < paidMinor ? (
+              <p>
+                This booking is cancelled with an unreconciled paid balance of{" "}
+                <strong>{money(paidMinor - processedRefundMinor, booking.currency)}</strong>.
+              </p>
+            ) : null}
+            {booking.status === "REFUND_PENDING" ? (
+              <p>Refund processing is still pending. Review Payment Activity before further action.</p>
+            ) : null}
+          </article>
+
+          <article className="admin-panel admin-detail-card">
             <h2>Payment Activity</h2>
             {booking.paymentIntents.length === 0 ? (
               <p>No payment intent has been created yet.</p>
@@ -765,15 +863,20 @@ export default async function BookingDetailPage({
           ) : null}
 
           <article className="admin-panel admin-detail-card">
-            <h2>Booking Timeline</h2>
+            <h2>Operational Timeline</h2>
+            <p>Status, payment and refund events are shown together, newest first.</p>
             <div className="admin-timeline">
-              {booking.history.map((entry) => (
-                <div key={entry.id.toString()}>
+              {timelineEvents.length === 0 ? (
+                <p>No operational events recorded yet.</p>
+              ) : timelineEvents.map((entry) => (
+                <div key={entry.key}>
                   <span>✓</span>
                   <div>
-                    <strong>{entry.toStatus.replaceAll("_", " ")}</strong>
-                    <small>{entry.createdAt.toLocaleString("en-IN")}</small>
-                    {entry.reason ? <p>{entry.reason}</p> : null}
+                    <strong>
+                      <StatusPill tone={entry.tone}>{entry.title}</StatusPill>
+                    </strong>
+                    <small>{entry.at.toLocaleString("en-IN")}</small>
+                    <p>{entry.detail}</p>
                   </div>
                 </div>
               ))}
