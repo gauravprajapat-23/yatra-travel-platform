@@ -1,11 +1,21 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getDb } from "@yatra/db/client";
+import { getDb, Prisma } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
 import { requireAdminSession } from "@/lib/auth/session";
+import {
+  isPricingRuleStatus,
+  isTripType,
+  pricingRuleStatuses,
+  tripTypes,
+} from "@/modules/pricing/pricing-rule-management-service";
 
 export const dynamic = "force-dynamic";
+
+const PAGE_SIZE = 25;
+type PricingRuleStatusValue = (typeof pricingRuleStatuses)[number];
+type TripTypeValue = (typeof tripTypes)[number];
 
 function money(minor: bigint | null, currency: string): string {
   if (minor === null) return "—";
@@ -24,26 +34,79 @@ function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
   return "gray";
 }
 
-export default async function OffersPage() {
+export default async function OffersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    tripType?: string;
+    page?: string;
+  }>;
+}) {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "settings.manage")) redirect("/admin");
+
+  const params = await searchParams;
+  const q = String(params.q ?? "").trim().slice(0, 120);
+  const status = isPricingRuleStatus(String(params.status ?? ""))
+    ? (String(params.status) as PricingRuleStatusValue)
+    : null;
+  const tripType = isTripType(String(params.tripType ?? ""))
+    ? (String(params.tripType) as TripTypeValue)
+    : null;
+  const requestedPage = Number(params.page ?? "1");
+  const page =
+    Number.isInteger(requestedPage) && requestedPage > 0
+      ? requestedPage
+      : 1;
 
   const db = getDb();
   const now = new Date();
 
-  const [rules, total, active, drafts, expiredActive] = await Promise.all([
+  const baseWhere: Prisma.PricingRuleWhereInput = {
+    ...(tripType ? { tripType } : {}),
+    ...(q
+      ? {
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { originKey: { contains: q, mode: "insensitive" } },
+            { destinationKey: { contains: q, mode: "insensitive" } },
+            {
+              vehicleClass: {
+                name: { contains: q, mode: "insensitive" },
+              },
+            },
+          ],
+        }
+      : {}),
+  };
+
+  const where: Prisma.PricingRuleWhereInput = {
+    ...baseWhere,
+    ...(status ? { status } : {}),
+  };
+
+  const total = await db.pricingRule.count({ where });
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const skip = (safePage - 1) * PAGE_SIZE;
+
+  const [rules, active, drafts, expiredActive] = await Promise.all([
     db.pricingRule.findMany({
+      where,
       orderBy: [{ status: "asc" }, { priority: "desc" }, { updatedAt: "desc" }],
       include: {
         vehicleClass: { select: { name: true } },
       },
-      take: 100,
+      skip,
+      take: PAGE_SIZE,
     }),
-    db.pricingRule.count(),
-    db.pricingRule.count({ where: { status: "ACTIVE" } }),
-    db.pricingRule.count({ where: { status: "DRAFT" } }),
+    db.pricingRule.count({ where: { ...baseWhere, status: "ACTIVE" } }),
+    db.pricingRule.count({ where: { ...baseWhere, status: "DRAFT" } }),
     db.pricingRule.count({
       where: {
+        ...baseWhere,
         status: "ACTIVE",
         activeTo: { lt: now },
       },
@@ -69,6 +132,19 @@ export default async function OffersPage() {
     </StatusPill>,
   ]);
 
+  function pageHref(targetPage: number) {
+    const next = new URLSearchParams();
+    if (q) next.set("q", q);
+    if (status) next.set("status", status);
+    if (tripType) next.set("tripType", tripType);
+    if (targetPage > 1) next.set("page", targetPage.toString());
+    const query = next.toString();
+    return query ? `/admin/offers?${query}` : "/admin/offers";
+  }
+
+  const firstShown = total === 0 ? 0 : skip + 1;
+  const lastShown = Math.min(skip + rules.length, total);
+
   return (
     <AdminTablePage
       active="Offers"
@@ -82,14 +158,114 @@ export default async function OffersPage() {
         ) : null
       }
       metrics={[
-        { label: "Pricing Rules", value: total.toString(), meta: "live DB records", tone: "blue" },
-        { label: "Active Rules", value: active.toString(), meta: "eligible for quoting", tone: "green" },
-        { label: "Draft Rules", value: drafts.toString(), meta: "not public", tone: "orange" },
-        { label: "Expired Active", value: expiredActive.toString(), meta: "requires review", tone: expiredActive ? "red" : "green" },
+        {
+          label: "Matching Rules",
+          value: total.toString(),
+          meta: "current filters",
+          tone: "blue",
+        },
+        {
+          label: "Active Rules",
+          value: active.toString(),
+          meta: "current search/trip type",
+          tone: "green",
+        },
+        {
+          label: "Draft Rules",
+          value: drafts.toString(),
+          meta: "current search/trip type",
+          tone: "orange",
+        },
+        {
+          label: "Expired Active",
+          value: expiredActive.toString(),
+          meta: "requires review",
+          tone: expiredActive ? "red" : "green",
+        },
       ]}
-      filters={["Latest 100"]}
-      columns={["Rule", "Vehicle Class", "Trip Type", "Basis", "Rate", "Starts", "Ends", "Status"]}
+      filters={[
+        tripType ? tripType.replaceAll("_", " ") : "All trip types",
+        status ? status.replaceAll("_", " ") : "All statuses",
+      ]}
+      toolbar={
+        <form className="admin-table-query" method="get">
+          <label>
+            <span>Search</span>
+            <input
+              name="q"
+              defaultValue={q}
+              placeholder="Rule name, route scope or vehicle class"
+            />
+          </label>
+
+          <label>
+            <span>Trip type</span>
+            <select name="tripType" defaultValue={tripType ?? ""}>
+              <option value="">All trip types</option>
+              {tripTypes.map((item) => (
+                <option key={item} value={item}>
+                  {item.replaceAll("_", " ")}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span>Status</span>
+            <select name="status" defaultValue={status ?? ""}>
+              <option value="">All statuses</option>
+              {pricingRuleStatuses.map((item) => (
+                <option key={item} value={item}>
+                  {item.replaceAll("_", " ")}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <button className="admin-primary-button" type="submit">
+            Apply
+          </button>
+
+          {(q || status || tripType) ? (
+            <Link className="admin-secondary-button" href="/admin/offers">
+              Reset
+            </Link>
+          ) : null}
+        </form>
+      }
+      columns={[
+        "Rule",
+        "Vehicle Class",
+        "Trip Type",
+        "Basis",
+        "Rate",
+        "Starts",
+        "Ends",
+        "Status",
+      ]}
       rows={rows}
+      footer={
+        <>
+          <span>
+            Showing {firstShown}–{lastShown} of {total}
+          </span>
+          <div className="admin-table-pager">
+            {safePage > 1 ? (
+              <Link className="admin-secondary-button" href={pageHref(safePage - 1)}>
+                ← Previous
+              </Link>
+            ) : null}
+            <small>
+              Page {safePage} of {totalPages}
+            </small>
+            {safePage < totalPages ? (
+              <Link className="admin-secondary-button" href={pageHref(safePage + 1)}>
+                Next →
+              </Link>
+            ) : null}
+          </div>
+        </>
+      }
     />
   );
 }
