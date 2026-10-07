@@ -143,3 +143,31 @@ export function StatusPill({
 }) {
   return <span className={`admin-status admin-status--${tone}`}>{children}</span>;
 }
+
+
+export function AdminPanelHeading({
+  title,
+  description,
+  meta,
+  actions,
+}: {
+  title: string;
+  description?: string;
+  meta?: ReactNode;
+  actions?: ReactNode;
+}) {
+  return (
+    <div className="admin-panel-heading">
+      <div>
+        <h2>{title}</h2>
+        {description ? <p>{description}</p> : null}
+      </div>
+      {meta || actions ? (
+        <div className="admin-panel-heading__actions">
+          {meta}
+          {actions}
+        </div>
+      ) : null}
+    </div>
+  );
+}
