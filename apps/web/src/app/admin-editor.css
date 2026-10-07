@@ -764,3 +764,41 @@
     padding: 20px;
   }
 }
+
+
+.admin-money-field {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-height: 43px;
+  overflow: hidden;
+  border: 1px solid #dcd5ca;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.admin-money-field:focus-within {
+  border-color: #e47a2d;
+  box-shadow: 0 0 0 3px rgba(242, 103, 23, .11);
+}
+
+.admin-money-field__currency {
+  display: grid;
+  place-items: center;
+  min-width: 54px;
+  padding: 0 10px;
+  border-right: 1px solid #e5ded4;
+  background: #f7f3ed;
+  color: #6d756f;
+  font-size: .62rem;
+  font-weight: 800;
+  letter-spacing: .03em;
+}
+
+.admin-money-field > input {
+  min-width: 0;
+  width: 100%;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none;
+  background: transparent;
+}
