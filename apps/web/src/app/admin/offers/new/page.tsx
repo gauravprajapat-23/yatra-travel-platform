@@ -12,6 +12,7 @@ import {
   AdminFormGrid,
   AdminFormSection,
 } from "@/components/admin-form";
+import { AdminMoneyField } from "@/components/admin-money-field";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   isPricingBasis,
@@ -156,21 +157,31 @@ export default async function NewPricingRulePage() {
             <AdminField label="Currency" htmlFor="currency" required hint="ISO currency code.">
               <input id="currency" name="currency" defaultValue="INR" maxLength={3} required />
             </AdminField>
-            <AdminField label="Fixed base amount" htmlFor="baseAmount">
-              <input id="baseAmount" name="baseAmount" inputMode="decimal" placeholder="4500.00" />
-            </AdminField>
-            <AdminField label="Per-km amount" htmlFor="perKm">
-              <input id="perKm" name="perKm" inputMode="decimal" placeholder="14.00" />
-            </AdminField>
+            <AdminMoneyField
+              name="baseAmount"
+              label="Fixed base amount"
+              currency="INR"
+              placeholder="4500.00"
+            />
+            <AdminMoneyField
+              name="perKm"
+              label="Per-km amount"
+              currency="INR"
+              placeholder="14.00"
+            />
             <AdminField label="Minimum distance (km)" htmlFor="minimumDistanceKm">
               <input id="minimumDistanceKm" type="number" name="minimumDistanceKm" min={0} />
             </AdminField>
-            <AdminField label="Driver allowance / day" htmlFor="driverAllowancePerDay">
-              <input id="driverAllowancePerDay" name="driverAllowancePerDay" inputMode="decimal" />
-            </AdminField>
-            <AdminField label="Night allowance" htmlFor="nightAllowance">
-              <input id="nightAllowance" name="nightAllowance" inputMode="decimal" />
-            </AdminField>
+            <AdminMoneyField
+              name="driverAllowancePerDay"
+              label="Driver allowance / day"
+              currency="INR"
+            />
+            <AdminMoneyField
+              name="nightAllowance"
+              label="Night allowance"
+              currency="INR"
+            />
           </AdminFormGrid>
         </AdminFormSection>
 
