@@ -267,8 +267,24 @@ export default async function DriverDetailPage({
                     </label>
                   ))}
                 </fieldset>
-                <label>Internal notes<textarea name="internalNotes" defaultValue={driver.internalNotes ?? ""} maxLength={1000}/></label>
-                <p>Leave phone/license number blank to keep the current encrypted value. New values remain encrypted and excluded from audit logs.</p>
+                <AdminField
+                  label="Internal notes"
+                  htmlFor="internalNotes"
+                  hint="Maximum 1,000 characters. Avoid unnecessary sensitive information."
+                >
+                  <textarea
+                    id="internalNotes"
+                    name="internalNotes"
+                    defaultValue={driver.internalNotes ?? ""}
+                    maxLength={1000}
+                    rows={5}
+                  />
+                </AdminField>
+
+                <p>
+                  New phone/license values are encrypted before persistence and
+                  excluded from audit logs.
+                </p>
                 <button className="admin-primary-button" type="submit">Save Driver</button>
               </form>
             ) : <p>Your role has read-only driver access.</p>}
