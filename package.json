@@ -26,6 +26,7 @@
     "verify:admin-routes": "node scripts/verify-admin-route-protection.mjs",
     "verify:admin-authenticated": "node scripts/verify-admin-authenticated-runtime.mjs",
     "verify:admin-accessibility": "node scripts/verify-admin-accessibility-runtime.mjs",
-    "verify:admin-forms": "node scripts/verify-admin-form-system.mjs"
+    "verify:admin-forms": "node scripts/verify-admin-form-system.mjs",
+    "verify:staff-invites": "node scripts/verify-staff-invite-runtime.mjs"
   }
 }
