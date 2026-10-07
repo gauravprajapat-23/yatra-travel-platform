@@ -105,17 +105,24 @@ export default async function AdminBookingsPage({
     ...(travelRange ? { startsAt: travelRange } : {}),
     ...(assignment === "ASSIGNED"
       ? { selectedVehicleId: { not: null }, assignedDriverId: { not: null } }
-      : assignment === "UNASSIGNED"
-        ? { OR: [{ selectedVehicleId: null }, { assignedDriverId: null }] }
-        : {}),
-    ...(q
+      : {}),
+    ...((assignment === "UNASSIGNED" || q)
       ? {
-          OR: [
-            { reference: { contains: q, mode: "insensitive" } },
-            { guestName: { contains: q, mode: "insensitive" } },
-            { guestEmail: { contains: q, mode: "insensitive" } },
-            { originText: { contains: q, mode: "insensitive" } },
-            { destinationText: { contains: q, mode: "insensitive" } },
+          AND: [
+            ...(assignment === "UNASSIGNED"
+              ? [{ OR: [{ selectedVehicleId: null }, { assignedDriverId: null }] }]
+              : []),
+            ...(q
+              ? [{
+                  OR: [
+                    { reference: { contains: q, mode: "insensitive" as const } },
+                    { guestName: { contains: q, mode: "insensitive" as const } },
+                    { guestEmail: { contains: q, mode: "insensitive" as const } },
+                    { originText: { contains: q, mode: "insensitive" as const } },
+                    { destinationText: { contains: q, mode: "insensitive" as const } },
+                  ],
+                }]
+              : []),
           ],
         }
       : {}),
@@ -162,7 +169,7 @@ export default async function AdminBookingsPage({
             createdAt: true,
           },
         }),
-    type === "CAR"
+    type === "CAR" || assignment !== "ALL"
       ? Promise.resolve([])
       : db.packageBooking.findMany({
           where: packageWhere,
@@ -182,7 +189,7 @@ export default async function AdminBookingsPage({
     type === "PACKAGE"
       ? Promise.resolve(0)
       : db.carBooking.count({ where: carWhere }),
-    type === "CAR"
+    type === "CAR" || assignment !== "ALL"
       ? Promise.resolve(0)
       : db.packageBooking.count({ where: packageWhere }),
   ]);
