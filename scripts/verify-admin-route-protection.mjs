@@ -13,6 +13,8 @@ const protectedRoutes = [
   "/admin/payments",
   "/admin/customers",
   "/admin/leads",
+  "/admin/staff",
+  "/admin/staff/new",
 ];
 
 async function request(path) {
@@ -67,4 +69,13 @@ if (exportLocation.pathname !== "/admin/login") {
 }
 
 process.stdout.write("PASS /api/admin/bookings/export -> /admin/login\n");
+
+const inviteResponse = await request("/admin/invite/invalid-certification-token");
+if (inviteResponse.status !== 200) {
+  throw new Error(
+    `Invalid invite setup page must remain publicly reachable; received ${inviteResponse.status}`,
+  );
+}
+process.stdout.write("PASS invalid invite setup page remains public\n");
+
 process.stdout.write("Admin route protection certification passed.\n");
