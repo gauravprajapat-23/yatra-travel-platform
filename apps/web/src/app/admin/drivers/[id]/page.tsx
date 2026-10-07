@@ -207,18 +207,57 @@ export default async function DriverDetailPage({
                     </select>
                   </AdminField>
                 </AdminFormGrid>
-                <label>
-                  Replace phone number
-                  <input name="phoneNumber" inputMode="tel" autoComplete="off" placeholder={driver.phoneLast4 ? `Current: •••• ${driver.phoneLast4}` : "Enter phone number"} maxLength={40}/>
-                </label>
-                <label>
-                  Replace license number
-                  <input name="licenseNumber" autoComplete="off" placeholder={driver.licenseNumberCiphertext ? "Encrypted value already stored" : "Enter license number"} maxLength={80}/>
-                </label>
-                <label>
-                  License expiry
-                  <input type="date" name="licenseExpiry" defaultValue={driver.licenseExpiry ? driver.licenseExpiry.toISOString().slice(0, 10) : ""}/>
-                </label>
+                <AdminFormGrid columns={2}>
+                  <AdminField
+                    label="Replace phone number"
+                    htmlFor="phoneNumber"
+                    hint="Leave blank to preserve the current encrypted value."
+                  >
+                    <input
+                      id="phoneNumber"
+                      name="phoneNumber"
+                      inputMode="tel"
+                      autoComplete="off"
+                      placeholder={
+                        driver.phoneLast4
+                          ? `Current: •••• ${driver.phoneLast4}`
+                          : "Enter phone number"
+                      }
+                      maxLength={40}
+                    />
+                  </AdminField>
+
+                  <AdminField
+                    label="Replace license number"
+                    htmlFor="licenseNumber"
+                    hint="Leave blank to preserve the current encrypted value."
+                  >
+                    <input
+                      id="licenseNumber"
+                      name="licenseNumber"
+                      autoComplete="off"
+                      placeholder={
+                        driver.licenseNumberCiphertext
+                          ? "Encrypted value already stored"
+                          : "Enter license number"
+                      }
+                      maxLength={80}
+                    />
+                  </AdminField>
+
+                  <AdminField label="License expiry" htmlFor="licenseExpiry">
+                    <input
+                      id="licenseExpiry"
+                      type="date"
+                      name="licenseExpiry"
+                      defaultValue={
+                        driver.licenseExpiry
+                          ? driver.licenseExpiry.toISOString().slice(0, 10)
+                          : ""
+                      }
+                    />
+                  </AdminField>
+                </AdminFormGrid>
                 <fieldset>
                   <legend>Qualified vehicle classes</legend>
                   {classes.map((item) => (
