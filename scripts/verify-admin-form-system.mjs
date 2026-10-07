@@ -15,6 +15,10 @@ const newPages = [
   "apps/web/src/app/admin/vehicles/new/page.tsx",
 ];
 
+const actionNewPages = [
+  "apps/web/src/app/admin/staff/new/page.tsx",
+];
+
 const tabbedEditors = [
   "apps/web/src/app/admin/bookings/[reference]/page.tsx",
   "apps/web/src/app/admin/content/[type]/[id]/page.tsx",
@@ -59,6 +63,23 @@ for (const file of newPages) {
   }
 
   process.stdout.write(`PASS shared create form: ${file}\n`);
+}
+
+for (const file of actionNewPages) {
+  const source = requireFragments(file, [
+    "<AdminActionForm",
+    "<AdminFormSection",
+    "<AdminFormGrid",
+    "<AdminSubmitButton",
+  ]);
+
+  if (source.includes("<label")) {
+    throw new Error(
+      `${file} contains raw <label> markup. Use AdminField/AdminCheckbox instead.`,
+    );
+  }
+
+  process.stdout.write(`PASS shared action create form: ${file}\n`);
 }
 
 for (const file of tabbedEditors) {
