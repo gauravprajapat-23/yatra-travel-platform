@@ -4,11 +4,16 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
+import {
+  AdminField,
+  AdminFormCallout,
+  AdminFormGrid,
+  AdminFormSection,
+} from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   activateBookingPolicy,
   retireBookingPolicy,
-  stringifyBookingPolicyDocument,
   updateBookingPolicyDraft,
 } from "@/modules/booking/booking-policy-management-service";
 
@@ -35,6 +40,29 @@ function parseOptionalDate(value: FormDataEntryValue | null): Date | null {
   const date = new Date(text);
   if (Number.isNaN(date.getTime())) throw new Error("Invalid date.");
   return date;
+}
+
+function policyValue(
+  document: unknown,
+  key:
+    | "cancellation"
+    | "refundEligibility"
+    | "rescheduling"
+    | "noShow"
+    | "customerResponsibilities"
+    | "serviceLimitations"
+    | "bookingTerms",
+): string {
+  if (
+    typeof document !== "object" ||
+    document === null ||
+    Array.isArray(document)
+  ) {
+    return "";
+  }
+
+  const value = (document as Record<string, unknown>)[key];
+  return typeof value === "string" ? value : "";
 }
 
 export default async function BookingPolicyDetailPage({
@@ -64,9 +92,25 @@ export default async function BookingPolicyDetailPage({
       redirect("/admin/settings/booking-policies");
     }
 
+    const rawDocument = JSON.stringify({
+      cancellation: String(formData.get("cancellation") ?? "").trim(),
+      refundEligibility: String(
+        formData.get("refundEligibility") ?? "",
+      ).trim(),
+      rescheduling: String(formData.get("rescheduling") ?? "").trim(),
+      noShow: String(formData.get("noShow") ?? "").trim(),
+      customerResponsibilities: String(
+        formData.get("customerResponsibilities") ?? "",
+      ).trim(),
+      serviceLimitations: String(
+        formData.get("serviceLimitations") ?? "",
+      ).trim(),
+      bookingTerms: String(formData.get("bookingTerms") ?? "").trim(),
+    });
+
     await updateBookingPolicyDraft({
       policyId,
-      rawDocument: String(formData.get("document") ?? "{}"),
+      rawDocument,
       effectiveFrom: parseOptionalDate(formData.get("effectiveFrom")),
       effectiveTo: parseOptionalDate(formData.get("effectiveTo")),
       actorUserId: currentSession.userId,
@@ -165,46 +209,139 @@ export default async function BookingPolicyDetailPage({
 
           {policy.status === "DRAFT" ? (
             <form action={saveDraft}>
-              <label>
-                Effective from
-                <input
-                  type="datetime-local"
-                  name="effectiveFrom"
-                  defaultValue={localDateTime(policy.effectiveFrom)}
-                />
-              </label>
+              <AdminFormSection
+                title="Effective window"
+                description="Optional dates controlling when this version is eligible after activation."
+              >
+                <AdminFormGrid columns={2}>
+                  <AdminField label="Effective from" htmlFor="effectiveFrom">
+                    <input
+                      id="effectiveFrom"
+                      type="datetime-local"
+                      name="effectiveFrom"
+                      defaultValue={localDateTime(policy.effectiveFrom)}
+                    />
+                  </AdminField>
 
-              <label>
-                Effective to
-                <input
-                  type="datetime-local"
-                  name="effectiveTo"
-                  defaultValue={localDateTime(policy.effectiveTo)}
-                />
-              </label>
+                  <AdminField label="Effective to" htmlFor="effectiveTo">
+                    <input
+                      id="effectiveTo"
+                      type="datetime-local"
+                      name="effectiveTo"
+                      defaultValue={localDateTime(policy.effectiveTo)}
+                    />
+                  </AdminField>
+                </AdminFormGrid>
+              </AdminFormSection>
 
-              <label>
-                Document JSON
-                <textarea
-                  name="document"
-                  rows={28}
-                  defaultValue={stringifyBookingPolicyDocument(policy.document)}
-                  spellCheck={false}
-                />
-              </label>
+              <AdminFormSection
+                title="Cancellation & refunds"
+                description="Complete the commercial rules customers rely on before activation."
+              >
+                <AdminFormGrid columns={1}>
+                  <AdminField label="Cancellation policy" htmlFor="cancellation">
+                    <textarea
+                      id="cancellation"
+                      name="cancellation"
+                      rows={5}
+                      defaultValue={policyValue(policy.document, "cancellation")}
+                    />
+                  </AdminField>
 
-              <p>
-                Active and retired versions are immutable. Activation validates
-                the required legal/business sections and automatically retires
-                the previous active version for this code.
-              </p>
+                  <AdminField label="Refund eligibility" htmlFor="refundEligibility">
+                    <textarea
+                      id="refundEligibility"
+                      name="refundEligibility"
+                      rows={5}
+                      defaultValue={policyValue(policy.document, "refundEligibility")}
+                    />
+                  </AdminField>
 
-              <button className="admin-secondary-button" type="submit">
-                Save Draft
+                  <AdminField label="Rescheduling policy" htmlFor="rescheduling">
+                    <textarea
+                      id="rescheduling"
+                      name="rescheduling"
+                      rows={5}
+                      defaultValue={policyValue(policy.document, "rescheduling")}
+                    />
+                  </AdminField>
+
+                  <AdminField label="No-show policy" htmlFor="noShow">
+                    <textarea
+                      id="noShow"
+                      name="noShow"
+                      rows={4}
+                      defaultValue={policyValue(policy.document, "noShow")}
+                    />
+                  </AdminField>
+                </AdminFormGrid>
+              </AdminFormSection>
+
+              <AdminFormSection
+                title="Responsibilities & limitations"
+                description="Define customer obligations and operational boundaries."
+              >
+                <AdminFormGrid columns={1}>
+                  <AdminField
+                    label="Customer responsibilities"
+                    htmlFor="customerResponsibilities"
+                  >
+                    <textarea
+                      id="customerResponsibilities"
+                      name="customerResponsibilities"
+                      rows={5}
+                      defaultValue={policyValue(
+                        policy.document,
+                        "customerResponsibilities",
+                      )}
+                    />
+                  </AdminField>
+
+                  <AdminField
+                    label="Service limitations"
+                    htmlFor="serviceLimitations"
+                  >
+                    <textarea
+                      id="serviceLimitations"
+                      name="serviceLimitations"
+                      rows={5}
+                      defaultValue={policyValue(
+                        policy.document,
+                        "serviceLimitations",
+                      )}
+                    />
+                  </AdminField>
+
+                  <AdminField label="Booking terms" htmlFor="bookingTerms">
+                    <textarea
+                      id="bookingTerms"
+                      name="bookingTerms"
+                      rows={6}
+                      defaultValue={policyValue(policy.document, "bookingTerms")}
+                    />
+                  </AdminField>
+                </AdminFormGrid>
+
+                <AdminFormCallout tone="warning" title="Activation validation">
+                  Every policy section above must contain approved content before
+                  this draft can be activated.
+                </AdminFormCallout>
+              </AdminFormSection>
+
+              <button className="admin-primary-button" type="submit">
+                Save Draft Policy
               </button>
             </form>
           ) : (
-            <pre>{stringifyBookingPolicyDocument(policy.document)}</pre>
+            <div className="admin-policy-readonly">
+              <section><h3>Cancellation</h3><p>{policyValue(policy.document, "cancellation") || "—"}</p></section>
+              <section><h3>Refund eligibility</h3><p>{policyValue(policy.document, "refundEligibility") || "—"}</p></section>
+              <section><h3>Rescheduling</h3><p>{policyValue(policy.document, "rescheduling") || "—"}</p></section>
+              <section><h3>No-show</h3><p>{policyValue(policy.document, "noShow") || "—"}</p></section>
+              <section><h3>Customer responsibilities</h3><p>{policyValue(policy.document, "customerResponsibilities") || "—"}</p></section>
+              <section><h3>Service limitations</h3><p>{policyValue(policy.document, "serviceLimitations") || "—"}</p></section>
+              <section><h3>Booking terms</h3><p>{policyValue(policy.document, "bookingTerms") || "—"}</p></section>
+            </div>
           )}
         </section>
       </div>
