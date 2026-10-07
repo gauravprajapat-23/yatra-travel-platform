@@ -13,6 +13,7 @@ import {
   AdminFormSection,
 } from "@/components/admin-form";
 import { AdminMoneyField } from "@/components/admin-money-field";
+import { AdminCurrencyField } from "@/components/admin-currency-field";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   isPricingBasis,
@@ -154,9 +155,11 @@ export default async function NewPricingRulePage() {
 
         <AdminFormSection title="Fare calculation" description="All money values are entered in major currency units and stored server-side in minor units.">
           <AdminFormGrid columns={3}>
-            <AdminField label="Currency" htmlFor="currency" required hint="ISO currency code.">
-              <input id="currency" name="currency" defaultValue="INR" maxLength={3} required />
-            </AdminField>
+            <AdminCurrencyField
+              id="currency"
+              name="currency"
+              defaultValue="INR"
+            />
             <AdminMoneyField
               name="baseAmount"
               label="Fixed base amount"
