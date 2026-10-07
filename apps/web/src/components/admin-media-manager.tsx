@@ -293,18 +293,39 @@ export function AdminMediaManager({
                 </small>
                 {canWrite && editingId === asset.id ? (
                   <form action={(formData) => updateMetadata(asset, formData)}>
-                    <label>
-                      Alt text
-                      <input name="altText" defaultValue={asset.altText ?? ""} maxLength={300}/>
-                    </label>
-                    <label>
-                      Caption
-                      <textarea name="caption" defaultValue={asset.caption ?? ""} maxLength={500}/>
-                    </label>
-                    <button className="admin-primary-button" type="submit" disabled={busyId === asset.id}>
+                    <AdminFormGrid columns={1}>
+                      <AdminField label="Alt text" htmlFor={`alt-${asset.id}`}>
+                        <input
+                          id={`alt-${asset.id}`}
+                          name="altText"
+                          defaultValue={asset.altText ?? ""}
+                          maxLength={300}
+                        />
+                      </AdminField>
+
+                      <AdminField label="Caption" htmlFor={`caption-${asset.id}`}>
+                        <textarea
+                          id={`caption-${asset.id}`}
+                          name="caption"
+                          defaultValue={asset.caption ?? ""}
+                          maxLength={500}
+                          rows={4}
+                        />
+                      </AdminField>
+                    </AdminFormGrid>
+
+                    <button
+                      className="admin-primary-button"
+                      type="submit"
+                      disabled={busyId === asset.id}
+                    >
                       Save Metadata
                     </button>
-                    <button className="admin-secondary-button" type="button" onClick={() => setEditingId(null)}>
+                    <button
+                      className="admin-secondary-button"
+                      type="button"
+                      onClick={() => setEditingId(null)}
+                    >
                       Cancel
                     </button>
                   </form>
