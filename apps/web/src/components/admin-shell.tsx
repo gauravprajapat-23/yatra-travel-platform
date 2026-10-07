@@ -13,6 +13,7 @@ const nav: Array<{
 }> = [
   { href: "/admin", label: "Dashboard", permission: "admin.access" },
   { href: "/admin/bookings", label: "Bookings", permission: "booking.read" },
+  { href: "/admin/dispatch", label: "Dispatch", permission: "booking.read" },
   { href: "/admin/packages", label: "Tours & Packages", permission: "package.read" },
   { href: "/admin/vehicles", label: "Fleet Management", permission: "vehicle.read" },
   { href: "/admin/customers", label: "Customers", permission: "customer.read" },
