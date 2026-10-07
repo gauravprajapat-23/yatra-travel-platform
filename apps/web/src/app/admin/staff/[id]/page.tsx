@@ -7,6 +7,7 @@ import {
   type RoleKey,
 } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   adminRoleKeys,
@@ -32,13 +33,21 @@ function roleLabel(role: RoleKey): string {
 
 export default async function StaffDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "staff.manage")) redirect("/admin");
 
   const { id } = await params;
+  const { tab: requestedTab } = await searchParams;
+  const activeTab = ["overview", "access", "sessions"].includes(
+    requestedTab ?? "",
+  )
+    ? requestedTab!
+    : "overview";
   const db = getDb();
 
   const user = await db.user.findUnique({
@@ -132,126 +141,146 @@ export default async function StaffDetailPage({
         </Link>
       }
     >
-      <div className="admin-detail-grid">
-        <section className="admin-panel admin-detail-card">
-          <div className="admin-panel-heading">
-            <h2>Account</h2>
-            <StatusPill tone={tone(user.status)}>
-              {user.status.replaceAll("_", " ")}
-            </StatusPill>
-          </div>
+      <AdminEditorTabs
+        basePath={`/admin/staff/${targetUserId}`}
+        active={activeTab}
+        tabs={[
+          { key: "overview", label: "Overview", description: "Account status" },
+          { key: "access", label: "Roles & Status", description: "RBAC access" },
+          { key: "sessions", label: "Sessions", description: "Active login sessions" },
+        ]}
+      />
 
-          <dl>
-            <div>
-              <dt>Email</dt>
-              <dd>{user.email}</dd>
+      <div className="admin-editor-section-stack">
+        {activeTab === "overview" ? (
+          <section className="admin-panel admin-detail-card">
+            <div className="admin-panel-heading">
+              <h2>Account</h2>
+              <StatusPill tone={tone(user.status)}>
+                {user.status.replaceAll("_", " ")}
+              </StatusPill>
             </div>
-            <div>
-              <dt>Name</dt>
-              <dd>{user.name ?? "Not set"}</dd>
-            </div>
-            <div>
-              <dt>Last Login</dt>
-              <dd>{user.lastLoginAt?.toLocaleString("en-IN") ?? "Never"}</dd>
-            </div>
-            <div>
-              <dt>Active Sessions</dt>
-              <dd>{activeSessions}</dd>
-            </div>
-            <div>
-              <dt>Created</dt>
-              <dd>{user.createdAt.toLocaleString("en-IN")}</dd>
-            </div>
-          </dl>
 
-          {isSelf ? (
-            <p>
-              You are editing your own account. Self-disable is blocked to prevent
-              accidental lockout.
-            </p>
-          ) : (
-            <form action={revokeSessions}>
-              <button className="admin-danger-button" type="submit">
-                Revoke All Active Sessions
+            <dl>
+              <div><dt>Email</dt><dd>{user.email}</dd></div>
+              <div><dt>Name</dt><dd>{user.name ?? "Not set"}</dd></div>
+              <div><dt>Roles</dt><dd>{currentRoles.map(roleLabel).join(", ")}</dd></div>
+              <div><dt>Last Login</dt><dd>{user.lastLoginAt?.toLocaleString("en-IN") ?? "Never"}</dd></div>
+              <div><dt>Active Sessions</dt><dd>{activeSessions}</dd></div>
+              <div><dt>Created</dt><dd>{user.createdAt.toLocaleString("en-IN")}</dd></div>
+            </dl>
+
+            {isSelf ? (
+              <p>
+                You are editing your own account. Self-disable is blocked to
+                prevent accidental lockout.
+              </p>
+            ) : activeSessions > 0 ? (
+              <form action={revokeSessions}>
+                <button className="admin-danger-button" type="submit">
+                  Revoke All Active Sessions
+                </button>
+              </form>
+            ) : (
+              <p>No active sessions to revoke.</p>
+            )}
+          </section>
+        ) : null}
+
+        {activeTab === "access" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Roles & Status</h2>
+
+            <form action={saveAccess}>
+              <label>
+                Account status
+                <select name="status" defaultValue={user.status}>
+                  {staffStatuses.map((status) => (
+                    <option key={status} value={status}>
+                      {status.replaceAll("_", " ")}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <fieldset>
+                <legend>Admin roles</legend>
+                {adminRoleKeys.map((role) => (
+                  <label key={role}>
+                    <input
+                      type="checkbox"
+                      name="roles"
+                      value={role}
+                      defaultChecked={currentRoles.includes(role)}
+                    />
+                    {roleLabel(role)}
+                  </label>
+                ))}
+              </fieldset>
+
+              <p>
+                Reducing another user&apos;s access revokes their active
+                sessions. The last active SUPER ADMIN cannot be removed or
+                disabled.
+              </p>
+
+              <button className="admin-primary-button" type="submit">
+                Save Access
               </button>
             </form>
-          )}
-        </section>
+          </section>
+        ) : null}
 
-        <section className="admin-panel admin-detail-card">
-          <h2>Roles & Status</h2>
+        {activeTab === "sessions" ? (
+          <section className="admin-panel admin-detail-card">
+            <div className="admin-panel-heading">
+              <div>
+                <h2>Recent Sessions</h2>
+                <p>Latest 20 sessions recorded for this staff account.</p>
+              </div>
+              <span>{activeSessions} active</span>
+            </div>
 
-          <form action={saveAccess}>
-            <label>
-              Account status
-              <select name="status" defaultValue={user.status}>
-                {staffStatuses.map((status) => (
-                  <option key={status} value={status}>
-                    {status.replaceAll("_", " ")}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <fieldset>
-              <legend>Admin roles</legend>
-              {adminRoleKeys.map((role) => (
-                <label key={role}>
-                  <input
-                    type="checkbox"
-                    name="roles"
-                    value={role}
-                    defaultChecked={currentRoles.includes(role)}
-                  />
-                  {roleLabel(role)}
-                </label>
-              ))}
-            </fieldset>
-
-            <p>
-              Reducing another user&apos;s access revokes their active sessions.
-              The last active SUPER ADMIN cannot be removed or disabled.
-            </p>
-
-            <button className="admin-primary-button" type="submit">
-              Save Access
-            </button>
-          </form>
-        </section>
-
-        <section className="admin-panel admin-detail-card">
-          <h2>Recent Sessions</h2>
-          {user.sessions.length === 0 ? (
-            <p>No sessions recorded.</p>
-          ) : (
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Created</th>
-                  <th>Last Seen</th>
-                  <th>Expires</th>
-                  <th>State</th>
-                </tr>
-              </thead>
-              <tbody>
-                {user.sessions.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.createdAt.toLocaleString("en-IN")}</td>
-                    <td>{item.lastSeenAt?.toLocaleString("en-IN") ?? "—"}</td>
-                    <td>{item.expiresAt.toLocaleString("en-IN")}</td>
-                    <td>
-                      {item.revokedAt
-                        ? "Revoked"
-                        : item.expiresAt <= new Date()
-                          ? "Expired"
-                          : "Active"}
-                    </td>
+            {user.sessions.length === 0 ? (
+              <p>No sessions recorded.</p>
+            ) : (
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Created</th>
+                    <th>Last Seen</th>
+                    <th>Expires</th>
+                    <th>State</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
+                </thead>
+                <tbody>
+                  {user.sessions.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.createdAt.toLocaleString("en-IN")}</td>
+                      <td>{item.lastSeenAt?.toLocaleString("en-IN") ?? "—"}</td>
+                      <td>{item.expiresAt.toLocaleString("en-IN")}</td>
+                      <td>
+                        {item.revokedAt
+                          ? "Revoked"
+                          : item.expiresAt <= new Date()
+                            ? "Expired"
+                            : "Active"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            {!isSelf && activeSessions > 0 ? (
+              <form action={revokeSessions}>
+                <button className="admin-danger-button" type="submit">
+                  Revoke All Active Sessions
+                </button>
+              </form>
+            ) : null}
+          </section>
+        ) : null}
       </div>
     </AdminShell>
   );
