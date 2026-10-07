@@ -54,9 +54,23 @@ export default async function CustomerDetailPage({
 
   const db = getDb();
 
+  const customerUser = await db.user.findUnique({
+    where: { emailNormalized: email },
+    select: { id: true, name: true, email: true },
+  });
+
+  const customerWhere = customerUser
+    ? {
+        OR: [
+          { customerUserId: customerUser.id },
+          { customerUserId: null, guestEmail: email },
+        ],
+      }
+    : { guestEmail: email };
+
   const [cars, packages] = await Promise.all([
     db.carBooking.findMany({
-      where: { guestEmail: email },
+      where: customerWhere,
       orderBy: { createdAt: "desc" },
       select: {
         reference: true,
@@ -71,7 +85,7 @@ export default async function CustomerDetailPage({
       },
     }),
     db.packageBooking.findMany({
-      where: { guestEmail: email },
+      where: customerWhere,
       orderBy: { createdAt: "desc" },
       select: {
         reference: true,
@@ -123,8 +137,8 @@ export default async function CustomerDetailPage({
   return (
     <AdminShell
       active="Customers"
-      title={latest?.name ?? "Guest Customer"}
-      subtitle={email}
+      title={customerUser?.name ?? latest?.name ?? "Guest Customer"}
+      subtitle={customerUser ? `${customerUser.email} · registered account` : email}
       actions={<Link className="admin-secondary-button" href="/admin/customers">← All Customers</Link>}
     >
       <div className="admin-metric-grid">
