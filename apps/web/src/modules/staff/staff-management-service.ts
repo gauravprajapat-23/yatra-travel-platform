@@ -1,4 +1,6 @@
+import { createHash, randomBytes } from "node:crypto";
 import { getDb, Prisma } from "@yatra/db/client";
+import { hashPassword } from "@/lib/auth/password";
 import {
   roles,
   type RoleKey,
@@ -230,6 +232,328 @@ export async function revokeStaffSessions(input: {
       });
 
       return { revokedSessions: result.count };
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
+}
+
+
+function normalizeStaffEmail(value: string): string {
+  const email = value.trim().toLowerCase();
+
+  if (
+    !email ||
+    email.length > 254 ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  ) {
+    throw new Error("Enter a valid staff email address.");
+  }
+
+  return email;
+}
+
+function hashInviteToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+function validateInvitePassword(password: string): void {
+  if (password.length < 12 || password.length > 128) {
+    throw new Error("Password must be between 12 and 128 characters.");
+  }
+
+  if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+    throw new Error("Password must include at least one letter and one number.");
+  }
+}
+
+export async function createStaffInvite(input: {
+  email: string;
+  name: string;
+  roles: Array<Exclude<RoleKey, "CUSTOMER">>;
+  actorUserId: string;
+  expiresInHours?: number;
+}) {
+  const emailNormalized = normalizeStaffEmail(input.email);
+  const name = input.name.trim();
+  const uniqueRoles = [...new Set(input.roles)];
+
+  if (name.length < 2 || name.length > 120) {
+    throw new Error("Staff name must be between 2 and 120 characters.");
+  }
+
+  if (uniqueRoles.length === 0 || uniqueRoles.some((role) => !isAdminRole(role))) {
+    throw new Error("At least one valid admin role is required.");
+  }
+
+  const expiresInHours = input.expiresInHours ?? 48;
+  if (
+    !Number.isInteger(expiresInHours) ||
+    expiresInHours < 1 ||
+    expiresInHours > 168
+  ) {
+    throw new Error("Invite expiry must be between 1 and 168 hours.");
+  }
+
+  const rawToken = randomBytes(32).toString("base64url");
+  const tokenHash = hashInviteToken(rawToken);
+  const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
+  const db = getDb();
+
+  const result = await db.$transaction(
+    async (tx) => {
+      const existing = await tx.user.findUnique({
+        where: { emailNormalized },
+        select: { id: true, status: true },
+      });
+
+      if (existing) {
+        throw new Error(
+          "An account already exists for this email. Use the existing staff/customer account workflow instead.",
+        );
+      }
+
+      const roleRows = await tx.role.findMany({
+        where: { key: { in: uniqueRoles } },
+        select: { id: true, key: true },
+      });
+
+      if (roleRows.length !== uniqueRoles.length) {
+        throw new Error("One or more requested roles do not exist.");
+      }
+
+      const user = await tx.user.create({
+        data: {
+          email: emailNormalized,
+          emailNormalized,
+          name,
+          status: "INVITED",
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          status: true,
+        },
+      });
+
+      await tx.userRole.createMany({
+        data: roleRows.map((role) => ({
+          userId: user.id,
+          roleId: role.id,
+          assignedById: input.actorUserId,
+        })),
+      });
+
+      const invite = await tx.staffInvite.create({
+        data: {
+          userId: user.id,
+          tokenHash,
+          createdById: input.actorUserId,
+          expiresAt,
+        },
+        select: {
+          id: true,
+          expiresAt: true,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorUserId: input.actorUserId,
+          action: "STAFF_INVITED",
+          entityType: "User",
+          entityId: user.id,
+          metadata: {
+            roles: uniqueRoles,
+            inviteId: invite.id,
+            expiresAt: invite.expiresAt.toISOString(),
+          },
+        },
+      });
+
+      return { user, invite };
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
+
+  return {
+    ...result,
+    token: rawToken,
+  };
+}
+
+export async function inspectStaffInvite(token: string) {
+  const value = token.trim();
+  if (!value || value.length > 512) return null;
+
+  const db = getDb();
+  const now = new Date();
+
+  const invite = await db.staffInvite.findUnique({
+    where: { tokenHash: hashInviteToken(value) },
+    select: {
+      id: true,
+      expiresAt: true,
+      acceptedAt: true,
+      revokedAt: true,
+      user: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          status: true,
+        },
+      },
+    },
+  });
+
+  if (
+    !invite ||
+    invite.acceptedAt ||
+    invite.revokedAt ||
+    invite.expiresAt <= now ||
+    invite.user.status !== "INVITED"
+  ) {
+    return null;
+  }
+
+  return invite;
+}
+
+export async function acceptStaffInvite(input: {
+  token: string;
+  password: string;
+}) {
+  const token = input.token.trim();
+  if (!token || token.length > 512) {
+    throw new Error("Invite link is invalid or expired.");
+  }
+
+  validateInvitePassword(input.password);
+
+  const tokenHash = hashInviteToken(token);
+  const passwordHash = await hashPassword(input.password);
+  const now = new Date();
+  const db = getDb();
+
+  return db.$transaction(
+    async (tx) => {
+      const invite = await tx.staffInvite.findUnique({
+        where: { tokenHash },
+        include: {
+          user: {
+            include: {
+              roles: {
+                include: { role: true },
+              },
+            },
+          },
+        },
+      });
+
+      if (
+        !invite ||
+        invite.acceptedAt ||
+        invite.revokedAt ||
+        invite.expiresAt <= now ||
+        invite.user.status !== "INVITED"
+      ) {
+        throw new Error("Invite link is invalid or expired.");
+      }
+
+      const claimed = await tx.staffInvite.updateMany({
+        where: {
+          id: invite.id,
+          acceptedAt: null,
+          revokedAt: null,
+          expiresAt: { gt: now },
+        },
+        data: { acceptedAt: now },
+      });
+
+      if (claimed.count !== 1) {
+        throw new Error("Invite link has already been used or expired.");
+      }
+
+      const user = await tx.user.update({
+        where: { id: invite.userId },
+        data: {
+          passwordHash,
+          status: "ACTIVE",
+          emailVerifiedAt: now,
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          status: true,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorUserId: user.id,
+          action: "STAFF_INVITE_ACCEPTED",
+          entityType: "User",
+          entityId: user.id,
+          metadata: {
+            inviteId: invite.id,
+            roles: invite.user.roles.map((entry) => entry.role.key),
+          },
+        },
+      });
+
+      return user;
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
+}
+
+export async function revokeStaffInvite(input: {
+  targetUserId: string;
+  actorUserId: string;
+}) {
+  const db = getDb();
+  const now = new Date();
+
+  return db.$transaction(
+    async (tx) => {
+      const invite = await tx.staffInvite.findUnique({
+        where: { userId: input.targetUserId },
+        include: {
+          user: {
+            select: {
+              id: true,
+              status: true,
+            },
+          },
+        },
+      });
+
+      if (!invite || invite.user.status !== "INVITED") {
+        throw new Error("No pending staff invite exists for this user.");
+      }
+
+      if (invite.acceptedAt || invite.revokedAt) {
+        throw new Error("Staff invite is no longer active.");
+      }
+
+      await tx.staffInvite.update({
+        where: { id: invite.id },
+        data: { revokedAt: now },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorUserId: input.actorUserId,
+          action: "STAFF_INVITE_REVOKED",
+          entityType: "User",
+          entityId: input.targetUserId,
+          metadata: { inviteId: invite.id },
+        },
+      });
+
+      return { revokedAt: now };
     },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
   );
