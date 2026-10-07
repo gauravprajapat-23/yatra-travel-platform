@@ -8,6 +8,7 @@ import { AdminEditorTabs } from "@/components/admin-editor-tabs";
 import { AdminMediaPicker } from "@/components/admin-media-picker";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
+import { AdminDateTimeRange } from "@/components/admin-date-time-range";
 import { requireAdminSession } from "@/lib/auth/session";
 import {
   addVehicleAvailabilityBlock,
@@ -403,23 +404,16 @@ export default async function VehicleDetailPage({
               <form action={addBlock}>
                 <h3>Add Availability Block</h3>
                 <AdminFormGrid columns={2}>
-                  <AdminField label="Starts" htmlFor="vehicleBlockStarts" required>
-                    <input
-                      id="vehicleBlockStarts"
-                      type="datetime-local"
-                      name="startsAt"
-                      required
-                    />
-                  </AdminField>
-
-                  <AdminField label="Ends" htmlFor="vehicleBlockEnds" required>
-                    <input
-                      id="vehicleBlockEnds"
-                      type="datetime-local"
-                      name="endsAt"
-                      required
-                    />
-                  </AdminField>
+                  <AdminDateTimeRange
+                    startName="startsAt"
+                    endName="endsAt"
+                    startLabel="Starts"
+                    endLabel="Ends"
+                    startId="vehicleBlockStarts"
+                    endId="vehicleBlockEnds"
+                    startRequired
+                    endRequired
+                  />
 
                   <AdminField
                     label="Reason"
