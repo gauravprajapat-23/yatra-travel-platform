@@ -5,7 +5,6 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell } from "@/components/admin-shell";
 import {
   AdminField,
-  AdminForm,
   AdminFormActions,
   AdminFormAsideCard,
   AdminFormCallout,
@@ -14,6 +13,10 @@ import {
 } from "@/components/admin-form";
 import { AdminSlugFields } from "@/components/admin-slug-fields";
 import { AdminTextareaField } from "@/components/admin-textarea-field";
+import {
+  AdminActionForm,
+  type AdminActionState,
+} from "@/components/admin-action-form";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -38,66 +41,83 @@ export default async function NewBlogPage() {
     select: { id: true, name: true },
   });
 
-  async function createPost(formData: FormData) {
+  async function createPost(
+    _previousState: AdminActionState,
+    formData: FormData,
+  ): Promise<AdminActionState> {
     "use server";
 
-    const currentSession = await requireAdminSession();
-    if (!hasPermission(currentSession.roles, "content.write")) {
-      redirect("/admin/blog");
-    }
+    let createdId: string;
 
-    const title = String(formData.get("title") ?? "").trim();
-    const slug = normalizeSlug(String(formData.get("slug") ?? ""));
-    const excerpt = String(formData.get("excerpt") ?? "").trim();
-    const categoryId = String(formData.get("categoryId") ?? "").trim() || null;
+    try {
+      const currentSession = await requireAdminSession();
+      if (!hasPermission(currentSession.roles, "content.write")) {
+        redirect("/admin/blog");
+      }
 
-    if (title.length < 2 || title.length > 180) {
-      throw new Error("Title must be between 2 and 180 characters.");
-    }
-    assertSlug(slug);
+      const title = String(formData.get("title") ?? "").trim();
+      const slug = normalizeSlug(String(formData.get("slug") ?? ""));
+      const excerpt = String(formData.get("excerpt") ?? "").trim();
+      const categoryId = String(formData.get("categoryId") ?? "").trim() || null;
 
-    if (categoryId) {
-      const category = await db.blogCategory.findUnique({
-        where: { id: categoryId },
+      if (title.length < 2 || title.length > 180) {
+        throw new Error("Title must be between 2 and 180 characters.");
+      }
+      assertSlug(slug);
+
+      if (categoryId) {
+        const category = await db.blogCategory.findUnique({
+          where: { id: categoryId },
+          select: { id: true },
+        });
+        if (!category) throw new Error("Selected blog category does not exist.");
+      }
+
+      const existing = await db.blogPost.findUnique({
+        where: { slug },
         select: { id: true },
       });
-      if (!category) throw new Error("Selected blog category does not exist.");
+      if (existing) throw new Error("A blog post with this slug already exists.");
+
+      const post = await db.$transaction(async (tx) => {
+        const created = await tx.blogPost.create({
+          data: {
+            slug,
+            title,
+            excerpt: excerpt || null,
+            body: [],
+            categoryId,
+            status: "DRAFT",
+            robotsIndex: false,
+            robotsFollow: false,
+          },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            actorUserId: currentSession.userId,
+            action: "BLOG_POST_CREATED",
+            entityType: "BlogPost",
+            entityId: created.id,
+            metadata: { slug, title, categoryId },
+          },
+        });
+
+        return created;
+      });
+
+      createdId = post.id;
+    } catch (error) {
+      return {
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to create blog post.",
+      };
     }
 
-    const existing = await db.blogPost.findUnique({
-      where: { slug },
-      select: { id: true },
-    });
-    if (existing) throw new Error("A blog post with this slug already exists.");
-
-    const post = await db.$transaction(async (tx) => {
-      const created = await tx.blogPost.create({
-        data: {
-          slug,
-          title,
-          excerpt: excerpt || null,
-          body: [],
-          categoryId,
-          status: "DRAFT",
-          robotsIndex: false,
-          robotsFollow: false,
-        },
-      });
-
-      await tx.auditLog.create({
-        data: {
-          actorUserId: currentSession.userId,
-          action: "BLOG_POST_CREATED",
-          entityType: "BlogPost",
-          entityId: created.id,
-          metadata: { slug, title, categoryId },
-        },
-      });
-
-      return created;
-    });
-
-    redirect(`/admin/content/blog/${post.id}`);
+    redirect(`/admin/content/blog/${createdId}`);
   }
 
   return (
@@ -107,8 +127,9 @@ export default async function NewBlogPage() {
       subtitle="Create the editorial foundation, then complete the article body, hero media, SEO and publication settings."
       actions={<Link className="admin-secondary-button" href="/admin/blog">← Blog</Link>}
     >
-      <AdminForm
+      <AdminActionForm
         action={createPost}
+        className="admin-form"
         aside={
           <>
             <AdminFormAsideCard title="Editorial workflow">
@@ -163,7 +184,7 @@ export default async function NewBlogPage() {
         </AdminFormSection>
 
         <AdminFormActions submitLabel="Create Draft Post" cancelHref="/admin/blog" helper="Creates a safe non-indexed article draft." />
-      </AdminForm>
+      </AdminActionForm>
     </AdminShell>
   );
 }
