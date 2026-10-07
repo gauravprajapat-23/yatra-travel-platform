@@ -314,7 +314,11 @@ export default async function DriverDetailPage({
                         {hasPermission(session.roles, "driver.write") ? (
                           <form action={removeBlock}>
                             <input type="hidden" name="blockId" value={block.id}/>
-                            <button className="admin-danger-button" type="submit">Delete</button>
+                            <AdminSubmitButton
+                              className="admin-danger-button"
+                              label="Delete"
+                              pendingLabel="Deleting…"
+                            />
                           </form>
                         ) : "—"}
                       </td>
