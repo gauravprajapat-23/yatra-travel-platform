@@ -471,19 +471,37 @@ export default async function AdminContentEditorPage({
             <h2>Blog Details</h2>
             {hasPermission(session.roles, "content.write") ? (
               <form action={saveBlogSpecifics}>
-                <label>
-                  Category
-                  <select name="categoryId" defaultValue={blogDetails.categoryId ?? ""}>
-                    <option value="">Uncategorized</option>
-                    {blogCategories.map((category) => (
-                      <option key={category.id} value={category.id}>{category.name}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Excerpt
-                  <textarea name="excerpt" defaultValue={blogDetails.excerpt ?? ""} maxLength={500}/>
-                </label>
+                <AdminFormGrid columns={1}>
+                  <AdminField label="Category" htmlFor="blogCategory">
+                    <select
+                      id="blogCategory"
+                      name="categoryId"
+                      defaultValue={blogDetails.categoryId ?? ""}
+                    >
+                      <option value="">Uncategorized</option>
+                      {blogCategories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </AdminField>
+
+                  <AdminField
+                    label="Excerpt"
+                    htmlFor="blogExcerpt"
+                    hint="Short summary shown in blog listings and previews."
+                  >
+                    <textarea
+                      id="blogExcerpt"
+                      name="excerpt"
+                      defaultValue={blogDetails.excerpt ?? ""}
+                      maxLength={500}
+                      rows={5}
+                    />
+                  </AdminField>
+                </AdminFormGrid>
+
                 <button className="admin-primary-button" type="submit">
                   Save Blog Details
                 </button>
@@ -502,25 +520,48 @@ export default async function AdminContentEditorPage({
             <h2>Destination Details</h2>
             {hasPermission(session.roles, "content.write") ? (
               <form action={saveDestinationSpecifics}>
-                <label>
-                  Kind
-                  <select name="kind" defaultValue={destinationDetails.kind}>
-                    {destinationKinds.map((kind) => (
-                      <option key={kind} value={kind}>{kind.replaceAll("_", " ")}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Summary
-                  <textarea name="summary" defaultValue={destinationDetails.summary ?? ""} maxLength={700}/>
-                </label>
-                <label>
-                  <input type="checkbox" name="isFeatured" defaultChecked={destinationDetails.isFeatured}/>
-                  Featured destination
-                </label>
+                <AdminFormGrid columns={1}>
+                  <AdminField label="Kind" htmlFor="destinationKind" required>
+                    <select
+                      id="destinationKind"
+                      name="kind"
+                      defaultValue={destinationDetails.kind}
+                    >
+                      {destinationKinds.map((kind) => (
+                        <option key={kind} value={kind}>
+                          {kind.replaceAll("_", " ")}
+                        </option>
+                      ))}
+                    </select>
+                  </AdminField>
+
+                  <AdminField
+                    label="Summary"
+                    htmlFor="destinationSummary"
+                    hint="Short public description of this destination."
+                  >
+                    <textarea
+                      id="destinationSummary"
+                      name="summary"
+                      defaultValue={destinationDetails.summary ?? ""}
+                      maxLength={700}
+                      rows={5}
+                    />
+                  </AdminField>
+                </AdminFormGrid>
+
+                <AdminCheckbox
+                  name="isFeatured"
+                  defaultChecked={destinationDetails.isFeatured}
+                  label="Featured destination"
+                  description="Promote this destination in highlighted public sections."
+                />
+
                 <p>
-                  Remove an existing Temple Profile before changing this destination to a non-temple kind.
+                  Remove an existing Temple Profile before changing this
+                  destination to a non-temple kind.
                 </p>
+
                 <button className="admin-primary-button" type="submit">
                   Save Destination Details
                 </button>
