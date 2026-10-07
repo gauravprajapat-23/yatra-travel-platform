@@ -64,6 +64,26 @@ const tabbedEditors = [
   "apps/web/src/app/admin/vehicles/[id]/page.tsx",
 ];
 
+function walkAdminPages(directory) {
+  const entries = fs.readdirSync(directory, { withFileTypes: true });
+  const pages = [];
+
+  for (const entry of entries) {
+    const fullPath = path.join(directory, entry.name);
+
+    if (entry.isDirectory()) {
+      pages.push(...walkAdminPages(fullPath));
+      continue;
+    }
+
+    if (entry.isFile() && entry.name === "page.tsx") {
+      pages.push(path.relative(root, fullPath).replaceAll("\\", "/"));
+    }
+  }
+
+  return pages;
+}
+
 function read(file) {
   return fs.readFileSync(path.join(root, file), "utf8");
 }
@@ -317,6 +337,24 @@ const primitiveCoverage = [
     label: "media library upload/search/metadata primitives",
   },
 ];
+
+const allAdminPages = walkAdminPages(
+  path.join(root, "apps/web/src/app/admin"),
+);
+
+for (const file of allAdminPages) {
+  const source = read(file);
+
+  if (source.includes("<label")) {
+    throw new Error(
+      `${file} contains raw <label> markup. Use AdminField/AdminCheckbox or another shared admin field primitive.`,
+    );
+  }
+}
+
+process.stdout.write(
+  `PASS global admin raw-label audit: ${allAdminPages.length} admin pages\n`,
+);
 
 for (const item of primitiveCoverage) {
   requireFragments(item.file, item.fragments);
