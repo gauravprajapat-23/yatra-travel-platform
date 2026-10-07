@@ -71,6 +71,9 @@ jobs:
       - name: Verify auth foundation
         run: npm run db:verify:auth -w @yatra/db
 
+      - name: Verify staff invite foundation
+        run: npm run db:verify:staff-invites -w @yatra/db
+
       - name: Verify CMS and SEO foundation
         run: npm run db:verify:cms -w @yatra/db
 
