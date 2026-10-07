@@ -21,14 +21,12 @@ export function AdminMultiSelectCards({
   const selected = new Set(defaultValues);
   const needle = query.trim().toLowerCase();
 
-  const visible = options.filter((option) =>
-    !needle
-      ? true
-      : [option.label, option.meta ?? ""]
-          .join(" ")
-          .toLowerCase()
-          .includes(needle),
-  );
+  const matches = (option: AdminMultiSelectOption) =>
+    !needle ||
+    [option.label, option.meta ?? ""]
+      .join(" ")
+      .toLowerCase()
+      .includes(needle);
 
   return (
     <div className="admin-multi-select">
@@ -42,8 +40,12 @@ export function AdminMultiSelectCards({
       </label>
 
       <div className="admin-multi-select__grid">
-        {visible.map((option) => (
-          <label className="admin-multi-select__item" key={option.id}>
+        {options.map((option) => (
+          <label
+            className="admin-multi-select__item"
+            key={option.id}
+            hidden={!matches(option)}
+          >
             <input
               type="checkbox"
               name={name}
