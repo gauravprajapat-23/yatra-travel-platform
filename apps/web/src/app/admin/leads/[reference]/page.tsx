@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 
@@ -157,7 +158,10 @@ export default async function LeadDetailPage({
                   ))}
                 </select>
               </AdminField>
-              <button className="admin-primary-button" type="submit">Save Lead Status</button>
+              <AdminSubmitButton
+                label="Save Lead Status"
+                pendingLabel="Saving Status…"
+              />
             </form>
           ) : (
             <p>Your role has read-only access to leads.</p>
