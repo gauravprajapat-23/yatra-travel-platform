@@ -571,8 +571,11 @@ It certifies:
 - shared panel-heading coverage
 - mobile/accessibility form primitives
 - global raw-label audit across every `apps/web/src/app/admin/**/page.tsx`
+- global raw-submit audit for mutation pages, with only approved lightweight GET-filter pages exempted
 
 The global raw-label audit intentionally rejects hand-written `<label>` markup in admin pages. Use `AdminField`, `AdminCheckbox`, or another approved shared primitive instead.
+
+Raw mutation submit buttons are also rejected. Use `AdminSubmitButton` or `AdminConfirmSubmitButton`. Plain submit buttons remain allowed only on the explicitly certified lightweight GET search/filter pages.
 
 ## New Form Checklist
 
