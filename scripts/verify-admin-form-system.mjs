@@ -187,7 +187,9 @@ for (const item of primitiveCoverage) {
 
 for (const file of newPages) {
   const source = requireFragments(file, [
-    "<AdminForm",
+    "<AdminActionForm",
+    "AdminActionState",
+    'status: "error"',
     "<AdminFormSection",
     "<AdminFormGrid",
     "<AdminFormActions",
@@ -199,12 +201,14 @@ for (const file of newPages) {
     );
   }
 
-  process.stdout.write(`PASS shared create form: ${file}\n`);
+  process.stdout.write(`PASS recoverable shared create form: ${file}\n`);
 }
 
 for (const file of actionNewPages) {
   const source = requireFragments(file, [
     "<AdminActionForm",
+    "AdminActionState",
+    'status: "error"',
     "<AdminFormSection",
     "<AdminFormGrid",
     "<AdminSubmitButton",
