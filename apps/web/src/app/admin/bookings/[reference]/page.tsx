@@ -520,9 +520,10 @@ export default async function BookingDetailPage({
       throw new Error("Payment is not refundable.");
     }
 
-    const reservedMinor = paymentIntent.refunds
-      .filter((refund) => ["PENDING", "PROCESSED"].includes(refund.status))
-      .reduce((sum, refund) => sum + refund.amountMinor, 0n);
+    const reservedMinor = paymentIntent.refunds.reduce(
+      (sum, refund) => sum + refund.amountMinor,
+      0n,
+    );
     const remainingMinor = paymentIntent.amountPaidMinor - reservedMinor;
 
     if (remainingMinor <= 0n) {
