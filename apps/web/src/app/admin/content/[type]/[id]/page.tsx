@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminPanelHeading, AdminShell, StatusPill } from "@/components/admin-shell";
-import { AdminEditorTabs } from "@/components/admin-editor-tabs";
+import { AdminEditorTabs, type AdminEditorTab } from "@/components/admin-editor-tabs";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminConfirmSubmitButton } from "@/components/admin-confirm-submit-button";
 import { AdminStructuredContentEditor } from "@/components/admin-structured-content-editor";
@@ -248,6 +248,76 @@ export default async function AdminContentEditorPage({
     ? requestedTab!
     : "overview";
 
+  const editorTabs: AdminEditorTab[] = [
+    {
+      key: "overview",
+      label: "Overview",
+      description: "Status & identity",
+      badge: content.status.replaceAll("_", " "),
+    },
+  ];
+
+  if (type === "blog") {
+    const blogReady = Boolean(blogDetails?.excerpt && blogDetails.categoryId);
+    editorTabs.push({
+      key: "details",
+      label: "Blog Details",
+      description: "Category & excerpt",
+      badge: blogReady ? "Ready" : "Incomplete",
+      badgeTone: blogReady ? "success" : "warning",
+    });
+  }
+
+  if (type === "destination") {
+    const destinationReady = Boolean(destinationDetails?.summary);
+    editorTabs.push({
+      key: "details",
+      label: "Destination",
+      description: "Kind & summary",
+      badge: destinationReady ? "Ready" : "Incomplete",
+      badgeTone: destinationReady ? "success" : "warning",
+    });
+
+    if (destinationDetails?.kind === "TEMPLE") {
+      const templeReady = Boolean(destinationDetails.templeProfile);
+      editorTabs.push({
+        key: "temple",
+        label: "Temple Profile",
+        description: "Darshan & practical info",
+        badge: templeReady ? "Ready" : "Missing",
+        badgeTone: templeReady ? "success" : "warning",
+      });
+    }
+  }
+
+  const hasBody =
+    Array.isArray(content.body) && content.body.length > 0;
+  const seoReady = Boolean(content.seoTitle && content.seoDescription);
+
+  editorTabs.push(
+    {
+      key: "content",
+      label: "Content",
+      description: "Structured body",
+      badge: hasBody ? `${content.body.length} blocks` : "Empty",
+      badgeTone: hasBody ? "success" : "warning",
+    },
+    {
+      key: "media",
+      label: "Media",
+      description: "Hero image",
+      badge: content.heroMediaId ? "Ready" : "Missing",
+      badgeTone: content.heroMediaId ? "success" : "warning",
+    },
+    {
+      key: "publishing",
+      label: "SEO & Publishing",
+      description: "Metadata & visibility",
+      badge: seoReady ? "Ready" : "Needs SEO",
+      badgeTone: seoReady ? "success" : "warning",
+    },
+  );
+
   async function saveBlogSpecifics(formData: FormData) {
     "use server";
 
@@ -455,84 +525,7 @@ export default async function AdminContentEditorPage({
       <AdminEditorTabs
         basePath={`/admin/content/${type}/${contentId}`}
         active={activeTab}
-        tabs={[
-          {
-            key: "overview",
-            label: "Overview",
-            description: "Status & identity",
-            badge: content.status.replaceAll("_", " "),
-          },
-          ...(type === "blog"
-            ? [{
-                key: "details",
-                label: "Blog Details",
-                description: "Category & excerpt",
-                badge:
-                  blogDetails?.excerpt && blogDetails.categoryId
-                    ? "Ready"
-                    : "Incomplete",
-                badgeTone:
-                  blogDetails?.excerpt && blogDetails.categoryId
-                    ? "success"
-                    : "warning",
-              }]
-            : []),
-          ...(type === "destination"
-            ? [{
-                key: "details",
-                label: "Destination",
-                description: "Kind & summary",
-                badge: destinationDetails?.summary ? "Ready" : "Incomplete",
-                badgeTone: destinationDetails?.summary
-                  ? "success"
-                  : "warning",
-              }]
-            : []),
-          ...(type === "destination" && destinationDetails?.kind === "TEMPLE"
-            ? [{
-                key: "temple",
-                label: "Temple Profile",
-                description: "Darshan & practical info",
-                badge: destinationDetails.templeProfile ? "Ready" : "Missing",
-                badgeTone: destinationDetails.templeProfile
-                  ? "success"
-                  : "warning",
-              }]
-            : []),
-          {
-            key: "content",
-            label: "Content",
-            description: "Structured body",
-            badge:
-              Array.isArray(content.body) && content.body.length > 0
-                ? `${content.body.length} blocks`
-                : "Empty",
-            badgeTone:
-              Array.isArray(content.body) && content.body.length > 0
-                ? "success"
-                : "warning",
-          },
-          {
-            key: "media",
-            label: "Media",
-            description: "Hero image",
-            badge: content.heroMediaId ? "Ready" : "Missing",
-            badgeTone: content.heroMediaId ? "success" : "warning",
-          },
-          {
-            key: "publishing",
-            label: "SEO & Publishing",
-            description: "Metadata & visibility",
-            badge:
-              content.seoTitle && content.seoDescription
-                ? "Ready"
-                : "Needs SEO",
-            badgeTone:
-              content.seoTitle && content.seoDescription
-                ? "success"
-                : "warning",
-          },
-        ]}
+        tabs={editorTabs}
       />
 
       <div className="admin-editor-section-stack">
