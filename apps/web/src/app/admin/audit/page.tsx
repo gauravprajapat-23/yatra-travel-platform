@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getDb, Prisma } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage } from "@/components/admin-table-page";
+import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -233,18 +234,17 @@ export default async function AuditPage({
       ]}
       toolbar={
         <form className="admin-table-query" method="get">
-          <label>
-            <span>Search</span>
+          <AdminField label="Search" htmlFor="auditSearch">
             <input
+              id="auditSearch"
               name="q"
               defaultValue={q}
               placeholder="Actor, action, entity, request ID"
             />
-          </label>
+          </AdminField>
 
-          <label>
-            <span>Action</span>
-            <select name="action" defaultValue={action}>
+          <AdminField label="Action" htmlFor="auditAction">
+            <select id="auditAction" name="action" defaultValue={action}>
               <option value="">All actions</option>
               {actionOptions.map((item) => (
                 <option key={item.action} value={item.action}>
@@ -252,11 +252,14 @@ export default async function AuditPage({
                 </option>
               ))}
             </select>
-          </label>
+          </AdminField>
 
-          <label>
-            <span>Entity</span>
-            <select name="entityType" defaultValue={entityType}>
+          <AdminField label="Entity" htmlFor="auditEntity">
+            <select
+              id="auditEntity"
+              name="entityType"
+              defaultValue={entityType}
+            >
               <option value="">All entity types</option>
               {entityOptions.map((item) => (
                 <option key={item.entityType} value={item.entityType}>
@@ -264,17 +267,25 @@ export default async function AuditPage({
                 </option>
               ))}
             </select>
-          </label>
+          </AdminField>
 
-          <label>
-            <span>From</span>
-            <input type="date" name="from" defaultValue={from} />
-          </label>
+          <AdminField label="From" htmlFor="auditFrom">
+            <input
+              id="auditFrom"
+              type="date"
+              name="from"
+              defaultValue={from}
+            />
+          </AdminField>
 
-          <label>
-            <span>To</span>
-            <input type="date" name="to" defaultValue={to} />
-          </label>
+          <AdminField label="To" htmlFor="auditTo">
+            <input
+              id="auditTo"
+              type="date"
+              name="to"
+              defaultValue={to}
+            />
+          </AdminField>
 
           <button className="admin-primary-button" type="submit">
             Apply
