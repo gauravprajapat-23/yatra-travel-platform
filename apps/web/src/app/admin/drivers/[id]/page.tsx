@@ -161,9 +161,24 @@ export default async function DriverDetailPage({
         basePath={`/admin/drivers/${driver.id}`}
         active={activeTab}
         tabs={[
-          { key: "overview", label: "Overview", description: "Status & readiness" },
-          { key: "details", label: "Driver Details", description: "Profile & qualifications" },
-          { key: "availability", label: "Availability", description: "Time blocks" },
+          {
+            key: "overview",
+            label: "Overview",
+            description: "Status & readiness",
+            badge: driver.status.replaceAll("_", " "),
+          },
+          {
+            key: "details",
+            label: "Driver Details",
+            description: "Profile & qualifications",
+            badge: `${driver.qualifications.length} classes`,
+          },
+          {
+            key: "availability",
+            label: "Availability",
+            description: "Time blocks",
+            badge: String(driver.availability.length),
+          },
         ]}
       />
 
