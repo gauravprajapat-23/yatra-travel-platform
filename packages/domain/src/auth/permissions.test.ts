@@ -42,6 +42,7 @@ test("operations can dispatch but cannot change booking lifecycle or finance", (
   assert.equal(hasPermission(["OPERATIONS"], "booking.write"), false);
   assert.equal(hasPermission(["OPERATIONS"], "refund.manage"), false);
   assert.equal(hasPermission(["OPERATIONS"], "payment.reconcile"), false);
+  assert.equal(hasPermission(["OPERATIONS"], "notification.read"), false);
 });
 
 test("booking sales can manage bookings but cannot assign fleet or refund", () => {
@@ -72,6 +73,7 @@ test("auditor remains read-only and owns audit visibility", () => {
     "payment.read",
     "report.read",
     "audit.read",
+    "notification.read",
   ];
 
   for (const permission of readPermissions) {
@@ -91,6 +93,7 @@ test("auditor remains read-only and owns audit visibility", () => {
     "refund.manage",
     "settings.manage",
     "staff.manage",
+    "notification.manage",
   ];
 
   for (const permission of forbidden) {
@@ -98,8 +101,10 @@ test("auditor remains read-only and owns audit visibility", () => {
   }
 });
 
-test("owner admin cannot read audit log while super admin can", () => {
+test("owner admin cannot read audit log but can operate notifications", () => {
   assert.equal(hasPermission(["OWNER_ADMIN"], "audit.read"), false);
+  assert.equal(hasPermission(["OWNER_ADMIN"], "notification.read"), true);
+  assert.equal(hasPermission(["OWNER_ADMIN"], "notification.manage"), true);
   assert.equal(hasPermission(["SUPER_ADMIN"], "audit.read"), true);
 });
 
