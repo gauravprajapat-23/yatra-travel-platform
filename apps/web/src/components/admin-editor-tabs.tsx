@@ -4,6 +4,7 @@ export type AdminEditorTab = {
   key: string;
   label: string;
   description?: string;
+  badge?: string;
 };
 
 export function AdminEditorTabs({
@@ -28,7 +29,12 @@ export function AdminEditorTabs({
           }
           aria-current={active === tab.key ? "page" : undefined}
         >
-          <strong>{tab.label}</strong>
+          <span className="admin-editor-tab__title">
+            <strong>{tab.label}</strong>
+            {tab.badge ? (
+              <span className="admin-editor-tab__badge">{tab.badge}</span>
+            ) : null}
+          </span>
           {tab.description ? <small>{tab.description}</small> : null}
         </Link>
       ))}
