@@ -130,6 +130,7 @@ const sharedComponents = [
   "apps/web/src/components/admin-media-picker.tsx",
   "apps/web/src/components/admin-multi-select-cards.tsx",
   "apps/web/src/components/admin-structured-content-editor.tsx",
+  "apps/web/src/components/admin-json-list-field.tsx",
 ];
 
 for (const file of sharedComponents) {
@@ -312,8 +313,38 @@ const primitiveCoverage = [
       "<AdminStructuredContentEditor",
       "<AdminMediaPicker",
       "<AdminPublicationFields",
+      "<AdminJsonListField",
+      "badge:",
     ],
-    label: "content rich editor primitives",
+    label: "content rich editor primitives and completion status",
+  },
+  {
+    file: "apps/web/src/components/admin-structured-content-editor.tsx",
+    fragments: [
+      "mediaOptions",
+      "Choose from Media Library",
+      "Add from Media Library",
+      "admin-block-media-preview",
+      "admin-block-gallery-editor",
+    ],
+    label: "structured content media-library integration",
+  },
+  {
+    file: "apps/web/src/components/admin-editor-tabs.tsx",
+    fragments: [
+      "badge?: string",
+      "admin-editor-tab__badge",
+    ],
+    label: "editor tab completion badge contract",
+  },
+  {
+    file: "apps/web/src/app/admin/packages/[id]/page.tsx",
+    fragments: [
+      "pkg.destinations.length",
+      "pkg.itinerary.length",
+      "pkg.heroMediaId ? \"Ready\" : \"Missing\"",
+    ],
+    label: "package completion badge coverage",
   },
   {
     file: "apps/web/src/app/admin/faq/new/page.tsx",
