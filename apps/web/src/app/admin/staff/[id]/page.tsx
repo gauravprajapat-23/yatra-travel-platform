@@ -97,6 +97,12 @@ export default async function StaffDetailPage({
 
   const targetUserId = user.id;
   const isSelf = targetUserId === session.userId;
+  const actorIsSuperAdmin = session.roles.includes("SUPER_ADMIN");
+  const targetIsSuperAdmin = currentRoles.includes("SUPER_ADMIN");
+  const canManageTarget = actorIsSuperAdmin || !targetIsSuperAdmin;
+  const roleOptions = actorIsSuperAdmin
+    ? adminRoleKeys
+    : adminRoleKeys.filter((role) => role !== "SUPER_ADMIN");
 
   async function revokeSessions() {
     "use server";
@@ -368,6 +374,7 @@ export default async function StaffDetailPage({
           <section className="admin-panel admin-detail-card">
             <h2>Roles & Status</h2>
 
+            {canManageTarget ? (
             <form action={saveAccess}>
               <AdminFormGrid columns={1}>
                 <AdminField label="Account status" htmlFor="staffStatus" required>
@@ -386,7 +393,7 @@ export default async function StaffDetailPage({
               </AdminFormGrid>
 
               <div className="admin-checkbox-grid">
-                {adminRoleKeys.map((role) => (
+                {roleOptions.map((role) => (
                   <AdminCheckbox
                     key={role}
                     name="roles"
@@ -409,6 +416,9 @@ export default async function StaffDetailPage({
                 pendingLabel="Saving Access…"
               />
             </form>
+            ) : (
+              <p>Only a SUPER ADMIN can change another SUPER ADMIN account.</p>
+            )}
           </section>
         ) : null}
 
@@ -453,7 +463,7 @@ export default async function StaffDetailPage({
               </table>
             )}
 
-            {!isSelf && activeSessions > 0 ? (
+            {canManageTarget && !isSelf && activeSessions > 0 ? (
               <AdminDangerZone
                 title="Revoke Active Sessions"
                 description="Use this when access should be terminated immediately on every active device."
