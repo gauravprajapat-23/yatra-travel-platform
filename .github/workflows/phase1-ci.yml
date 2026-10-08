@@ -88,6 +88,9 @@ jobs:
       - name: Check readiness script syntax
         run: node --check scripts/verify-production-readiness.mjs
 
+      - name: Payment runtime safety certification
+        run: npm run verify:payment-runtime
+
       - name: Production build
         run: npm run build
 
