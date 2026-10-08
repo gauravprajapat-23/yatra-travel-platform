@@ -87,24 +87,32 @@ function toPackageBookingDto(booking: {
 export async function createGuestPackageBooking(
   input: CreateGuestPackageBookingInput,
 ) {
+  const customerUserId = input.customerUserId ?? null;
+  const guestName = customerUserId ? null : input.guestName ?? null;
+  const guestEmail = customerUserId ? null : input.guestEmail ?? null;
+
+  if (!customerUserId && (!guestName || !guestEmail)) {
+    throw new Error("Guest booking requires name and email.");
+  }
+
   assertBookingCustomerIdentity(
-    input.customerUserId
-      ? { customerUserId: input.customerUserId }
+    customerUserId
+      ? { customerUserId }
       : {
-          guestName: input.guestName,
-          guestEmail: input.guestEmail,
+          guestName: guestName!,
+          guestEmail: guestEmail!,
         },
   );
 
-  const fingerprint = input.customerUserId
+  const fingerprint = customerUserId
     ? createCustomerBookingRequestFingerprint({
         quoteId: input.quoteId,
-        customerUserId: input.customerUserId,
+        customerUserId,
       })
     : createBookingRequestFingerprint({
         quoteId: input.quoteId,
-        guestName: input.guestName,
-        guestEmail: input.guestEmail,
+        guestName: guestName!,
+        guestEmail: guestEmail!,
       });
 
   const db = getDb();
@@ -280,11 +288,11 @@ export async function createGuestPackageBooking(
             travellers: quote.travellers,
             vehicleCount: quote.vehicleCount,
             travelStartAt: quote.travelStartAt,
-            customerUserId: input.customerUserId ?? null,
-            guestName: input.customerUserId ? null : input.guestName.trim(),
-            guestEmail: input.customerUserId
+            customerUserId,
+            guestName: customerUserId ? null : guestName!.trim(),
+            guestEmail: customerUserId
               ? null
-              : input.guestEmail.trim().toLowerCase(),
+              : guestEmail!.trim().toLowerCase(),
             currency: quote.currency,
             subtotalMinor: quote.subtotalMinor,
             discountMinor: quote.discountMinor,
