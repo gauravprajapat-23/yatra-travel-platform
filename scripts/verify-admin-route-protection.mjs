@@ -11,6 +11,7 @@ const protectedRoutes = [
   "/admin/drivers",
   "/admin/reports",
   "/admin/payments",
+  "/admin/notifications",
   "/admin/customers",
   "/admin/leads",
   "/admin/staff",
