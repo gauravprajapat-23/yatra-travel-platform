@@ -11,6 +11,7 @@ import { AdminMoneyField } from "@/components/admin-money-field";
 import { AdminCurrencyField } from "@/components/admin-currency-field";
 import { AdminDateTimeRange } from "@/components/admin-date-time-range";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDateTimeLocal, parseIstDateTimeLocal } from "@/lib/admin/datetime";
 import {
   isPricingBasis,
   isPricingRuleStatus,
@@ -51,23 +52,6 @@ function parseOptionalInt(value: FormDataEntryValue | null): number | null {
   const parsed = Number(text);
   if (!Number.isInteger(parsed)) throw new Error("Expected a whole number.");
   return parsed;
-}
-
-function parseOptionalDate(value: FormDataEntryValue | null): Date | null {
-  const text = String(value ?? "").trim();
-  if (!text) return null;
-  const parsed = new Date(text);
-  if (Number.isNaN(parsed.getTime())) throw new Error("Invalid date.");
-  return parsed;
-}
-
-function localDateTime(value: Date | null): string {
-  if (!value) return "";
-  return new Date(
-    value.getTime() - value.getTimezoneOffset() * 60_000,
-  )
-    .toISOString()
-    .slice(0, 16);
 }
 
 export default async function PricingRuleDetailPage({
@@ -139,8 +123,8 @@ export default async function PricingRuleDetailPage({
       destinationKey: String(formData.get("destinationKey") ?? ""),
       priority: Number(formData.get("priority") ?? 0),
       status,
-      activeFrom: parseOptionalDate(formData.get("activeFrom")),
-      activeTo: parseOptionalDate(formData.get("activeTo")),
+      activeFrom: parseIstDateTimeLocal(formData.get("activeFrom")),
+      activeTo: parseIstDateTimeLocal(formData.get("activeTo")),
       actorUserId: currentSession.userId,
     });
 
@@ -208,8 +192,8 @@ export default async function PricingRuleDetailPage({
           <section className="admin-panel admin-detail-card">
             <h2>Rule Details</h2>
             <form action={save}>
-              <input type="hidden" name="activeFrom" value={localDateTime(rule.activeFrom)}/>
-              <input type="hidden" name="activeTo" value={localDateTime(rule.activeTo)}/>
+              <input type="hidden" name="activeFrom" value={formatIstDateTimeLocal(rule.activeFrom)}/>
+              <input type="hidden" name="activeTo" value={formatIstDateTimeLocal(rule.activeTo)}/>
               <input type="hidden" name="status" value={rule.status}/>
 
               <AdminFormGrid columns={2}>
@@ -383,8 +367,8 @@ export default async function PricingRuleDetailPage({
                   endLabel="Active to"
                   startId="activeFrom"
                   endId="activeTo"
-                  defaultStart={localDateTime(rule.activeFrom)}
-                  defaultEnd={localDateTime(rule.activeTo)}
+                  defaultStart={formatIstDateTimeLocal(rule.activeFrom)}
+                  defaultEnd={formatIstDateTimeLocal(rule.activeTo)}
                   startHint="Leave blank to allow immediate activation."
                   endHint="Optional expiry for this pricing rule."
                 />
