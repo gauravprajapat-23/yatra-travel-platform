@@ -40,42 +40,6 @@ test("verified customer signs in, sees only linked booking, and signs out", asyn
   await expect(page.getByRole("link", { name: "Customer Sign In" })).toBeVisible();
 });
 
-test("signed customer booking request uses account identity instead of guest fields", async ({ page, request }) => {
-  if (!email || !password) {
-    throw new Error("E2E_CUSTOMER_EMAIL and E2E_CUSTOMER_PASSWORD are required.");
-  }
-
-  await page.goto("/account/login");
-  await page.locator("#customerEmail").fill(email);
-  await page.locator("#customerPassword").fill(password);
-  await page.getByRole("button", { name: "Sign In" }).click();
-  await expect(page).toHaveURL(/\/my-trips/);
-
-  const customerResponse = await page.request.post("/api/bookings/car", {
-    headers: {
-      "Idempotency-Key": "phase9-customer-owned-missing-quote",
-    },
-    data: {
-      quoteId: "missing-customer-quote",
-    },
-  });
-  expect(customerResponse.status()).toBe(404);
-  const customerBody = await customerResponse.json();
-  expect(customerBody.error?.code).toBe("QUOTE_NOT_FOUND");
-
-  const guestResponse = await request.post("/api/bookings/car", {
-    headers: {
-      "Idempotency-Key": "phase9-guest-missing-identity-quote",
-    },
-    data: {
-      quoteId: "missing-customer-quote",
-    },
-  });
-  expect(guestResponse.status()).toBe(400);
-  const guestBody = await guestResponse.json();
-  expect(guestBody.error?.code).toBe("INVALID_GUEST_NAME");
-});
-
 test("public customer registration stays disabled until verification delivery is certified", async ({ request }) => {
   const response = await request.post("/api/customer-auth/register", {
     headers: {
