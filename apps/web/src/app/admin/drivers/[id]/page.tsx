@@ -166,18 +166,21 @@ export default async function DriverDetailPage({
             label: "Overview",
             description: "Status & readiness",
             badge: driver.status.replaceAll("_", " "),
+            badgeTone: driver.status === "ACTIVE" ? "success" : "neutral",
           },
           {
             key: "details",
             label: "Driver Details",
             description: "Profile & qualifications",
             badge: `${driver.qualifications.length} classes`,
+            badgeTone: driver.qualifications.length > 0 ? "success" : "warning",
           },
           {
             key: "availability",
             label: "Availability",
             description: "Time blocks",
             badge: String(driver.availability.length),
+            badgeTone: driver.availability.length === 0 ? "success" : "warning",
           },
         ]}
       />
