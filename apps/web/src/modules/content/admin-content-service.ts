@@ -1,4 +1,5 @@
 import { getDb, Prisma } from "@yatra/db/client";
+import { parseIstDateTimeLocal } from "@/lib/admin/datetime";
 
 export const adminContentTypes = ["cms", "blog", "destination"] as const;
 export type AdminContentType = (typeof adminContentTypes)[number];
@@ -47,7 +48,7 @@ export async function updateAdminContent(input: {
 
   const scheduledFor =
     input.status === "SCHEDULED"
-      ? new Date(input.scheduledFor)
+      ? parseIstDateTimeLocal(input.scheduledFor)
       : null;
 
   if (
