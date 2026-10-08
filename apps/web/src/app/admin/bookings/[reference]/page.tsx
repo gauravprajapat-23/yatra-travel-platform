@@ -667,10 +667,43 @@ export default async function BookingDetailPage({
         basePath={`/admin/bookings/${booking.reference}`}
         active={activeTab}
         tabs={[
-          { key: "overview", label: "Overview", description: "Trip & customer" },
-          { key: "payments", label: "Payments", description: "Captured & refunds" },
-          { key: "operations", label: "Operations", description: "Status & assignment" },
-          { key: "timeline", label: "Timeline", description: "Audit history" },
+          {
+            key: "overview",
+            label: "Overview",
+            description: "Trip & customer",
+            badge: booking.status.replaceAll("_", " "),
+          },
+          {
+            key: "payments",
+            label: "Payments",
+            description: "Captured & refunds",
+            badge: String(booking.paymentIntents.length),
+            badgeTone:
+              booking.paymentIntents.length > 0 ? "success" : "neutral",
+          },
+          {
+            key: "operations",
+            label: "Operations",
+            description: "Status & assignment",
+            badge:
+              booking.type === "CAR"
+                ? booking.assignment
+                  ? "Assigned"
+                  : "Unassigned"
+                : "Package",
+            badgeTone:
+              booking.type === "CAR"
+                ? booking.assignment
+                  ? "success"
+                  : "warning"
+                : "neutral",
+          },
+          {
+            key: "timeline",
+            label: "Timeline",
+            description: "Audit history",
+            badge: String(timelineEvents.length),
+          },
         ]}
       />
 
