@@ -36,8 +36,9 @@ test("notification monitor masks destinations and exposes delivery outcomes", as
   await expect(page.getByText("phase10-monitor@yatra.test")).toHaveCount(0);
   await expect(page.getByText(/p\*+@yatra\.test/).first()).toBeVisible();
 
-  await expect(page.getByText("SENT", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("FAILED", { exact: true }).first()).toBeVisible();
+  const table = page.locator("table");
+  await expect(table.getByText("SENT", { exact: true })).toBeVisible();
+  await expect(table.getByText("FAILED", { exact: true })).toBeVisible();
   await expect(
     page.getByText(/E2E provider timeout for monitoring certification/),
   ).toBeVisible();
