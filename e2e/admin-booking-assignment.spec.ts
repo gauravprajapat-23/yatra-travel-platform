@@ -33,6 +33,20 @@ test("operations admin assigns an available vehicle and driver", async ({ page }
     page.getByRole("heading", { name: "Vehicle & Driver Assignment" }),
   ).toBeVisible();
 
+  await expect(
+    page.getByText(/E2E Busy Vehicle.*Overlaps booking YAT-E2EBLOCK/),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/E2E Busy Driver.*Overlaps booking YAT-E2EBLOCK/),
+  ).toBeVisible();
+
+  await expect(
+    page.locator('#bookingVehicle option', { hasText: "E2E Busy Vehicle" }),
+  ).toHaveCount(0);
+  await expect(
+    page.locator('#bookingDriver option', { hasText: "E2E Busy Driver" }),
+  ).toHaveCount(0);
+
   await page.locator("#bookingVehicle").selectOption({
     label: /E2E Operations Vehicle/,
   });
