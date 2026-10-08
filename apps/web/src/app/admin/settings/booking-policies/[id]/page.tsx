@@ -14,7 +14,7 @@ import {
   AdminFormSection,
 } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
-import { formatIstDateTimeLocal, parseIstDateTimeLocal } from "@/lib/admin/datetime";
+import { formatIstDateTime, formatIstDateTimeLocal, parseIstDateTimeLocal } from "@/lib/admin/datetime";
 import {
   activateBookingPolicy,
   retireBookingPolicy,
@@ -168,10 +168,10 @@ export default async function BookingPolicyDetailPage({
           <dl>
             <div><dt>Code</dt><dd>{policy.code}</dd></div>
             <div><dt>Version</dt><dd>{policy.version}</dd></div>
-            <div><dt>Effective from</dt><dd>{policy.effectiveFrom?.toLocaleString("en-IN") ?? "Immediate"}</dd></div>
-            <div><dt>Effective to</dt><dd>{policy.effectiveTo?.toLocaleString("en-IN") ?? "No expiry"}</dd></div>
-            <div><dt>Activated</dt><dd>{policy.activatedAt?.toLocaleString("en-IN") ?? "—"}</dd></div>
-            <div><dt>Retired</dt><dd>{policy.retiredAt?.toLocaleString("en-IN") ?? "—"}</dd></div>
+            <div><dt>Effective from</dt><dd>{policy.effectiveFrom ? formatIstDateTime(policy.effectiveFrom) : "Immediate"}</dd></div>
+            <div><dt>Effective to</dt><dd>{policy.effectiveTo ? formatIstDateTime(policy.effectiveTo) : "No expiry"}</dd></div>
+            <div><dt>Activated</dt><dd>{policy.activatedAt ? formatIstDateTime(policy.activatedAt) : "—"}</dd></div>
+            <div><dt>Retired</dt><dd>{policy.retiredAt ? formatIstDateTime(policy.retiredAt) : "—"}</dd></div>
           </dl>
 
           {policy.status === "DRAFT" ? (
