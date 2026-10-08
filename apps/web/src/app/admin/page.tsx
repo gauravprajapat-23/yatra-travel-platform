@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getDb } from "@yatra/db/client";
 import { AdminMetric, AdminShell, StatusPill } from "@/components/admin-shell";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDate } from "@/lib/admin/datetime";
 
 export const dynamic = "force-dynamic";
 
@@ -155,7 +156,7 @@ export default async function AdminDashboardPage() {
     <AdminShell
       active="Dashboard"
       title="Dashboard"
-      subtitle={`Live operations snapshot · ${now.toLocaleDateString("en-IN")}`}
+      subtitle={`Live operations snapshot · ${formatIstDate(now)}`}
     >
       <div className="admin-metric-grid">
         <AdminMetric label="Total Bookings" value={totalBookings.toString()} meta="car + package" tone="green"/>
