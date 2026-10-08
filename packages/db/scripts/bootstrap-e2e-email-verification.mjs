@@ -8,13 +8,14 @@ const scrypt = promisify(scryptCallback);
 
 const connectionString = process.env.DATABASE_URL;
 const email = (process.env.E2E_VERIFY_EMAIL ?? "phase10-verify@yatra.test").trim().toLowerCase();
-const password = process.env.E2E_VERIFY_PASSWORD ?? "Phase10-Verify-Only-2026!";
+const password = process.env.E2E_CUSTOMER_PASSWORD;
 const name = process.env.E2E_VERIFY_NAME ?? "Phase 10 Verify Customer";
-const rawToken =
-  process.env.E2E_VERIFY_TOKEN ??
-  "phase10_email_verification_token_2026_abcdef1234567890";
+const rawToken = createHash("sha256")
+  .update("phase10-email-verification-e2e")
+  .digest("base64url");
 
 if (!connectionString) throw new Error("DATABASE_URL is required.");
+if (!password) throw new Error("E2E_CUSTOMER_PASSWORD is required.");
 
 function hashToken(token) {
   return createHash("sha256")
