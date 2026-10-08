@@ -27,6 +27,7 @@
     "verify:admin-authenticated": "node scripts/verify-admin-authenticated-runtime.mjs",
     "verify:admin-accessibility": "node scripts/verify-admin-accessibility-runtime.mjs",
     "verify:admin-forms": "node scripts/verify-admin-form-system.mjs",
-    "verify:staff-invites": "node scripts/verify-staff-invite-runtime.mjs"
+    "verify:staff-invites": "node scripts/verify-staff-invite-runtime.mjs",
+    "verify:payment-runtime": "node scripts/verify-payment-runtime-safety.mjs"
   }
 }
