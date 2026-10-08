@@ -2567,7 +2567,8 @@ input {
 /* === Generated-reference admin system === */
 body:has(.admin-root) .site-header,
 body:has(.admin-root) .site-footer,
-body:has(.admin-root) .skip-link {
+body:has(.admin-invite-page) .site-header,
+body:has(.admin-invite-page) .site-footer {
   display: none;
 }
 
