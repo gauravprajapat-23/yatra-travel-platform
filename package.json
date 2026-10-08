@@ -28,6 +28,10 @@
     "verify:admin-accessibility": "node scripts/verify-admin-accessibility-runtime.mjs",
     "verify:admin-forms": "node scripts/verify-admin-form-system.mjs",
     "verify:staff-invites": "node scripts/verify-staff-invite-runtime.mjs",
-    "verify:payment-runtime": "node scripts/verify-payment-runtime-safety.mjs"
+    "verify:payment-runtime": "node scripts/verify-payment-runtime-safety.mjs",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
   }
 }
