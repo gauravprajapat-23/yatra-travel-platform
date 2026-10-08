@@ -225,13 +225,12 @@ export async function resetCustomerPasswordWithToken(input: {
   return db.$transaction(async (tx) => {
     const token = await tx.authActionToken.findUnique({
       where: { tokenHash },
-      select: {
-        id: true,
-        userId: true,
-        purpose: true,
-        expiresAt: true,
-        consumedAt: true,
-        revokedAt: true,
+      include: {
+        user: {
+          select: {
+            status: true,
+          },
+        },
       },
     });
 
@@ -240,7 +239,8 @@ export async function resetCustomerPasswordWithToken(input: {
       token.purpose !== "PASSWORD_RESET" ||
       token.consumedAt ||
       token.revokedAt ||
-      token.expiresAt <= now
+      token.expiresAt <= now ||
+      token.user.status !== "ACTIVE"
     ) {
       return null;
     }
