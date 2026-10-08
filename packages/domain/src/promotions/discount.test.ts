@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   assertPromotionEligible,
+  assertPromotionRule,
   calculatePromotionDiscount,
   type PromotionRule,
 } from "./discount";
@@ -188,5 +189,64 @@ test("promotion rule rejects mixed discount modes", () => {
         },
       ),
     /cannot also define a fixed amount/i,
+  );
+});
+
+
+test("static rule validation rejects invalid window and minimum", () => {
+  assert.throws(
+    () =>
+      assertPromotionRule({
+        ...baseRule,
+        activeFrom: new Date("2026-10-10T00:00:00.000Z"),
+        activeTo: new Date("2026-10-09T00:00:00.000Z"),
+      }),
+    /active window is invalid/i,
+  );
+
+  assert.throws(
+    () =>
+      assertPromotionRule({
+        ...baseRule,
+        minSubtotalMinor: -1n,
+      }),
+    /minimum subtotal cannot be negative/i,
+  );
+});
+
+test("per-customer limit requires history and is enforced", () => {
+  const rule: PromotionRule = {
+    ...baseRule,
+    perCustomerLimit: 2,
+  };
+
+  assert.throws(
+    () =>
+      assertPromotionEligible(rule, {
+        bookingType: "CAR",
+        subtotalMinor: 10_000n,
+        currency: "INR",
+      }),
+    /requires customer redemption history/i,
+  );
+
+  assert.throws(
+    () =>
+      assertPromotionEligible(rule, {
+        bookingType: "CAR",
+        subtotalMinor: 10_000n,
+        currency: "INR",
+        customerRedemptionCount: 2,
+      }),
+    /per-customer redemption limit has been reached/i,
+  );
+
+  assert.doesNotThrow(() =>
+    assertPromotionEligible(rule, {
+      bookingType: "CAR",
+      subtotalMinor: 10_000n,
+      currency: "INR",
+      customerRedemptionCount: 1,
+    }),
   );
 });
