@@ -33,6 +33,10 @@ function roleLabel(value: string): string {
 export default async function NewStaffPage() {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "staff.manage")) redirect("/admin");
+  const canGrantSuperAdmin = session.roles.includes("SUPER_ADMIN");
+  const roleOptions = canGrantSuperAdmin
+    ? adminRoleKeys
+    : adminRoleKeys.filter((role) => role !== "SUPER_ADMIN");
 
   async function invite(
     _previousState: AdminActionState,
@@ -185,7 +189,7 @@ export default async function NewStaffPage() {
             description="Assign only the permissions needed for this staff member's responsibilities."
           >
             <AdminCheckboxGrid>
-              {adminRoleKeys.map((role) => (
+              {roleOptions.map((role) => (
                 <AdminCheckbox
                   key={role}
                   name="roles"
@@ -197,8 +201,9 @@ export default async function NewStaffPage() {
             </AdminCheckboxGrid>
 
             <AdminFormCallout tone="warning" title="Least privilege">
-              Avoid SUPER ADMIN unless the user must manage every administrative
-              permission and critical account controls.
+              {canGrantSuperAdmin
+                ? "Avoid SUPER ADMIN unless the user must manage every administrative permission and critical account controls."
+                : "Only a SUPER ADMIN can grant SUPER ADMIN access. Assign the narrowest role needed for this staff member."}
             </AdminFormCallout>
           </AdminFormSection>
 
