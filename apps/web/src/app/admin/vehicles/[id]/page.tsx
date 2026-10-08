@@ -11,6 +11,7 @@ import { AdminConfirmSubmitButton } from "@/components/admin-confirm-submit-butt
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { AdminDateTimeRange } from "@/components/admin-date-time-range";
 import { requireAdminSession } from "@/lib/auth/session";
+import { parseIstDateTimeLocal } from "@/lib/admin/datetime";
 import {
   addVehicleAvailabilityBlock,
   attachVehicleMedia,
@@ -144,8 +145,8 @@ export default async function VehicleDetailPage({
 
     await addVehicleAvailabilityBlock({
       vehicleId,
-      startsAt: new Date(String(formData.get("startsAt") ?? "")),
-      endsAt: new Date(String(formData.get("endsAt") ?? "")),
+      startsAt: parseIstDateTimeLocal(formData.get("startsAt")) ?? new Date(NaN),
+      endsAt: parseIstDateTimeLocal(formData.get("endsAt")) ?? new Date(NaN),
       reason: String(formData.get("reason") ?? ""),
       actorUserId: currentSession.userId,
     });
