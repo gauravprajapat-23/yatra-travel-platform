@@ -5,6 +5,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage } from "@/components/admin-table-page";
 import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDate, formatIstDateTime } from "@/lib/admin/datetime";
 
 export const dynamic = "force-dynamic";
 
@@ -170,7 +171,7 @@ export default async function AuditPage({
   ]);
 
   const rows = events.map((event) => [
-    event.createdAt.toLocaleString("en-IN"),
+    formatIstDateTime(event.createdAt),
     event.actor?.name ??
       event.actor?.email ??
       (event.actorUserId ? "Known user" : "System"),
@@ -222,7 +223,7 @@ export default async function AuditPage({
         },
         {
           label: "Latest Event",
-          value: events[0]?.createdAt.toLocaleDateString("en-IN") ?? "—",
+          value: events[0]?.createdAt ? formatIstDate(events[0].createdAt) : "—",
           meta: "current results",
           tone: "green",
         },
