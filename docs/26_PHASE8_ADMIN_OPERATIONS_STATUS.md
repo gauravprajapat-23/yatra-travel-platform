@@ -1,6 +1,6 @@
 # Phase 8 — Admin Operations & Dispatch Status
 
-Status: IN PROGRESS
+Status: CERTIFICATION PENDING FINAL MAINTENANCE-ALERT CI
 
 Updated: 2026-10-08
 
@@ -73,20 +73,20 @@ Assignment writes continue to use the existing server-authoritative assignment s
 ### Dispatch
 - [x] Add resource-specific schedule views for vehicles and drivers
 - [x] Add explicit overlap/conflict indicators before assignment submission
-- [ ] Add maintenance/document-expiry operational warnings when corresponding source data exists
+- [x] Surface existing vehicle MAINTENANCE status in Dispatch; document-expiry warnings remain deferred because no vehicle-document model exists
 - [x] Add configurable near-term departure alerts
-- [ ] Add package/tour operations handoff once package departure inventory exists
+- [→] Package/tour departure handoff deferred to Phase 13 because no departure/inventory model exists yet
 
 ### Dashboard and reporting
 - [x] Add trend charts and date-aware operational KPIs
 - [x] Add revenue/refund/booking trend views
 - [x] Add route and package performance summaries
-- [ ] Add CSV/Excel exports where operationally useful
+- [x] Add permission-gated CSV exports for booking operations and management reports
 
 ### Fleet operations
 - [x] Improve availability calendar UX
-- [ ] Add service/maintenance lifecycle if introduced in the data model
-- [ ] Add document-compliance lifecycle if introduced in the data model
+- [→] Full service/maintenance lifecycle deferred to Phase 12; current schema exposes status only
+- [→] Vehicle document-compliance lifecycle deferred to Phase 12 because no corresponding model exists
 
 ### Admin QA
 - [x] Admin runtime + Playwright certification covers unauthenticated protection, authenticated login/logout, RBAC, protected routes, booking assignment/conflicts, booking lifecycle transitions, refund-control permissions and mobile operational views against migrated CI Postgres
@@ -94,6 +94,15 @@ Assignment writes continue to use the existing server-authoritative assignment s
 - [x] Verify keyboard/focus behavior for admin login skip navigation and labeled credential controls
 - [x] Permission/audit certification covers role-permission matrix tests, login success/failure audit persistence, RBAC browser checks, lifecycle-validated booking mutations and assignment audit/timeline behavior
 - [x] Final production build / CI certification for the current Phase 8 QA baseline — Application CI run 37739171347 PASS
+
+## Deferred by data-model boundary
+
+These items are intentionally not blockers for Phase 8 certification because their source models do not exist yet:
+
+- Vehicle service/maintenance history and compliance documents → Phase 12 Fleet Operations Upgrade.
+- Package departure dates, capacity/inventory and operations handoff → Phase 13 Package Inventory & Departure Management.
+
+Phase 8 must not invent placeholder tables for these future domains.
 
 ## Phase 8 acceptance rule
 
