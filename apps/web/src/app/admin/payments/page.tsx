@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getDb, Prisma } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
+import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -375,27 +376,25 @@ export default async function PaymentsPage({
       ]}
       toolbar={
         <form className="admin-table-query" method="get">
-          <label>
-            <span>Search</span>
+          <AdminField label="Search" htmlFor="paymentSearch">
             <input
+              id="paymentSearch"
               name="q"
               defaultValue={q}
               placeholder="Provider ID, booking, customer or email"
             />
-          </label>
+          </AdminField>
 
-          <label>
-            <span>Type</span>
-            <select name="type" defaultValue={type}>
+          <AdminField label="Type" htmlFor="paymentType">
+            <select id="paymentType" name="type" defaultValue={type}>
               <option value="ALL">Payments + refunds</option>
               <option value="PAYMENT">Payments</option>
               <option value="REFUND">Refunds</option>
             </select>
-          </label>
+          </AdminField>
 
-          <label>
-            <span>Status</span>
-            <select name="status" defaultValue={status}>
+          <AdminField label="Status" htmlFor="paymentStatus">
+            <select id="paymentStatus" name="status" defaultValue={status}>
               <option value="">All statuses</option>
               {allStatuses.map((item) => (
                 <option key={item} value={item}>
@@ -403,7 +402,7 @@ export default async function PaymentsPage({
                 </option>
               ))}
             </select>
-          </label>
+          </AdminField>
 
           <button className="admin-primary-button" type="submit">
             Apply
