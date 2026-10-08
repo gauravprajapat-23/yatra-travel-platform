@@ -290,8 +290,10 @@ export default async function AdminContentEditorPage({
     }
   }
 
-  const hasBody =
-    Array.isArray(content.body) && content.body.length > 0;
+  const bodyBlockCount = Array.isArray(content.body)
+    ? content.body.length
+    : 0;
+  const hasBody = bodyBlockCount > 0;
   const seoReady = Boolean(content.seoTitle && content.seoDescription);
 
   editorTabs.push(
@@ -299,7 +301,7 @@ export default async function AdminContentEditorPage({
       key: "content",
       label: "Content",
       description: "Structured body",
-      badge: hasBody ? `${content.body.length} blocks` : "Empty",
+      badge: hasBody ? `${bodyBlockCount} blocks` : "Empty",
       badgeTone: hasBody ? "success" : "warning",
     },
     {
