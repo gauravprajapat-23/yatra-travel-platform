@@ -19,8 +19,14 @@ export function CustomerEmailVerification() {
     if (started.current) return;
     started.current = true;
 
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token")?.trim() ?? "";
+    const fragmentParams = new URLSearchParams(
+      window.location.hash.replace(/^#/, ""),
+    );
+    const queryParams = new URLSearchParams(window.location.search);
+    const token =
+      fragmentParams.get("token")?.trim() ??
+      queryParams.get("token")?.trim() ??
+      "";
 
     window.history.replaceState({}, "", window.location.pathname);
 
