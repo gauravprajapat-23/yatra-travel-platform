@@ -9,8 +9,8 @@ test("operations admin sees only allowed navigation and is denied restricted rou
   }
 
   await page.goto("/admin/login");
-  await page.getByLabel(/email/i).fill(email);
-  await page.getByLabel(/password/i).fill(password);
+  await page.locator("#adminEmail").fill(email);
+  await page.locator("#adminPassword").fill(password);
   await page.getByRole("button", { name: /sign in/i }).click();
   await expect(page).toHaveURL(/\/admin(?:$|\?)/);
 
