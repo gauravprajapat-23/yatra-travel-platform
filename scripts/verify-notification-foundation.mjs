@@ -186,8 +186,10 @@ requireFragments(
     "getEmailNotificationProvider",
     "sendAuthActionNotification",
     'purpose: "EMAIL_VERIFICATION"',
+    "verificationDeliveryPending: true",
+    "Request a new verification link to continue.",
   ],
-  "registration remains gated and requires verification delivery",
+  "registration remains gated and recoverable after delivery failure",
 );
 
 requireFragments(
