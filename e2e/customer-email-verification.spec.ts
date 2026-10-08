@@ -14,7 +14,7 @@ test("unverified customer consumes one-time email token, signs in, and cannot re
     throw new Error("E2E_VERIFY_EMAIL and E2E_CUSTOMER_PASSWORD are required.");
   }
 
-  await page.goto(`/account/verify-email?token=${encodeURIComponent(token)}`);
+  await page.goto(`/account/verify-email#token=${encodeURIComponent(token)}`);
 
   await expect(page).toHaveURL(/\/account\/verify-email$/);
   await expect(
@@ -41,7 +41,7 @@ test("unverified customer consumes one-time email token, signs in, and cannot re
   await expect(page).toHaveURL(/\/my-trips/);
 
   await page.context().clearCookies();
-  await page.goto(`/account/verify-email?token=${encodeURIComponent(token)}`);
+  await page.goto(`/account/verify-email#token=${encodeURIComponent(token)}`);
   await expect(page).toHaveURL(/\/account\/verify-email$/);
   await expect(
     page.getByRole("heading", { name: "Verification failed." }),
