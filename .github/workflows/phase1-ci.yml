@@ -118,6 +118,9 @@ jobs:
       - name: Customer auth safety certification
         run: npm run verify:customer-auth
 
+      - name: Notification foundation certification
+        run: npm run verify:notifications
+
       - name: Production build
         run: npm run build
 
