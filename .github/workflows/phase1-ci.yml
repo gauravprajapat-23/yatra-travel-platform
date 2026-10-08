@@ -104,6 +104,30 @@ jobs:
       - name: Production build
         run: npm run build
 
+      - name: Admin form-system certification
+        run: npm run verify:admin-forms
+
+      - name: Admin route protection certification
+        shell: bash
+        run: |
+          npm run start -w @yatra/web -- --hostname 127.0.0.1 --port 3000 > /tmp/yatra-next.log 2>&1 &
+          APP_PID=$!
+          trap 'kill $APP_PID || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/admin/login > /dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              cat /tmp/yatra-next.log
+              exit 1
+            fi
+            sleep 1
+          done
+          ADMIN_SMOKE_BASE_URL=http://127.0.0.1:3000 npm run verify:admin-routes
+          ADMIN_SMOKE_BASE_URL=http://127.0.0.1:3000 npm run verify:admin-authenticated
+          ADMIN_SMOKE_BASE_URL=http://127.0.0.1:3000 npm run verify:admin-accessibility
+          ADMIN_SMOKE_BASE_URL=http://127.0.0.1:3000 npm run verify:staff-invites
+
       - name: Install Playwright Chromium
         run: npx playwright install chromium
 
@@ -128,26 +152,3 @@ jobs:
           done
           npm run test:e2e
 
-      - name: Admin form-system certification
-        run: npm run verify:admin-forms
-
-      - name: Admin route protection certification
-        shell: bash
-        run: |
-          npm run start -w @yatra/web -- --hostname 127.0.0.1 --port 3000 > /tmp/yatra-next.log 2>&1 &
-          APP_PID=$!
-          trap 'kill $APP_PID || true' EXIT
-          for attempt in {1..30}; do
-            if curl --fail --silent http://127.0.0.1:3000/admin/login > /dev/null; then
-              break
-            fi
-            if [ "$attempt" -eq 30 ]; then
-              cat /tmp/yatra-next.log
-              exit 1
-            fi
-            sleep 1
-          done
-          ADMIN_SMOKE_BASE_URL=http://127.0.0.1:3000 npm run verify:admin-routes
-          ADMIN_SMOKE_BASE_URL=http://127.0.0.1:3000 npm run verify:admin-authenticated
-          ADMIN_SMOKE_BASE_URL=http://127.0.0.1:3000 npm run verify:admin-accessibility
-          ADMIN_SMOKE_BASE_URL=http://127.0.0.1:3000 npm run verify:staff-invites
