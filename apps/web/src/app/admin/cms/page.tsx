@@ -5,6 +5,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
 import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDate } from "@/lib/admin/datetime";
 import { contentStatuses } from "@/modules/content/admin-content-service";
 
 export const dynamic = "force-dynamic";
@@ -92,8 +93,8 @@ export default async function CmsPage({
     <StatusPill key={pageRecord.id} tone={tone(pageRecord.status)}>
       {pageRecord.status.replaceAll("_", " ")}
     </StatusPill>,
-    pageRecord.publishedAt?.toLocaleDateString("en-IN") ?? "—",
-    pageRecord.updatedAt.toLocaleDateString("en-IN"),
+    pageRecord.publishedAt ? formatIstDate(pageRecord.publishedAt) : "—",
+    formatIstDate(pageRecord.updatedAt),
   ]);
 
   function pageHref(targetPage: number) {
