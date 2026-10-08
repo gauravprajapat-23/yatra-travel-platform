@@ -5,6 +5,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminMetric, AdminShell } from "@/components/admin-shell";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDate } from "@/lib/admin/datetime";
 
 export const dynamic = "force-dynamic";
 
@@ -418,7 +419,7 @@ export default async function ReportsPage({
       <section className="admin-panel">
         <div className="admin-panel-heading">
           <h2>14-Day Booking / Revenue Trend</h2>
-          <small>Daily activity in IST ending {trendEnd.toLocaleDateString("en-IN")}</small>
+          <small>Daily activity in IST ending {formatIstDate(trendEnd)}</small>
         </div>
         <div className="admin-report-trend">
           {trends.map((item) => (
