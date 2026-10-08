@@ -214,69 +214,6 @@ export async function verifyCustomerEmailWithToken(rawToken: string) {
 }
 
 
-export async function verifyCustomerEmailWithToken(rawToken: string) {
-  const db = getDb();
-  const tokenHash = hashAuthActionToken(rawToken);
-  const now = new Date();
-
-  return db.$transaction(async (tx) => {
-    const token = await tx.authActionToken.findUnique({
-      where: { tokenHash },
-      select: {
-        id: true,
-        userId: true,
-        purpose: true,
-        expiresAt: true,
-        consumedAt: true,
-        revokedAt: true,
-      },
-    });
-
-    if (
-      !token ||
-      token.purpose !== "EMAIL_VERIFICATION" ||
-      token.consumedAt ||
-      token.revokedAt ||
-      token.expiresAt <= now
-    ) {
-      return null;
-    }
-
-    const claimed = await tx.authActionToken.updateMany({
-      where: {
-        id: token.id,
-        purpose: "EMAIL_VERIFICATION",
-        consumedAt: null,
-        revokedAt: null,
-        expiresAt: { gt: now },
-      },
-      data: { consumedAt: now },
-    });
-
-    if (claimed.count !== 1) return null;
-
-    await tx.user.update({
-      where: { id: token.userId },
-      data: { emailVerifiedAt: now },
-    });
-
-    await tx.auditLog.create({
-      data: {
-        actorUserId: token.userId,
-        action: "CUSTOMER_EMAIL_VERIFIED",
-        entityType: "User",
-        entityId: token.userId,
-        metadata: { authActionTokenId: token.id },
-      },
-    });
-
-    return {
-      userId: token.userId,
-      verifiedAt: now,
-    };
-  });
-}
-
 export async function resetCustomerPasswordWithToken(input: {
   rawToken: string;
   passwordHash: string;
