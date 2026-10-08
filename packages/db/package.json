@@ -32,7 +32,8 @@
     "db:bootstrap:e2e-customer": "node scripts/bootstrap-e2e-customer.mjs",
     "db:bootstrap:e2e-email-verification": "node scripts/bootstrap-e2e-email-verification.mjs",
     "db:bootstrap:e2e-password-reset": "node scripts/bootstrap-e2e-password-reset.mjs",
-    "db:bootstrap:e2e-notifications": "node scripts/bootstrap-e2e-notification-deliveries.mjs"
+    "db:bootstrap:e2e-notifications": "node scripts/bootstrap-e2e-notification-deliveries.mjs",
+    "db:verify:promotions": "node scripts/verify-promotion-foundation.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
