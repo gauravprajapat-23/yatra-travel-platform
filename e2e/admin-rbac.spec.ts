@@ -11,6 +11,7 @@ test("operations admin sees only allowed navigation and is denied restricted rou
   await page.goto("/admin/login");
   await page.locator("#adminEmail").fill(email);
   await page.locator("#adminPassword").fill(password);
+
   const [loginResponse] = await Promise.all([
     page.waitForResponse(
       (response) =>
@@ -25,63 +26,38 @@ test("operations admin sees only allowed navigation and is denied restricted rou
       `Operations login failed with HTTP ${loginResponse.status()}: ${await loginResponse.text()}`,
     );
   }
+
   await expect(page).toHaveURL(/\/admin(?:$|\?)/);
 
   const sidebar = page.locator(".admin-sidebar nav");
 
-  for (const allowed of [
-    "Bookings",
-    "Dispatch",
-    "Fleet Management",
-    "Drivers & Staff",
+  for (const href of [
+    "/admin/bookings",
+    "/admin/dispatch",
+    "/admin/vehicles",
+    "/admin/drivers",
   ]) {
-    await expect(
-      sidebar.getByRole("link", { name: new RegExp(`\\b${allowed.replace(/[.*+?^$\{\}()|[\\]\\\\]/g, "\\\\  await expect(page.getByRole("link", { name: "Bookings" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Dispatch" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Fleet Management" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Drivers & Staff" })).toBeVisible();
-
-  for (const forbidden of [
-    "Payments",
-    "Staff / Roles",
-    "Reports",
-    "Audit Log",
-    "Settings",
-    "CMS Pages",
-  ]) {
-    await expect(page.getByRole("link", { name: forbidden })).toHaveCount(0);
-  }")}\\b`) }),
-    ).toBeVisible();
+    await expect(sidebar.locator(`a[href="${href}"]`)).toBeVisible();
   }
 
-  for (const forbidden of [
-    "Payments",
-    "Staff / Roles",
-    "Reports",
-    "Audit Log",
-    "Settings",
-    "CMS Pages",
+  for (const href of [
+    "/admin/payments",
+    "/admin/staff",
+    "/admin/reports",
+    "/admin/audit",
+    "/admin/settings",
+    "/admin/cms",
   ]) {
-    await expect(
-      sidebar.getByRole("link", { name: new RegExp(`\\b${forbidden.replace(/[.*+?^$\{\}()|[\\]\\\\]/g, "\\\\  await expect(page.getByRole("link", { name: "Bookings" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Dispatch" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Fleet Management" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Drivers & Staff" })).toBeVisible();
-
-  for (const forbidden of [
-    "Payments",
-    "Staff / Roles",
-    "Reports",
-    "Audit Log",
-    "Settings",
-    "CMS Pages",
-  ]) {
-    await expect(page.getByRole("link", { name: forbidden })).toHaveCount(0);
-  }")}\\b`) }),
-    ).toHaveCount(0);
+    await expect(sidebar.locator(`a[href="${href}"]`)).toHaveCount(0);
   }
 
-  for (const path of ["/admin/staff", "/admin/settings", "/admin/payments", "/admin/reports", "/admin/audit"]) {
+  for (const path of [
+    "/admin/staff",
+    "/admin/settings",
+    "/admin/payments",
+    "/admin/reports",
+    "/admin/audit",
+  ]) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/admin(?:$|\?)/);
   }
