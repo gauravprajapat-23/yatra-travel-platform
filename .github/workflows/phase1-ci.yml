@@ -138,6 +138,9 @@ jobs:
           ADMIN_SMOKE_BASE_URL=http://127.0.0.1:3000 npm run verify:admin-accessibility
           ADMIN_SMOKE_BASE_URL=http://127.0.0.1:3000 npm run verify:staff-invites
 
+      - name: Reset CI login rate-limit buckets
+        run: npm run db:reset:e2e-login-rate-limits -w @yatra/db
+
       - name: Install Playwright Chromium
         run: npx playwright install chromium
 
