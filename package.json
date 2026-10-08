@@ -29,7 +29,8 @@
     "verify:admin-forms": "node scripts/verify-admin-form-system.mjs",
     "verify:staff-invites": "node scripts/verify-staff-invite-runtime.mjs",
     "verify:payment-runtime": "node scripts/verify-payment-runtime-safety.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "verify:customer-auth": "node scripts/verify-customer-auth-safety.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0"
