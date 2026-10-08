@@ -44,6 +44,11 @@ test("admin can login, navigate protected operations, and logout", async ({ page
   await page.goto("/admin/dispatch/calendar");
   await expect(page.getByRole("heading", { name: /fleet availability calendar/i })).toBeVisible();
 
+  await page.goto("/admin/notifications");
+  await expect(
+    page.getByRole("heading", { name: /notification deliveries/i }),
+  ).toBeVisible();
+
   await page.getByRole("button", { name: /logout|sign out/i }).click();
   await expect(page).toHaveURL(/\/admin\/login/);
 });
