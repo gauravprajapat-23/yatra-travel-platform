@@ -98,7 +98,7 @@ export async function AdminShell({
           </div>
         </header>
 
-        <main className="admin-main">
+        <div className="admin-main">
           <div className="admin-page-heading">
             <div>
               <h1>{title}</h1>
@@ -107,7 +107,7 @@ export async function AdminShell({
             <div className="admin-heading-actions">{actions}</div>
           </div>
           {children}
-        </main>
+        </div>
       </div>
     </div>
   );
