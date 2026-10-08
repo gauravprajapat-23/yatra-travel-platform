@@ -5,6 +5,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminField } from "@/components/admin-form";
 import { AdminMetric, AdminShell } from "@/components/admin-shell";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDate } from "@/lib/admin/datetime";
 import styles from "./calendar.module.css";
 
 export const dynamic = "force-dynamic";
