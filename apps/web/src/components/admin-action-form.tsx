@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminFormDirtyGuard } from "@/components/admin-form-dirty-guard";
 import {
   useActionState,
   useEffect,
@@ -63,6 +64,7 @@ export function AdminActionForm({
 
   const form = (
     <form action={formAction} className={className}>
+      <AdminFormDirtyGuard />
       {state.status !== "idle" && state.message ? (
         <div
           ref={feedbackRef}
