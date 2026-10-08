@@ -1,14 +1,17 @@
+import { createHash } from "node:crypto";
 import { test, expect } from "@playwright/test";
 
 const email = process.env.E2E_VERIFY_EMAIL;
-const password = process.env.E2E_VERIFY_PASSWORD;
-const token = process.env.E2E_VERIFY_TOKEN;
+const password = process.env.E2E_CUSTOMER_PASSWORD;
+const token = createHash("sha256")
+  .update("phase10-email-verification-e2e")
+  .digest("base64url");
 
 test.describe.configure({ retries: 0 });
 
 test("unverified customer consumes one-time email token, signs in, and cannot replay it", async ({ page }) => {
-  if (!email || !password || !token) {
-    throw new Error("E2E_VERIFY_EMAIL, E2E_VERIFY_PASSWORD and E2E_VERIFY_TOKEN are required.");
+  if (!email || !password) {
+    throw new Error("E2E_VERIFY_EMAIL and E2E_CUSTOMER_PASSWORD are required.");
   }
 
   await page.goto(`/account/verify-email?token=${encodeURIComponent(token)}`);
