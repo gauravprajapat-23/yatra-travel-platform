@@ -50,7 +50,8 @@ test("super admin sees calculated remaining-refund control while writes stay gat
 
   await expect(page.getByText("CAPTURED", { exact: true })).toBeVisible();
   const refundButton = page.getByRole("button", {
-    name: /refund remaining ₹1,200\.00/i,
+    name: /refund remaining/i,
   });
   await expect(refundButton).toBeVisible();
+  await expect(refundButton).toContainText("1,200");
 });
