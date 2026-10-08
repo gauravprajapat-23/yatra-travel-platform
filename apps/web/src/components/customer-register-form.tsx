@@ -88,6 +88,10 @@ export function CustomerRegisterForm() {
       </button>
 
       <small>
+        Need another verification link?{" "}
+        <Link href="/account/verify-email/request">Request one</Link>
+      </small>
+      <small>
         Already verified? <Link href="/account/login">Sign in</Link>
       </small>
     </form>
