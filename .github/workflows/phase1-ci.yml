@@ -102,6 +102,9 @@ jobs:
       - name: Verify staff invite foundation
         run: npm run db:verify:staff-invites -w @yatra/db
 
+      - name: Verify promotion foundation
+        run: npm run db:verify:promotions -w @yatra/db
+
       - name: Lint
         run: npm run lint
 
