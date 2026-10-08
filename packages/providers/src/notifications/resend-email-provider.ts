@@ -36,7 +36,11 @@ function stringValue(
 ): string {
   const value = message.templateData[key];
   if (typeof value !== "string" || !value.trim()) {
-    throw new Error(`Notification template field ${key} is required.`);
+    throw new NotificationProviderError(
+      `Notification template field ${key} is required.`,
+      false,
+      "INVALID_TEMPLATE_DATA",
+    );
   }
 
   return value.trim().slice(0, maxLength);
@@ -76,7 +80,11 @@ function renderEmail(message: NotificationMessage): {
     };
   }
 
-  throw new Error(`Unsupported notification template: ${message.templateKey}`);
+  throw new NotificationProviderError(
+    `Unsupported notification template: ${message.templateKey}`,
+    false,
+    "UNSUPPORTED_TEMPLATE",
+  );
 }
 
 export class ResendEmailProvider implements NotificationProvider {
