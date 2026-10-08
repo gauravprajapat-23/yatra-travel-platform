@@ -20,7 +20,20 @@ test("admin can login, navigate protected operations, and logout", async ({ page
 
   await page.locator("#adminEmail").fill(email!);
   await page.locator("#adminPassword").fill(password!);
-  await page.getByRole("button", { name: /sign in|login/i }).click();
+  const [loginResponse] = await Promise.all([
+    page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/admin-auth/login") &&
+        response.request().method() === "POST",
+    ),
+    page.getByRole("button", { name: /sign in|login/i }).click(),
+  ]);
+
+  if (loginResponse.status() !== 200) {
+    throw new Error(
+      `Admin login failed with HTTP ${loginResponse.status()}: ${await loginResponse.text()}`,
+    );
+  }
 
   await expect(page).toHaveURL(/\/admin(?:$|\?)/);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
