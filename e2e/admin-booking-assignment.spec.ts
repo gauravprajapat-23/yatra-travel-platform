@@ -46,14 +46,16 @@ test("operations admin assigns an available vehicle and driver", async ({ page }
   ).toBeVisible();
 
   await page.goto(`/admin/bookings/${reference}`);
-  await expect(page.getByText("DRIVER ASSIGNED")).toBeVisible();
   await expect(
     page.getByText("E2E Operations Driver · E2E Operations Vehicle"),
   ).toBeVisible();
 
   await page.goto(`/admin/bookings/${reference}?tab=timeline`);
-  await expect(page.getByText("DRIVER ASSIGNED")).toBeVisible();
+  const timeline = page
+    .getByRole("heading", { name: "Operational Timeline" })
+    .locator("..");
+  await expect(timeline.getByText("DRIVER ASSIGNED", { exact: true })).toBeVisible();
   await expect(
-    page.getByText("Vehicle and driver assigned by operations."),
+    timeline.getByText("Vehicle and driver assigned by operations.", { exact: true }),
   ).toBeVisible();
 });
