@@ -131,6 +131,7 @@ const sharedComponents = [
   "apps/web/src/components/admin-multi-select-cards.tsx",
   "apps/web/src/components/admin-structured-content-editor.tsx",
   "apps/web/src/components/admin-json-list-field.tsx",
+  "apps/web/src/components/admin-completion-checklist.tsx",
 ];
 
 for (const file of sharedComponents) {
@@ -344,8 +345,18 @@ const primitiveCoverage = [
       "pkg.destinations.length",
       "pkg.itinerary.length",
       "pkg.heroMediaId ? \"Ready\" : \"Missing\"",
+      "<AdminCompletionChecklist",
     ],
-    label: "package completion badge coverage",
+    label: "package completion badge/checklist coverage",
+  },
+  {
+    file: "apps/web/src/app/admin/content/[type]/[id]/page.tsx",
+    fragments: [
+      "<AdminCompletionChecklist",
+      "bodyBlockCount",
+      "seoReady",
+    ],
+    label: "content completion checklist coverage",
   },
   {
     file: "apps/web/src/app/admin/faq/new/page.tsx",
