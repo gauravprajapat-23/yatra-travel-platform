@@ -5,6 +5,7 @@ import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminPanelHeading, AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs } from "@/components/admin-editor-tabs";
+import { AdminCompletionChecklist } from "@/components/admin-completion-checklist";
 import { AdminStructuredContentEditor } from "@/components/admin-structured-content-editor";
 import { AdminMediaPicker } from "@/components/admin-media-picker";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
@@ -753,6 +754,62 @@ export default async function PackageDetailPage({
               <div><dt>Updated</dt><dd>{pkg.updatedAt.toLocaleString("en-IN")}</dd></div>
             </dl>
           </section>
+
+          <AdminCompletionChecklist
+            items={[
+              {
+                label: "Destinations",
+                detail:
+                  pkg.destinations.length > 0
+                    ? `${pkg.destinations.length} selected`
+                    : "Select at least one destination",
+                ready: pkg.destinations.length > 0,
+                href: `/admin/packages/${packageId}?tab=destinations`,
+              },
+              {
+                label: "Itinerary",
+                detail:
+                  pkg.itinerary.length === packageDurationDays
+                    ? "All advertised days configured"
+                    : `${pkg.itinerary.length}/${packageDurationDays} days configured`,
+                ready: pkg.itinerary.length === packageDurationDays,
+                href: `/admin/packages/${packageId}?tab=itinerary`,
+              },
+              {
+                label: "Pricing",
+                detail:
+                  pkg.priceOptions.length > 0
+                    ? `${pkg.priceOptions.length} pricing option${pkg.priceOptions.length === 1 ? "" : "s"}`
+                    : "Add at least one pricing option",
+                ready: pkg.priceOptions.length > 0,
+                href: `/admin/packages/${packageId}?tab=pricing`,
+              },
+              {
+                label: "Content",
+                detail:
+                  Array.isArray(pkg.body) && pkg.body.length > 0
+                    ? `${pkg.body.length} structured blocks`
+                    : "Add structured package content",
+                ready: Array.isArray(pkg.body) && pkg.body.length > 0,
+                href: `/admin/packages/${packageId}?tab=content`,
+              },
+              {
+                label: "Hero Media",
+                detail: pkg.heroMediaId ? "Hero image selected" : "Choose a hero image",
+                ready: Boolean(pkg.heroMediaId),
+                href: `/admin/packages/${packageId}?tab=media`,
+              },
+              {
+                label: "SEO",
+                detail:
+                  pkg.seoTitle && pkg.seoDescription
+                    ? "SEO title and description ready"
+                    : "Complete SEO title and description",
+                ready: Boolean(pkg.seoTitle && pkg.seoDescription),
+                href: `/admin/packages/${packageId}?tab=publishing`,
+              },
+            ]}
+          />
         ) : null}
 
         {activeTab === "destinations" ? (
