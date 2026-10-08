@@ -6851,3 +6851,94 @@ body:has(.admin-root) {
     grid-template-columns: repeat(2,minmax(0,1fr));
   }
 }
+
+
+.customer-auth-page {
+  min-height: min(760px, calc(100vh - 80px));
+  display: grid;
+  place-items: center;
+  padding: 72px 20px;
+  background:
+    radial-gradient(circle at 20% 15%, rgba(237,106,24,.12), transparent 30%),
+    #fbf7ef;
+}
+
+.customer-auth-card {
+  width: min(480px, 100%);
+  display: grid;
+  gap: 12px;
+  padding: clamp(24px, 5vw, 42px);
+  border: 1px solid #e5ddd1;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 20px 55px rgba(16,40,31,.08);
+}
+
+.customer-auth-card h1 {
+  margin: 0;
+  color: #19332a;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(2rem, 6vw, 3.1rem);
+}
+
+.customer-auth-card > p {
+  margin: 0 0 8px;
+  color: #6f7772;
+  line-height: 1.6;
+}
+
+.customer-auth-card label {
+  color: #3c4943;
+  font-size: .78rem;
+  font-weight: 750;
+}
+
+.customer-auth-card input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 12px;
+  border: 1px solid #ddd5c9;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.customer-auth-password {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.customer-auth-password button {
+  min-width: 64px;
+  border: 1px solid #ddd5c9;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.customer-auth-card > small {
+  color: #747a75;
+}
+
+.customer-auth-card > small a {
+  color: #d85d14;
+  font-weight: 750;
+}
+
+.customer-empty-state {
+  margin: 24px 0;
+  padding: 28px;
+  border: 1px dashed #cfc3b3;
+  border-radius: 14px;
+  background: rgba(255,255,255,.65);
+}
+
+.customer-empty-state h3 {
+  margin-top: 0;
+  color: #19332a;
+}
+
+.customer-guest-lookup {
+  margin-top: 48px;
+  border-top: 1px solid #e2d9cc;
+  padding-top: 28px;
+}
