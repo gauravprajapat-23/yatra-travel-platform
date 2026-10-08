@@ -11,10 +11,12 @@ process.env.RESEND_API_KEY = "re_test_123";
 process.env.NOTIFICATION_EMAIL_FROM = "Yatra <noreply@example.com>";
 
 test("Resend provider sends known verification template without persisting secrets", async () => {
-  let requestBody: Record<string, unknown> | null = null;
+  const requestBodies: Record<string, unknown>[] = [];
 
   globalThis.fetch = (async (_input, init) => {
-    requestBody = JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>;
+    requestBodies.push(
+      JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>,
+    );
     return new Response(JSON.stringify({ id: "email_123" }), {
       status: 200,
       headers: { "content-type": "application/json" },
@@ -35,13 +37,15 @@ test("Resend provider sends known verification template without persisting secre
 
   assert.equal(result.provider, "resend");
   assert.equal(result.providerMessageId, "email_123");
-  assert.equal(requestBody?.to instanceof Array, true);
-  assert.equal((requestBody?.to as string[])[0], "customer@example.com");
-  assert.match(String(requestBody?.html), /Verify email address/);
-  assert.match(String(requestBody?.html), /secret-token/);
-  assert.match(String(requestBody?.html), /&amp;next=/);
-  assert.match(String(requestBody?.html), /&lt;unsafe&gt;/);
-  assert.doesNotMatch(String(requestBody?.html), /<unsafe>/);
+  const requestBody = requestBodies[0];
+  assert.ok(requestBody);
+  assert.equal(requestBody.to instanceof Array, true);
+  assert.equal((requestBody.to as string[])[0], "customer@example.com");
+  assert.match(String(requestBody.html), /Verify email address/);
+  assert.match(String(requestBody.html), /secret-token/);
+  assert.match(String(requestBody.html), /&amp;next=/);
+  assert.match(String(requestBody.html), /&lt;unsafe&gt;/);
+  assert.doesNotMatch(String(requestBody.html), /<unsafe>/);
 });
 
 test("Resend provider rejects unsupported channel", async () => {
