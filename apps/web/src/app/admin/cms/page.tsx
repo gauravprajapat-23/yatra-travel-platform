@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getDb, Prisma } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
+import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import { contentStatuses } from "@/modules/content/admin-content-service";
 
@@ -151,17 +152,16 @@ export default async function CmsPage({
       ]}
       toolbar={
         <form className="admin-table-query admin-table-query--compact" method="get">
-          <label>
-            <span>Search</span>
+          <AdminField label="Search" htmlFor="cmsSearch">
             <input
+              id="cmsSearch"
               name="q"
               defaultValue={q}
               placeholder="Page title, slug or SEO metadata"
             />
-          </label>
-          <label>
-            <span>Status</span>
-            <select name="status" defaultValue={status ?? ""}>
+          </AdminField>
+          <AdminField label="Status" htmlFor="cmsStatus">
+            <select id="cmsStatus" name="status" defaultValue={status ?? ""}>
               <option value="">All statuses</option>
               {contentStatuses.map((item) => (
                 <option key={item} value={item}>
@@ -169,7 +169,7 @@ export default async function CmsPage({
                 </option>
               ))}
             </select>
-          </label>
+          </AdminField>
           <button className="admin-primary-button" type="submit">
             Apply
           </button>
