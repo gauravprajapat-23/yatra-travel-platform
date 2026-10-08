@@ -55,9 +55,10 @@ test("operations admin assigns an available vehicle and driver", async ({ page }
     .selectOption("e2e_assignment_driver");
 
   await page.getByRole("button", { name: "Assign Resources" }).click();
-  await expect(
-    page.getByText("Vehicle and driver assigned successfully."),
-  ).toBeVisible();
+
+  const feedback = page.locator(".admin-action-feedback");
+  await expect(feedback).toBeVisible();
+  await expect(feedback).toHaveText("Vehicle and driver assigned successfully.");
 
   await page.goto(`/admin/bookings/${reference}`);
   await expect(
