@@ -8,6 +8,7 @@ import { assertBookingCustomerIdentity } from "@yatra/domain/booking/customer-id
 import {
   assertIdempotentReplay,
   createBookingRequestFingerprint,
+  createCustomerBookingRequestFingerprint,
 } from "@yatra/domain/booking/idempotency";
 import {
   assertQuoteUsable,
@@ -17,9 +18,18 @@ import {
 export type CreateGuestCarBookingInput = {
   quoteId: string;
   idempotencyKey: string;
-  guestName: string;
-  guestEmail: string;
-};
+} & (
+  | {
+      customerUserId: string;
+      guestName?: never;
+      guestEmail?: never;
+    }
+  | {
+      customerUserId?: null;
+      guestName: string;
+      guestEmail: string;
+    }
+);
 
 export class BookingServiceError extends Error {
   constructor(
@@ -81,16 +91,25 @@ function toBookingDto(booking: {
 export async function createGuestCarBooking(
   input: CreateGuestCarBookingInput,
 ) {
-  assertBookingCustomerIdentity({
-    guestName: input.guestName,
-    guestEmail: input.guestEmail,
-  });
+  assertBookingCustomerIdentity(
+    input.customerUserId
+      ? { customerUserId: input.customerUserId }
+      : {
+          guestName: input.guestName,
+          guestEmail: input.guestEmail,
+        },
+  );
 
-  const fingerprint = createBookingRequestFingerprint({
-    quoteId: input.quoteId,
-    guestName: input.guestName,
-    guestEmail: input.guestEmail,
-  });
+  const fingerprint = input.customerUserId
+    ? createCustomerBookingRequestFingerprint({
+        quoteId: input.quoteId,
+        customerUserId: input.customerUserId,
+      })
+    : createBookingRequestFingerprint({
+        quoteId: input.quoteId,
+        guestName: input.guestName,
+        guestEmail: input.guestEmail,
+      });
 
   const db = getDb();
 
@@ -235,8 +254,11 @@ export async function createGuestCarBooking(
             startsAt: quote.startsAt,
             endsAt: quote.endsAt,
             travellers: quote.travellers,
-            guestName: input.guestName.trim(),
-            guestEmail: input.guestEmail.trim().toLowerCase(),
+            customerUserId: input.customerUserId ?? null,
+            guestName: input.customerUserId ? null : input.guestName.trim(),
+            guestEmail: input.customerUserId
+              ? null
+              : input.guestEmail.trim().toLowerCase(),
             vehicleClassId: quote.vehicleClassId,
             pricingRuleId: quote.pricingRuleId,
             currency: quote.currency,
