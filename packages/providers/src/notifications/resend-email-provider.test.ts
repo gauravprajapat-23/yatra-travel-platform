@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { NotificationProviderError } from "./notification-provider";
 import { ResendEmailProvider } from "./resend-email-provider";
 
 const originalFetch = globalThis.fetch;
@@ -27,7 +28,7 @@ test("Resend provider sends known verification template without persisting secre
     destination: "customer@example.com",
     templateKey: "customer-email-verification-v1",
     templateData: {
-      actionUrl: "https://example.com/account/verify-email?token=secret-token",
+      actionUrl: "https://example.com/account/verify-email?token=secret-token&next=<unsafe>",
       expiresAt: "2026-10-09T00:00:00.000Z",
     },
   });
@@ -38,6 +39,9 @@ test("Resend provider sends known verification template without persisting secre
   assert.equal((requestBody?.to as string[])[0], "customer@example.com");
   assert.match(String(requestBody?.html), /Verify email address/);
   assert.match(String(requestBody?.html), /secret-token/);
+  assert.match(String(requestBody?.html), /&amp;next=/);
+  assert.match(String(requestBody?.html), /&lt;unsafe&gt;/);
+  assert.doesNotMatch(String(requestBody?.html), /<unsafe>/);
 });
 
 test("Resend provider rejects unsupported channel", async () => {
@@ -84,6 +88,28 @@ test("Resend provider classifies throttling as retryable", async () => {
       error instanceof Error &&
       "retryable" in error &&
       (error as { retryable: boolean }).retryable === true,
+  );
+});
+
+test("Resend provider rejects unknown templates as non-retryable", async () => {
+  const provider = new ResendEmailProvider();
+
+  await assert.rejects(
+    () =>
+      provider.send({
+        channel: "EMAIL",
+        purpose: "CUSTOMER_PASSWORD_RESET",
+        destination: "customer@example.com",
+        templateKey: "unknown-template",
+        templateData: {
+          actionUrl: "https://example.com/account/reset-password?token=secret",
+          expiresAt: "2026-10-09T00:00:00.000Z",
+        },
+      }),
+    (error: unknown) =>
+      error instanceof NotificationProviderError &&
+      error.retryable === false &&
+      error.code === "UNSUPPORTED_TEMPLATE",
   );
 });
 
