@@ -39,6 +39,11 @@ jobs:
       E2E_OPERATIONS_EMAIL: phase8-ops@yatra.test
       E2E_OPERATIONS_PASSWORD: Phase8-Ops-Only-2026!
       E2E_OPERATIONS_NAME: Phase 8 Operations
+      E2E_CUSTOMER_EMAIL: phase9-customer@yatra.test
+      E2E_CUSTOMER_PASSWORD: Phase9-Customer-Only-2026!
+      E2E_CUSTOMER_NAME: Phase 9 Customer
+      E2E_ALLOW_INSECURE_CUSTOMER_COOKIE: "true"
+      CUSTOMER_AUTH_WRITE_ENABLED: "false"
       E2E_ALLOW_INSECURE_ADMIN_COOKIE: "true"
 
     steps:
@@ -79,6 +84,9 @@ jobs:
 
       - name: Bootstrap refund permission fixture
         run: npm run db:bootstrap:e2e-refund -w @yatra/db
+
+      - name: Bootstrap verified customer portal fixture
+        run: npm run db:bootstrap:e2e-customer -w @yatra/db
 
       - name: Verify staff invite foundation
         run: npm run db:verify:staff-invites -w @yatra/db
