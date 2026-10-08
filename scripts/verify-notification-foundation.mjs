@@ -83,7 +83,7 @@ requireFragments(
   [
     "issueAuthActionToken",
     "deliverNotification",
-    "url.searchParams.set",
+    "url.hash = new URLSearchParams",
     "revokeAuthActionTokens",
   ],
   "auth notification orchestration",
