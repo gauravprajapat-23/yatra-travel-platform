@@ -64,7 +64,7 @@ export function AdminActionForm({
 
   const form = (
     <form action={formAction} className={className}>
-      <AdminFormDirtyGuard />
+      <AdminFormDirtyGuard resultStatus={state.status} />
       {state.status !== "idle" && state.message ? (
         <div
           ref={feedbackRef}
