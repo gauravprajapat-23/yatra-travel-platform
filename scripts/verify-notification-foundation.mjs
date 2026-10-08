@@ -89,6 +89,74 @@ requireFragments(
   "auth notification orchestration",
 );
 
+
+requireFragments(
+  "packages/providers/src/notifications/resend-email-provider.ts",
+  [
+    'const API_URL = "https://api.resend.com/emails"',
+    "REQUEST_TIMEOUT_MS",
+    'Authorization: `Bearer ${apiKey}`',
+    "customer-email-verification-v1",
+    "customer-password-reset-v1",
+    "NotificationProviderError",
+  ],
+  "Resend email provider bounds and known templates",
+);
+
+requireFragments(
+  "apps/web/src/modules/notifications/provider-factory.ts",
+  [
+    'provider === "resend"',
+    "new ResendEmailProvider()",
+    "No certified email notification provider is configured",
+  ],
+  "notification provider remains explicit and fail-closed",
+);
+
+requireFragments(
+  "apps/web/src/app/api/customer-auth/verify-email/route.ts",
+  [
+    "verifyCustomerEmailWithToken",
+    "INVALID_OR_EXPIRED_TOKEN",
+    "consumePublicWriteAttempt",
+  ],
+  "email verification endpoint safeguards",
+);
+
+requireFragments(
+  "apps/web/src/app/api/customer-auth/password-reset/request/route.ts",
+  [
+    'process.env.CUSTOMER_PASSWORD_RESET_ENABLED !== "true"',
+    "PASSWORD_RESET_DISABLED",
+    "getEmailNotificationProvider",
+    "sendAuthActionNotification",
+    "If a verified account exists for that email",
+  ],
+  "password reset request stays gated and enumeration-safe",
+);
+
+requireFragments(
+  "apps/web/src/app/api/customer-auth/password-reset/confirm/route.ts",
+  [
+    "resetCustomerPasswordWithToken",
+    "hashPassword",
+    "RESET_LINK_INVALID",
+    "consumePublicWriteAttempt",
+  ],
+  "password reset confirmation safeguards",
+);
+
+requireFragments(
+  "apps/web/src/modules/notifications/auth-action-service.ts",
+  [
+    "CUSTOMER_EMAIL_VERIFIED",
+    "CUSTOMER_PASSWORD_RESET",
+    "tx.session.updateMany",
+    'purpose: "PASSWORD_RESET"',
+  ],
+  "verification and reset mutations remain transactional and audited",
+);
+
 requireFragments(
   "apps/web/src/app/api/customer-auth/register/route.ts",
   [
