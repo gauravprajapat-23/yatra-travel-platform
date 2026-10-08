@@ -98,8 +98,8 @@ export function CustomerEmailVerification() {
 
       {state === "error" ? (
         <small>
-          Need a new verification message? Return to{" "}
-          <Link href="/account/register">account registration</Link>.
+          Need a new verification message?{" "}
+          <Link href="/account/verify-email/request">Request another link</Link>.
         </small>
       ) : null}
     </div>
