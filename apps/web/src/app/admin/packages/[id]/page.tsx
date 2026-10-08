@@ -1089,7 +1089,22 @@ export default async function PackageDetailPage({
             <p>Long-form package content is stored as safe structured blocks. Raw HTML/script is rejected.</p>
             {hasPermission(session.roles, "package.write") ? (
               <form action={saveBody}>
-                <AdminStructuredContentEditor initialValue={pkg.body} />
+                <AdminStructuredContentEditor
+                  initialValue={pkg.body}
+                  mediaOptions={heroOptions.flatMap((asset) =>
+                    asset.publicUrl
+                      ? [{
+                          id: asset.id,
+                          publicUrl: asset.publicUrl,
+                          label:
+                            asset.altText ??
+                            asset.objectKey.split("/").pop() ??
+                            asset.objectKey,
+                          altText: asset.altText,
+                        }]
+                      : [],
+                  )}
+                />
                 <AdminSubmitButton
                   label="Save Package Content"
                   pendingLabel="Saving Content…"
