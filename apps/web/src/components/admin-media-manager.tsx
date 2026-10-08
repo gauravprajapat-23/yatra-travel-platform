@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { formatIstDate } from "@/lib/admin/datetime";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { AdminFileUploadField } from "@/components/admin-file-upload-field";
 import { AdminTextareaField } from "@/components/admin-textarea-field";
@@ -280,7 +281,7 @@ export function AdminMediaManager({
                 <strong>{asset.objectKey.split("/").pop() ?? asset.objectKey}</strong>
                 <small>{humanBytes(asset.byteSize)} · {asset.mimeType}</small>
                 <span>{asset.altText ?? asset.caption ?? "No alt text"}</span>
-                <small>{new Date(asset.createdAt).toLocaleDateString("en-IN")}</small>
+                <small>{formatIstDate(new Date(asset.createdAt))}</small>
                 <small>
                   {asset.referenceCount > 0
                     ? `${asset.referenceCount} active reference${asset.referenceCount === 1 ? "" : "s"}`
