@@ -270,9 +270,16 @@ function BlockPreview({ block }: { block: Block }) {
 export function AdminStructuredContentEditor({
   name = "body",
   initialValue,
+  mediaOptions = [],
 }: {
   name?: string;
   initialValue: unknown;
+  mediaOptions?: Array<{
+    id: string;
+    publicUrl: string;
+    label: string;
+    altText?: string | null;
+  }>;
 }) {
   const initialBlocks = useMemo(
     () => normalizeBlocks(initialValue),
@@ -613,6 +620,41 @@ export function AdminStructuredContentEditor({
 
                   {block.type === "image" ? (
                     <div className="admin-form-grid admin-form-grid--1">
+                      {mediaOptions.length > 0 ? (
+                        <label className="admin-field">
+                          <span className="admin-field__label">
+                            Choose from Media Library
+                          </span>
+                          <select
+                            defaultValue=""
+                            onChange={(event) => {
+                              const selected = mediaOptions.find(
+                                (option) => option.id === event.target.value,
+                              );
+                              if (!selected) return;
+
+                              setBlockData(block.id, (data) => ({
+                                ...data,
+                                url: selected.publicUrl,
+                                alt:
+                                  selected.altText ??
+                                  stringValue(data.alt) ??
+                                  "",
+                              }));
+                            }}
+                          >
+                            <option value="">Select an existing image…</option>
+                            {mediaOptions.map((option) => (
+                              <option key={option.id} value={option.id}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                          <small className="admin-field__hint">
+                            Selecting an asset fills the image URL and available alt text.
+                          </small>
+                        </label>
+                      ) : null}
                       <label className="admin-field">
                         <span className="admin-field__label">Image URL</span>
                         <input
@@ -654,7 +696,70 @@ export function AdminStructuredContentEditor({
                   ) : null}
 
                   {block.type === "gallery" ? (
-                    <label className="admin-field admin-field--wide">
+                    <div className="admin-form-grid admin-form-grid--1">
+                      {mediaOptions.length > 0 ? (
+                        <label className="admin-field">
+                          <span className="admin-field__label">
+                            Add from Media Library
+                          </span>
+                          <select
+                            defaultValue=""
+                            onChange={(event) => {
+                              const selected = mediaOptions.find(
+                                (option) => option.id === event.target.value,
+                              );
+                              if (!selected) return;
+
+                              setBlockData(block.id, (data) => {
+                                const items = Array.isArray(data.items)
+                                  ? data.items
+                                  : [];
+                                const alreadyIncluded = items.some((item) => {
+                                  if (
+                                    typeof item !== "object" ||
+                                    item === null ||
+                                    Array.isArray(item)
+                                  ) {
+                                    return false;
+                                  }
+                                  return (
+                                    stringValue(
+                                      (item as Record<string, unknown>).url,
+                                    ) === selected.publicUrl
+                                  );
+                                });
+
+                                return alreadyIncluded
+                                  ? data
+                                  : {
+                                      ...data,
+                                      items: [
+                                        ...items,
+                                        {
+                                          url: selected.publicUrl,
+                                          alt: selected.altText ?? "",
+                                        },
+                                      ],
+                                    };
+                              });
+
+                              event.currentTarget.value = "";
+                            }}
+                          >
+                            <option value="">Add an existing image…</option>
+                            {mediaOptions.map((option) => (
+                              <option key={option.id} value={option.id}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                          <small className="admin-field__hint">
+                            Add multiple library images; duplicate URLs are ignored.
+                          </small>
+                        </label>
+                      ) : null}
+
+                      <label className="admin-field admin-field--wide">
                       <span className="admin-field__label">Gallery images</span>
                       <textarea
                         value={galleryText(block.data.items)}
@@ -671,6 +776,7 @@ export function AdminStructuredContentEditor({
                         One image per line: URL | alt text.
                       </small>
                     </label>
+                    </div>
                   ) : null}
 
                   {block.type === "faqGroup" ? (
