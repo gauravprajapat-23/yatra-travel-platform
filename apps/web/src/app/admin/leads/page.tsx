@@ -5,6 +5,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
 import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDate } from "@/lib/admin/datetime";
 
 export const dynamic = "force-dynamic";
 
@@ -118,7 +119,7 @@ export default async function LeadsPage({
     <StatusPill key={`${lead.id}-status`} tone={tone(lead.status)}>
       {lead.status.replaceAll("_", " ")}
     </StatusPill>,
-    lead.createdAt.toLocaleDateString("en-IN"),
+    formatIstDate(lead.createdAt),
     <Link key={lead.reference} href={`/admin/leads/${lead.reference}`}>
       {lead.reference}
     </Link>,
