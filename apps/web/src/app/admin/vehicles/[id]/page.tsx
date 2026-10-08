@@ -11,7 +11,7 @@ import { AdminConfirmSubmitButton } from "@/components/admin-confirm-submit-butt
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { AdminDateTimeRange } from "@/components/admin-date-time-range";
 import { requireAdminSession } from "@/lib/auth/session";
-import { parseIstDateTimeLocal } from "@/lib/admin/datetime";
+import { formatIstDateTime, parseIstDateTimeLocal } from "@/lib/admin/datetime";
 import {
   addVehicleAvailabilityBlock,
   attachVehicleMedia,
@@ -409,8 +409,8 @@ export default async function VehicleDetailPage({
                 <tbody>
                   {vehicle.availability.map((block) => (
                     <tr key={block.id}>
-                      <td>{block.startsAt.toLocaleString("en-IN")}</td>
-                      <td>{block.endsAt.toLocaleString("en-IN")}</td>
+                      <td>{formatIstDateTime(block.startsAt)}</td>
+                      <td>{formatIstDateTime(block.endsAt)}</td>
                       <td>{block.reason ?? "—"}</td>
                       <td>
                         {hasPermission(session.roles, "vehicle.write") ? (
