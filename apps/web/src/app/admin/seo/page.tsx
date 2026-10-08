@@ -11,6 +11,7 @@ import {
   type AdminActionState,
 } from "@/components/admin-action-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDate } from "@/lib/admin/datetime";
 
 export const dynamic = "force-dynamic";
 
@@ -546,7 +547,7 @@ export default async function SeoPage({
                       </StatusPill>
                     </td>
                     <td>{row.robotsIndex ? "Index" : "Noindex"}</td>
-                    <td>{row.updatedAt.toLocaleDateString("en-IN")}</td>
+                    <td>{formatIstDate(row.updatedAt)}</td>
                     <td>
                       <Link href={editHref(row)}>Edit SEO</Link>
                     </td>
