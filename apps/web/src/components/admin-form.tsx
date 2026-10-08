@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
+import { AdminFormDirtyGuard } from "@/components/admin-form-dirty-guard";
 
 type AdminFormProps = FormHTMLAttributes<HTMLFormElement> & {
   children: ReactNode;
@@ -22,6 +23,7 @@ export function AdminForm({
   return (
     <div className={aside ? "admin-form-layout" : "admin-form-layout admin-form-layout--single"}>
       <form className={`admin-form ${className}`.trim()} {...props}>
+        <AdminFormDirtyGuard />
         {children}
       </form>
       {aside ? <aside className="admin-form-aside">{aside}</aside> : null}
