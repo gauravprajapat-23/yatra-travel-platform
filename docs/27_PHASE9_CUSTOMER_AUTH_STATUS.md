@@ -1,6 +1,6 @@
 # Phase 9 — Customer Authentication & Portal Status
 
-Status: IN PROGRESS — VERIFIED CUSTOMER PORTAL FOUNDATION IMPLEMENTED
+Status: IN PROGRESS — FOUNDATION CERTIFICATION RUNNING
 
 Updated: 2026-10-08
 
@@ -43,6 +43,20 @@ Add a secure customer account experience without weakening guest-booking privacy
 - [x] Customer sign-out experience
 - [x] Responsive account UI
 
+### Account security
+- [x] Authenticated password change requires current password
+- [x] New password is re-hashed with the existing scrypt implementation
+- [x] Other active sessions are revoked after password change
+- [x] Password-change audit event
+- [x] Reversible browser E2E password-change coverage
+
+### Booking ownership
+- [x] Customer-owned booking idempotency fingerprint is separate from guest fingerprint behavior
+- [x] Car/package APIs derive customer ownership from the signed customer session only
+- [x] Guest identity remains mandatory when no customer session exists
+- [x] Customer-owned bookings persist customerUserId with guest identity cleared
+- [x] Customer auth/booking-ownership certification runs in Application CI
+
 ### Automated certification
 - [x] Disposable verified CUSTOMER fixture
 - [x] Linked booking fixture
@@ -71,10 +85,10 @@ until email verification delivery is implemented and certified. The registration
 
 - [ ] Certify current customer foundation through full Application CI
 - [ ] Add verified guest-booking claim flow after verification delivery exists
-- [ ] Connect authenticated customer identity to new booking creation
-- [ ] Add customer profile/account settings
-- [ ] Add customer session-management view if required
-- [ ] Add password reset after notification delivery exists
+- [x] Connect authenticated customer identity to new car/package booking creation using signed session ownership
+- [x] Add customer profile/account settings for name/phone with self-write authorization and audit
+- [x] Password change revokes other sessions; separate session-management UI not required for the current foundation
+- [→] Password reset deferred to Phase 10 notification delivery; authenticated password change is implemented
 - [ ] Final Phase 9 production-readiness certification
 
 ## Phase 10 dependency
