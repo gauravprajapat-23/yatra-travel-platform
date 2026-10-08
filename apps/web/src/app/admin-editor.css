@@ -1196,3 +1196,31 @@ form[data-admin-dirty="false"] .admin-form-actions__meta::before {
   border-color: #e47a2d;
   box-shadow: 0 0 0 3px rgba(242,103,23,.11);
 }
+
+
+.admin-editor-tab__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.admin-editor-tab__badge {
+  flex: 0 0 auto;
+  max-width: 92px;
+  overflow: hidden;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: #f3eee8;
+  color: #7e7266;
+  font-size: .52rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-editor-tab--active .admin-editor-tab__badge {
+  background: rgba(255,255,255,.2);
+  color: #fff;
+}
