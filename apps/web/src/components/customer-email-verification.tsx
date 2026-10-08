@@ -25,9 +25,11 @@ export function CustomerEmailVerification() {
     window.history.replaceState({}, "", window.location.pathname);
 
     if (!token) {
-      setState("error");
-      setMessage("This verification link is invalid or has expired.");
-      return;
+      const timer = window.setTimeout(() => {
+        setState("error");
+        setMessage("This verification link is invalid or has expired.");
+      }, 0);
+      return () => window.clearTimeout(timer);
     }
 
     void (async () => {
