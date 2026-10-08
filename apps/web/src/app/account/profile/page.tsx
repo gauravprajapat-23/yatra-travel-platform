@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getDb } from "@yatra/db/client";
 import { CustomerProfileForm } from "@/components/customer-profile-form";
+import { CustomerPasswordForm } from "@/components/customer-password-form";
 import { requireCustomerSession } from "@/lib/auth/customer-session";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +33,7 @@ export default async function CustomerProfilePage() {
           defaultName={user.name ?? ""}
           defaultPhone={user.phone ?? ""}
         />
+        <CustomerPasswordForm />
       </div>
     </section>
   );
