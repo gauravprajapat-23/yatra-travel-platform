@@ -27,6 +27,40 @@ export function isAdminRole(value: string): value is Exclude<RoleKey, "CUSTOMER"
   return (adminRoleKeys as readonly string[]).includes(value);
 }
 
+async function actorIsSuperAdmin(
+  tx: Prisma.TransactionClient,
+  actorUserId: string,
+): Promise<boolean> {
+  const actor = await tx.user.findFirst({
+    where: {
+      id: actorUserId,
+      status: "ACTIVE",
+      roles: {
+        some: {
+          role: { key: "SUPER_ADMIN" },
+        },
+      },
+    },
+    select: { id: true },
+  });
+
+  return Boolean(actor);
+}
+
+function assertSuperAdminManagementAllowed(input: {
+  actorIsSuperAdmin: boolean;
+  currentRoles?: readonly RoleKey[];
+  nextRoles?: readonly RoleKey[];
+}) {
+  const touchesSuperAdmin =
+    input.currentRoles?.includes("SUPER_ADMIN") ||
+    input.nextRoles?.includes("SUPER_ADMIN");
+
+  if (touchesSuperAdmin && !input.actorIsSuperAdmin) {
+    throw new Error("Only a SUPER_ADMIN can grant or manage SUPER_ADMIN access.");
+  }
+}
+
 export async function updateStaffAccess(input: {
   targetUserId: string;
   actorUserId: string;
@@ -69,6 +103,12 @@ export async function updateStaffAccess(input: {
       const currentRoles = target.roles
         .map((entry) => entry.role.key as RoleKey)
         .filter((role) => role !== "CUSTOMER");
+
+      assertSuperAdminManagementAllowed({
+        actorIsSuperAdmin: await actorIsSuperAdmin(tx, input.actorUserId),
+        currentRoles,
+        nextRoles: uniqueRoles,
+      });
 
       if (currentRoles.length === 0) {
         throw new Error("Target user is not an admin staff account.");
@@ -214,9 +254,16 @@ export async function revokeStaffSessions(input: {
 
       if (!target) throw new Error("Staff user not found.");
 
-      const hasAdminRole = target.roles.some(
-        (entry) => entry.role.key !== "CUSTOMER",
-      );
+      const targetRoles = target.roles
+        .map((entry) => entry.role.key as RoleKey)
+        .filter((role) => role !== "CUSTOMER");
+
+      assertSuperAdminManagementAllowed({
+        actorIsSuperAdmin: await actorIsSuperAdmin(tx, input.actorUserId),
+        currentRoles: targetRoles,
+      });
+
+      const hasAdminRole = targetRoles.length > 0;
 
       if (!hasAdminRole) {
         throw new Error("Target user is not an admin staff account.");
@@ -323,6 +370,11 @@ export async function createStaffInvite(input: {
           "An account already exists for this email. Use the existing staff/customer account workflow instead.",
         );
       }
+
+      assertSuperAdminManagementAllowed({
+        actorIsSuperAdmin: await actorIsSuperAdmin(tx, input.actorUserId),
+        nextRoles: uniqueRoles,
+      });
 
       const roleRows = await tx.role.findMany({
         where: { key: { in: uniqueRoles } },
@@ -537,6 +589,9 @@ export async function revokeStaffInvite(input: {
             select: {
               id: true,
               status: true,
+              roles: {
+                include: { role: true },
+              },
             },
           },
         },
@@ -545,6 +600,15 @@ export async function revokeStaffInvite(input: {
       if (!invite || invite.user.status !== "INVITED") {
         throw new Error("No pending staff invite exists for this user.");
       }
+
+      const invitedRoles = invite.user.roles
+        .map((entry) => entry.role.key as RoleKey)
+        .filter((role) => role !== "CUSTOMER");
+
+      assertSuperAdminManagementAllowed({
+        actorIsSuperAdmin: await actorIsSuperAdmin(tx, input.actorUserId),
+        currentRoles: invitedRoles,
+      });
 
       if (invite.acceptedAt || invite.revokedAt) {
         throw new Error("Staff invite is no longer active.");
@@ -618,6 +682,11 @@ export async function renewStaffInvite(input: {
       const adminRoles = target.roles
         .map((entry) => entry.role.key as RoleKey)
         .filter((role) => role !== "CUSTOMER");
+
+      assertSuperAdminManagementAllowed({
+        actorIsSuperAdmin: await actorIsSuperAdmin(tx, input.actorUserId),
+        currentRoles: adminRoles,
+      });
 
       if (adminRoles.length === 0) {
         throw new Error("Invited account has no admin roles.");
