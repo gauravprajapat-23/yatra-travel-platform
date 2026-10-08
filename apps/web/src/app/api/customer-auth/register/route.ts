@@ -3,6 +3,8 @@ import { getDb } from "@yatra/db/client";
 import { hashPassword } from "@/lib/auth/password";
 import { JsonBodyError, readJsonBody } from "@/lib/read-json-body";
 import { consumePublicWriteAttempt, rateLimitedResponse } from "@/lib/public-write-rate-limit";
+import { getEmailNotificationProvider } from "@/modules/notifications/provider-factory";
+import { sendAuthActionNotification } from "@/modules/notifications/auth-notification-service";
 
 export const runtime = "nodejs";
 
@@ -99,6 +101,8 @@ export async function POST(request: Request) {
       });
     }
 
+    const provider = getEmailNotificationProvider();
+
     const db = getDb();
     const existing = await db.user.findUnique({
       where: { emailNormalized: email },
@@ -152,11 +156,18 @@ export async function POST(request: Request) {
       },
     });
 
+    await sendAuthActionNotification({
+      userId: user.id,
+      destinationEmail: email,
+      purpose: "EMAIL_VERIFICATION",
+      provider,
+    });
+
     return NextResponse.json(
       {
         ok: true,
         verificationRequired: true,
-        message: "Account created. Email verification is required before sign-in.",
+        message: "Account created. Check your email to verify the account before sign-in.",
       },
       { status: 201, headers: { "Cache-Control": "no-store" } },
     );
