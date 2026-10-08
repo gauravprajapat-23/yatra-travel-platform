@@ -5,6 +5,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
 import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDate } from "@/lib/admin/datetime";
 import { driverStatuses } from "@/modules/fleet/fleet-management-service";
 
 export const dynamic = "force-dynamic";
@@ -111,7 +112,7 @@ export default async function AdminDriversPage({
     driver.phoneLast4 ? `•••• ${driver.phoneLast4}` : "Protected",
     driver.qualifications.map((item) => item.vehicleClass.name).join(", ") ||
       "Unqualified",
-    driver.licenseExpiry?.toLocaleDateString("en-IN") ?? "Not recorded",
+    driver.licenseExpiry ? formatIstDate(driver.licenseExpiry) : "Not recorded",
     <StatusPill key={driver.id} tone={tone(driver.status)}>
       {driver.status.replaceAll("_", " ")}
     </StatusPill>,
