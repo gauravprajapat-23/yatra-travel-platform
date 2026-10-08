@@ -24,7 +24,7 @@ requireFragments(
   "packages/db/prisma/schema.prisma",
   [
     "model AuthActionToken",
-    "tokenHash   String            @unique",
+    "tokenHash  String            @unique",
     "consumedAt DateTime?",
     "revokedAt  DateTime?",
     "model NotificationDelivery",
