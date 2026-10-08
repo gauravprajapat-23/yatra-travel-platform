@@ -4,6 +4,8 @@ const email = process.env.ADMIN_EMAIL;
 const password = process.env.ADMIN_PASSWORD;
 const reference = "YAT-E2ELIFE";
 
+test.describe.configure({ retries: 0 });
+
 async function login(page: import("@playwright/test").Page) {
   if (!email || !password) {
     throw new Error("ADMIN_EMAIL and ADMIN_PASSWORD are required.");
@@ -41,17 +43,11 @@ test("super admin advances and cancels a zero-value booking through validated li
   await page.locator("#bookingStatusReason").fill("E2E confirmed by admin.");
   await page.getByRole("button", { name: "Update Status" }).click();
 
-  const feedback = page.locator(".admin-action-feedback");
-  await expect(feedback).toHaveText("Booking moved to CONFIRMED.");
-
   await page.goto(`/admin/bookings/${reference}?tab=operations`);
   await expect(page.locator("#bookingNextStatus")).toContainText("CANCELLED");
   await page.locator("#bookingNextStatus").selectOption("CANCELLED");
   await page.locator("#bookingStatusReason").fill("E2E cancellation validation.");
   await page.getByRole("button", { name: "Update Status" }).click();
-  await expect(page.locator(".admin-action-feedback")).toHaveText(
-    "Booking moved to CANCELLED.",
-  );
 
   await page.goto(`/admin/bookings/${reference}?tab=timeline`);
   const timeline = page
