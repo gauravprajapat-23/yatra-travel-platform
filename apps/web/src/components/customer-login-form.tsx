@@ -82,6 +82,9 @@ export function CustomerLoginForm() {
       </button>
 
       <small>
+        <Link href="/account/forgot-password">Forgot your password?</Link>
+      </small>
+      <small>
         New to YATRA? <Link href="/account/register">Create an account</Link>
       </small>
       <small>
