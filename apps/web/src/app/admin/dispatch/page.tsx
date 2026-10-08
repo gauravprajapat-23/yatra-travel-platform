@@ -53,6 +53,7 @@ export default async function DispatchPage({
     vehicleBlocks,
     driverBlocks,
     expiringLicenses,
+    maintenanceVehicles,
     activeVehicles,
     activeDrivers,
   ] = await Promise.all([
@@ -157,6 +158,18 @@ export default async function DispatchPage({
         phoneLast4: true,
       },
     }),
+    db.vehicle.findMany({
+      where: { status: "MAINTENANCE" },
+      orderBy: { updatedAt: "desc" },
+      take: 50,
+      select: {
+        id: true,
+        displayName: true,
+        registrationNumber: true,
+        updatedAt: true,
+        vehicleClass: { select: { name: true } },
+      },
+    }),
     db.vehicle.count({ where: { status: "ACTIVE" } }),
     db.driver.count({ where: { status: "ACTIVE" } }),
   ]);
@@ -194,6 +207,13 @@ export default async function DispatchPage({
           label: `${expiringLicenses.length} active driver license${expiringLicenses.length === 1 ? "" : "s"} expire within 30 days.`,
           href: "#license-alerts",
           tone: "red" as const,
+        }]
+      : []),
+    ...(maintenanceVehicles.length > 0
+      ? [{
+          label: `${maintenanceVehicles.length} vehicle${maintenanceVehicles.length === 1 ? "" : "s"} currently marked MAINTENANCE and excluded from active dispatch resources.`,
+          href: "#maintenance-alerts",
+          tone: "orange" as const,
         }]
       : []),
     ...((vehicleBlocks.length + driverBlocks.length) > 0
@@ -536,6 +556,39 @@ export default async function DispatchPage({
           </table>
         </section>
       </div>
+
+      <section className="admin-panel" id="maintenance-alerts">
+        <div className="admin-panel-heading">
+          <h2>Vehicle Maintenance Alerts</h2>
+          <Link href="/admin/vehicles">Fleet Management →</Link>
+        </div>
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Vehicle</th>
+                <th>Registration</th>
+                <th>Class</th>
+                <th>Status Updated</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {maintenanceVehicles.length === 0 ? (
+                <tr><td colSpan={5}>No vehicles are currently marked for maintenance.</td></tr>
+              ) : maintenanceVehicles.map((vehicle) => (
+                <tr key={vehicle.id}>
+                  <td>{vehicle.displayName}</td>
+                  <td>{vehicle.registrationNumber}</td>
+                  <td>{vehicle.vehicleClass.name}</td>
+                  <td>{formatIstDateTime(vehicle.updatedAt)}</td>
+                  <td><Link href={`/admin/vehicles/${vehicle.id}`}>Review →</Link></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <section className="admin-panel" id="license-alerts">
         <div className="admin-panel-heading">
