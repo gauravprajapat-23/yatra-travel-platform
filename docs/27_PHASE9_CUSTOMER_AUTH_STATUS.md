@@ -1,6 +1,6 @@
 # Phase 9 — Customer Authentication & Portal Status
 
-Status: IN PROGRESS — FOUNDATION CERTIFICATION RUNNING
+Status: FOUNDATION CERTIFIED — REGISTRATION GATED ON PHASE 10 DELIVERY
 
 Updated: 2026-10-08
 
@@ -63,7 +63,7 @@ Add a secure customer account experience without weakening guest-booking privacy
 - [x] Browser login -> portal -> linked booking visibility
 - [x] Browser logout -> guest state
 - [x] Registration-disabled safety-gate test
-- [ ] Latest full Application CI certification
+- [x] Latest full Application CI certification — run 37745929465 PASS
 
 ## Security decisions
 
@@ -83,13 +83,13 @@ until email verification delivery is implemented and certified. The registration
 
 ## Remaining Phase 9 work
 
-- [ ] Certify current customer foundation through full Application CI
+- [x] Certify current customer foundation through full Application CI — run 37745929465 PASS
 - [ ] Add verified guest-booking claim flow after verification delivery exists
 - [x] Connect authenticated customer identity to new car/package booking creation using signed session ownership
 - [x] Add customer profile/account settings for name/phone with self-write authorization and audit
 - [x] Password change revokes other sessions; separate session-management UI not required for the current foundation
 - [→] Password reset deferred to Phase 10 notification delivery; authenticated password change is implemented
-- [ ] Final Phase 9 production-readiness certification
+- [x] Phase 9 foundation production-readiness certified with registration intentionally disabled pending Phase 10 delivery
 
 ## Phase 10 dependency
 
