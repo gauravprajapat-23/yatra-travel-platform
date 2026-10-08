@@ -9,8 +9,8 @@ test("mobile admin dispatch remains usable without page-level horizontal overflo
   }
 
   await page.goto("/admin/login");
-  await page.getByLabel(/email/i).fill(email);
-  await page.getByLabel(/password/i).fill(password);
+  await page.locator("#adminEmail").fill(email);
+  await page.locator("#adminPassword").fill(password);
   await page.getByRole("button", { name: /sign in|login/i }).click();
   await expect(page).toHaveURL(/\/admin(?:$|\?)/);
 
