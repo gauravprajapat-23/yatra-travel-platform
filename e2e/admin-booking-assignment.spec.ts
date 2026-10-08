@@ -47,12 +47,12 @@ test("operations admin assigns an available vehicle and driver", async ({ page }
     page.locator('#bookingDriver option', { hasText: "E2E Busy Driver" }),
   ).toHaveCount(0);
 
-  await page.locator("#bookingVehicle").selectOption({
-    label: /E2E Operations Vehicle/,
-  });
-  await page.locator("#bookingDriver").selectOption({
-    label: /E2E Operations Driver/,
-  });
+  await page
+    .locator("#bookingVehicle")
+    .selectOption("e2e_assignment_vehicle");
+  await page
+    .locator("#bookingDriver")
+    .selectOption("e2e_assignment_driver");
 
   await page.getByRole("button", { name: "Assign Resources" }).click();
   await expect(
