@@ -19,6 +19,7 @@ import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminActionForm, type AdminActionState } from "@/components/admin-action-form";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDate, formatIstDateTime } from "@/lib/admin/datetime";
 import {
   transitionCarBookingStatus,
   transitionPackageBookingStatus,
@@ -656,7 +657,7 @@ export default async function BookingDetailPage({
     <AdminShell
       active="Bookings"
       title={`Booking #${booking.reference}`}
-      subtitle={`${booking.type === "CAR" ? "Car booking" : "Package booking"} · created ${booking.createdAt.toLocaleString("en-IN")}`}
+      subtitle={`${booking.type === "CAR" ? "Car booking" : "Package booking"} · created ${formatIstDateTime(booking.createdAt)}`}
       actions={
         <Link className="admin-secondary-button" href="/admin/bookings">
           ← All Bookings
@@ -720,8 +721,8 @@ export default async function BookingDetailPage({
               <h3>{booking.title}</h3>
               <p>{booking.route}</p>
               <dl>
-                <div><dt>Departure</dt><dd>{booking.startsAt.toLocaleDateString("en-IN")}</dd></div>
-                <div><dt>Return</dt><dd>{booking.endsAt?.toLocaleDateString("en-IN") ?? "As per booking"}</dd></div>
+                <div><dt>Departure</dt><dd>{formatIstDate(booking.startsAt)}</dd></div>
+                <div><dt>Return</dt><dd>{booking.endsAt ? formatIstDate(booking.endsAt) : "As per booking"}</dd></div>
                 <div><dt>Travellers</dt><dd>{booking.travellers}</dd></div>
                 <div><dt>Assignment</dt><dd>{booking.assignment ?? "Not assigned"}</dd></div>
               </dl>
@@ -1006,7 +1007,7 @@ export default async function BookingDetailPage({
                         {entry.title}
                       </StatusPill>
                     </strong>
-                    <small>{entry.at.toLocaleString("en-IN")}</small>
+                    <small>{formatIstDateTime(entry.at)}</small>
                     <p>{entry.detail}</p>
                   </div>
                 </div>
