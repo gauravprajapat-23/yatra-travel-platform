@@ -977,3 +977,22 @@
     width: 100%;
   }
 }
+
+
+.admin-shell-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .admin-shell-actions {
+    width: 100%;
+  }
+
+  .admin-shell-actions > * {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
