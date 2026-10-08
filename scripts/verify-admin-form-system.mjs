@@ -333,6 +333,7 @@ const primitiveCoverage = [
     file: "apps/web/src/components/admin-editor-tabs.tsx",
     fragments: [
       "badge?: string",
+      'badgeTone?: "neutral" | "success" | "warning"',
       "admin-editor-tab__badge",
     ],
     label: "editor tab completion badge contract",
