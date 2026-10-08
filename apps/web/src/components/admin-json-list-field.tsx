@@ -54,19 +54,20 @@ export function AdminJsonListField({
   const [advanced, setAdvanced] = useState(false);
   const [lines, setLines] = useState(initialLines);
   const [json, setJson] = useState(stringify(defaultValue));
+  const [edited, setEdited] = useState(false);
+
+  function guidedJson() {
+    return JSON.stringify(
+      lines
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean),
+    );
+  }
 
   function toggleMode() {
     if (!advanced) {
-      setJson(
-        JSON.stringify(
-          lines
-            .split("\n")
-            .map((line) => line.trim())
-            .filter(Boolean),
-          null,
-          2,
-        ),
-      );
+      setJson(edited ? JSON.stringify(JSON.parse(guidedJson()), null, 2) : stringify(defaultValue));
       setAdvanced(true);
       return;
     }
@@ -80,14 +81,11 @@ export function AdminJsonListField({
     }
   }
 
-  const submittedValue = advanced
-    ? json
-    : JSON.stringify(
-        lines
-          .split("\n")
-          .map((line) => line.trim())
-          .filter(Boolean),
-      );
+  const submittedValue = edited
+    ? advanced
+      ? json
+      : guidedJson()
+    : stringify(defaultValue);
 
   return (
     <div className="admin-json-list-field">
@@ -107,7 +105,10 @@ export function AdminJsonListField({
       {advanced ? (
         <textarea
           value={json}
-          onChange={(event) => setJson(event.target.value)}
+          onChange={(event) => {
+            setEdited(true);
+            setJson(event.target.value);
+          }}
           rows={8}
           spellCheck={false}
           aria-label={`${label} JSON`}
@@ -115,7 +116,10 @@ export function AdminJsonListField({
       ) : (
         <textarea
           value={lines}
-          onChange={(event) => setLines(event.target.value)}
+          onChange={(event) => {
+            setEdited(true);
+            setLines(event.target.value);
+          }}
           rows={6}
           placeholder={placeholder}
           aria-label={label}
