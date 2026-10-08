@@ -15,6 +15,7 @@ import {
   type AdminActionState,
 } from "@/components/admin-action-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { parseIstDateTimeLocal } from "@/lib/admin/datetime";
 import { AdminDateTimeRange } from "@/components/admin-date-time-range";
 import { AdminTextareaField } from "@/components/admin-textarea-field";
 import {
@@ -24,14 +25,6 @@ import {
 } from "@/modules/booking/booking-policy-management-service";
 
 export const dynamic = "force-dynamic";
-
-function parseOptionalDate(value: FormDataEntryValue | null): Date | null {
-  const text = String(value ?? "").trim();
-  if (!text) return null;
-  const date = new Date(text);
-  if (Number.isNaN(date.getTime())) throw new Error("Invalid date.");
-  return date;
-}
 
 export default async function NewBookingPolicyPage() {
   const session = await requireAdminSession();
@@ -75,8 +68,8 @@ export default async function NewBookingPolicyPage() {
       const policy = await createBookingPolicyDraft({
         code,
         rawDocument,
-        effectiveFrom: parseOptionalDate(formData.get("effectiveFrom")),
-        effectiveTo: parseOptionalDate(formData.get("effectiveTo")),
+        effectiveFrom: parseIstDateTimeLocal(formData.get("effectiveFrom")),
+        effectiveTo: parseIstDateTimeLocal(formData.get("effectiveTo")),
         actorUserId: currentSession.userId,
       });
 
