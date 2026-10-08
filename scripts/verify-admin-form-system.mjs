@@ -114,6 +114,7 @@ function requireFragments(file, fragments) {
 const sharedComponents = [
   "apps/web/src/components/admin-form.tsx",
   "apps/web/src/components/admin-action-form.tsx",
+  "apps/web/src/components/admin-form-dirty-guard.tsx",
   "apps/web/src/components/admin-editor-tabs.tsx",
   "apps/web/src/components/admin-submit-button.tsx",
   "apps/web/src/components/admin-confirm-submit-button.tsx",
@@ -213,6 +214,16 @@ const primitiveCoverage = [
       "admin-field__error",
     ],
     label: "field-level accessibility linkage",
+  },
+  {
+    file: "apps/web/src/components/admin-form.tsx",
+    fragments: ["<AdminFormDirtyGuard"],
+    label: "shared unsaved-change guard",
+  },
+  {
+    file: "apps/web/src/components/admin-action-form.tsx",
+    fragments: ["<AdminFormDirtyGuard"],
+    label: "recoverable form unsaved-change guard",
   },
   {
     file: "apps/web/src/components/admin-action-form.tsx",
