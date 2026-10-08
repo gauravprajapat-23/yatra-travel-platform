@@ -5,6 +5,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDate, formatIstDateTime } from "@/lib/admin/datetime";
 import {
   adminRoleKeys,
   isAdminRole,
@@ -135,11 +136,11 @@ export default async function StaffPage({
       .filter((entry) => entry.role.key !== "CUSTOMER")
       .map((entry) => entry.role.label)
       .join(", ") || "—",
-    user.lastLoginAt?.toLocaleString("en-IN") ?? "Never",
+    user.lastLoginAt ? formatIstDateTime(user.lastLoginAt) : "Never",
     <StatusPill key={user.id} tone={tone(user.status)}>
       {user.status.replaceAll("_", " ")}
     </StatusPill>,
-    user.createdAt.toLocaleDateString("en-IN"),
+    formatIstDate(user.createdAt),
   ]);
 
   function pageHref(targetPage: number) {
