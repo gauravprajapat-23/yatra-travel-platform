@@ -1224,3 +1224,20 @@ form[data-admin-dirty="false"] .admin-form-actions__meta::before {
   background: rgba(255,255,255,.2);
   color: #fff;
 }
+
+
+.admin-editor-tab__badge--success {
+  background: #e8f6ee;
+  color: #26784d;
+}
+
+.admin-editor-tab__badge--warning {
+  background: #fff0df;
+  color: #b86916;
+}
+
+.admin-editor-tab--active .admin-editor-tab__badge--success,
+.admin-editor-tab--active .admin-editor-tab__badge--warning {
+  background: rgba(255,255,255,.2);
+  color: #fff;
+}
