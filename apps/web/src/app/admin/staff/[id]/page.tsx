@@ -241,9 +241,24 @@ export default async function StaffDetailPage({
         basePath={`/admin/staff/${targetUserId}`}
         active={activeTab}
         tabs={[
-          { key: "overview", label: "Overview", description: "Account status" },
-          { key: "access", label: "Roles & Status", description: "RBAC access" },
-          { key: "sessions", label: "Sessions", description: "Active login sessions" },
+          {
+            key: "overview",
+            label: "Overview",
+            description: "Account status",
+            badge: user.status.replaceAll("_", " "),
+          },
+          {
+            key: "access",
+            label: "Roles & Status",
+            description: "RBAC access",
+            badge: `${currentRoles.length} roles`,
+          },
+          {
+            key: "sessions",
+            label: "Sessions",
+            description: "Active login sessions",
+            badge: String(activeSessions),
+          },
         ]}
       />
 
