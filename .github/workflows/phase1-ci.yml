@@ -36,6 +36,9 @@ jobs:
       ADMIN_EMAIL: phase8-ci-admin@yatra.test
       ADMIN_PASSWORD: Phase8-CI-Admin-Only-2026!
       ADMIN_NAME: Phase 8 CI Admin
+      E2E_OPERATIONS_EMAIL: phase8-ops@yatra.test
+      E2E_OPERATIONS_PASSWORD: Phase8-Ops-Only-2026!
+      E2E_OPERATIONS_NAME: Phase 8 Operations
 
     steps:
       - name: Checkout
@@ -63,6 +66,9 @@ jobs:
 
       - name: Bootstrap disposable CI admin
         run: npm run db:bootstrap:admin -w @yatra/db
+
+      - name: Bootstrap disposable operations admin
+        run: npm run db:bootstrap:e2e-operations -w @yatra/db
 
       - name: Verify staff invite foundation
         run: npm run db:verify:staff-invites -w @yatra/db
