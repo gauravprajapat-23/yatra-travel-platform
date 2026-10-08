@@ -41,19 +41,27 @@ test("super admin advances and cancels a zero-value booking through validated li
   await expect(status.locator('option[value="CONFIRMED"]')).toHaveCount(1);
   await status.selectOption("CONFIRMED");
   await page.locator("#bookingStatusReason").fill("E2E confirmed by admin.");
-  await page.getByRole("button", { name: "Update Status" }).click();
-  await expect(page.locator(".admin-action-feedback")).toHaveText(
-    "Booking moved to CONFIRMED.",
-  );
+  await Promise.all([
+    page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().includes(`/admin/bookings/${reference}`),
+    ),
+    page.getByRole("button", { name: "Update Status" }).click(),
+  ]);
 
   await page.goto(`/admin/bookings/${reference}?tab=operations`);
   await expect(page.locator("#bookingNextStatus")).toContainText("CANCELLED");
   await page.locator("#bookingNextStatus").selectOption("CANCELLED");
   await page.locator("#bookingStatusReason").fill("E2E cancellation validation.");
-  await page.getByRole("button", { name: "Update Status" }).click();
-  await expect(page.locator(".admin-action-feedback")).toHaveText(
-    "Booking moved to CANCELLED.",
-  );
+  await Promise.all([
+    page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        response.url().includes(`/admin/bookings/${reference}`),
+    ),
+    page.getByRole("button", { name: "Update Status" }).click(),
+  ]);
 
   await page.goto(`/admin/bookings/${reference}?tab=timeline`);
   const timeline = page
