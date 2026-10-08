@@ -533,6 +533,7 @@ export default async function AdminContentEditorPage({
 
       <div className="admin-editor-section-stack">
         {activeTab === "overview" ? (
+          <>
           <section className="admin-panel admin-detail-card">
             <AdminPanelHeading
               title="Publication Overview"
@@ -613,6 +614,7 @@ export default async function AdminContentEditorPage({
               },
             ]}
           />
+          </>
         ) : null}
 
         {activeTab === "details" && type === "blog" && blogDetails ? (
