@@ -27,7 +27,13 @@ test("mobile admin dispatch remains usable without page-level horizontal overflo
   }
   await expect(page).toHaveURL(/\/admin(?:$|\?)/);
 
-  for (const path of ["/admin/dispatch", "/admin/bookings", "/admin/reports"]) {
+  for (const path of [
+    "/admin/dispatch",
+    "/admin/bookings",
+    "/admin/reports",
+    "/admin/bookings/YAT-E2EASSIGN?tab=operations",
+    "/admin/bookings/YAT-E2EREFUND?tab=payments",
+  ]) {
     await page.goto(path);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
