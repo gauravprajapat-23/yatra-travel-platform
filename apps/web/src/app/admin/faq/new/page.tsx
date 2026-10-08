@@ -17,6 +17,7 @@ import {
   type AdminActionState,
 } from "@/components/admin-action-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { parseIstDateTimeLocal } from "@/lib/admin/datetime";
 import {
   createFaq,
   faqScopes,
@@ -26,14 +27,6 @@ import {
 } from "@/modules/content/faq-management-service";
 
 export const dynamic = "force-dynamic";
-
-function parseOptionalDate(value: FormDataEntryValue | null): Date | null {
-  const text = String(value ?? "").trim();
-  if (!text) return null;
-  const date = new Date(text);
-  if (Number.isNaN(date.getTime())) throw new Error("Invalid schedule date.");
-  return date;
-}
 
 export default async function NewFaqPage() {
   const session = await requireAdminSession();
@@ -65,7 +58,7 @@ export default async function NewFaqPage() {
         answer: String(formData.get("answer") ?? ""),
         sortOrder: Number(formData.get("sortOrder") ?? 0),
         status,
-        scheduledFor: parseOptionalDate(formData.get("scheduledFor")),
+        scheduledFor: parseIstDateTimeLocal(formData.get("scheduledFor")),
         actorUserId: currentSession.userId,
       });
 
