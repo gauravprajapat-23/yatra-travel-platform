@@ -40,14 +40,18 @@ const managedInlinePages = [
 ];
 
 const lightweightFilterPages = [
+  "apps/web/src/app/admin/audit/page.tsx",
+  "apps/web/src/app/admin/blog/page.tsx",
+  "apps/web/src/app/admin/cms/page.tsx",
+  "apps/web/src/app/admin/destinations/page.tsx",
+  "apps/web/src/app/admin/offers/page.tsx",
+  "apps/web/src/app/admin/payments/page.tsx",
+  "apps/web/src/app/admin/search/page.tsx",
   "apps/web/src/app/admin/packages/page.tsx",
   "apps/web/src/app/admin/vehicles/page.tsx",
   "apps/web/src/app/admin/drivers/page.tsx",
   "apps/web/src/app/admin/leads/page.tsx",
-  "apps/web/src/app/admin/faq/page.tsx",
-  "apps/web/src/app/admin/payments/page.tsx",
-  "apps/web/src/app/admin/search/page.tsx",
-  "apps/web/src/app/admin/dispatch/page.tsx",
+  "apps/web/src/app/admin/faq/page.tsx",  "apps/web/src/app/admin/dispatch/page.tsx",
   "apps/web/src/app/admin/dispatch/calendar/page.tsx",
   "apps/web/src/app/admin/dispatch/resources/page.tsx",
   "apps/web/src/app/admin/reports/page.tsx",
