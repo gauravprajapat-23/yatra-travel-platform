@@ -9,6 +9,7 @@ import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminConfirmSubmitButton } from "@/components/admin-confirm-submit-button";
 import { AdminStructuredContentEditor } from "@/components/admin-structured-content-editor";
 import { AdminMediaPicker } from "@/components/admin-media-picker";
+import { AdminJsonListField } from "@/components/admin-json-list-field";
 import { AdminTextareaField } from "@/components/admin-textarea-field";
 import { AdminTextInputField } from "@/components/admin-text-input-field";
 import { AdminPublicationFields } from "@/components/admin-publication-fields";
@@ -30,7 +31,6 @@ import {
   isDestinationKind,
   removeTempleProfile,
   saveTempleProfile,
-  stringifyOptionalJson,
   updateDestinationDetails,
 } from "@/modules/content/destination-management-service";
 import { updateBlogDetails } from "@/modules/content/blog-management-service";
@@ -661,56 +661,41 @@ export default async function AdminContentEditorPage({
                       hint="Temple-specific clothing or entry requirements."
                     />
 
-                    <AdminField
-                      label="Opening hours JSON"
-                      htmlFor="openingHours"
-                      wide
-                      hint="Advanced structured field for daily/seasonal timings."
-                    >
-                      <textarea
-                        id="openingHours"
+                    <div className="admin-field admin-field--wide">
+                      <AdminJsonListField
                         name="openingHours"
-                        rows={8}
-                        spellCheck={false}
-                        defaultValue={stringifyOptionalJson(
-                          destinationDetails.templeProfile?.openingHours,
-                        )}
+                        label="Opening hours"
+                        defaultValue={
+                          destinationDetails.templeProfile?.openingHours
+                        }
+                        hint="Enter one timing or schedule note per line."
+                        placeholder={"Daily: 4:00 AM – 11:00 PM\nBhasma Aarti: advance booking required"}
                       />
-                    </AdminField>
+                    </div>
 
-                    <AdminField
-                      label="Nearby places JSON"
-                      htmlFor="nearbyPlaces"
-                      wide
-                      hint="Advanced structured field for nearby attractions or facilities."
-                    >
-                      <textarea
-                        id="nearbyPlaces"
+                    <div className="admin-field admin-field--wide">
+                      <AdminJsonListField
                         name="nearbyPlaces"
-                        rows={8}
-                        spellCheck={false}
-                        defaultValue={stringifyOptionalJson(
-                          destinationDetails.templeProfile?.nearbyPlaces,
-                        )}
+                        label="Nearby places"
+                        defaultValue={
+                          destinationDetails.templeProfile?.nearbyPlaces
+                        }
+                        hint="Enter one nearby attraction, facility or landmark per line."
+                        placeholder={"Ram Ghat – 1.5 km\nKal Bhairav Temple – 6 km"}
                       />
-                    </AdminField>
+                    </div>
 
-                    <AdminField
-                      label="Practical notes JSON"
-                      htmlFor="practicalNotes"
-                      wide
-                      hint="Advanced structured field for parking, accessibility, local transport and similar notes."
-                    >
-                      <textarea
-                        id="practicalNotes"
+                    <div className="admin-field admin-field--wide">
+                      <AdminJsonListField
                         name="practicalNotes"
-                        rows={8}
-                        spellCheck={false}
-                        defaultValue={stringifyOptionalJson(
-                          destinationDetails.templeProfile?.practicalNotes,
-                        )}
+                        label="Practical notes"
+                        defaultValue={
+                          destinationDetails.templeProfile?.practicalNotes
+                        }
+                        hint="Enter one visitor tip or operational note per line."
+                        placeholder={"Footwear must be left outside\nPhotography restrictions may apply"}
                       />
-                    </AdminField>
+                    </div>
                   </AdminFormGrid>
 
                   <AdminSubmitButton
