@@ -996,3 +996,22 @@
     justify-content: center;
   }
 }
+
+
+form[data-admin-dirty="true"] .admin-form-actions__meta::before {
+  content: "Unsaved changes";
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #fff3df;
+  color: #a66018;
+  font-size: .58rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+form[data-admin-dirty="false"] .admin-form-actions__meta::before {
+  content: none;
+}
