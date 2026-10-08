@@ -646,9 +646,20 @@ export default async function PackageDetailPage({
       title={pkg.title}
       subtitle={`${packageDurationDays}D / ${pkg.durationNights}N · ${packageSlug}`}
       actions={
-        <Link className="admin-secondary-button" href="/admin/packages">
-          ← All Packages
-        </Link>
+        <div className="admin-shell-actions">
+          {pkg.status === "PUBLISHED" ? (
+            <Link
+              className="admin-primary-button"
+              href={`/packages/${packageSlug}`}
+              target="_blank"
+            >
+              View Public Page ↗
+            </Link>
+          ) : null}
+          <Link className="admin-secondary-button" href="/admin/packages">
+            ← All Packages
+          </Link>
+        </div>
       }
     >
       <AdminEditorTabs
