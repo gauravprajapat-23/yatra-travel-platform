@@ -677,18 +677,24 @@ export default async function PackageDetailPage({
             label: "Destinations",
             description: "Route coverage",
             badge: String(pkg.destinations.length),
+            badgeTone: pkg.destinations.length > 0 ? "success" : "warning",
           },
           {
             key: "itinerary",
             label: "Itinerary",
             description: "Day-by-day plan",
             badge: `${pkg.itinerary.length}/${packageDurationDays}`,
+            badgeTone:
+              pkg.itinerary.length === packageDurationDays
+                ? "success"
+                : "warning",
           },
           {
             key: "pricing",
             label: "Pricing",
             description: "Fare options",
             badge: String(pkg.priceOptions.length),
+            badgeTone: pkg.priceOptions.length > 0 ? "success" : "warning",
           },
           {
             key: "content",
@@ -698,12 +704,17 @@ export default async function PackageDetailPage({
               Array.isArray(pkg.body) && pkg.body.length > 0
                 ? `${pkg.body.length} blocks`
                 : "Empty",
+            badgeTone:
+              Array.isArray(pkg.body) && pkg.body.length > 0
+                ? "success"
+                : "warning",
           },
           {
             key: "media",
             label: "Media",
             description: "Hero image",
             badge: pkg.heroMediaId ? "Ready" : "Missing",
+            badgeTone: pkg.heroMediaId ? "success" : "warning",
           },
           {
             key: "publishing",
@@ -713,6 +724,10 @@ export default async function PackageDetailPage({
               pkg.seoTitle && pkg.seoDescription
                 ? "Ready"
                 : "Needs SEO",
+            badgeTone:
+              pkg.seoTitle && pkg.seoDescription
+                ? "success"
+                : "warning",
           },
         ]}
       />
