@@ -135,11 +135,16 @@ export default async function MyTripsPage() {
             Your account only shows bookings explicitly linked to this verified
             customer identity.
           </p>
-          <form action="/api/customer-auth/logout" method="post">
-            <button className="button-link button-link--ghost" type="submit">
-              Sign Out
-            </button>
-          </form>
+          <div className="trip-actions">
+            <Link className="button-link button-link--ghost" href="/account/profile">
+              Account Settings
+            </Link>
+            <form action="/api/customer-auth/logout" method="post">
+              <button className="button-link button-link--ghost" type="submit">
+                Sign Out
+              </button>
+            </form>
+          </div>
         </div>
       </section>
 
