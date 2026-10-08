@@ -11,6 +11,7 @@ import { AdminMultiSelectCards } from "@/components/admin-multi-select-cards";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { AdminDateTimeRange } from "@/components/admin-date-time-range";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDate, formatIstDateTime, parseIstDateTimeLocal } from "@/lib/admin/datetime";
 import { parseIstDateTimeLocal } from "@/lib/admin/datetime";
 import {
   addDriverAvailabilityBlock,
@@ -197,7 +198,7 @@ export default async function DriverDetailPage({
             />
             <dl>
               <div><dt>Qualified classes</dt><dd>{driver.qualifications.map((item) => item.vehicleClass.name).join(", ") || "None"}</dd></div>
-              <div><dt>License expiry</dt><dd>{driver.licenseExpiry?.toLocaleDateString("en-IN") ?? "Not recorded"}</dd></div>
+              <div><dt>License expiry</dt><dd>{driver.licenseExpiry ? formatIstDate(driver.licenseExpiry) : "Not recorded"}</dd></div>
               <div><dt>Protected contact</dt><dd>{driver.phoneLast4 ? `•••• ${driver.phoneLast4}` : "Not available"}</dd></div>
               <div><dt>Availability blocks</dt><dd>{driver.availability.length}</dd></div>
             </dl>
@@ -330,8 +331,8 @@ export default async function DriverDetailPage({
                 <tbody>
                   {driver.availability.map((block) => (
                     <tr key={block.id}>
-                      <td>{block.startsAt.toLocaleString("en-IN")}</td>
-                      <td>{block.endsAt.toLocaleString("en-IN")}</td>
+                      <td>{formatIstDateTime(block.startsAt)}</td>
+                      <td>{formatIstDateTime(block.endsAt)}</td>
                       <td>{block.reason ?? "—"}</td>
                       <td>
                         {hasPermission(session.roles, "driver.write") ? (
