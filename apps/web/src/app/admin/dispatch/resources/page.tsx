@@ -6,6 +6,7 @@ import { bookingTimeWindow, windowsOverlap } from "@yatra/domain/fleet/availabil
 import { AdminField } from "@/components/admin-form";
 import { AdminMetric, AdminShell, StatusPill } from "@/components/admin-shell";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDate, formatIstDateTime } from "@/lib/admin/datetime";
 
 export const dynamic = "force-dynamic";
 
@@ -15,13 +16,6 @@ const allowedWindows = new Set([7, 14, 30]);
 function parseWindow(value: string | undefined) {
   const parsed = Number(value ?? "14");
   return allowedWindows.has(parsed) ? parsed : 14;
-}
-
-function fmt(value: Date) {
-  return value.toLocaleString("en-IN", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
 }
 
 export default async function DispatchResourcesPage({
@@ -200,16 +194,16 @@ export default async function DispatchResourcesPage({
                       {vehicle.bookings.length === 0 ? "—" : vehicle.bookings.map((booking) => (
                         <div key={booking.reference}>
                           <Link href={`/admin/bookings/${booking.reference}`}>{booking.reference}</Link>
-                          {" · "}{fmt(booking.startsAt)}
+                          {" · "}{formatIstDateTime(booking.startsAt)}
                         </div>
                       ))}
                     </td>
                     <td>
                       {vehicle.availability.length === 0 ? "—" : vehicle.availability.map((block) => (
-                        <div key={block.id}>{fmt(block.startsAt)} → {fmt(block.endsAt)}</div>
+                        <div key={block.id}>{formatIstDateTime(block.startsAt)} → {formatIstDateTime(block.endsAt)}</div>
                       ))}
                     </td>
-                    <td>{nextCommitment ? `${fmt(nextCommitment.at)} · ${nextCommitment.label}` : "Free in selected window"}</td>
+                    <td>{nextCommitment ? `${formatIstDateTime(nextCommitment.at)} · ${nextCommitment.label}` : "Free in selected window"}</td>
                   </tr>
                 );
               })}
@@ -261,23 +255,23 @@ export default async function DispatchResourcesPage({
                     </td>
                     <td>
                       <StatusPill tone={licenseTone}>
-                        {driver.licenseExpiry ? driver.licenseExpiry.toLocaleDateString("en-IN") : "No expiry set"}
+                        {driver.licenseExpiry ? formatIstDate(driver.licenseExpiry) : "No expiry set"}
                       </StatusPill>
                     </td>
                     <td>
                       {driver.bookings.length === 0 ? "—" : driver.bookings.map((booking) => (
                         <div key={booking.reference}>
                           <Link href={`/admin/bookings/${booking.reference}`}>{booking.reference}</Link>
-                          {" · "}{fmt(booking.startsAt)}
+                          {" · "}{formatIstDateTime(booking.startsAt)}
                         </div>
                       ))}
                     </td>
                     <td>
                       {driver.availability.length === 0 ? "—" : driver.availability.map((block) => (
-                        <div key={block.id}>{fmt(block.startsAt)} → {fmt(block.endsAt)}</div>
+                        <div key={block.id}>{formatIstDateTime(block.startsAt)} → {formatIstDateTime(block.endsAt)}</div>
                       ))}
                     </td>
-                    <td>{nextCommitment ? `${fmt(nextCommitment.at)} · ${nextCommitment.label}` : "Free in selected window"}</td>
+                    <td>{nextCommitment ? `${formatIstDateTime(nextCommitment.at)} · ${nextCommitment.label}` : "Free in selected window"}</td>
                   </tr>
                 );
               })}
