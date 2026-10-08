@@ -244,6 +244,7 @@ export default async function VehicleDetailPage({
             label: "Overview",
             description: "Fleet status",
             badge: vehicle.status.replaceAll("_", " "),
+            badgeTone: vehicle.status === "ACTIVE" ? "success" : "neutral",
           },
           {
             key: "details",
@@ -256,6 +257,7 @@ export default async function VehicleDetailPage({
             label: "Availability",
             description: "Blocks & maintenance",
             badge: String(vehicle.availability.length),
+            badgeTone: vehicle.availability.length === 0 ? "success" : "warning",
           },
           {
             key: "media",
@@ -264,6 +266,7 @@ export default async function VehicleDetailPage({
             badge: vehicle.media.length > 0
               ? `${vehicle.media.length} assets`
               : "Missing",
+            badgeTone: vehicle.media.length > 0 ? "success" : "warning",
           },
         ]}
       />
