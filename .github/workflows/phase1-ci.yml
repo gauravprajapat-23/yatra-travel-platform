@@ -96,6 +96,9 @@ jobs:
       - name: Bootstrap password reset fixture
         run: npm run db:bootstrap:e2e-password-reset -w @yatra/db
 
+      - name: Bootstrap notification delivery monitor fixture
+        run: npm run db:bootstrap:e2e-notifications -w @yatra/db
+
       - name: Verify staff invite foundation
         run: npm run db:verify:staff-invites -w @yatra/db
 
