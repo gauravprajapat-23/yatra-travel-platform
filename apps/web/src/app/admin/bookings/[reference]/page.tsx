@@ -410,6 +410,7 @@ export default async function BookingDetailPage({
   const bookingId = booking.id;
   const bookingReference = booking.reference;
   const bookingType = booking.type;
+  const bookingStatus = booking.status;
 
   async function assignResources(
     _previousState: AdminActionState,
@@ -417,6 +418,7 @@ export default async function BookingDetailPage({
   ): Promise<AdminActionState> {
     "use server";
 
+    const actionDb = getDb();
     const currentSession = await requireAdminSession();
     if (!hasPermission(currentSession.roles, "booking.assign")) {
       redirect(`/admin/bookings/${bookingReference}`);
@@ -447,7 +449,7 @@ export default async function BookingDetailPage({
         actorUserId: currentSession.userId,
       });
 
-      await db.auditLog.create({
+      await actionDb.auditLog.create({
         data: {
           actorUserId: currentSession.userId,
           action: "BOOKING_RESOURCES_ASSIGNED",
@@ -480,6 +482,7 @@ export default async function BookingDetailPage({
   async function refundRemainingPayment(formData: FormData) {
     "use server";
 
+    const actionDb = getDb();
     const currentSession = await requireAdminSession();
     if (!hasPermission(currentSession.roles, "refund.manage")) {
       redirect(`/admin/bookings/${bookingReference}`);
@@ -490,7 +493,7 @@ export default async function BookingDetailPage({
       throw new Error("Payment intent is required.");
     }
 
-    const paymentIntent = await db.paymentIntent.findUnique({
+    const paymentIntent = await actionDb.paymentIntent.findUnique({
       where: { id: paymentIntentId },
       include: {
         refunds: {
@@ -537,7 +540,7 @@ export default async function BookingDetailPage({
       "CANCELLED",
     ];
 
-    if (!refundableBookingStates.includes(booking.status)) {
+    if (!refundableBookingStates.includes(bookingStatus)) {
       throw new Error("Booking is not in a refundable operational state.");
     }
 
@@ -564,7 +567,7 @@ export default async function BookingDetailPage({
       });
     }
 
-    await db.auditLog.create({
+    await actionDb.auditLog.create({
       data: {
         actorUserId: currentSession.userId,
         action: "BOOKING_REFUND_REQUESTED",
@@ -591,6 +594,7 @@ export default async function BookingDetailPage({
   ): Promise<AdminActionState> {
     "use server";
 
+    const actionDb = getDb();
     const currentSession = await requireAdminSession();
     if (!hasPermission(currentSession.roles, "booking.write")) {
       redirect("/admin/bookings");
@@ -607,30 +611,30 @@ export default async function BookingDetailPage({
     }
 
     try {
-      if (booking.type === "CAR") {
+      if (bookingType === "CAR") {
         await transitionCarBookingStatus({
-          bookingId: booking.id,
+          bookingId,
           toStatus: toStatusValue,
           actorUserId: currentSession.userId,
           reason,
         });
       } else {
         await transitionPackageBookingStatus({
-          bookingId: booking.id,
+          bookingId,
           toStatus: toStatusValue,
           actorUserId: currentSession.userId,
           reason,
         });
       }
 
-      await db.auditLog.create({
+      await actionDb.auditLog.create({
         data: {
           actorUserId: currentSession.userId,
           action: "BOOKING_STATUS_CHANGED",
-          entityType: booking.type === "CAR" ? "CarBooking" : "PackageBooking",
-          entityId: booking.id,
+          entityType: bookingType === "CAR" ? "CarBooking" : "PackageBooking",
+          entityId: bookingId,
           metadata: {
-            reference: booking.reference,
+            reference: bookingReference,
             toStatus: toStatusValue,
             reason: reason || null,
           },
@@ -644,7 +648,7 @@ export default async function BookingDetailPage({
       };
     }
 
-    revalidatePath(`/admin/bookings/${booking.reference}`);
+    revalidatePath(`/admin/bookings/${bookingReference}`);
     revalidatePath("/admin/bookings");
 
     return {
