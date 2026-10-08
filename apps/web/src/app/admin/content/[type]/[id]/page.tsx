@@ -427,9 +427,20 @@ export default async function AdminContentEditorPage({
       title={content.title}
       subtitle={`${type.toUpperCase()} · ${content.slug}`}
       actions={
-        <Link className="admin-secondary-button" href={backPath(type)}>
-          ← Back
-        </Link>
+        <div className="admin-shell-actions">
+          {content.status === "PUBLISHED" ? (
+            <Link
+              className="admin-primary-button"
+              href={publicPath(type, content.slug)}
+              target="_blank"
+            >
+              View Public Page ↗
+            </Link>
+          ) : null}
+          <Link className="admin-secondary-button" href={backPath(type)}>
+            ← Back
+          </Link>
+        </div>
       }
     >
       <AdminEditorTabs
