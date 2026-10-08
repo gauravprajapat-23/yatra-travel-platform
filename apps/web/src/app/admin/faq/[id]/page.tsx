@@ -109,9 +109,24 @@ export default async function FaqDetailPage({
         basePath={`/admin/faq/${faq.id}`}
         active={activeTab}
         tabs={[
-          { key: "overview", label: "Overview", description: "Status & placement" },
-          { key: "content", label: "Content", description: "Question & answer" },
-          { key: "publishing", label: "Publishing", description: "Scope & schedule" },
+          {
+            key: "overview",
+            label: "Overview",
+            description: "Status & placement",
+            badge: faq.status.replaceAll("_", " "),
+          },
+          {
+            key: "content",
+            label: "Content",
+            description: "Question & answer",
+            badge: faq.answer.trim() ? "Ready" : "Incomplete",
+          },
+          {
+            key: "publishing",
+            label: "Publishing",
+            description: "Scope & schedule",
+            badge: faq.scope.replaceAll("_", " "),
+          },
         ]}
       />
 
