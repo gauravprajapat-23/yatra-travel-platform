@@ -49,6 +49,7 @@ const lightweightFilterPages = [
   "apps/web/src/app/admin/destinations/page.tsx",
   "apps/web/src/app/admin/offers/page.tsx",
   "apps/web/src/app/admin/payments/page.tsx",
+  "apps/web/src/app/admin/notifications/page.tsx",
   "apps/web/src/app/admin/search/page.tsx",
   "apps/web/src/app/admin/packages/page.tsx",
   "apps/web/src/app/admin/vehicles/page.tsx",
