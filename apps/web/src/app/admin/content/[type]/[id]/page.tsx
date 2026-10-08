@@ -456,19 +456,63 @@ export default async function AdminContentEditorPage({
         basePath={`/admin/content/${type}/${contentId}`}
         active={activeTab}
         tabs={[
-          { key: "overview", label: "Overview", description: "Status & identity" },
+          {
+            key: "overview",
+            label: "Overview",
+            description: "Status & identity",
+            badge: content.status.replaceAll("_", " "),
+          },
           ...(type === "blog"
-            ? [{ key: "details", label: "Blog Details", description: "Category & excerpt" }]
+            ? [{
+                key: "details",
+                label: "Blog Details",
+                description: "Category & excerpt",
+                badge:
+                  blogDetails?.excerpt && blogDetails.categoryId
+                    ? "Ready"
+                    : "Incomplete",
+              }]
             : []),
           ...(type === "destination"
-            ? [{ key: "details", label: "Destination", description: "Kind & summary" }]
+            ? [{
+                key: "details",
+                label: "Destination",
+                description: "Kind & summary",
+                badge: destinationDetails?.summary ? "Ready" : "Incomplete",
+              }]
             : []),
           ...(type === "destination" && destinationDetails?.kind === "TEMPLE"
-            ? [{ key: "temple", label: "Temple Profile", description: "Darshan & practical info" }]
+            ? [{
+                key: "temple",
+                label: "Temple Profile",
+                description: "Darshan & practical info",
+                badge: destinationDetails.templeProfile ? "Ready" : "Missing",
+              }]
             : []),
-          { key: "content", label: "Content", description: "Structured body" },
-          { key: "media", label: "Media", description: "Hero image" },
-          { key: "publishing", label: "SEO & Publishing", description: "Metadata & visibility" },
+          {
+            key: "content",
+            label: "Content",
+            description: "Structured body",
+            badge:
+              Array.isArray(content.body) && content.body.length > 0
+                ? `${content.body.length} blocks`
+                : "Empty",
+          },
+          {
+            key: "media",
+            label: "Media",
+            description: "Hero image",
+            badge: content.heroMediaId ? "Ready" : "Missing",
+          },
+          {
+            key: "publishing",
+            label: "SEO & Publishing",
+            description: "Metadata & visibility",
+            badge:
+              content.seoTitle && content.seoDescription
+                ? "Ready"
+                : "Needs SEO",
+          },
         ]}
       />
 
