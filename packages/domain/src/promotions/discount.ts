@@ -36,11 +36,83 @@ function assertCurrency(value: string): void {
   }
 }
 
+export function assertPromotionRule(rule: PromotionRule): void {
+
+  if (
+    rule.maxRedemptions !== null &&
+    rule.maxRedemptions !== undefined &&
+    (!Number.isInteger(rule.maxRedemptions) || rule.maxRedemptions <= 0)
+  ) {
+    throw new Error("Promotion redemption limit must be a positive integer.");
+  }
+
+  const redeemedCount = rule.redeemedCount ?? 0;
+  if (!Number.isInteger(redeemedCount) || redeemedCount < 0) {
+    throw new Error("Promotion redeemed count is invalid.");
+  }
+
+  if (
+    rule.maxRedemptions !== null &&
+    rule.maxRedemptions !== undefined &&
+    redeemedCount > rule.maxRedemptions
+  ) {
+    throw new Error("Promotion redeemed count exceeds its redemption limit.");
+  }
+
+  if (
+    rule.maxDiscountMinor !== null &&
+    rule.maxDiscountMinor !== undefined &&
+    rule.maxDiscountMinor <= 0n
+  ) {
+    throw new Error("Promotion maximum discount must be positive.");
+  }
+
+  if (rule.discountKind === "PERCENTAGE") {
+    if (
+      !Number.isInteger(rule.percentageBps) ||
+      (rule.percentageBps ?? 0) <= 0 ||
+      (rule.percentageBps ?? 0) > 10_000
+    ) {
+      throw new Error(
+        "Percentage promotion must be between 1 and 10000 basis points.",
+      );
+    }
+
+    if (rule.fixedAmountMinor !== null && rule.fixedAmountMinor !== undefined) {
+      throw new Error("Percentage promotion cannot also define a fixed amount.");
+    }
+  } else {
+    if (
+      rule.fixedAmountMinor === null ||
+      rule.fixedAmountMinor === undefined ||
+      rule.fixedAmountMinor <= 0n
+    ) {
+      throw new Error("Fixed promotion must define a positive amount.");
+    }
+
+    if (rule.percentageBps !== null && rule.percentageBps !== undefined) {
+      throw new Error("Fixed promotion cannot also define a percentage.");
+    }
+
+    if (!rule.currency) {
+      throw new Error("Fixed promotion must define a currency.");
+    }
+
+    assertCurrency(rule.currency);
+  }
+
+  if (rule.currency) {
+    assertCurrency(rule.currency);
+  }
+}
+
 export function assertPromotionEligible(
   rule: PromotionRule,
   context: PromotionContext,
 ): void {
   const now = context.at ?? new Date();
+
+  assertPromotionRule(rule);
 
   if (context.subtotalMinor < 0n) {
     throw new Error("Promotion subtotal cannot be negative.");
@@ -86,66 +158,16 @@ export function assertPromotionEligible(
 
   if (
     rule.maxRedemptions !== null &&
-    rule.maxRedemptions !== undefined
+    rule.maxRedemptions !== undefined &&
+    (rule.redeemedCount ?? 0) >= rule.maxRedemptions
   ) {
-    if (!Number.isInteger(rule.maxRedemptions) || rule.maxRedemptions <= 0) {
-      throw new Error("Promotion redemption limit must be a positive integer.");
-    }
-
-    const redeemedCount = rule.redeemedCount ?? 0;
-    if (!Number.isInteger(redeemedCount) || redeemedCount < 0) {
-      throw new Error("Promotion redeemed count is invalid.");
-    }
-
-    if (redeemedCount >= rule.maxRedemptions) {
-      throw new Error("Promotion redemption limit has been reached.");
-    }
+    throw new Error("Promotion redemption limit has been reached.");
   }
 
   if (
-    rule.maxDiscountMinor !== null &&
-    rule.maxDiscountMinor !== undefined &&
-    rule.maxDiscountMinor <= 0n
+    rule.discountKind === "FIXED" &&
+    rule.currency !== context.currency
   ) {
-    throw new Error("Promotion maximum discount must be positive.");
-  }
-
-  if (rule.discountKind === "PERCENTAGE") {
-    if (
-      !Number.isInteger(rule.percentageBps) ||
-      (rule.percentageBps ?? 0) <= 0 ||
-      (rule.percentageBps ?? 0) > 10_000
-    ) {
-      throw new Error(
-        "Percentage promotion must be between 1 and 10000 basis points.",
-      );
-    }
-
-    if (rule.fixedAmountMinor !== null && rule.fixedAmountMinor !== undefined) {
-      throw new Error("Percentage promotion cannot also define a fixed amount.");
-    }
-    return;
-  }
-
-  if (
-    rule.fixedAmountMinor === null ||
-    rule.fixedAmountMinor === undefined ||
-    rule.fixedAmountMinor <= 0n
-  ) {
-    throw new Error("Fixed promotion must define a positive amount.");
-  }
-
-  if (rule.percentageBps !== null && rule.percentageBps !== undefined) {
-    throw new Error("Fixed promotion cannot also define a percentage.");
-  }
-
-  if (!rule.currency) {
-    throw new Error("Fixed promotion must define a currency.");
-  }
-
-  assertCurrency(rule.currency);
-
-  if (rule.currency !== context.currency) {
     throw new Error("Promotion currency does not match the quote currency.");
   }
 }
