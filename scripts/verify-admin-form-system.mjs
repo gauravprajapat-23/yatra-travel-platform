@@ -111,6 +111,53 @@ function requireFragments(file, fragments) {
 }
 
 
+
+const crossChatRegressionChecks = [
+  {
+    file: "apps/web/src/app/admin/layout.tsx",
+    fragments: ["<AdminGlobalFormGuard"],
+    label: "global unsaved-change guard mount",
+  },
+  {
+    file: "apps/web/src/components/admin-json-list-field.tsx",
+    fragments: ["const [edited, setEdited]", "stringify(defaultValue)", "edited"],
+    label: "structured JSON preservation until edit",
+  },
+  {
+    file: "apps/web/src/modules/staff/staff-management-service.ts",
+    fragments: [
+      "assertSuperAdminManagementAllowed",
+      "Only a SUPER_ADMIN can grant or manage SUPER_ADMIN access.",
+    ],
+    label: "staff super-admin hierarchy enforcement",
+  },
+  {
+    file: "apps/web/src/lib/admin/datetime.ts",
+    fragments: ["Asia/Kolkata", "parseIstDateTimeLocal", "formatIstDateTimeLocal"],
+    label: "explicit IST datetime-local conversion",
+  },
+  {
+    file: "apps/web/src/app/admin/vehicles/[id]/page.tsx",
+    fragments: ["parseIstDateTimeLocal(formData.get(\"startsAt\"))", "parseIstDateTimeLocal(formData.get(\"endsAt\"))"],
+    label: "vehicle availability IST parsing",
+  },
+  {
+    file: "apps/web/src/app/admin/drivers/[id]/page.tsx",
+    fragments: ["parseIstDateTimeLocal(formData.get(\"startsAt\"))", "parseIstDateTimeLocal(formData.get(\"endsAt\"))"],
+    label: "driver availability IST parsing",
+  },
+  {
+    file: "apps/web/src/app/admin/settings/booking-policies/[id]/page.tsx",
+    fragments: ["formatIstDateTimeLocal", "parseIstDateTimeLocal"],
+    label: "booking policy IST round-trip",
+  },
+];
+
+for (const check of crossChatRegressionChecks) {
+  requireFragments(check.file, check.fragments);
+  process.stdout.write(`PASS ${check.label}\n`);
+}
+
 const sharedComponents = [
   "apps/web/src/components/admin-form.tsx",
   "apps/web/src/components/admin-action-form.tsx",
