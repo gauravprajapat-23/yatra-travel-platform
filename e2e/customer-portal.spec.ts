@@ -63,6 +63,32 @@ test("verified customer can update only their own profile", async ({ page }) => 
   await expect(page.locator("#customerProfileEmail")).toHaveAttribute("readonly", "");
 });
 
+test("verified customer can change password and restore it in the current session", async ({ page }) => {
+  if (!email || !password) {
+    throw new Error("E2E_CUSTOMER_EMAIL and E2E_CUSTOMER_PASSWORD are required.");
+  }
+
+  const temporaryPassword = "Phase9-Customer-Temporary-2026!";
+
+  await page.goto("/account/login");
+  await page.locator("#customerEmail").fill(email);
+  await page.locator("#customerPassword").fill(password);
+  await page.getByRole("button", { name: "Sign In" }).click();
+  await expect(page).toHaveURL(/\/my-trips/);
+
+  await page.goto("/account/profile");
+
+  await page.locator("#customerCurrentPassword").fill(password);
+  await page.locator("#customerNewPassword").fill(temporaryPassword);
+  await page.getByRole("button", { name: "Change Password" }).click();
+  await expect(page.getByText(/Password updated\. Other sessions were signed out\./)).toBeVisible();
+
+  await page.locator("#customerCurrentPassword").fill(temporaryPassword);
+  await page.locator("#customerNewPassword").fill(password);
+  await page.getByRole("button", { name: "Change Password" }).click();
+  await expect(page.getByText(/Password updated\. Other sessions were signed out\./)).toBeVisible();
+});
+
 test("public customer registration stays disabled until verification delivery is certified", async ({ request }) => {
   const response = await request.post("/api/customer-auth/register", {
     headers: {
