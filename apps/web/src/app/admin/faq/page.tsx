@@ -5,6 +5,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
 import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDateTime } from "@/lib/admin/datetime";
 import {
   faqScopes,
   faqStatuses,
@@ -99,8 +100,8 @@ export default async function AdminFaqPage({
     <StatusPill key={`${faq.id}-status`} tone={tone(faq.status)}>
       {faq.status.replaceAll("_", " ")}
     </StatusPill>,
-    faq.publishedAt?.toLocaleString("en-IN") ?? "—",
-    faq.updatedAt.toLocaleString("en-IN"),
+    faq.publishedAt ? formatIstDateTime(faq.publishedAt) : "—",
+    formatIstDateTime(faq.updatedAt),
   ]);
 
   function pageHref(targetPage: number) {
