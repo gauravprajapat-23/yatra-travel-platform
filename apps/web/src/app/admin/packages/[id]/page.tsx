@@ -666,13 +666,54 @@ export default async function PackageDetailPage({
         basePath={`/admin/packages/${packageId}`}
         active={activeTab}
         tabs={[
-          { key: "overview", label: "Overview", description: "Status & summary" },
-          { key: "destinations", label: "Destinations", description: "Route coverage" },
-          { key: "itinerary", label: "Itinerary", description: "Day-by-day plan" },
-          { key: "pricing", label: "Pricing", description: "Fare options" },
-          { key: "content", label: "Content", description: "Structured body" },
-          { key: "media", label: "Media", description: "Hero image" },
-          { key: "publishing", label: "SEO & Publishing", description: "Visibility & metadata" },
+          {
+            key: "overview",
+            label: "Overview",
+            description: "Status & summary",
+            badge: pkg.status.replaceAll("_", " "),
+          },
+          {
+            key: "destinations",
+            label: "Destinations",
+            description: "Route coverage",
+            badge: String(pkg.destinations.length),
+          },
+          {
+            key: "itinerary",
+            label: "Itinerary",
+            description: "Day-by-day plan",
+            badge: `${pkg.itinerary.length}/${packageDurationDays}`,
+          },
+          {
+            key: "pricing",
+            label: "Pricing",
+            description: "Fare options",
+            badge: String(pkg.priceOptions.length),
+          },
+          {
+            key: "content",
+            label: "Content",
+            description: "Structured body",
+            badge:
+              Array.isArray(pkg.body) && pkg.body.length > 0
+                ? `${pkg.body.length} blocks`
+                : "Empty",
+          },
+          {
+            key: "media",
+            label: "Media",
+            description: "Hero image",
+            badge: pkg.heroMediaId ? "Ready" : "Missing",
+          },
+          {
+            key: "publishing",
+            label: "SEO & Publishing",
+            description: "Visibility & metadata",
+            badge:
+              pkg.seoTitle && pkg.seoDescription
+                ? "Ready"
+                : "Needs SEO",
+          },
         ]}
       />
 
