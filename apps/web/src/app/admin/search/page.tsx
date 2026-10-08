@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -90,16 +91,16 @@ export default async function AdminSearchPage({
         <section className="admin-panel admin-detail-card">
           <h2>Search the admin</h2>
           <form className="admin-table-query admin-table-query--compact" method="get">
-            <label>
-              <span>Search</span>
+            <AdminField label="Search" htmlFor="adminSearchEmpty">
               <input
+                id="adminSearchEmpty"
                 name="q"
                 minLength={2}
                 maxLength={120}
                 placeholder="Booking reference, customer, lead, package, vehicle…"
                 autoFocus
               />
-            </label>
+            </AdminField>
             <button className="admin-primary-button" type="submit">
               Search
             </button>
@@ -409,16 +410,16 @@ export default async function AdminSearchPage({
     >
       <section className="admin-panel admin-card-body">
         <form className="admin-table-query admin-table-query--compact" method="get">
-          <label>
-            <span>Search</span>
+          <AdminField label="Search" htmlFor="adminSearchQuery">
             <input
+              id="adminSearchQuery"
               name="q"
               defaultValue={q}
               minLength={2}
               maxLength={120}
               autoFocus
             />
-          </label>
+          </AdminField>
           <button className="admin-primary-button" type="submit">
             Search
           </button>
