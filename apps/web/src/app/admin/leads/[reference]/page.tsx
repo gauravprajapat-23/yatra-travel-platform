@@ -132,9 +132,31 @@ export default async function LeadDetailPage({
         basePath={`/admin/leads/${leadReference}`}
         active={activeTab}
         tabs={[
-          { key: "overview", label: "Overview", description: "Contact & message" },
-          { key: "trip", label: "Trip Data", description: "Captured enquiry details" },
-          { key: "status", label: "Status", description: "Qualification workflow" },
+          {
+            key: "overview",
+            label: "Overview",
+            description: "Contact & message",
+            badge: lead.status.replaceAll("_", " "),
+          },
+          {
+            key: "trip",
+            label: "Trip Data",
+            description: "Captured enquiry details",
+            badge: String(tripData.length),
+            badgeTone: tripData.length > 0 ? "success" : "neutral",
+          },
+          {
+            key: "status",
+            label: "Status",
+            description: "Qualification workflow",
+            badge: lead.status.replaceAll("_", " "),
+            badgeTone:
+              lead.status === "QUALIFIED"
+                ? "success"
+                : lead.status === "LOST"
+                  ? "warning"
+                  : "neutral",
+          },
         ]}
       />
 
