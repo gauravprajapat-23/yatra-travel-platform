@@ -332,6 +332,15 @@ New dedicated create pages should not ship with raw label/input stacks or error-
 
 Use URL-driven tabs for complex editors.
 
+Tabs may expose a compact `badge` and optional readiness `badgeTone`:
+- neutral: informational counts/status
+- success: section is ready/complete
+- warning: missing or incomplete work
+
+Badges must communicate real editor state from server data. Do not use them as decoration.
+
+Use URL-driven tabs for complex editors.
+
 Preferred pattern:
 
 `/admin/resource/:id?tab=overview`
@@ -411,7 +420,35 @@ Guided blocks include:
 
 The component still submits the existing structured JSON field, so server-side validation remains authoritative.
 
+Image and Gallery blocks integrate with the existing Media Library:
+- editors can choose existing uploaded images
+- selected Image blocks show an immediate thumbnail
+- Gallery blocks show removable thumbnail rows
+- duplicate gallery URLs are ignored when selecting from the library
+- manual URL entry remains available as a fallback
+
 Advanced JSON may remain available only as an explicit advanced option.
+
+## Temple Fact Lists
+
+Use `AdminJsonListField` for Temple Profile fields that are stored as optional JSON but behave publicly like readable fact lists.
+
+Current uses:
+- opening hours
+- nearby places
+- practical notes
+
+Guided mode:
+- one fact per line
+- serializes to a JSON string array
+- avoids exposing JSON syntax to normal editors
+
+Advanced JSON:
+- remains available behind an explicit toggle
+- preserves custom/object structures when needed
+- must be valid JSON before returning to guided mode
+
+Do not add raw JSON textareas back to the normal Temple Profile workflow.
 
 ## Media Selection
 
