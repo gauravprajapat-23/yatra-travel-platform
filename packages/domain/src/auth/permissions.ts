@@ -35,6 +35,8 @@ export const permissions = [
   "refund.manage",
   "report.read",
   "audit.read",
+  "notification.read",
+  "notification.manage",
   "settings.manage",
   "customer.self.read",
   "customer.self.write",
@@ -101,6 +103,7 @@ export const rolePermissions: Readonly<Record<RoleKey, readonly Permission[]>> =
     "payment.read",
     "report.read",
     "audit.read",
+    "notification.read",
   ],
   CUSTOMER: ["customer.self.read", "customer.self.write"],
 };
