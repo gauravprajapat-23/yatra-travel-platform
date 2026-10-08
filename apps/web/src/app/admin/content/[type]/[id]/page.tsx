@@ -16,7 +16,7 @@ import { AdminTextInputField } from "@/components/admin-text-input-field";
 import { AdminPublicationFields } from "@/components/admin-publication-fields";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
-import { formatIstDateTimeLocal } from "@/lib/admin/datetime";
+import { formatIstDateTime, formatIstDateTimeLocal } from "@/lib/admin/datetime";
 import {
   contentStatuses,
   isAdminContentType,
@@ -547,8 +547,8 @@ export default async function AdminContentEditorPage({
             <dl>
               <div><dt>Slug</dt><dd>{content.slug}</dd></div>
               <div><dt>Type</dt><dd>{type.replaceAll("_", " ").toUpperCase()}</dd></div>
-              <div><dt>Published</dt><dd>{content.publishedAt?.toLocaleString("en-IN") ?? "Not published"}</dd></div>
-              <div><dt>Updated</dt><dd>{content.updatedAt.toLocaleString("en-IN")}</dd></div>
+              <div><dt>Published</dt><dd>{content.publishedAt ? formatIstDateTime(content.publishedAt) : "Not published"}</dd></div>
+              <div><dt>Updated</dt><dd>{formatIstDateTime(content.updatedAt)}</dd></div>
               <div><dt>Search indexing</dt><dd>{content.robotsIndex ? "Allowed" : "Blocked"}</dd></div>
             </dl>
           </section>
