@@ -156,18 +156,38 @@ export async function POST(request: Request) {
       },
     });
 
-    await sendAuthActionNotification({
-      userId: user.id,
-      destinationEmail: email,
-      purpose: "EMAIL_VERIFICATION",
-      provider,
-    });
+    try {
+      await sendAuthActionNotification({
+        userId: user.id,
+        destinationEmail: email,
+        purpose: "EMAIL_VERIFICATION",
+        provider,
+      });
+    } catch (deliveryError) {
+      console.error(
+        "[customer-auth] registration verification delivery failed",
+        deliveryError instanceof Error ? deliveryError.message : "unknown",
+      );
+
+      return NextResponse.json(
+        {
+          ok: true,
+          verificationRequired: true,
+          verificationDeliveryPending: true,
+          message:
+            "Account created, but the verification email could not be sent. Request a new verification link to continue.",
+        },
+        { status: 202, headers: { "Cache-Control": "no-store" } },
+      );
+    }
 
     return NextResponse.json(
       {
         ok: true,
         verificationRequired: true,
-        message: "Account created. Check your email to verify the account before sign-in.",
+        verificationDeliveryPending: false,
+        message:
+          "Account created. Check your email to verify the account before sign-in.",
       },
       { status: 201, headers: { "Cache-Control": "no-store" } },
     );
