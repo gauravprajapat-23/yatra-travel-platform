@@ -18,6 +18,7 @@ import { AdminPublicationFields } from "@/components/admin-publication-fields";
 import { AdminCurrencyField } from "@/components/admin-currency-field";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDateTimeLocal, parseIstDateTimeLocal } from "@/lib/admin/datetime";
 import {
   contentStatuses,
   isContentStatus,
@@ -530,7 +531,7 @@ export default async function PackageDetailPage({
     }
 
     const scheduledFor =
-      status === "SCHEDULED" ? new Date(scheduledForRaw) : null;
+      status === "SCHEDULED" ? parseIstDateTimeLocal(scheduledForRaw) : null;
 
     if (
       status === "SCHEDULED" &&
@@ -1297,16 +1298,7 @@ export default async function PackageDetailPage({
                       label: status.replaceAll("_", " "),
                     }))}
                     defaultStatus={pkg.status}
-                    defaultScheduledFor={
-                      pkg.scheduledFor
-                        ? new Date(
-                            pkg.scheduledFor.getTime() -
-                              pkg.scheduledFor.getTimezoneOffset() * 60_000,
-                          )
-                            .toISOString()
-                            .slice(0, 16)
-                        : ""
-                    }
+                    defaultScheduledFor={formatIstDateTimeLocal(pkg.scheduledFor)}
                     statusId="packageStatus"
                     scheduleId="packageScheduledFor"
                   />
