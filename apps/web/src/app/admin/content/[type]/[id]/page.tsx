@@ -5,6 +5,7 @@ import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminPanelHeading, AdminShell, StatusPill } from "@/components/admin-shell";
 import { AdminEditorTabs, type AdminEditorTab } from "@/components/admin-editor-tabs";
+import { AdminCompletionChecklist } from "@/components/admin-completion-checklist";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminConfirmSubmitButton } from "@/components/admin-confirm-submit-button";
 import { AdminStructuredContentEditor } from "@/components/admin-structured-content-editor";
@@ -549,6 +550,69 @@ export default async function AdminContentEditorPage({
               <div><dt>Search indexing</dt><dd>{content.robotsIndex ? "Allowed" : "Blocked"}</dd></div>
             </dl>
           </section>
+
+          <AdminCompletionChecklist
+            items={[
+              ...(type === "blog"
+                ? [{
+                    label: "Blog Details",
+                    detail:
+                      blogDetails?.excerpt && blogDetails.categoryId
+                        ? "Category and excerpt ready"
+                        : "Complete category and excerpt",
+                    ready: Boolean(
+                      blogDetails?.excerpt && blogDetails.categoryId,
+                    ),
+                    href: `/admin/content/${type}/${contentId}?tab=details`,
+                  }]
+                : []),
+              ...(type === "destination"
+                ? [{
+                    label: "Destination Details",
+                    detail: destinationDetails?.summary
+                      ? "Destination summary ready"
+                      : "Add the destination summary",
+                    ready: Boolean(destinationDetails?.summary),
+                    href: `/admin/content/${type}/${contentId}?tab=details`,
+                  }]
+                : []),
+              ...(type === "destination" &&
+              destinationDetails?.kind === "TEMPLE"
+                ? [{
+                    label: "Temple Profile",
+                    detail: destinationDetails.templeProfile
+                      ? "Temple-specific visitor information ready"
+                      : "Add temple-specific visitor information",
+                    ready: Boolean(destinationDetails.templeProfile),
+                    href: `/admin/content/${type}/${contentId}?tab=temple`,
+                  }]
+                : []),
+              {
+                label: "Structured Content",
+                detail: hasBody
+                  ? `${bodyBlockCount} content block${bodyBlockCount === 1 ? "" : "s"}`
+                  : "Add structured content blocks",
+                ready: hasBody,
+                href: `/admin/content/${type}/${contentId}?tab=content`,
+              },
+              {
+                label: "Hero Media",
+                detail: content.heroMediaId
+                  ? "Hero image selected"
+                  : "Choose a hero image",
+                ready: Boolean(content.heroMediaId),
+                href: `/admin/content/${type}/${contentId}?tab=media`,
+              },
+              {
+                label: "SEO",
+                detail: seoReady
+                  ? "SEO title and description ready"
+                  : "Complete SEO title and description",
+                ready: seoReady,
+                href: `/admin/content/${type}/${contentId}?tab=publishing`,
+              },
+            ]}
+          />
         ) : null}
 
         {activeTab === "details" && type === "blog" && blogDetails ? (
