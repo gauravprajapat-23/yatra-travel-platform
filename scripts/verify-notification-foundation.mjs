@@ -20,16 +20,37 @@ function requireFragments(file, fragments, label) {
   process.stdout.write(`PASS ${label}\n`);
 }
 
-requireFragments(
+function requirePatterns(file, patterns, label) {
+  const source = read(file);
+  const missing = patterns
+    .filter(({ pattern }) => !pattern.test(source))
+    .map(({ name }) => name);
+
+  if (missing.length > 0) {
+    throw new Error(
+      `${label} is missing required safeguards: ${missing.join(", ")}`,
+    );
+  }
+
+  process.stdout.write(`PASS ${label}\n`);
+}
+
+requirePatterns(
   "packages/db/prisma/schema.prisma",
   [
-    "model AuthActionToken",
-    "tokenHash  String            @unique",
-    "consumedAt DateTime?",
-    "revokedAt  DateTime?",
-    "model NotificationDelivery",
-    "status            NotificationDeliveryStatus @default(PENDING)",
-    "attemptCount      Int                        @default(0)",
+    { name: "AuthActionToken model", pattern: /model\s+AuthActionToken\s*\{/ },
+    { name: "unique token hash", pattern: /tokenHash\s+String\s+@unique/ },
+    { name: "consumed timestamp", pattern: /consumedAt\s+DateTime\?/ },
+    { name: "revoked timestamp", pattern: /revokedAt\s+DateTime\?/ },
+    { name: "NotificationDelivery model", pattern: /model\s+NotificationDelivery\s*\{/ },
+    {
+      name: "pending delivery default",
+      pattern: /status\s+NotificationDeliveryStatus\s+@default\(PENDING\)/,
+    },
+    {
+      name: "delivery attempt counter",
+      pattern: /attemptCount\s+Int\s+@default\(0\)/,
+    },
   ],
   "notification database foundation",
 );
