@@ -16,6 +16,7 @@ import { AdminTextInputField } from "@/components/admin-text-input-field";
 import { AdminPublicationFields } from "@/components/admin-publication-fields";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDateTimeLocal } from "@/lib/admin/datetime";
 import {
   contentStatuses,
   isAdminContentType,
@@ -940,16 +941,7 @@ export default async function AdminContentEditorPage({
                       label: status.replaceAll("_", " "),
                     }))}
                     defaultStatus={content.status}
-                    defaultScheduledFor={
-                      content.scheduledFor
-                        ? new Date(
-                            content.scheduledFor.getTime() -
-                              content.scheduledFor.getTimezoneOffset() * 60_000,
-                          )
-                            .toISOString()
-                            .slice(0, 16)
-                        : ""
-                    }
+                    defaultScheduledFor={formatIstDateTimeLocal(content.scheduledFor)}
                     statusId="contentStatus"
                     scheduleId="contentScheduledFor"
                   />
