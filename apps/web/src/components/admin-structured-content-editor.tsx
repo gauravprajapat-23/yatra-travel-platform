@@ -655,6 +655,21 @@ export function AdminStructuredContentEditor({
                           </small>
                         </label>
                       ) : null}
+                      {stringValue(block.data.url) ? (
+                        <div className="admin-block-media-preview">
+                          <img
+                            src={stringValue(block.data.url)}
+                            alt={stringValue(block.data.alt)}
+                          />
+                          <div>
+                            <strong>Selected image</strong>
+                            <small>{stringValue(block.data.url)}</small>
+                            {!stringValue(block.data.alt) ? (
+                              <span>Alt text is missing.</span>
+                            ) : null}
+                          </div>
+                        </div>
+                      ) : null}
                       <label className="admin-field">
                         <span className="admin-field__label">Image URL</span>
                         <input
@@ -757,6 +772,57 @@ export function AdminStructuredContentEditor({
                             Add multiple library images; duplicate URLs are ignored.
                           </small>
                         </label>
+                      ) : null}
+
+                      {Array.isArray(block.data.items) &&
+                      block.data.items.length > 0 ? (
+                        <div className="admin-block-gallery-editor">
+                          {block.data.items.map((item, itemIndex) => {
+                            const source =
+                              typeof item === "object" &&
+                              item !== null &&
+                              !Array.isArray(item)
+                                ? (item as Record<string, unknown>)
+                                : {};
+                            const url = stringValue(source.url);
+                            if (!url) return null;
+
+                            return (
+                              <div
+                                className="admin-block-gallery-editor__item"
+                                key={`${block.id}-edit-gallery-${itemIndex}`}
+                              >
+                                <img
+                                  src={url}
+                                  alt={stringValue(source.alt)}
+                                  loading="lazy"
+                                />
+                                <div>
+                                  <strong>
+                                    {stringValue(source.alt) || "No alt text"}
+                                  </strong>
+                                  <small>{url}</small>
+                                </div>
+                                <button
+                                  type="button"
+                                  aria-label="Remove gallery image"
+                                  onClick={() =>
+                                    setBlockData(block.id, (data) => ({
+                                      ...data,
+                                      items: Array.isArray(data.items)
+                                        ? data.items.filter(
+                                            (_, index) => index !== itemIndex,
+                                          )
+                                        : [],
+                                    }))
+                                  }
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
                       ) : null}
 
                       <label className="admin-field admin-field--wide">
