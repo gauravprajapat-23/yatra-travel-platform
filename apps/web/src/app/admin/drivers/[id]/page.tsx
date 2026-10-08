@@ -11,6 +11,7 @@ import { AdminMultiSelectCards } from "@/components/admin-multi-select-cards";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { AdminDateTimeRange } from "@/components/admin-date-time-range";
 import { requireAdminSession } from "@/lib/auth/session";
+import { parseIstDateTimeLocal } from "@/lib/admin/datetime";
 import {
   addDriverAvailabilityBlock,
   deleteDriverAvailabilityBlock,
@@ -124,8 +125,8 @@ export default async function DriverDetailPage({
 
     await addDriverAvailabilityBlock({
       driverId,
-      startsAt: new Date(String(formData.get("startsAt") ?? "")),
-      endsAt: new Date(String(formData.get("endsAt") ?? "")),
+      startsAt: parseIstDateTimeLocal(formData.get("startsAt")) ?? new Date(NaN),
+      endsAt: parseIstDateTimeLocal(formData.get("endsAt")) ?? new Date(NaN),
       reason: String(formData.get("reason") ?? ""),
       actorUserId: currentSession.userId,
     });
