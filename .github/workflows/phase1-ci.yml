@@ -94,6 +94,9 @@ jobs:
       - name: Production build
         run: npm run build
 
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium
+
       - name: Admin form-system certification
         run: npm run verify:admin-forms
 
