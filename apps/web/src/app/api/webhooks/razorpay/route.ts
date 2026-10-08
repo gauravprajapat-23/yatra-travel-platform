@@ -4,11 +4,20 @@ import { verifyRazorpayWebhookSignature } from "@yatra/providers/payments/razorp
 import { NextResponse } from "next/server";
 import { processRazorpayWebhookEvent } from "@/modules/payments/razorpay-webhook-processor";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const MAX_WEBHOOK_BODY_BYTES = 512 * 1024;
+const MAX_EVENT_ID_LENGTH = 256;
+
 function dedupeKey(rawBody: string, eventHeader: string | null): string {
-  if (eventHeader?.trim()) {
-    return eventHeader.trim();
+  const normalizedEventId = eventHeader?.trim();
+
+  if (
+    normalizedEventId &&
+    normalizedEventId.length <= MAX_EVENT_ID_LENGTH
+  ) {
+    return normalizedEventId;
   }
 
   return createHash("sha256").update(rawBody).digest("hex");
@@ -26,14 +35,38 @@ export async function POST(request: Request) {
 
   const signature = request.headers.get("x-razorpay-signature");
 
-  if (!signature) {
+  if (!signature || signature.length > 512) {
     return NextResponse.json(
       { error: { code: "MISSING_SIGNATURE" } },
       { status: 401 },
     );
   }
 
+  const declaredLength = Number(request.headers.get("content-length") ?? "0");
+  if (
+    Number.isFinite(declaredLength) &&
+    declaredLength > MAX_WEBHOOK_BODY_BYTES
+  ) {
+    return NextResponse.json(
+      { error: { code: "PAYLOAD_TOO_LARGE" } },
+      {
+        status: 413,
+        headers: { "Cache-Control": "no-store" },
+      },
+    );
+  }
+
   const rawBody = await request.text();
+
+  if (new TextEncoder().encode(rawBody).byteLength > MAX_WEBHOOK_BODY_BYTES) {
+    return NextResponse.json(
+      { error: { code: "PAYLOAD_TOO_LARGE" } },
+      {
+        status: 413,
+        headers: { "Cache-Control": "no-store" },
+      },
+    );
+  }
 
   if (
     !verifyRazorpayWebhookSignature({
@@ -63,7 +96,8 @@ export async function POST(request: Request) {
     typeof payload === "object" &&
     payload !== null &&
     "event" in payload &&
-    typeof payload.event === "string"
+    typeof payload.event === "string" &&
+    payload.event.length <= 128
       ? payload.event
       : "unknown";
 
