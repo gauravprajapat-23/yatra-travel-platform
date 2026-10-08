@@ -130,8 +130,15 @@ export async function POST(request: Request) {
   }
 
   const customerSession = await getCustomerSession();
+  const guestName = isNonEmptyString(body.guestName, 120)
+    ? body.guestName.trim()
+    : null;
+  const guestEmail =
+    isNonEmptyString(body.guestEmail, 254) && isEmail(body.guestEmail)
+      ? body.guestEmail.trim().toLowerCase()
+      : null;
 
-  if (!customerSession && !isNonEmptyString(body.guestName, 120)) {
+  if (!customerSession && !guestName) {
     return NextResponse.json(
       {
         error: {
@@ -143,10 +150,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (
-    !customerSession &&
-    (!isNonEmptyString(body.guestEmail, 254) || !isEmail(body.guestEmail))
-  ) {
+  if (!customerSession && !guestEmail) {
     return NextResponse.json(
       {
         error: {
@@ -168,8 +172,8 @@ export async function POST(request: Request) {
           }
         : {
             quoteId: body.quoteId.trim(),
-            guestName: body.guestName!.trim(),
-            guestEmail: body.guestEmail!.trim(),
+            guestName: guestName!,
+            guestEmail: guestEmail!,
             idempotencyKey,
           },
     );
