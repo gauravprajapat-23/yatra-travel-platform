@@ -14,6 +14,7 @@ import {
   AdminFormSection,
 } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDateTimeLocal, parseIstDateTimeLocal } from "@/lib/admin/datetime";
 import {
   activateBookingPolicy,
   retireBookingPolicy,
@@ -26,23 +27,6 @@ function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
   if (status === "ACTIVE") return "green";
   if (status === "DRAFT") return "orange";
   return "gray";
-}
-
-function localDateTime(value: Date | null): string {
-  if (!value) return "";
-  return new Date(
-    value.getTime() - value.getTimezoneOffset() * 60_000,
-  )
-    .toISOString()
-    .slice(0, 16);
-}
-
-function parseOptionalDate(value: FormDataEntryValue | null): Date | null {
-  const text = String(value ?? "").trim();
-  if (!text) return null;
-  const date = new Date(text);
-  if (Number.isNaN(date.getTime())) throw new Error("Invalid date.");
-  return date;
 }
 
 function policyValue(
@@ -114,8 +98,8 @@ export default async function BookingPolicyDetailPage({
     await updateBookingPolicyDraft({
       policyId,
       rawDocument,
-      effectiveFrom: parseOptionalDate(formData.get("effectiveFrom")),
-      effectiveTo: parseOptionalDate(formData.get("effectiveTo")),
+      effectiveFrom: parseIstDateTimeLocal(formData.get("effectiveFrom")),
+      effectiveTo: parseIstDateTimeLocal(formData.get("effectiveTo")),
       actorUserId: currentSession.userId,
     });
 
@@ -227,8 +211,8 @@ export default async function BookingPolicyDetailPage({
                     endLabel="Effective to"
                     startId="effectiveFrom"
                     endId="effectiveTo"
-                    defaultStart={localDateTime(policy.effectiveFrom)}
-                    defaultEnd={localDateTime(policy.effectiveTo)}
+                    defaultStart={formatIstDateTimeLocal(policy.effectiveFrom)}
+                    defaultEnd={formatIstDateTimeLocal(policy.effectiveTo)}
                     startHint="Leave blank for immediate eligibility after activation."
                     endHint="Optional expiry for this policy version."
                   />
