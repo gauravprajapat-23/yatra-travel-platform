@@ -1159,3 +1159,40 @@ form[data-admin-dirty="false"] .admin-form-actions__meta::before {
     width: 56px;
   }
 }
+
+
+.admin-json-list-field {
+  display: grid;
+  gap: 7px;
+}
+
+.admin-json-list-field__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-json-list-field__header .admin-field__label {
+  margin: 0;
+}
+
+.admin-json-list-field textarea {
+  width: 100%;
+  min-height: 132px;
+  padding: 9px 11px;
+  border: 1px solid #dcd5ca;
+  border-radius: 8px;
+  outline: none;
+  background: #fff;
+  color: #273a33;
+  font: inherit;
+  font-size: .74rem;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.admin-json-list-field textarea:focus {
+  border-color: #e47a2d;
+  box-shadow: 0 0 0 3px rgba(242,103,23,.11);
+}
