@@ -51,7 +51,9 @@ export async function sendAuthActionNotification(input: {
   });
 
   const url = new URL(config.path, appOrigin());
-  url.searchParams.set(config.tokenParam, token.rawToken);
+  url.hash = new URLSearchParams({
+    [config.tokenParam]: token.rawToken,
+  }).toString();
 
   try {
     const delivery = await deliverNotification({
