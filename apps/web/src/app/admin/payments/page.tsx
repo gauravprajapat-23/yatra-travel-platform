@@ -5,6 +5,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
 import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDate } from "@/lib/admin/datetime";
 
 export const dynamic = "force-dynamic";
 
@@ -232,7 +233,7 @@ export default async function PaymentsPage({
     return {
       createdAt: intent.createdAt,
       cells: [
-        intent.createdAt.toLocaleDateString("en-IN"),
+        formatIstDate(intent.createdAt),
         intent.providerPaymentId ?? intent.providerOrderId ?? intent.id,
         reference === "Unlinked" ? reference : (
           <Link key={`${intent.id}-booking`} href={`/admin/bookings/${reference}`}>
@@ -265,7 +266,7 @@ export default async function PaymentsPage({
     return {
       createdAt: refund.createdAt,
       cells: [
-        refund.createdAt.toLocaleDateString("en-IN"),
+        formatIstDate(refund.createdAt),
         refund.providerRefundId ?? refund.id,
         reference === "Unlinked" ? reference : (
           <Link key={`${refund.id}-booking`} href={`/admin/bookings/${reference}`}>
