@@ -164,6 +164,7 @@ export default async function PricingRuleDetailPage({
             label: "Overview",
             description: "Scope & status",
             badge: rule.status.replaceAll("_", " "),
+            badgeTone: rule.status === "ACTIVE" ? "success" : "neutral",
           },
           {
             key: "details",
@@ -176,6 +177,7 @@ export default async function PricingRuleDetailPage({
             label: "Activation",
             description: "Dates & status",
             badge: rule.activeTo ? "Timed" : "Open ended",
+            badgeTone: "neutral",
           },
         ]}
       />
