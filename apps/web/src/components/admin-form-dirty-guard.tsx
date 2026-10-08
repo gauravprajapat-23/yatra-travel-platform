@@ -12,12 +12,16 @@ export function AdminFormDirtyGuard({
   const submittingRef = useRef(false);
 
   useEffect(() => {
+    const form = markerRef.current?.closest("form");
+
     if (resultStatus === "error") {
       dirtyRef.current = true;
       submittingRef.current = false;
+      if (form) form.dataset.adminDirty = "true";
     } else if (resultStatus === "success") {
       dirtyRef.current = false;
       submittingRef.current = false;
+      if (form) form.dataset.adminDirty = "false";
     }
   }, [resultStatus]);
 
@@ -27,13 +31,18 @@ export function AdminFormDirtyGuard({
     if (!form) return;
 
     const markDirty = () => {
-      if (!submittingRef.current) dirtyRef.current = true;
+      if (submittingRef.current) return;
+      dirtyRef.current = true;
+      form.dataset.adminDirty = "true";
     };
 
     const markSubmitting = () => {
       submittingRef.current = true;
       dirtyRef.current = false;
+      form.dataset.adminDirty = "false";
     };
+
+    form.dataset.adminDirty = "false";
 
     const beforeUnload = (event: BeforeUnloadEvent) => {
       if (!dirtyRef.current || submittingRef.current) return;
@@ -94,6 +103,7 @@ export function AdminFormDirtyGuard({
         event.stopPropagation();
       } else {
         dirtyRef.current = false;
+        form.dataset.adminDirty = "false";
       }
     };
 
