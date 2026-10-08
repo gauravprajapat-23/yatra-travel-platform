@@ -111,6 +111,23 @@ enum PackagePriceMode {
   FIXED
 }
 
+enum PromotionStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum PromotionScope {
+  ALL
+  CAR
+  PACKAGE
+}
+
+enum PromotionDiscountKind {
+  PERCENTAGE
+  FIXED
+}
 
 enum LeadType {
   CONTACT
@@ -189,6 +206,7 @@ model User {
   packageBookingChanges PackageBookingStatusHistory[] @relation("PackageBookingStatusActor")
   authActionTokens     AuthActionToken[]
   notificationDeliveries NotificationDelivery[]
+  promotionRedemptions PromotionRedemption[] @relation("PromotionRedemptionCustomer")
 
   @@index([status])
   @@index([createdAt])
@@ -647,6 +665,8 @@ model CarQuote {
   travellers      Int
   vehicleClassId  String
   pricingRuleId   String?
+  promotionId     String?
+  promotionSnapshot Json?
   currency        String   @default("INR")
   subtotalMinor   BigInt
   discountMinor   BigInt   @default(0)
@@ -658,9 +678,11 @@ model CarQuote {
 
   vehicleClass VehicleClass @relation(fields: [vehicleClassId], references: [id], onDelete: Restrict)
   pricingRule  PricingRule? @relation(fields: [pricingRuleId], references: [id], onDelete: SetNull)
+  promotion    Promotion?   @relation("CarQuotePromotion", fields: [promotionId], references: [id], onDelete: SetNull)
   booking      CarBooking?
 
   @@index([vehicleClassId, startsAt])
+  @@index([promotionId])
   @@index([tripType])
   @@index([expiresAt])
 }
@@ -686,6 +708,8 @@ model CarBooking {
   selectedVehicleId    String?
   assignedDriverId     String?
   pricingRuleId        String?
+  promotionId          String?
+  promotionSnapshot    Json?
   currency             String        @default("INR")
   subtotalMinor        BigInt
   discountMinor        BigInt        @default(0)
@@ -707,6 +731,8 @@ model CarBooking {
   selectedVehicle Vehicle?      @relation("AssignedVehicleBookings", fields: [selectedVehicleId], references: [id], onDelete: SetNull)
   assignedDriver  Driver?       @relation("AssignedDriverBookings", fields: [assignedDriverId], references: [id], onDelete: SetNull)
   pricingRule     PricingRule?  @relation(fields: [pricingRuleId], references: [id], onDelete: SetNull)
+  promotion       Promotion?    @relation("CarBookingPromotion", fields: [promotionId], references: [id], onDelete: SetNull)
+  promotionRedemption PromotionRedemption? @relation("CarBookingPromotionRedemption")
   bookingPolicy   BookingPolicyVersion? @relation(fields: [bookingPolicyVersionId], references: [id], onDelete: SetNull)
   statusHistory   BookingStatusHistory[]
   paymentIntents  PaymentIntent[] @relation("CarBookingPayments")
@@ -716,6 +742,7 @@ model CarBooking {
   @@index([selectedVehicleId, startsAt])
   @@index([assignedDriverId, startsAt])
   @@index([vehicleClassId, startsAt])
+  @@index([promotionId])
   @@index([bookingPolicyVersionId])
 }
 
@@ -847,6 +874,8 @@ model PackageQuote {
   vehicleCount   Int?
   quantity       Int
   travelStartAt  DateTime
+  promotionId   String?
+  promotionSnapshot Json?
   currency       String   @default("INR")
   subtotalMinor  BigInt
   discountMinor  BigInt   @default(0)
@@ -858,10 +887,12 @@ model PackageQuote {
 
   package     TourPackage        @relation(fields: [packageId], references: [id], onDelete: Restrict)
   priceOption PackagePriceOption @relation(fields: [priceOptionId], references: [id], onDelete: Restrict)
+  promotion   Promotion?          @relation("PackageQuotePromotion", fields: [promotionId], references: [id], onDelete: SetNull)
   booking     PackageBooking?
 
   @@index([packageId, travelStartAt])
   @@index([priceOptionId])
+  @@index([promotionId])
   @@index([expiresAt])
 }
 
@@ -881,6 +912,8 @@ model PackageBooking {
   guestName              String?
   guestEmail             String?
   guestPhoneCiphertext   String?
+  promotionId            String?
+  promotionSnapshot      Json?
   currency               String        @default("INR")
   subtotalMinor          BigInt
   discountMinor          BigInt        @default(0)
@@ -900,6 +933,8 @@ model PackageBooking {
   package       TourPackage           @relation(fields: [packageId], references: [id], onDelete: Restrict)
   priceOption   PackagePriceOption?   @relation(fields: [priceOptionId], references: [id], onDelete: SetNull)
   customer      User?                 @relation("CustomerPackageBookings", fields: [customerUserId], references: [id], onDelete: SetNull)
+  promotion     Promotion?            @relation("PackageBookingPromotion", fields: [promotionId], references: [id], onDelete: SetNull)
+  promotionRedemption PromotionRedemption? @relation("PackageBookingPromotionRedemption")
   bookingPolicy BookingPolicyVersion? @relation(fields: [bookingPolicyVersionId], references: [id], onDelete: SetNull)
   statusHistory PackageBookingStatusHistory[]
   paymentIntents PaymentIntent[] @relation("PackageBookingPayments")
@@ -907,6 +942,7 @@ model PackageBooking {
   @@index([status, travelStartAt])
   @@index([packageId, travelStartAt])
   @@index([customerUserId, createdAt])
+  @@index([promotionId])
   @@index([bookingPolicyVersionId])
 }
 
@@ -929,6 +965,58 @@ model PackageBookingStatusHistory {
 }
 
 
+
+model Promotion {
+  id                 String                @id @default(cuid())
+  code               String                @unique
+  name               String
+  description        String?
+  status             PromotionStatus       @default(DRAFT)
+  scope              PromotionScope        @default(ALL)
+  discountKind       PromotionDiscountKind
+  percentageBps      Int?
+  fixedAmountMinor   BigInt?
+  currency           String?
+  minSubtotalMinor   BigInt?
+  maxDiscountMinor   BigInt?
+  maxRedemptions     Int?
+  redeemedCount      Int                   @default(0)
+  perCustomerLimit   Int?
+  activeFrom         DateTime?
+  activeTo           DateTime?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  carQuotes          CarQuote[]            @relation("CarQuotePromotion")
+  packageQuotes      PackageQuote[]        @relation("PackageQuotePromotion")
+  carBookings        CarBooking[]          @relation("CarBookingPromotion")
+  packageBookings    PackageBooking[]      @relation("PackageBookingPromotion")
+  redemptions        PromotionRedemption[]
+
+  @@index([status, activeFrom, activeTo])
+  @@index([scope, status])
+}
+
+model PromotionRedemption {
+  id                   String          @id @default(cuid())
+  promotionId          String
+  customerUserId       String?
+  guestEmailNormalized String?
+  carBookingId         String?         @unique
+  packageBookingId     String?         @unique
+  currency             String
+  discountMinor        BigInt
+  redeemedAt           DateTime        @default(now())
+
+  promotion     Promotion       @relation(fields: [promotionId], references: [id], onDelete: Restrict)
+  customer      User?           @relation("PromotionRedemptionCustomer", fields: [customerUserId], references: [id], onDelete: SetNull)
+  carBooking    CarBooking?     @relation("CarBookingPromotionRedemption", fields: [carBookingId], references: [id], onDelete: Restrict)
+  packageBooking PackageBooking? @relation("PackageBookingPromotionRedemption", fields: [packageBookingId], references: [id], onDelete: Restrict)
+
+  @@index([promotionId, redeemedAt])
+  @@index([customerUserId, promotionId])
+  @@index([guestEmailNormalized, promotionId])
+}
 
 model Lead {
   id              String     @id @default(cuid())
