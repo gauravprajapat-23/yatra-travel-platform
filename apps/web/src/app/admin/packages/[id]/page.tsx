@@ -735,6 +735,7 @@ export default async function PackageDetailPage({
 
       <div className="admin-editor-section-stack">
         {activeTab === "overview" ? (
+          <>
           <section className="admin-panel admin-detail-card">
             <AdminPanelHeading
               title="Package Overview"
@@ -810,6 +811,7 @@ export default async function PackageDetailPage({
               },
             ]}
           />
+          </>
         ) : null}
 
         {activeTab === "destinations" ? (
