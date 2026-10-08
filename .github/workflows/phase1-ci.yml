@@ -64,6 +64,9 @@ jobs:
       - name: Bootstrap disposable CI admin
         run: npm run db:bootstrap:admin -w @yatra/db
 
+      - name: Verify staff invite foundation
+        run: npm run db:verify:staff-invites -w @yatra/db
+
       - name: Lint
         run: npm run lint
 
