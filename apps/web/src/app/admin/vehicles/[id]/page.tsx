@@ -239,10 +239,32 @@ export default async function VehicleDetailPage({
         basePath={`/admin/vehicles/${vehicle.id}`}
         active={activeTab}
         tabs={[
-          { key: "overview", label: "Overview", description: "Fleet status" },
-          { key: "details", label: "Vehicle Details", description: "Class & capacity" },
-          { key: "availability", label: "Availability", description: "Blocks & maintenance" },
-          { key: "media", label: "Media", description: "Primary & gallery" },
+          {
+            key: "overview",
+            label: "Overview",
+            description: "Fleet status",
+            badge: vehicle.status.replaceAll("_", " "),
+          },
+          {
+            key: "details",
+            label: "Vehicle Details",
+            description: "Class & capacity",
+            badge: `${vehicle.seats} seats`,
+          },
+          {
+            key: "availability",
+            label: "Availability",
+            description: "Blocks & maintenance",
+            badge: String(vehicle.availability.length),
+          },
+          {
+            key: "media",
+            label: "Media",
+            description: "Primary & gallery",
+            badge: vehicle.media.length > 0
+              ? `${vehicle.media.length} assets`
+              : "Missing",
+          },
         ]}
       />
 
