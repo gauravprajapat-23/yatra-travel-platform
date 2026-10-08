@@ -20,6 +20,7 @@ const nav: Array<{
   { href: "/admin/leads", label: "Enquiries / Leads", permission: "lead.read" },
   { href: "/admin/drivers", label: "Drivers & Staff", permission: "driver.read" },
   { href: "/admin/payments", label: "Payments", permission: "payment.read" },
+  { href: "/admin/notifications", label: "Notifications", permission: "notification.read" },
   { href: "/admin/destinations", label: "Destinations", permission: "content.read" },
   { href: "/admin/offers", label: "Offers", permission: "settings.manage" },
   { href: "/admin/cms", label: "CMS Pages", permission: "content.read" },
