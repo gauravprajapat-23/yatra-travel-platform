@@ -104,6 +104,24 @@ export async function POST(request: Request) {
       user.status !== "ACTIVE" ||
       !user.emailVerifiedAt
     ) {
+      await db.auditLog.create({
+        data: {
+          actorUserId: user?.id ?? null,
+          action: "CUSTOMER_LOGIN_FAILED",
+          entityType: user ? "User" : "CustomerLoginIdentity",
+          entityId: user?.id ?? null,
+          metadata: {
+            reason: !user
+              ? "UNKNOWN_IDENTITY"
+              : !user.passwordHash
+                ? "PASSWORD_LOGIN_UNAVAILABLE"
+                : user.status !== "ACTIVE"
+                  ? "ACCOUNT_INACTIVE"
+                  : "EMAIL_UNVERIFIED",
+          },
+        },
+      }).catch(() => undefined);
+
       return NextResponse.json(genericError, {
         status: 401,
         headers: { "Cache-Control": "no-store" },
@@ -113,6 +131,20 @@ export async function POST(request: Request) {
     const passwordOk = await verifyPassword(password, user.passwordHash);
     const roles = user.roles.map((entry) => entry.role.key) as RoleKey[];
     if (!passwordOk || !hasPermission(roles, "customer.self.read")) {
+      await db.auditLog.create({
+        data: {
+          actorUserId: passwordOk ? user.id : null,
+          action: "CUSTOMER_LOGIN_FAILED",
+          entityType: "User",
+          entityId: user.id,
+          metadata: {
+            reason: passwordOk
+              ? "CUSTOMER_ACCESS_DENIED"
+              : "INVALID_CREDENTIALS",
+          },
+        },
+      }).catch(() => undefined);
+
       return NextResponse.json(genericError, {
         status: 401,
         headers: { "Cache-Control": "no-store" },
@@ -120,12 +152,21 @@ export async function POST(request: Request) {
     }
 
     const expiresAt = await createCustomerSession(user.id, request);
-    await db.user
-      .update({
+    await db.$transaction([
+      db.user.update({
         where: { id: user.id },
         data: { lastLoginAt: new Date() },
-      })
-      .catch(() => undefined);
+      }),
+      db.auditLog.create({
+        data: {
+          actorUserId: user.id,
+          action: "CUSTOMER_LOGIN_SUCCEEDED",
+          entityType: "User",
+          entityId: user.id,
+          metadata: { roles },
+        },
+      }),
+    ]);
 
     return NextResponse.json(
       {
