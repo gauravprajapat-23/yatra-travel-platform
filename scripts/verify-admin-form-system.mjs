@@ -221,6 +221,14 @@ const primitiveCoverage = [
     label: "shared unsaved-change guard",
   },
   {
+    file: "apps/web/src/components/admin-form-dirty-guard.tsx",
+    fragments: [
+      'form.dataset.adminDirty = "true"',
+      'form.dataset.adminDirty = "false"',
+    ],
+    label: "visible unsaved-change state",
+  },
+  {
     file: "apps/web/src/components/admin-action-form.tsx",
     fragments: [
       "<AdminFormDirtyGuard",
