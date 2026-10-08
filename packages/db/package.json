@@ -29,7 +29,8 @@
     "db:bootstrap:e2e-lifecycle": "node scripts/bootstrap-e2e-lifecycle.mjs",
     "db:bootstrap:e2e-refund": "node scripts/bootstrap-e2e-refund.mjs",
     "db:reset:e2e-login-rate-limits": "node scripts/reset-e2e-login-rate-limits.mjs",
-    "db:bootstrap:e2e-customer": "node scripts/bootstrap-e2e-customer.mjs"
+    "db:bootstrap:e2e-customer": "node scripts/bootstrap-e2e-customer.mjs",
+    "db:bootstrap:e2e-email-verification": "node scripts/bootstrap-e2e-email-verification.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
