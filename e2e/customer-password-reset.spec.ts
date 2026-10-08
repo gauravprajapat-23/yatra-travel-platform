@@ -15,7 +15,7 @@ test("customer consumes one-time reset token, changes password, and cannot repla
     throw new Error("E2E_CUSTOMER_PASSWORD is required.");
   }
 
-  await page.goto(`/account/reset-password?token=${encodeURIComponent(token)}`);
+  await page.goto(`/account/reset-password#token=${encodeURIComponent(token)}`);
   await page.locator("#customerNewPassword").fill(newPassword);
   await page.locator("#customerConfirmPassword").fill(newPassword);
   await page.getByRole("button", { name: "Reset Password" }).click();
@@ -44,7 +44,7 @@ test("customer consumes one-time reset token, changes password, and cannot repla
   await expect(page).toHaveURL(/\/my-trips/);
 
   await page.context().clearCookies();
-  await page.goto(`/account/reset-password?token=${encodeURIComponent(token)}`);
+  await page.goto(`/account/reset-password#token=${encodeURIComponent(token)}`);
   await page.locator("#customerNewPassword").fill("Phase10-Replay-2026!");
   await page.locator("#customerConfirmPassword").fill("Phase10-Replay-2026!");
   await page.getByRole("button", { name: "Reset Password" }).click();
