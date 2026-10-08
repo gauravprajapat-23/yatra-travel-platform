@@ -150,5 +150,9 @@ jobs:
             fi
             sleep 1
           done
-          npm run test:e2e
+          if ! npm run test:e2e; then
+            echo "=== Next.js server log ==="
+            cat /tmp/yatra-playwright.log
+            exit 1
+          fi
 
