@@ -471,6 +471,10 @@ export default async function AdminContentEditorPage({
                   blogDetails?.excerpt && blogDetails.categoryId
                     ? "Ready"
                     : "Incomplete",
+                badgeTone:
+                  blogDetails?.excerpt && blogDetails.categoryId
+                    ? "success"
+                    : "warning",
               }]
             : []),
           ...(type === "destination"
@@ -479,6 +483,9 @@ export default async function AdminContentEditorPage({
                 label: "Destination",
                 description: "Kind & summary",
                 badge: destinationDetails?.summary ? "Ready" : "Incomplete",
+                badgeTone: destinationDetails?.summary
+                  ? "success"
+                  : "warning",
               }]
             : []),
           ...(type === "destination" && destinationDetails?.kind === "TEMPLE"
@@ -487,6 +494,9 @@ export default async function AdminContentEditorPage({
                 label: "Temple Profile",
                 description: "Darshan & practical info",
                 badge: destinationDetails.templeProfile ? "Ready" : "Missing",
+                badgeTone: destinationDetails.templeProfile
+                  ? "success"
+                  : "warning",
               }]
             : []),
           {
@@ -497,12 +507,17 @@ export default async function AdminContentEditorPage({
               Array.isArray(content.body) && content.body.length > 0
                 ? `${content.body.length} blocks`
                 : "Empty",
+            badgeTone:
+              Array.isArray(content.body) && content.body.length > 0
+                ? "success"
+                : "warning",
           },
           {
             key: "media",
             label: "Media",
             description: "Hero image",
             badge: content.heroMediaId ? "Ready" : "Missing",
+            badgeTone: content.heroMediaId ? "success" : "warning",
           },
           {
             key: "publishing",
@@ -512,6 +527,10 @@ export default async function AdminContentEditorPage({
               content.seoTitle && content.seoDescription
                 ? "Ready"
                 : "Needs SEO",
+            badgeTone:
+              content.seoTitle && content.seoDescription
+                ? "success"
+                : "warning",
           },
         ]}
       />
