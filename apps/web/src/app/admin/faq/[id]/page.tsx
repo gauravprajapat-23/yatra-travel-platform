@@ -10,7 +10,7 @@ import { AdminPublicationFields } from "@/components/admin-publication-fields";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
-import { formatIstDateTimeLocal, parseIstDateTimeLocal } from "@/lib/admin/datetime";
+import { formatIstDateTime, formatIstDateTimeLocal, parseIstDateTimeLocal } from "@/lib/admin/datetime";
 import {
   faqScopes,
   faqStatuses,
@@ -127,9 +127,9 @@ export default async function FaqDetailPage({
             <dl>
               <div><dt>Scope</dt><dd>{faq.scope.replaceAll("_", " ")}</dd></div>
               <div><dt>Sort order</dt><dd>{faq.sortOrder}</dd></div>
-              <div><dt>Published</dt><dd>{faq.publishedAt?.toLocaleString("en-IN") ?? "—"}</dd></div>
-              <div><dt>Scheduled</dt><dd>{faq.scheduledFor?.toLocaleString("en-IN") ?? "—"}</dd></div>
-              <div><dt>Updated</dt><dd>{faq.updatedAt.toLocaleString("en-IN")}</dd></div>
+              <div><dt>Published</dt><dd>{faq.publishedAt ? formatIstDateTime(faq.publishedAt) : "—"}</dd></div>
+              <div><dt>Scheduled</dt><dd>{faq.scheduledFor ? formatIstDateTime(faq.scheduledFor) : "—"}</dd></div>
+              <div><dt>Updated</dt><dd>{formatIstDateTime(faq.updatedAt)}</dd></div>
             </dl>
           </section>
         ) : null}
