@@ -74,6 +74,9 @@ jobs:
       - name: Bootstrap booking assignment fixture
         run: npm run db:bootstrap:e2e-assignment -w @yatra/db
 
+      - name: Bootstrap booking lifecycle fixture
+        run: npm run db:bootstrap:e2e-lifecycle -w @yatra/db
+
       - name: Verify staff invite foundation
         run: npm run db:verify:staff-invites -w @yatra/db
 
