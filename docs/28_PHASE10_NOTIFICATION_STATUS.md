@@ -63,6 +63,7 @@ Add real customer notification delivery for email verification and password rese
 - [x] Generic verification-resend endpoint for unverified CUSTOMER accounts
 - [x] Verification resend page/form
 - [x] Anti-enumeration response for resend requests
+- [x] Registration delivery failure returns a recoverable verification-pending state instead of stranding the account
 
 ### Password recovery
 - [x] Password reset request endpoint behind CUSTOMER_PASSWORD_RESET_ENABLED
@@ -73,6 +74,7 @@ Add real customer notification delivery for email verification and password rese
 - [x] One-time reset token E2E
 - [x] Reset replay rejection E2E
 - [x] Previous sessions revoked after reset
+- [x] Password reset tokens are rejected for disabled/non-ACTIVE accounts
 - [x] CI keeps password-reset delivery disabled until provider certification
 
 ### Automated certification
@@ -83,6 +85,7 @@ Add real customer notification delivery for email verification and password rese
 - [x] Browser verification flow
 - [x] Browser password-reset flow
 - [x] Registration remains disabled in CI until provider delivery certification
+- [x] Read-only admin notification delivery monitor with masked destinations and dedicated RBAC
 
 ## Production gates
 
@@ -119,7 +122,8 @@ Only after the provider connectivity drill passes and the production sender/doma
 - [ ] Run real registration -> email delivery -> verification -> sign-in drill
 - [ ] Run real forgot-password -> delivery -> reset -> sign-in drill
 - [ ] Add operational retry/worker processing for FAILED deliveries if asynchronous retry is required
-- [ ] Add admin delivery monitoring/retry UI if operational support requires it
+- [x] Add read-only admin delivery monitoring with status/channel/purpose/provider filters
+- [ ] Add safe retry actions only where a fresh auth token can be issued; raw auth tokens are intentionally never persisted
 - [→] SMS/WhatsApp providers remain optional future channel implementations; schema/contract is ready
 
 ## Acceptance rule
