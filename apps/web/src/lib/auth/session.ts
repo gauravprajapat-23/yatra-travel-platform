@@ -4,8 +4,33 @@ import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission, type RoleKey } from "@yatra/domain/auth/permissions";
 
+function allowInsecureCiSessionCookie(): boolean {
+  if (
+    process.env.CI !== "true" ||
+    process.env.E2E_ALLOW_INSECURE_ADMIN_COOKIE !== "true"
+  ) {
+    return false;
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (!appUrl) return false;
+
+  try {
+    const url = new URL(appUrl);
+    return (
+      url.protocol === "http:" &&
+      (url.hostname === "127.0.0.1" || url.hostname === "localhost")
+    );
+  } catch {
+    return false;
+  }
+}
+
+const SECURE_ADMIN_COOKIE =
+  process.env.NODE_ENV === "production" && !allowInsecureCiSessionCookie();
+
 export const ADMIN_SESSION_COOKIE =
-  process.env.NODE_ENV === "production" ? "__Host-yatra_session" : "yatra_session";
+  SECURE_ADMIN_COOKIE ? "__Host-yatra_session" : "yatra_session";
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 export function hashSessionToken(token: string): string {
@@ -54,7 +79,7 @@ export async function createAdminSession(
   const jar = await cookies();
   jar.set(ADMIN_SESSION_COOKIE, rawToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: SECURE_ADMIN_COOKIE,
     sameSite: "lax",
     path: "/",
     expires: expiresAt,
