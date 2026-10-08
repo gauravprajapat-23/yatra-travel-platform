@@ -18,7 +18,7 @@ import { AdminPublicationFields } from "@/components/admin-publication-fields";
 import { AdminCurrencyField } from "@/components/admin-currency-field";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
-import { formatIstDateTimeLocal, parseIstDateTimeLocal } from "@/lib/admin/datetime";
+import { formatIstDateTime, formatIstDateTimeLocal, parseIstDateTimeLocal } from "@/lib/admin/datetime";
 import {
   contentStatuses,
   isContentStatus,
@@ -752,8 +752,8 @@ export default async function PackageDetailPage({
               <div><dt>Destinations</dt><dd>{pkg.destinations.map((item) => item.destination.name).join(", ") || "—"}</dd></div>
               <div><dt>Price options</dt><dd>{pkg.priceOptions.length}</dd></div>
               <div><dt>Itinerary days</dt><dd>{pkg.itinerary.length}</dd></div>
-              <div><dt>Published</dt><dd>{pkg.publishedAt?.toLocaleString("en-IN") ?? "Not published"}</dd></div>
-              <div><dt>Updated</dt><dd>{pkg.updatedAt.toLocaleString("en-IN")}</dd></div>
+              <div><dt>Published</dt><dd>{pkg.publishedAt ? formatIstDateTime(pkg.publishedAt) : "Not published"}</dd></div>
+              <div><dt>Updated</dt><dd>{formatIstDateTime(pkg.updatedAt)}</dd></div>
             </dl>
           </section>
 
