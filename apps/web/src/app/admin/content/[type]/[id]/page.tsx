@@ -45,6 +45,15 @@ function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
   return "gray";
 }
 
+function publicPath(
+  type: "cms" | "blog" | "destination",
+  slug: string,
+) {
+  if (type === "blog") return `/travel-guides/${slug}`;
+  if (type === "destination") return `/destinations/${slug}`;
+  return `/${slug}`;
+}
+
 function backPath(type: "cms" | "blog" | "destination") {
   if (type === "cms") return "/admin/cms";
   if (type === "blog") return "/admin/blog";
