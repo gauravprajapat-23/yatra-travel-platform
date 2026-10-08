@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { test, expect } from "@playwright/test";
 
-const email = process.env.E2E_VERIFY_EMAIL;
+const email = process.env.E2E_VERIFY_EMAIL ?? "phase10-verify@yatra.test";
 const password = process.env.E2E_CUSTOMER_PASSWORD;
 const token = createHash("sha256")
   .update("phase10-email-verification-e2e")
