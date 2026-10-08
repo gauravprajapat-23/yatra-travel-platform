@@ -12,7 +12,7 @@ test("admin login supports keyboard skip navigation and labeled credentials", as
   await page.keyboard.press("Enter");
   await expect(page.locator("#main-content")).toBeFocused();
 
-  await expect(page.getByLabel(/email/i)).toBeVisible();
-  await expect(page.getByLabel(/password/i)).toBeVisible();
+  await expect(page.locator("#adminEmail")).toBeVisible();
+  await expect(page.locator("#adminPassword")).toBeVisible();
   await expect(page.getByRole("button", { name: /show password/i })).toBeVisible();
 });
