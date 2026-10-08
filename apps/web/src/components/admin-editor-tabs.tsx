@@ -5,6 +5,7 @@ export type AdminEditorTab = {
   label: string;
   description?: string;
   badge?: string;
+  badgeTone?: "neutral" | "success" | "warning";
 };
 
 export function AdminEditorTabs({
@@ -32,7 +33,18 @@ export function AdminEditorTabs({
           <span className="admin-editor-tab__title">
             <strong>{tab.label}</strong>
             {tab.badge ? (
-              <span className="admin-editor-tab__badge">{tab.badge}</span>
+              <span
+                className={[
+                  "admin-editor-tab__badge",
+                  tab.badgeTone
+                    ? `admin-editor-tab__badge--${tab.badgeTone}`
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                {tab.badge}
+              </span>
             ) : null}
           </span>
           {tab.description ? <small>{tab.description}</small> : null}
