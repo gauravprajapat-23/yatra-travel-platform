@@ -49,7 +49,7 @@ export default async function StaffInvitePage({
 
   if (!invite) {
     return (
-      <main className="admin-invite-page">
+      <div className="admin-invite-page">
         <section className="admin-invite-card">
           <strong className="admin-login-brand">YATRA</strong>
           <h1>Invite unavailable</h1>
@@ -65,12 +65,12 @@ export default async function StaffInvitePage({
             Back to Admin Login
           </Link>
         </section>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="admin-invite-page">
+    <div className="admin-invite-page">
       <section className="admin-invite-card">
         <strong className="admin-login-brand">YATRA</strong>
         <span className="admin-invite-card__eyebrow">STAFF INVITE</span>
@@ -126,6 +126,6 @@ export default async function StaffInvitePage({
           />
         </form>
       </section>
-    </main>
+    </div>
   );
 }
