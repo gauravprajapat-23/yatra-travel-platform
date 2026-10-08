@@ -151,7 +151,7 @@ export default async function LeadDetailPage({
             description: "Qualification workflow",
             badge: lead.status.replaceAll("_", " "),
             badgeTone:
-              lead.status === "CLOSED"
+              lead.status === "QUALIFIED" || lead.status === "CLOSED"
                 ? "success"
                 : lead.status === "SPAM"
                   ? "warning"
