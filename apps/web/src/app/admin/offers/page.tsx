@@ -5,6 +5,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
 import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDate } from "@/lib/admin/datetime";
 import {
   isPricingRuleStatus,
   isTripType,
@@ -126,8 +127,8 @@ export default async function OffersPage({
       : rule.basis === "PER_KM"
         ? `${money(rule.perKmMinor, rule.currency)} / km`
         : "Quote only",
-    rule.activeFrom?.toLocaleDateString("en-IN") ?? "Immediate",
-    rule.activeTo?.toLocaleDateString("en-IN") ?? "No expiry",
+    rule.activeFrom ? formatIstDate(rule.activeFrom) : "Immediate",
+    rule.activeTo ? formatIstDate(rule.activeTo) : "No expiry",
     <StatusPill key={rule.id} tone={tone(rule.status)}>
       {rule.status.replaceAll("_", " ")}
     </StatusPill>,
