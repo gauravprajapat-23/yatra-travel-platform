@@ -2,35 +2,61 @@
 
 import { useEffect, useRef } from "react";
 
-export function AdminFormDirtyGuard() {
+export function AdminFormDirtyGuard({
+  resultStatus,
+}: {
+  resultStatus?: "idle" | "success" | "error";
+}) {
   const markerRef = useRef<HTMLSpanElement | null>(null);
+  const dirtyRef = useRef(false);
+  const submittingRef = useRef(false);
+
+  useEffect(() => {
+    if (resultStatus === "error") {
+      dirtyRef.current = true;
+      submittingRef.current = false;
+    } else if (resultStatus === "success") {
+      dirtyRef.current = false;
+      submittingRef.current = false;
+    }
+  }, [resultStatus]);
 
   useEffect(() => {
     const marker = markerRef.current;
     const form = marker?.closest("form");
     if (!form) return;
 
-    let dirty = false;
-    let submitted = false;
-
     const markDirty = () => {
-      if (!submitted) dirty = true;
+      if (!submittingRef.current) dirtyRef.current = true;
     };
 
-    const markSubmitted = () => {
-      submitted = true;
-      dirty = false;
+    const markSubmitting = () => {
+      submittingRef.current = true;
+      dirtyRef.current = false;
     };
 
     const beforeUnload = (event: BeforeUnloadEvent) => {
-      if (!dirty || submitted) return;
+      if (!dirtyRef.current || submittingRef.current) return;
       event.preventDefault();
       event.returnValue = "";
     };
 
     const documentClick = (event: MouseEvent) => {
-      if (!dirty || submitted || event.defaultPrevented) return;
-      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      if (
+        !dirtyRef.current ||
+        submittingRef.current ||
+        event.defaultPrevented
+      ) {
+        return;
+      }
+
+      if (
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
         return;
       }
 
@@ -67,20 +93,20 @@ export function AdminFormDirtyGuard() {
         event.preventDefault();
         event.stopPropagation();
       } else {
-        dirty = false;
+        dirtyRef.current = false;
       }
     };
 
     form.addEventListener("input", markDirty);
     form.addEventListener("change", markDirty);
-    form.addEventListener("submit", markSubmitted);
+    form.addEventListener("submit", markSubmitting);
     window.addEventListener("beforeunload", beforeUnload);
     document.addEventListener("click", documentClick, true);
 
     return () => {
       form.removeEventListener("input", markDirty);
       form.removeEventListener("change", markDirty);
-      form.removeEventListener("submit", markSubmitted);
+      form.removeEventListener("submit", markSubmitting);
       window.removeEventListener("beforeunload", beforeUnload);
       document.removeEventListener("click", documentClick, true);
     };
