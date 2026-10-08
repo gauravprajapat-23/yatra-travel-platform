@@ -11,7 +11,20 @@ test("operations admin sees only allowed navigation and is denied restricted rou
   await page.goto("/admin/login");
   await page.locator("#adminEmail").fill(email);
   await page.locator("#adminPassword").fill(password);
-  await page.getByRole("button", { name: /sign in/i }).click();
+  const [loginResponse] = await Promise.all([
+    page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/admin-auth/login") &&
+        response.request().method() === "POST",
+    ),
+    page.getByRole("button", { name: /sign in/i }).click(),
+  ]);
+
+  if (loginResponse.status() !== 200) {
+    throw new Error(
+      `Operations login failed with HTTP ${loginResponse.status()}: ${await loginResponse.text()}`,
+    );
+  }
   await expect(page).toHaveURL(/\/admin(?:$|\?)/);
 
   await expect(page.getByRole("link", { name: "Bookings" })).toBeVisible();
