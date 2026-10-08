@@ -1,17 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 type ResetResponse = {
   error?: { message?: string };
 };
 
-export function CustomerResetPasswordForm({
-  token,
-}: {
-  token: string;
-}) {
+export function CustomerResetPasswordForm() {
+  const [token, setToken] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -19,8 +16,27 @@ export function CustomerResetPasswordForm({
   const [complete, setComplete] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    const fragmentParams = new URLSearchParams(
+      window.location.hash.replace(/^#/, ""),
+    );
+    const queryParams = new URLSearchParams(window.location.search);
+    const rawToken =
+      fragmentParams.get("token")?.trim() ??
+      queryParams.get("token")?.trim() ??
+      "";
+
+    window.history.replaceState({}, "", window.location.pathname);
+
+    const timer = window.setTimeout(() => {
+      setToken(rawToken);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
   const tokenValid = useMemo(
-    () => /^[A-Za-z0-9_-]{32,128}$/.test(token),
+    () => /^[A-Za-z0-9_-]{32,128}$/.test(token ?? ""),
     [token],
   );
 
@@ -49,7 +65,7 @@ export function CustomerResetPasswordForm({
       const response = await fetch("/api/customer-auth/password-reset/confirm", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ token, password }),
+        body: JSON.stringify({ token: token ?? "", password }),
       });
       const result = (await response.json()) as ResetResponse;
 
@@ -140,7 +156,7 @@ export function CustomerResetPasswordForm({
         {pending ? "Resetting…" : "Reset Password"}
       </button>
 
-      {!tokenValid ? (
+      {token !== null && !tokenValid ? (
         <p className="lead-form-error" role="alert">
           This reset link is invalid or expired.
         </p>
