@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getDb, Prisma } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
+import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import { contentStatuses } from "@/modules/content/admin-content-service";
 
@@ -176,18 +177,17 @@ export default async function BlogPage({
       ]}
       toolbar={
         <form className="admin-table-query" method="get">
-          <label>
-            <span>Search</span>
+          <AdminField label="Search" htmlFor="blogSearch">
             <input
+              id="blogSearch"
               name="q"
               defaultValue={q}
               placeholder="Title, slug, excerpt or category"
             />
-          </label>
+          </AdminField>
 
-          <label>
-            <span>Category</span>
-            <select name="category" defaultValue={categoryId}>
+          <AdminField label="Category" htmlFor="blogCategory">
+            <select id="blogCategory" name="category" defaultValue={categoryId}>
               <option value="">All categories</option>
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>
@@ -195,11 +195,10 @@ export default async function BlogPage({
                 </option>
               ))}
             </select>
-          </label>
+          </AdminField>
 
-          <label>
-            <span>Status</span>
-            <select name="status" defaultValue={status ?? ""}>
+          <AdminField label="Status" htmlFor="blogStatus">
+            <select id="blogStatus" name="status" defaultValue={status ?? ""}>
               <option value="">All statuses</option>
               {contentStatuses.map((item) => (
                 <option key={item} value={item}>
@@ -207,7 +206,7 @@ export default async function BlogPage({
                 </option>
               ))}
             </select>
-          </label>
+          </AdminField>
 
           <button className="admin-primary-button" type="submit">
             Apply
