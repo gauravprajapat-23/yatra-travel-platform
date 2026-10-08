@@ -120,6 +120,7 @@ export default async function FaqDetailPage({
             label: "Content",
             description: "Question & answer",
             badge: faq.answer.trim() ? "Ready" : "Incomplete",
+            badgeTone: faq.answer.trim() ? "success" : "warning",
           },
           {
             key: "publishing",
