@@ -7,6 +7,7 @@ import {
   type BookingStatus,
 } from "@yatra/domain/booking/status-machine";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
+import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -310,27 +311,25 @@ export default async function AdminBookingsPage({
       ]}
       toolbar={
         <form className="admin-table-query" method="get">
-          <label>
-            <span>Search</span>
+          <AdminField label="Search" htmlFor="bookingSearch">
             <input
+              id="bookingSearch"
               name="q"
               defaultValue={q}
               placeholder="Reference, customer, email or route"
             />
-          </label>
+          </AdminField>
 
-          <label>
-            <span>Type</span>
-            <select name="type" defaultValue={type}>
+          <AdminField label="Type" htmlFor="bookingType">
+            <select id="bookingType" name="type" defaultValue={type}>
               <option value="ALL">All types</option>
               <option value="CAR">Car</option>
               <option value="PACKAGE">Package</option>
             </select>
-          </label>
+          </AdminField>
 
-          <label>
-            <span>Status</span>
-            <select name="status" defaultValue={status ?? ""}>
+          <AdminField label="Status" htmlFor="bookingStatus">
+            <select id="bookingStatus" name="status" defaultValue={status ?? ""}>
               <option value="">All statuses</option>
               {bookingStatuses.map((item) => (
                 <option key={item} value={item}>
@@ -338,26 +337,23 @@ export default async function AdminBookingsPage({
                 </option>
               ))}
             </select>
-          </label>
+          </AdminField>
 
-          <label>
-            <span>Assignment</span>
-            <select name="assignment" defaultValue={assignment}>
+          <AdminField label="Assignment" htmlFor="bookingAssignment">
+            <select id="bookingAssignment" name="assignment" defaultValue={assignment}>
               <option value="ALL">All assignments</option>
               <option value="ASSIGNED">Assigned</option>
               <option value="UNASSIGNED">Needs assignment</option>
             </select>
-          </label>
+          </AdminField>
 
-          <label>
-            <span>Travel from</span>
-            <input type="date" name="from" defaultValue={from} />
-          </label>
+          <AdminField label="Travel from" htmlFor="bookingFrom">
+            <input id="bookingFrom" type="date" name="from" defaultValue={from} />
+          </AdminField>
 
-          <label>
-            <span>Travel to</span>
-            <input type="date" name="to" defaultValue={to} />
-          </label>
+          <AdminField label="Travel to" htmlFor="bookingTo">
+            <input id="bookingTo" type="date" name="to" defaultValue={to} />
+          </AdminField>
 
           <button className="admin-primary-button" type="submit">
             Apply
