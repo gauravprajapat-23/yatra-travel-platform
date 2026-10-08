@@ -10,7 +10,8 @@
     "./storage/s3-config": "./src/storage/s3-config.ts",
     "./storage/s3-client": "./src/storage/s3-client.ts",
     "./security/field-encryption": "./src/security/field-encryption.ts",
-    "./notifications/notification-provider": "./src/notifications/notification-provider.ts"
+    "./notifications/notification-provider": "./src/notifications/notification-provider.ts",
+    "./notifications/resend-email-provider": "./src/notifications/resend-email-provider.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
