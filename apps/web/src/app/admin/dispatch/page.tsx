@@ -5,6 +5,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminField } from "@/components/admin-form";
 import { AdminMetric, AdminShell, StatusPill } from "@/components/admin-shell";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDate, formatIstDateTime } from "@/lib/admin/datetime";
 
 export const dynamic = "force-dynamic";
 
@@ -19,13 +20,6 @@ function parseWindow(value: string | undefined) {
 function parseAlertHours(value: string | undefined) {
   const parsed = Number(value ?? "24");
   return allowedAlertHours.has(parsed) ? parsed : 24;
-}
-
-function formatDateTime(value: Date) {
-  return value.toLocaleString("en-IN", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
 }
 
 function bookingTone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
@@ -323,7 +317,7 @@ export default async function DispatchPage({
                 <tr><td colSpan={5}>No departures within the selected alert window.</td></tr>
               ) : nearDepartures.map((booking) => (
                 <tr key={booking.reference}>
-                  <td>{formatDateTime(booking.startsAt)}</td>
+                  <td>{formatIstDateTime(booking.startsAt)}</td>
                   <td><Link href={`/admin/bookings/${booking.reference}`}>{booking.reference}</Link></td>
                   <td>{booking.route}</td>
                   <td><StatusPill tone={booking.tone}>{booking.readiness}</StatusPill></td>
@@ -361,7 +355,7 @@ export default async function DispatchPage({
               ) : (
                 unassigned.map((booking) => (
                   <tr key={booking.reference}>
-                    <td>{formatDateTime(booking.startsAt)}</td>
+                    <td>{formatIstDateTime(booking.startsAt)}</td>
                     <td>
                       <Link href={`/admin/bookings/${booking.reference}`}>
                         {booking.reference}
@@ -408,7 +402,7 @@ export default async function DispatchPage({
               ) : (
                 upcomingAssigned.map((booking) => (
                   <tr key={booking.reference}>
-                    <td>{formatDateTime(booking.startsAt)}</td>
+                    <td>{formatIstDateTime(booking.startsAt)}</td>
                     <td>
                       <Link href={`/admin/bookings/${booking.reference}`}>
                         {booking.reference}
@@ -471,7 +465,7 @@ export default async function DispatchPage({
                         : "Not assigned"}
                     </td>
                     <td>{booking.assignedDriver?.displayName ?? "Not assigned"}</td>
-                    <td>{formatDateTime(booking.startsAt)}</td>
+                    <td>{formatIstDateTime(booking.startsAt)}</td>
                   </tr>
                 ))
               )}
@@ -501,8 +495,8 @@ export default async function DispatchPage({
               ) : vehicleBlocks.map((block) => (
                 <tr key={block.id}>
                   <td>{block.vehicle.displayName} · {block.vehicle.registrationNumber}</td>
-                  <td>{formatDateTime(block.startsAt)}</td>
-                  <td>{formatDateTime(block.endsAt)}</td>
+                  <td>{formatIstDateTime(block.startsAt)}</td>
+                  <td>{formatIstDateTime(block.endsAt)}</td>
                   <td>{block.reason ?? "Unavailable"}</td>
                 </tr>
               ))}
@@ -533,8 +527,8 @@ export default async function DispatchPage({
                     {block.driver.displayName}
                     {block.driver.phoneLast4 ? ` · •••• ${block.driver.phoneLast4}` : ""}
                   </td>
-                  <td>{formatDateTime(block.startsAt)}</td>
-                  <td>{formatDateTime(block.endsAt)}</td>
+                  <td>{formatIstDateTime(block.startsAt)}</td>
+                  <td>{formatIstDateTime(block.endsAt)}</td>
                   <td>{block.reason ?? "Unavailable"}</td>
                 </tr>
               ))}
@@ -564,7 +558,7 @@ export default async function DispatchPage({
                 <tr key={driver.id}>
                   <td>{driver.displayName}</td>
                   <td>{driver.phoneLast4 ? `•••• ${driver.phoneLast4}` : "Not available"}</td>
-                  <td>{driver.licenseExpiry?.toLocaleDateString("en-IN") ?? "Not set"}</td>
+                  <td>{driver.licenseExpiry ? formatIstDate(driver.licenseExpiry) : "Not set"}</td>
                   <td><Link href={`/admin/drivers/${driver.id}`}>Review →</Link></td>
                 </tr>
               ))}
