@@ -9,7 +9,8 @@
     "./payments/razorpay-signature": "./src/payments/razorpay-signature.ts",
     "./storage/s3-config": "./src/storage/s3-config.ts",
     "./storage/s3-client": "./src/storage/s3-client.ts",
-    "./security/field-encryption": "./src/security/field-encryption.ts"
+    "./security/field-encryption": "./src/security/field-encryption.ts",
+    "./notifications/notification-provider": "./src/notifications/notification-provider.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
