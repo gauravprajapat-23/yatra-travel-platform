@@ -17,3 +17,6 @@ Thumbs.db
 *.jks
 *.keystore
 service-account*.json
+
+playwright-report/
+test-results/
