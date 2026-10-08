@@ -2,7 +2,7 @@
 
 Status: IN PROGRESS
 
-Updated: 2026-10-07
+Updated: 2026-10-08
 
 ## Goal
 
@@ -38,6 +38,17 @@ Turn the existing administration surface into a complete day-to-day travel opera
 - [x] Dashboard dispatch-pressure metric and shortcut
 
 Assignment writes continue to use the existing server-authoritative assignment service. The dispatch board does not bypass overlap checks, qualification checks, license validation, availability blocks or serializable assignment transactions.
+
+### Cross-chat regression hardening
+- [x] Admin-wide explicit IST formatting for operational dates/timestamps
+- [x] Explicit IST parsing/round-trip for pricing, content, package, FAQ, vehicle/driver availability and booking-policy date windows
+- [x] Global unsaved-change guard mounted at the admin layout
+- [x] Structured temple JSON fields preserve untouched object/array shape
+- [x] SUPER_ADMIN hierarchy enforced server-side across staff access, invite and session-management paths
+- [x] Non-super staff managers cannot grant or manage SUPER_ADMIN access in the UI
+- [x] Staff-invite database/runtime certification added to normal Application CI
+- [x] Razorpay webhook request-size/event-id bounds added
+- [x] Payment runtime safety certification added to CI
 
 ## Remaining Phase 8 work
 
