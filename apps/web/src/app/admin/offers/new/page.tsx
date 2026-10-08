@@ -19,6 +19,7 @@ import {
 import { AdminCurrencyField } from "@/components/admin-currency-field";
 import { AdminDateTimeRange } from "@/components/admin-date-time-range";
 import { requireAdminSession } from "@/lib/auth/session";
+import { parseIstDateTimeLocal } from "@/lib/admin/datetime";
 import {
   isPricingBasis,
   isPricingRuleStatus,
@@ -46,14 +47,6 @@ function parseOptionalInt(value: FormDataEntryValue | null): number | null {
   if (!text) return null;
   const parsed = Number(text);
   if (!Number.isInteger(parsed)) throw new Error("Expected a whole number.");
-  return parsed;
-}
-
-function parseOptionalDate(value: FormDataEntryValue | null): Date | null {
-  const text = String(value ?? "").trim();
-  if (!text) return null;
-  const parsed = new Date(text);
-  if (Number.isNaN(parsed.getTime())) throw new Error("Invalid date.");
   return parsed;
 }
 
@@ -111,8 +104,8 @@ export default async function NewPricingRulePage() {
         destinationKey: String(formData.get("destinationKey") ?? ""),
         priority: Number(formData.get("priority") ?? 0),
         status,
-        activeFrom: parseOptionalDate(formData.get("activeFrom")),
-        activeTo: parseOptionalDate(formData.get("activeTo")),
+        activeFrom: parseIstDateTimeLocal(formData.get("activeFrom")),
+        activeTo: parseIstDateTimeLocal(formData.get("activeTo")),
         actorUserId: currentSession.userId,
       });
 
