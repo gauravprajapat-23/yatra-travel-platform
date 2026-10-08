@@ -17,6 +17,7 @@ import {
 } from "@/components/admin-action-form";
 import { AdminCheckbox, AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDateTime } from "@/lib/admin/datetime";
 import {
   adminRoleKeys,
   isAdminRole,
@@ -287,15 +288,16 @@ export default async function StaffDetailPage({
               <div><dt>Email</dt><dd>{user.email}</dd></div>
               <div><dt>Name</dt><dd>{user.name ?? "Not set"}</dd></div>
               <div><dt>Roles</dt><dd>{currentRoles.map(roleLabel).join(", ")}</dd></div>
-              <div><dt>Last Login</dt><dd>{user.lastLoginAt?.toLocaleString("en-IN") ?? "Never"}</dd></div>
+              <div><dt>Last Login</dt><dd>{user.lastLoginAt ? formatIstDateTime(user.lastLoginAt) : "Never"}</dd></div>
               <div><dt>Active Sessions</dt><dd>{activeSessions}</dd></div>
-              <div><dt>Created</dt><dd>{user.createdAt.toLocaleString("en-IN")}</dd></div>
+              <div><dt>Created</dt><dd>{formatIstDateTime(user.createdAt)}</dd></div>
               {user.status === "INVITED" && canManageTarget ? (
                 <div>
                   <dt>Invite expiry</dt>
                   <dd>
-                    {user.staffInvite?.expiresAt.toLocaleString("en-IN") ??
-                      "Invite link needs regeneration"}
+                    {user.staffInvite?.expiresAt
+                      ? formatIstDateTime(user.staffInvite.expiresAt)
+                      : "Invite link needs regeneration"}
                   </dd>
                 </div>
               ) : null}
@@ -447,9 +449,9 @@ export default async function StaffDetailPage({
                 <tbody>
                   {user.sessions.map((item) => (
                     <tr key={item.id}>
-                      <td>{item.createdAt.toLocaleString("en-IN")}</td>
-                      <td>{item.lastSeenAt?.toLocaleString("en-IN") ?? "—"}</td>
-                      <td>{item.expiresAt.toLocaleString("en-IN")}</td>
+                      <td>{formatIstDateTime(item.createdAt)}</td>
+                      <td>{item.lastSeenAt ? formatIstDateTime(item.lastSeenAt) : "—"}</td>
+                      <td>{formatIstDateTime(item.expiresAt)}</td>
                       <td>
                         {item.revokedAt
                           ? "Revoked"
