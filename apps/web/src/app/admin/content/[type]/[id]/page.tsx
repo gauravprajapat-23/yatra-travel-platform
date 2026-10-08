@@ -746,7 +746,22 @@ export default async function AdminContentEditorPage({
             <p>Body content uses safe structured blocks. Raw HTML and scripts are rejected.</p>
             {hasPermission(session.roles, "content.write") ? (
               <form action={saveBody}>
-                <AdminStructuredContentEditor initialValue={content.body} />
+                <AdminStructuredContentEditor
+                  initialValue={content.body}
+                  mediaOptions={heroOptions.flatMap((asset) =>
+                    asset.publicUrl
+                      ? [{
+                          id: asset.id,
+                          publicUrl: asset.publicUrl,
+                          label:
+                            asset.altText ??
+                            asset.objectKey.split("/").pop() ??
+                            asset.objectKey,
+                          altText: asset.altText,
+                        }]
+                      : [],
+                  )}
+                />
                 <AdminSubmitButton
                   label="Save Structured Content"
                   pendingLabel="Saving Content…"
