@@ -4,7 +4,7 @@ Status: CERTIFIED — CURRENT DATA MODEL
 
 Updated: 2026-10-08
 
-Certification evidence: Application CI run 37739563364 — PASS
+Certification evidence: Application CI run 37745929465 — PASS
 
 ## Goal
 
@@ -95,7 +95,7 @@ Assignment writes continue to use the existing server-authoritative assignment s
 - [x] Verify mobile table/dispatch usability, including booking operations and payment detail views
 - [x] Verify keyboard/focus behavior for admin login skip navigation and labeled credential controls
 - [x] Permission/audit certification covers role-permission matrix tests, login success/failure audit persistence, RBAC browser checks, lifecycle-validated booking mutations and assignment audit/timeline behavior
-- [x] Final production build / CI certification for the current Phase 8 QA baseline — Application CI run 37739171347 PASS
+- [x] Final production build / CI certification for the current Phase 8 QA baseline — Application CI run 37745929465 PASS
 
 ## Deferred by data-model boundary
 
