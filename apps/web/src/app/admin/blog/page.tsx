@@ -5,6 +5,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
 import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDate } from "@/lib/admin/datetime";
 import { contentStatuses } from "@/modules/content/admin-content-service";
 
 export const dynamic = "force-dynamic";
@@ -109,8 +110,8 @@ export default async function BlogPage({
     <StatusPill key={post.id} tone={tone(post.status)}>
       {post.status.replaceAll("_", " ")}
     </StatusPill>,
-    post.publishedAt?.toLocaleDateString("en-IN") ?? "—",
-    post.updatedAt.toLocaleDateString("en-IN"),
+    post.publishedAt ? formatIstDate(post.publishedAt) : "—",
+    formatIstDate(post.updatedAt),
   ]);
 
   function pageHref(targetPage: number) {
