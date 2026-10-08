@@ -10,6 +10,7 @@ import { AdminPublicationFields } from "@/components/admin-publication-fields";
 import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDateTimeLocal, parseIstDateTimeLocal } from "@/lib/admin/datetime";
 import {
   faqScopes,
   faqStatuses,
@@ -25,23 +26,6 @@ function tone(status: string): "green" | "orange" | "red" | "blue" | "gray" {
   if (status === "SCHEDULED") return "blue";
   if (status === "DRAFT" || status === "REVIEW") return "orange";
   return "gray";
-}
-
-function localDateTime(value: Date | null): string {
-  if (!value) return "";
-  return new Date(
-    value.getTime() - value.getTimezoneOffset() * 60_000,
-  )
-    .toISOString()
-    .slice(0, 16);
-}
-
-function parseOptionalDate(value: FormDataEntryValue | null): Date | null {
-  const text = String(value ?? "").trim();
-  if (!text) return null;
-  const date = new Date(text);
-  if (Number.isNaN(date.getTime())) throw new Error("Invalid schedule date.");
-  return date;
 }
 
 export default async function FaqDetailPage({
@@ -89,7 +73,7 @@ export default async function FaqDetailPage({
       answer: String(formData.get("answer") ?? ""),
       sortOrder: Number(formData.get("sortOrder") ?? 0),
       status,
-      scheduledFor: parseOptionalDate(formData.get("scheduledFor")),
+      scheduledFor: parseIstDateTimeLocal(formData.get("scheduledFor")),
       actorUserId: currentSession.userId,
     });
 
@@ -158,7 +142,7 @@ export default async function FaqDetailPage({
                 <input type="hidden" name="scope" value={faq.scope}/>
                 <input type="hidden" name="sortOrder" value={faq.sortOrder}/>
                 <input type="hidden" name="status" value={faq.status}/>
-                <input type="hidden" name="scheduledFor" value={localDateTime(faq.scheduledFor)}/>
+                <input type="hidden" name="scheduledFor" value={formatIstDateTimeLocal(faq.scheduledFor)}/>
                 <AdminFormGrid columns={1}>
                   <AdminTextareaField
                     id="faqQuestion"
@@ -236,7 +220,7 @@ export default async function FaqDetailPage({
                       label: status.replaceAll("_", " "),
                     }))}
                     defaultStatus={faq.status}
-                    defaultScheduledFor={localDateTime(faq.scheduledFor)}
+                    defaultScheduledFor={formatIstDateTimeLocal(faq.scheduledFor)}
                     statusId="faqStatus"
                     scheduleId="faqScheduledFor"
                   />
