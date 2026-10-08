@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
+import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -334,18 +335,17 @@ export default async function CustomersPage({
       ]}
       toolbar={
         <form className="admin-table-query admin-table-query--compact" method="get">
-          <label>
-            <span>Search</span>
+          <AdminField label="Search" htmlFor="customerSearch">
             <input
+              id="customerSearch"
               name="q"
               defaultValue={q}
               placeholder="Customer name or email"
             />
-          </label>
+          </AdminField>
 
-          <label>
-            <span>Segment</span>
-            <select name="segment" defaultValue={segment ?? ""}>
+          <AdminField label="Segment" htmlFor="customerSegment">
+            <select id="customerSegment" name="segment" defaultValue={segment ?? ""}>
               <option value="">All segments</option>
               {segments.map((item) => (
                 <option key={item} value={item}>
@@ -353,7 +353,7 @@ export default async function CustomersPage({
                 </option>
               ))}
             </select>
-          </label>
+          </AdminField>
 
           <button className="admin-primary-button" type="submit">
             Apply
