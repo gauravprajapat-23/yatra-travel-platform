@@ -50,6 +50,17 @@ Assignment writes continue to use the existing server-authoritative assignment s
 - [x] Razorpay webhook request-size/event-id bounds added
 - [x] Payment runtime safety certification added to CI
 
+### Browser E2E certification
+- [x] Playwright 1.63.0 pinned in the repository
+- [x] Desktop Chromium authentication/logout coverage
+- [x] Keyboard skip-link/focus coverage
+- [x] OPERATIONS role navigation and direct-route RBAC coverage
+- [x] Vehicle/driver assignment and conflict filtering coverage
+- [x] Booking lifecycle transition coverage
+- [x] Refund-control permission visibility coverage with refund writes kept disabled
+- [x] Mobile no-page-overflow checks for dispatch, bookings, reports, assignment detail and payment detail
+- [x] CI browser login-rate isolation without weakening production rate limits
+
 ## Remaining Phase 8 work
 
 ### Booking operations
@@ -78,11 +89,11 @@ Assignment writes continue to use the existing server-authoritative assignment s
 - [ ] Add document-compliance lifecycle if introduced in the data model
 
 ### Admin QA
-- [~] Admin runtime certification now covers unauthenticated protection plus authenticated login/session/protected-page/export/logout flows against a migrated CI Postgres database; browser-level interaction E2E remains
-- [ ] Verify mobile table/dispatch usability
-- [ ] Verify keyboard/focus behavior
-- [~] Permission/audit certification in progress; role-permission matrix tests are locked in CI, login success/failure audit persistence is runtime-certified, and bulk booking mutations are permission checked, lifecycle validated and audited
-- [ ] Final production build / CI certification
+- [x] Admin runtime + Playwright certification covers unauthenticated protection, authenticated login/logout, RBAC, protected routes, booking assignment/conflicts, booking lifecycle transitions, refund-control permissions and mobile operational views against migrated CI Postgres
+- [x] Verify mobile table/dispatch usability, including booking operations and payment detail views
+- [x] Verify keyboard/focus behavior for admin login skip navigation and labeled credential controls
+- [x] Permission/audit certification covers role-permission matrix tests, login success/failure audit persistence, RBAC browser checks, lifecycle-validated booking mutations and assignment audit/timeline behavior
+- [x] Final production build / CI certification for the current Phase 8 QA baseline — Application CI run 37739171347 PASS
 
 ## Phase 8 acceptance rule
 
