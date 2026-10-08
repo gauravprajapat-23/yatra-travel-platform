@@ -222,7 +222,10 @@ const primitiveCoverage = [
   },
   {
     file: "apps/web/src/components/admin-action-form.tsx",
-    fragments: ["<AdminFormDirtyGuard"],
+    fragments: [
+      "<AdminFormDirtyGuard",
+      "resultStatus={state.status}",
+    ],
     label: "recoverable form unsaved-change guard",
   },
   {
