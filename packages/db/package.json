@@ -26,7 +26,8 @@
     "db:verify:staff-invites": "node scripts/verify-staff-invite-foundation.mjs",
     "db:bootstrap:e2e-operations": "node scripts/bootstrap-e2e-operations.mjs",
     "db:bootstrap:e2e-assignment": "node scripts/bootstrap-e2e-assignment.mjs",
-    "db:bootstrap:e2e-lifecycle": "node scripts/bootstrap-e2e-lifecycle.mjs"
+    "db:bootstrap:e2e-lifecycle": "node scripts/bootstrap-e2e-lifecycle.mjs",
+    "db:bootstrap:e2e-refund": "node scripts/bootstrap-e2e-refund.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
