@@ -162,8 +162,23 @@ requireFragments(
   [
     'process.env.CUSTOMER_AUTH_WRITE_ENABLED !== "true"',
     "REGISTRATION_DISABLED",
+    "getEmailNotificationProvider",
+    "sendAuthActionNotification",
+    'purpose: "EMAIL_VERIFICATION"',
   ],
-  "registration remains gated until delivery certification",
+  "registration remains gated and requires verification delivery",
+);
+
+requireFragments(
+  "apps/web/src/app/api/customer-auth/verification/request/route.ts",
+  [
+    'process.env.CUSTOMER_AUTH_WRITE_ENABLED !== "true"',
+    "VERIFICATION_DELIVERY_DISABLED",
+    "getEmailNotificationProvider",
+    "sendAuthActionNotification",
+    "If an unverified customer account exists for that email",
+  ],
+  "verification resend stays gated and enumeration-safe",
 );
 
 process.stdout.write("Notification foundation certification passed.\n");
