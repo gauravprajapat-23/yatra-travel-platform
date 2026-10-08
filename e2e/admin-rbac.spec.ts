@@ -27,7 +27,16 @@ test("operations admin sees only allowed navigation and is denied restricted rou
   }
   await expect(page).toHaveURL(/\/admin(?:$|\?)/);
 
-  await expect(page.getByRole("link", { name: "Bookings" })).toBeVisible();
+  const sidebar = page.locator(".admin-sidebar nav");
+
+  for (const allowed of [
+    "Bookings",
+    "Dispatch",
+    "Fleet Management",
+    "Drivers & Staff",
+  ]) {
+    await expect(
+      sidebar.getByRole("link", { name: new RegExp(`\\b${allowed.replace(/[.*+?^$\{\}()|[\\]\\\\]/g, "\\\\  await expect(page.getByRole("link", { name: "Bookings" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Dispatch" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Fleet Management" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Drivers & Staff" })).toBeVisible();
@@ -41,6 +50,35 @@ test("operations admin sees only allowed navigation and is denied restricted rou
     "CMS Pages",
   ]) {
     await expect(page.getByRole("link", { name: forbidden })).toHaveCount(0);
+  }")}\\b`) }),
+    ).toBeVisible();
+  }
+
+  for (const forbidden of [
+    "Payments",
+    "Staff / Roles",
+    "Reports",
+    "Audit Log",
+    "Settings",
+    "CMS Pages",
+  ]) {
+    await expect(
+      sidebar.getByRole("link", { name: new RegExp(`\\b${forbidden.replace(/[.*+?^$\{\}()|[\\]\\\\]/g, "\\\\  await expect(page.getByRole("link", { name: "Bookings" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Dispatch" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Fleet Management" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Drivers & Staff" })).toBeVisible();
+
+  for (const forbidden of [
+    "Payments",
+    "Staff / Roles",
+    "Reports",
+    "Audit Log",
+    "Settings",
+    "CMS Pages",
+  ]) {
+    await expect(page.getByRole("link", { name: forbidden })).toHaveCount(0);
+  }")}\\b`) }),
+    ).toHaveCount(0);
   }
 
   for (const path of ["/admin/staff", "/admin/settings", "/admin/payments", "/admin/reports", "/admin/audit"]) {
