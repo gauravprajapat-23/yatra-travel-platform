@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { JsonBodyError, readJsonBody } from "@/lib/read-json-body";
+import { getCustomerSession } from "@/lib/auth/customer-session";
 import {
   consumePublicWriteAttempt,
   rateLimitedResponse,
@@ -128,7 +129,9 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!isNonEmptyString(body.guestName, 120)) {
+  const customerSession = await getCustomerSession();
+
+  if (!customerSession && !isNonEmptyString(body.guestName, 120)) {
     return NextResponse.json(
       {
         error: {
@@ -141,8 +144,8 @@ export async function POST(request: Request) {
   }
 
   if (
-    !isNonEmptyString(body.guestEmail, 254) ||
-    !isEmail(body.guestEmail)
+    !customerSession &&
+    (!isNonEmptyString(body.guestEmail, 254) || !isEmail(body.guestEmail))
   ) {
     return NextResponse.json(
       {
@@ -156,12 +159,20 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await createGuestCarBooking({
-      quoteId: body.quoteId.trim(),
-      guestName: body.guestName.trim(),
-      guestEmail: body.guestEmail.trim(),
-      idempotencyKey,
-    });
+    const result = await createGuestCarBooking(
+      customerSession
+        ? {
+            quoteId: body.quoteId.trim(),
+            customerUserId: customerSession.userId,
+            idempotencyKey,
+          }
+        : {
+            quoteId: body.quoteId.trim(),
+            guestName: body.guestName!.trim(),
+            guestEmail: body.guestEmail!.trim(),
+            idempotencyKey,
+          },
+    );
 
     const response = NextResponse.json(result, {
       status: result.replayed ? 200 : 201,
