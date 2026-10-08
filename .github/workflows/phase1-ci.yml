@@ -115,6 +115,9 @@ jobs:
       - name: Payment runtime safety certification
         run: npm run verify:payment-runtime
 
+      - name: Customer auth safety certification
+        run: npm run verify:customer-auth
+
       - name: Production build
         run: npm run build
 
