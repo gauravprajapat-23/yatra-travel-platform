@@ -129,3 +129,86 @@ export async function revokeAuthActionTokens(input: {
     data: { revokedAt: new Date() },
   });
 }
+
+
+export async function verifyCustomerEmailWithToken(rawToken: string) {
+  const db = getDb();
+  const tokenHash = hashAuthActionToken(rawToken);
+  const now = new Date();
+
+  return db.$transaction(async (tx) => {
+    const token = await tx.authActionToken.findUnique({
+      where: { tokenHash },
+      include: {
+        user: {
+          select: {
+            id: true,
+            status: true,
+            emailVerifiedAt: true,
+          },
+        },
+      },
+    });
+
+    if (
+      !token ||
+      token.purpose !== "EMAIL_VERIFICATION" ||
+      token.consumedAt ||
+      token.revokedAt ||
+      token.expiresAt <= now ||
+      token.user.status !== "ACTIVE"
+    ) {
+      return null;
+    }
+
+    const claimed = await tx.authActionToken.updateMany({
+      where: {
+        id: token.id,
+        purpose: "EMAIL_VERIFICATION",
+        consumedAt: null,
+        revokedAt: null,
+        expiresAt: { gt: now },
+      },
+      data: { consumedAt: now },
+    });
+
+    if (claimed.count !== 1) return null;
+
+    const verifiedAt = token.user.emailVerifiedAt ?? now;
+
+    if (!token.user.emailVerifiedAt) {
+      await tx.user.update({
+        where: { id: token.userId },
+        data: { emailVerifiedAt: verifiedAt },
+      });
+    }
+
+    await tx.authActionToken.updateMany({
+      where: {
+        userId: token.userId,
+        purpose: "EMAIL_VERIFICATION",
+        id: { not: token.id },
+        consumedAt: null,
+        revokedAt: null,
+      },
+      data: { revokedAt: now },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        actorUserId: token.userId,
+        action: "CUSTOMER_EMAIL_VERIFIED",
+        entityType: "User",
+        entityId: token.userId,
+        metadata: {
+          authActionTokenId: token.id,
+        },
+      },
+    });
+
+    return {
+      userId: token.userId,
+      verifiedAt,
+    };
+  });
+}
