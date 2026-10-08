@@ -78,8 +78,7 @@ export default async function NotificationDeliveriesPage({
       ? requestedPage
       : 1;
 
-  const where: Prisma.NotificationDeliveryWhereInput = {
-    ...(status ? { status: status as never } : {}),
+  const sharedWhere: Prisma.NotificationDeliveryWhereInput = {
     ...(channel ? { channel: channel as never } : {}),
     ...(purpose ? { purpose } : {}),
     ...(q
@@ -100,6 +99,11 @@ export default async function NotificationDeliveriesPage({
           ],
         }
       : {}),
+  };
+
+  const where: Prisma.NotificationDeliveryWhereInput = {
+    ...sharedWhere,
+    ...(status ? { status: status as never } : {}),
   };
 
   const db = getDb();
@@ -132,6 +136,7 @@ export default async function NotificationDeliveriesPage({
     }),
     db.notificationDelivery.groupBy({
       by: ["status"],
+      where: sharedWhere,
       _count: { _all: true },
     }),
     db.notificationDelivery.findMany({
