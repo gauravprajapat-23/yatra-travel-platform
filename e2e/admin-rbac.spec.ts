@@ -42,6 +42,7 @@ test("operations admin sees only allowed navigation and is denied restricted rou
 
   for (const href of [
     "/admin/payments",
+    "/admin/notifications",
     "/admin/staff",
     "/admin/reports",
     "/admin/audit",
@@ -55,6 +56,7 @@ test("operations admin sees only allowed navigation and is denied restricted rou
     "/admin/staff",
     "/admin/settings",
     "/admin/payments",
+    "/admin/notifications",
     "/admin/reports",
     "/admin/audit",
   ]) {
