@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getDb, Prisma } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
+import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
 import { contentStatuses } from "@/modules/content/admin-content-service";
 
@@ -184,18 +185,17 @@ export default async function DestinationsPage({
       ]}
       toolbar={
         <form className="admin-table-query" method="get">
-          <label>
-            <span>Search</span>
+          <AdminField label="Search" htmlFor="destinationSearch">
             <input
+              id="destinationSearch"
               name="q"
               defaultValue={q}
               placeholder="Destination name, slug or summary"
             />
-          </label>
+          </AdminField>
 
-          <label>
-            <span>Kind</span>
-            <select name="kind" defaultValue={kind ?? ""}>
+          <AdminField label="Kind" htmlFor="destinationKind">
+            <select id="destinationKind" name="kind" defaultValue={kind ?? ""}>
               <option value="">All kinds</option>
               {destinationKinds.map((item) => (
                 <option key={item} value={item}>
@@ -203,11 +203,10 @@ export default async function DestinationsPage({
                 </option>
               ))}
             </select>
-          </label>
+          </AdminField>
 
-          <label>
-            <span>Status</span>
-            <select name="status" defaultValue={status ?? ""}>
+          <AdminField label="Status" htmlFor="destinationStatus">
+            <select id="destinationStatus" name="status" defaultValue={status ?? ""}>
               <option value="">All statuses</option>
               {contentStatuses.map((item) => (
                 <option key={item} value={item}>
@@ -215,11 +214,11 @@ export default async function DestinationsPage({
                 </option>
               ))}
             </select>
-          </label>
+          </AdminField>
 
-          <label>
-            <span>Featured</span>
+          <AdminField label="Featured" htmlFor="destinationFeatured">
             <select
+              id="destinationFeatured"
               name="featured"
               defaultValue={featured === null ? "" : featured ? "YES" : "NO"}
             >
@@ -227,7 +226,7 @@ export default async function DestinationsPage({
               <option value="YES">Featured</option>
               <option value="NO">Standard</option>
             </select>
-          </label>
+          </AdminField>
 
           <button className="admin-primary-button" type="submit">
             Apply
