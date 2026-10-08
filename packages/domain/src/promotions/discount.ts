@@ -16,6 +16,7 @@ export type PromotionRule = {
   activeTo?: Date | null;
   maxRedemptions?: number | null;
   redeemedCount?: number;
+  perCustomerLimit?: number | null;
 };
 
 export type PromotionContext = {
@@ -23,6 +24,7 @@ export type PromotionContext = {
   subtotalMinor: bigint;
   currency: string;
   at?: Date;
+  customerRedemptionCount?: number | null;
 };
 
 export type PromotionDiscount = {
@@ -37,6 +39,21 @@ function assertCurrency(value: string): void {
 }
 
 export function assertPromotionRule(rule: PromotionRule): void {
+  if (
+    rule.activeFrom &&
+    rule.activeTo &&
+    rule.activeFrom >= rule.activeTo
+  ) {
+    throw new Error("Promotion active window is invalid.");
+  }
+
+  if (
+    rule.minSubtotalMinor !== null &&
+    rule.minSubtotalMinor !== undefined &&
+    rule.minSubtotalMinor < 0n
+  ) {
+    throw new Error("Promotion minimum subtotal cannot be negative.");
+  }
 
   if (
     rule.maxRedemptions !== null &&
@@ -44,6 +61,14 @@ export function assertPromotionRule(rule: PromotionRule): void {
     (!Number.isInteger(rule.maxRedemptions) || rule.maxRedemptions <= 0)
   ) {
     throw new Error("Promotion redemption limit must be a positive integer.");
+  }
+
+  if (
+    rule.perCustomerLimit !== null &&
+    rule.perCustomerLimit !== undefined &&
+    (!Number.isInteger(rule.perCustomerLimit) || rule.perCustomerLimit <= 0)
+  ) {
+    throw new Error("Promotion per-customer limit must be a positive integer.");
   }
 
   const redeemedCount = rule.redeemedCount ?? 0;
@@ -162,6 +187,27 @@ export function assertPromotionEligible(
     (rule.redeemedCount ?? 0) >= rule.maxRedemptions
   ) {
     throw new Error("Promotion redemption limit has been reached.");
+  }
+
+  if (
+    rule.perCustomerLimit !== null &&
+    rule.perCustomerLimit !== undefined
+  ) {
+    const customerCount = context.customerRedemptionCount;
+    if (
+      customerCount === null ||
+      customerCount === undefined ||
+      !Number.isInteger(customerCount) ||
+      customerCount < 0
+    ) {
+      throw new Error(
+        "Promotion eligibility requires customer redemption history.",
+      );
+    }
+
+    if (customerCount >= rule.perCustomerLimit) {
+      throw new Error("Promotion per-customer redemption limit has been reached.");
+    }
   }
 
   if (
