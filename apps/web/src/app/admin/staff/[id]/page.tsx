@@ -290,7 +290,7 @@ export default async function StaffDetailPage({
               <div><dt>Last Login</dt><dd>{user.lastLoginAt?.toLocaleString("en-IN") ?? "Never"}</dd></div>
               <div><dt>Active Sessions</dt><dd>{activeSessions}</dd></div>
               <div><dt>Created</dt><dd>{user.createdAt.toLocaleString("en-IN")}</dd></div>
-              {user.status === "INVITED" ? (
+              {user.status === "INVITED" && canManageTarget ? (
                 <div>
                   <dt>Invite expiry</dt>
                   <dd>
@@ -301,7 +301,7 @@ export default async function StaffDetailPage({
               ) : null}
             </dl>
 
-            {user.status === "INVITED" ? (
+            {user.status === "INVITED" && canManageTarget ? (
               <AdminActionForm action={regenerateInvite}>
                 <AdminFormGrid columns={1}>
                   <AdminField
@@ -331,7 +331,7 @@ export default async function StaffDetailPage({
               </AdminActionForm>
             ) : null}
 
-            {user.status === "INVITED" ? (
+            {user.status === "INVITED" && canManageTarget ? (
               <AdminDangerZone
                 title="Cancel Pending Invite"
                 description="Cancelling removes the pending staff account and invalidates the invite link."
@@ -351,7 +351,7 @@ export default async function StaffDetailPage({
                 You are editing your own account. Self-disable is blocked to
                 prevent accidental lockout.
               </p>
-            ) : activeSessions > 0 ? (
+            ) : canManageTarget && activeSessions > 0 ? (
               <AdminDangerZone
                 title="Revoke Active Sessions"
                 description="This signs the staff member out everywhere and forces a fresh login."
