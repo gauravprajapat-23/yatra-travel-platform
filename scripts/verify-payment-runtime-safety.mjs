@@ -35,7 +35,7 @@ requireFragments(
 requireFragments(
   "apps/web/src/app/admin/bookings/[reference]/page.tsx",
   [
-    '.filter((refund) => ["PENDING", "PROCESSED"].includes(refund.status))',
+    'where: { status: { in: ["PENDING", "PROCESSED"] } }',
     "createRefundRequest",
     "BOOKING_REFUND_REQUESTED",
   ],
