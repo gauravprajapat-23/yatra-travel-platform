@@ -6,17 +6,10 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function CustomerResetPasswordPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ token?: string }>;
-}) {
-  const params = await searchParams;
-  const token = params.token?.trim() ?? "";
-
+export default function CustomerResetPasswordPage() {
   return (
     <section className="customer-auth-page">
-      <CustomerResetPasswordForm token={token} />
+      <CustomerResetPasswordForm />
     </section>
   );
 }
