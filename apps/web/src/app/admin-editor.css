@@ -1040,3 +1040,122 @@ form[data-admin-dirty="false"] .admin-form-actions__meta::before {
   outline-offset: 3px;
   border-radius: 3px;
 }
+
+
+.admin-block-media-preview {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #e5ddd2;
+  border-radius: 9px;
+  background: #fffaf4;
+}
+
+.admin-block-media-preview img {
+  width: 120px;
+  aspect-ratio: 4 / 3;
+  border-radius: 7px;
+  object-fit: cover;
+  background: #f1ece5;
+}
+
+.admin-block-media-preview > div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.admin-block-media-preview strong {
+  color: #35483f;
+  font-size: .66rem;
+}
+
+.admin-block-media-preview small {
+  overflow: hidden;
+  color: #8a918d;
+  font-size: .57rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-block-media-preview span {
+  color: #b66a22;
+  font-size: .58rem;
+  font-weight: 700;
+}
+
+.admin-block-gallery-editor {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-block-gallery-editor__item {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 30px;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #e5ddd2;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.admin-block-gallery-editor__item img {
+  width: 72px;
+  aspect-ratio: 4 / 3;
+  border-radius: 6px;
+  object-fit: cover;
+  background: #f1ece5;
+}
+
+.admin-block-gallery-editor__item > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.admin-block-gallery-editor__item strong {
+  color: #35483f;
+  font-size: .63rem;
+}
+
+.admin-block-gallery-editor__item small {
+  overflow: hidden;
+  color: #8b918d;
+  font-size: .55rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-block-gallery-editor__item button {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid #e3d7ca;
+  border-radius: 7px;
+  background: #fff8f4;
+  color: #b9502f;
+  cursor: pointer;
+}
+
+@media (max-width: 560px) {
+  .admin-block-media-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-block-media-preview img {
+    width: 100%;
+    max-height: 220px;
+  }
+
+  .admin-block-gallery-editor__item {
+    grid-template-columns: 56px minmax(0, 1fr) 30px;
+  }
+
+  .admin-block-gallery-editor__item img {
+    width: 56px;
+  }
+}
