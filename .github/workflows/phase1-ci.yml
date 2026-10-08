@@ -88,6 +88,9 @@ jobs:
       - name: Bootstrap verified customer portal fixture
         run: npm run db:bootstrap:e2e-customer -w @yatra/db
 
+      - name: Bootstrap email verification fixture
+        run: npm run db:bootstrap:e2e-email-verification -w @yatra/db
+
       - name: Verify staff invite foundation
         run: npm run db:verify:staff-invites -w @yatra/db
 
