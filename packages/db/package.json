@@ -24,7 +24,8 @@
     "db:verify:payments": "node scripts/verify-payment-foundation.mjs",
     "db:bootstrap:admin": "node scripts/bootstrap-admin.mjs",
     "db:verify:staff-invites": "node scripts/verify-staff-invite-foundation.mjs",
-    "db:bootstrap:e2e-operations": "node scripts/bootstrap-e2e-operations.mjs"
+    "db:bootstrap:e2e-operations": "node scripts/bootstrap-e2e-operations.mjs",
+    "db:bootstrap:e2e-assignment": "node scripts/bootstrap-e2e-assignment.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
