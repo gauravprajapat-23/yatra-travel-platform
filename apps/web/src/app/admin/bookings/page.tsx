@@ -9,6 +9,7 @@ import {
 import { AdminTablePage, StatusPill } from "@/components/admin-table-page";
 import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDate } from "@/lib/admin/datetime";
 
 export const dynamic = "force-dynamic";
 
@@ -242,7 +243,7 @@ export default async function AdminBookingsPage({
     </Link>,
     booking.customer ?? "Account customer",
     booking.summary,
-    booking.date.toLocaleDateString("en-IN"),
+    formatIstDate(booking.date),
     booking.vehicle,
     booking.amount,
     <StatusPill key={`${booking.reference}-status`} tone={tone(booking.status)}>
