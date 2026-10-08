@@ -22,6 +22,19 @@ export function createBookingRequestFingerprint(
   return createHash("sha256").update(payload).digest("hex");
 }
 
+
+export function createCustomerBookingRequestFingerprint(input: {
+  quoteId: string;
+  customerUserId: string;
+}): string {
+  const payload = JSON.stringify({
+    quoteId: input.quoteId.trim(),
+    customerUserId: input.customerUserId.trim(),
+  });
+
+  return createHash("sha256").update(payload).digest("hex");
+}
+
 export function assertIdempotentReplay(
   existingFingerprint: string,
   requestedFingerprint: string,
