@@ -9,6 +9,7 @@ import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminActionForm, type AdminActionState } from "@/components/admin-action-form";
 import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
+import { formatIstDateTime } from "@/lib/admin/datetime";
 
 export const dynamic = "force-dynamic";
 
@@ -125,7 +126,7 @@ export default async function LeadDetailPage({
     <AdminShell
       active="Enquiries / Leads"
       title={`Lead ${leadReference}`}
-      subtitle={`${lead.type.replaceAll("_", " ")} enquiry · created ${lead.createdAt.toLocaleString("en-IN")}`}
+      subtitle={`${lead.type.replaceAll("_", " ")} enquiry · created ${formatIstDateTime(lead.createdAt)}`}
       actions={<Link className="admin-secondary-button" href="/admin/leads">← All Leads</Link>}
     >
       <AdminEditorTabs
@@ -175,7 +176,7 @@ export default async function LeadDetailPage({
               <div><dt>Phone</dt><dd>{lead.phone ?? "Not provided"}</dd></div>
               <div><dt>Source</dt><dd>{lead.sourcePath ?? "Website"}</dd></div>
               <div><dt>Type</dt><dd>{lead.type.replaceAll("_", " ")}</dd></div>
-              <div><dt>Updated</dt><dd>{lead.updatedAt.toLocaleString("en-IN")}</dd></div>
+              <div><dt>Updated</dt><dd>{formatIstDateTime(lead.updatedAt)}</dd></div>
             </dl>
             {lead.message ? (
               <>
