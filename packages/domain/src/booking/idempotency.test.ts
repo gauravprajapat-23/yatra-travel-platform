@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   assertIdempotentReplay,
   createBookingRequestFingerprint,
+  createCustomerBookingRequestFingerprint,
 } from "./idempotency";
 
 test("booking fingerprint is stable across harmless casing and whitespace", () => {
@@ -25,4 +26,31 @@ test("idempotency replay rejects changed request", () => {
     () => assertIdempotentReplay("one", "two"),
     /different booking request/,
   );
+});
+
+
+test("customer booking fingerprint is stable for the same quote and customer", () => {
+  const a = createCustomerBookingRequestFingerprint({
+    quoteId: " quote-1 ",
+    customerUserId: "customer-123",
+  });
+  const b = createCustomerBookingRequestFingerprint({
+    quoteId: "quote-1",
+    customerUserId: "customer-123",
+  });
+
+  assert.equal(a, b);
+});
+
+test("customer booking fingerprint changes when customer ownership changes", () => {
+  const a = createCustomerBookingRequestFingerprint({
+    quoteId: "quote-1",
+    customerUserId: "customer-123",
+  });
+  const b = createCustomerBookingRequestFingerprint({
+    quoteId: "quote-1",
+    customerUserId: "customer-456",
+  });
+
+  assert.notEqual(a, b);
 });
