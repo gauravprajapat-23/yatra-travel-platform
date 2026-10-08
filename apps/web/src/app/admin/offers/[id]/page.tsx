@@ -159,9 +159,24 @@ export default async function PricingRuleDetailPage({
         basePath={`/admin/offers/${rule.id}`}
         active={activeTab}
         tabs={[
-          { key: "overview", label: "Overview", description: "Scope & status" },
-          { key: "details", label: "Rule Details", description: "Fare calculation" },
-          { key: "activation", label: "Activation", description: "Dates & status" },
+          {
+            key: "overview",
+            label: "Overview",
+            description: "Scope & status",
+            badge: rule.status.replaceAll("_", " "),
+          },
+          {
+            key: "details",
+            label: "Rule Details",
+            description: "Fare calculation",
+            badge: rule.basis.replaceAll("_", " "),
+          },
+          {
+            key: "activation",
+            label: "Activation",
+            description: "Dates & status",
+            badge: rule.activeTo ? "Timed" : "Open ended",
+          },
         ]}
       />
 
