@@ -1015,3 +1015,28 @@ form[data-admin-dirty="true"] .admin-form-actions__meta::before {
 form[data-admin-dirty="false"] .admin-form-actions__meta::before {
   content: none;
 }
+
+
+.admin-field__link-button {
+  width: max-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #c76c22;
+  cursor: pointer;
+  font: inherit;
+  font-size: .59rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.admin-field__link-button:hover {
+  color: #9f4f13;
+}
+
+.admin-field__link-button:focus-visible {
+  outline: 2px solid rgba(242, 103, 23, .35);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
