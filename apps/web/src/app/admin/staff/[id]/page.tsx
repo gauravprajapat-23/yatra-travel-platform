@@ -246,18 +246,21 @@ export default async function StaffDetailPage({
             label: "Overview",
             description: "Account status",
             badge: user.status.replaceAll("_", " "),
+            badgeTone: user.status === "ACTIVE" ? "success" : "warning",
           },
           {
             key: "access",
             label: "Roles & Status",
             description: "RBAC access",
             badge: `${currentRoles.length} roles`,
+            badgeTone: currentRoles.length > 0 ? "success" : "warning",
           },
           {
             key: "sessions",
             label: "Sessions",
             description: "Active login sessions",
             badge: String(activeSessions),
+            badgeTone: activeSessions > 0 ? "success" : "neutral",
           },
         ]}
       />
