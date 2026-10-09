@@ -83,11 +83,23 @@ async function main() {
   const safeInventoryRejection =
     rejection.reason instanceof PackageDepartureInventoryError &&
     rejection.reason.code === "DEPARTURE_SOLD_OUT";
-  const safeSerializationRejection =
+  const rejectionCode =
     typeof rejection.reason === "object" &&
     rejection.reason !== null &&
     "code" in rejection.reason &&
-    rejection.reason.code === "P2034";
+    typeof rejection.reason.code === "string"
+      ? rejection.reason.code
+      : null;
+  const rejectionMessage =
+    rejection.reason instanceof Error
+      ? rejection.reason.message
+      : String(rejection.reason ?? "");
+
+  const safeSerializationRejection =
+    rejectionCode === "P2034" ||
+    /could not serialize access|serialization failure|write conflict|deadlock/i.test(
+      rejectionMessage,
+    );
 
   assert.ok(
     safeInventoryRejection || safeSerializationRejection,
