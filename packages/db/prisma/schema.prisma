@@ -64,6 +64,23 @@ enum DriverStatus {
   SUSPENDED
 }
 
+enum VehicleMaintenanceStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum VehicleDocumentType {
+  REGISTRATION
+  INSURANCE
+  POLLUTION_CERTIFICATE
+  PERMIT
+  FITNESS_CERTIFICATE
+  TAX
+  OTHER
+}
+
 enum PricingRuleStatus {
   DRAFT
   ACTIVE
@@ -546,6 +563,8 @@ model Vehicle {
   vehicleClass VehicleClass               @relation(fields: [vehicleClassId], references: [id], onDelete: Restrict)
   media        VehicleMedia[]
   availability VehicleAvailabilityBlock[]
+  maintenance  VehicleMaintenanceRecord[]
+  complianceDocuments VehicleComplianceDocument[]
   bookings     CarBooking[] @relation("AssignedVehicleBookings")
 
   @@index([vehicleClassId, status])
@@ -606,9 +625,56 @@ model VehicleAvailabilityBlock {
   reason    String?
   createdAt DateTime @default(now())
 
-  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  vehicle      Vehicle                   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  maintenance  VehicleMaintenanceRecord?
 
   @@index([vehicleId, startsAt, endsAt])
+}
+
+model VehicleMaintenanceRecord {
+  id                  String                   @id @default(cuid())
+  vehicleId           String
+  availabilityBlockId String?                  @unique
+  status              VehicleMaintenanceStatus @default(SCHEDULED)
+  category            String
+  summary             String
+  startsAt            DateTime
+  endsAt              DateTime
+  odometerKm          Int?
+  costMinor           BigInt?
+  currency            String                   @default("INR")
+  vendor              String?
+  notes               String?
+  completedAt         DateTime?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+
+  vehicle           Vehicle                   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  availabilityBlock VehicleAvailabilityBlock? @relation(fields: [availabilityBlockId], references: [id], onDelete: SetNull)
+
+  @@index([vehicleId, startsAt, endsAt])
+  @@index([status, startsAt])
+  @@index([completedAt])
+}
+
+model VehicleComplianceDocument {
+  id             String              @id @default(cuid())
+  vehicleId      String
+  type           VehicleDocumentType
+  label          String
+  referenceLast4 String?
+  issuedAt       DateTime?
+  expiresAt      DateTime?
+  blocksDispatch Boolean             @default(true)
+  notes          String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId, type])
+  @@index([expiresAt])
+  @@index([blocksDispatch, expiresAt])
 }
 
 model DriverAvailabilityBlock {
