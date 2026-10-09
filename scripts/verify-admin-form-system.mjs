@@ -10,6 +10,7 @@ const newPages = [
   "apps/web/src/app/admin/drivers/new/page.tsx",
   "apps/web/src/app/admin/faq/new/page.tsx",
   "apps/web/src/app/admin/offers/new/page.tsx",
+  "apps/web/src/app/admin/promotions/new/page.tsx",
   "apps/web/src/app/admin/packages/new/page.tsx",
   "apps/web/src/app/admin/settings/booking-policies/new/page.tsx",
   "apps/web/src/app/admin/vehicles/new/page.tsx",
@@ -26,6 +27,15 @@ const managedInlinePages = [
       "<AdminSubmitButton",
     ],
     label: "blog category management",
+  },
+  {
+    file: "apps/web/src/app/admin/promotions/[id]/page.tsx",
+    fragments: [
+      "<AdminFormSection",
+      "<AdminSubmitButton",
+      "<AdminDateTimeRange",
+    ],
+    label: "promotion configuration management",
   },
   {
     file: "apps/web/src/app/admin/settings/booking-policies/[id]/page.tsx",
@@ -49,6 +59,7 @@ const lightweightFilterPages = [
   "apps/web/src/app/admin/destinations/page.tsx",
   "apps/web/src/app/admin/offers/page.tsx",
   "apps/web/src/app/admin/payments/page.tsx",
+  "apps/web/src/app/admin/promotions/page.tsx",
   "apps/web/src/app/admin/notifications/page.tsx",
   "apps/web/src/app/admin/search/page.tsx",
   "apps/web/src/app/admin/packages/page.tsx",
