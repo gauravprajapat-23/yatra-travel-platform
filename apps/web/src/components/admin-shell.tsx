@@ -18,6 +18,7 @@ const nav: Array<{
   { href: "/admin/vehicles", label: "Fleet Management", permission: "vehicle.read" },
   { href: "/admin/customers", label: "Customers", permission: "customer.read" },
   { href: "/admin/leads", label: "Enquiries / Leads", permission: "lead.read" },
+  { href: "/admin/crm", label: "CRM", permission: "crm.read" },
   { href: "/admin/drivers", label: "Drivers & Staff", permission: "driver.read" },
   { href: "/admin/payments", label: "Payments", permission: "payment.read" },
   { href: "/admin/notifications", label: "Notifications", permission: "notification.read" },
