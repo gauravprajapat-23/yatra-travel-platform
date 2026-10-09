@@ -36,7 +36,8 @@
     "verify:production-health": "node scripts/verify-production-health-contract.mjs",
     "certify:production-runtime": "node scripts/certify-production-runtime.mjs",
     "verify:observability": "node scripts/verify-observability-safety.mjs",
-    "verify:public-seo": "node scripts/verify-public-seo-safety.mjs"
+    "verify:public-seo": "node scripts/verify-public-seo-safety.mjs",
+    "verify:production-readiness-workflow": "node scripts/verify-production-readiness-workflow.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0"
