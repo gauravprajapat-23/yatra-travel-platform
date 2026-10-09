@@ -168,6 +168,27 @@ enum LeadStatus {
   SPAM
 }
 
+enum CrmInteractionType {
+  NOTE
+  CALL
+  EMAIL
+  SMS
+  WHATSAPP
+  OTHER
+}
+
+enum CrmInteractionDirection {
+  INTERNAL
+  INBOUND
+  OUTBOUND
+}
+
+enum CrmFollowUpStatus {
+  OPEN
+  COMPLETED
+  CANCELLED
+}
+
 enum PaymentProvider {
   RAZORPAY
 }
@@ -233,6 +254,11 @@ model User {
   authActionTokens     AuthActionToken[]
   notificationDeliveries NotificationDelivery[]
   promotionRedemptions PromotionRedemption[] @relation("PromotionRedemptionCustomer")
+  crmInteractionsAsCustomer CrmInteraction[] @relation("CrmInteractionCustomer")
+  crmInteractionsCreated CrmInteraction[] @relation("CrmInteractionCreator")
+  crmFollowUpsAsCustomer CrmFollowUpTask[] @relation("CrmFollowUpCustomer")
+  crmFollowUpsAssigned CrmFollowUpTask[] @relation("CrmFollowUpAssignee")
+  crmFollowUpsCreated CrmFollowUpTask[] @relation("CrmFollowUpCreator")
 
   @@index([status])
   @@index([createdAt])
@@ -1142,9 +1168,63 @@ model Lead {
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
+  crmInteractions CrmInteraction[]
+  crmFollowUps     CrmFollowUpTask[]
+
   @@index([status, createdAt])
   @@index([type, status, createdAt])
   @@index([emailNormalized, createdAt])
+}
+
+model CrmInteraction {
+  id                      String                  @id @default(cuid())
+  leadId                  String?
+  customerUserId          String?
+  customerEmailNormalized String?
+  type                    CrmInteractionType
+  direction               CrmInteractionDirection @default(INTERNAL)
+  subject                 String?
+  body                    String
+  createdByUserId         String?
+  occurredAt              DateTime                @default(now())
+  createdAt               DateTime                @default(now())
+
+  lead       Lead? @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  customer   User? @relation("CrmInteractionCustomer", fields: [customerUserId], references: [id], onDelete: Cascade)
+  createdBy  User? @relation("CrmInteractionCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([leadId, occurredAt])
+  @@index([customerUserId, occurredAt])
+  @@index([customerEmailNormalized, occurredAt])
+  @@index([createdByUserId, occurredAt])
+  @@index([type, occurredAt])
+}
+
+model CrmFollowUpTask {
+  id                      String            @id @default(cuid())
+  leadId                  String?
+  customerUserId          String?
+  customerEmailNormalized String?
+  title                   String
+  notes                   String?
+  status                  CrmFollowUpStatus @default(OPEN)
+  dueAt                   DateTime
+  assignedToUserId        String?
+  createdByUserId         String?
+  completedAt             DateTime?
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  lead        Lead? @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  customer    User? @relation("CrmFollowUpCustomer", fields: [customerUserId], references: [id], onDelete: Cascade)
+  assignedTo  User? @relation("CrmFollowUpAssignee", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+  createdBy   User? @relation("CrmFollowUpCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([leadId, dueAt])
+  @@index([customerUserId, dueAt])
+  @@index([customerEmailNormalized, dueAt])
+  @@index([assignedToUserId, status, dueAt])
+  @@index([status, dueAt])
 }
 
 model PaymentIntent {
