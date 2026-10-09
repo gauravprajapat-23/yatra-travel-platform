@@ -125,6 +125,9 @@ test("CRM permissions separate operational read access from sales write access",
   assert.equal(hasPermission(["AUDITOR"], "crm.read"), true);
   assert.equal(hasPermission(["AUDITOR"], "crm.write"), false);
 
+  assert.equal(hasPermission(["FINANCE"], "crm.read"), false);
+  assert.equal(hasPermission(["FINANCE"], "crm.write"), false);
+
   assert.equal(hasPermission(["CUSTOMER"], "crm.read"), false);
   assert.equal(hasPermission(["CUSTOMER"], "crm.write"), false);
 });
