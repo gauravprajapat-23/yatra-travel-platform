@@ -1,6 +1,6 @@
 # Phase 15 — Reporting & BI Status
 
-Status: IMPLEMENTED — FINAL CONSOLIDATED EXPORT CI RUNNING
+Status: CODE + CI CERTIFIED — PRODUCTION FINANCE RECONCILIATION PENDING
 
 Updated: 2026-10-09
 
@@ -99,11 +99,11 @@ Already green:
 - CRM RBAC/browser read-only queue — Application CI 37903931325 PASS
 - Earlier reports trend, route/package/promotion, fleet and departure surfaces passed their respective Application CI runs.
 
-Current consolidated export / CSV-safety commits are running at this checkpoint.
+Final consolidated reporting certification: Application CI run 37921454975 PASS.
 
 ## Remaining Phase 15 work
 
-- [ ] Final newest-head Application CI PASS including CSV safety and report export E2E
+- [x] Final newest-head Application CI PASS including CSV safety and report export E2E — run 37921454975 PASS
 - [ ] Optional downloadable detailed CRM follow-up export if operations requests it
 - [ ] Optional detailed maintenance/compliance export if operations requests it
 - [ ] Production acceptance with realistic date ranges and finance reconciliation
