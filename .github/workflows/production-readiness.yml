@@ -7,25 +7,27 @@ on:
         description: "Production base URL, e.g. https://example.com"
         required: true
         type: string
-      mode:
-        description: "Readiness scope"
+      modes:
+        description: "Comma-separated readiness scopes: core,car,package,payments,media,scheduled,customer,notifications,promotions,fleet,crm,full"
         required: true
         default: "core"
-        type: choice
-        options:
-          - core
-          - car
-          - package
-          - payments
-          - media
-          - scheduled
-          - full
+        type: string
       expected_commit:
-        description: "Expected deployed commit SHA or prefix (optional)"
+        description: "Expected deployed commit SHA or prefix (recommended)"
         required: false
         type: string
       require_refunds:
-        description: "Require refund writes to be enabled"
+        description: "Require refund writes/provider readiness"
+        required: true
+        default: false
+        type: boolean
+      require_password_reset:
+        description: "Require customer password-reset readiness"
+        required: true
+        default: false
+        type: boolean
+      require_departures:
+        description: "Require sellable package departure inventory"
         required: true
         default: false
         type: boolean
@@ -58,11 +60,15 @@ jobs:
         shell: bash
         env:
           PRODUCTION_URL: ${{ inputs.production_url }}
-          READINESS_MODE: ${{ inputs.mode }}
+          READINESS_MODES: ${{ inputs.modes }}
           EXPECTED_COMMIT: ${{ inputs.expected_commit }}
           REQUIRE_REFUNDS: ${{ inputs.require_refunds }}
+          REQUIRE_PASSWORD_RESET: ${{ inputs.require_password_reset }}
+          REQUIRE_DEPARTURES: ${{ inputs.require_departures }}
         run: |
-          args=(--url "$PRODUCTION_URL" --mode "$READINESS_MODE")
+          set -euo pipefail
+
+          args=(--url "$PRODUCTION_URL" --modes "$READINESS_MODES")
 
           if [ -n "$EXPECTED_COMMIT" ]; then
             args+=(--expect-commit "$EXPECTED_COMMIT")
@@ -72,4 +78,12 @@ jobs:
             args+=(--require-refunds)
           fi
 
-          npm run verify:production -- "${args[@]}"
+          if [ "$REQUIRE_PASSWORD_RESET" = "true" ]; then
+            args+=(--require-password-reset)
+          fi
+
+          if [ "$REQUIRE_DEPARTURES" = "true" ]; then
+            args+=(--require-departures)
+          fi
+
+          npm run certify:production-runtime -- "${args[@]}"
