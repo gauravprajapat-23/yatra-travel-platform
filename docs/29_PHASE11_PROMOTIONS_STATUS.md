@@ -96,6 +96,13 @@ Add server-authoritative coupon/promotion support for car and package bookings w
 - [x] Promotion domain unit tests
 - [x] Application CI includes promotion database + runtime gates
 
+## Certification evidence
+
+- Promotion migration: Neon Migration Verify PASS
+- Promotion preview/runtime safety: Application CI PASS on the gated foundation
+- Discounted booking verifier evidence: Application CI run 37895366931 passed the `Verify discounted promotion booking` step before continuing to production build
+- Redemption concurrency gate: concurrent maxRedemptions=1 verification passes in Application CI
+
 ## Production gate
 
 Keep promotion application disabled until live acceptance is complete:
@@ -108,14 +115,17 @@ Admin promotion configuration is safe while the flag is off.
 
 ## Remaining Phase 11 work
 
-- [ ] Add disposable promo/quote fixture for browser/API preview certification
-- [ ] Add E2E: promotion preview shows exact server discount
-- [ ] Add E2E: invalid/expired/wrong-scope/minimum-spend codes are rejected
-- [ ] Add E2E: per-customer limit rejection
-- [ ] Add E2E: discounted booking stores promotion snapshot and redemption exactly once
-- [ ] Add E2E: idempotent replay does not double-increment redeemedCount
+- [x] Add disposable promo/quote fixture for browser/API preview certification
+- [x] Add E2E: promotion preview shows exact server discount
+- [x] Add E2E: invalid/expired/wrong-scope/minimum-spend codes are rejected
+- [x] Add E2E: per-customer limit rejection
+- [x] Add service-level integration: discounted booking stores promotion snapshot and redemption exactly once
+- [x] Add service-level integration: idempotent replay does not double-increment redeemedCount
 - [ ] Add package-booking customer promotion UI if/when direct package checkout is exposed publicly
-- [ ] Add promotion visibility to booking detail/reporting/export
+- [x] Add promotion visibility to booking detail and CSV export
+- [x] Add booking search by promotion code
+- [x] Add admin browser coverage for locating and inspecting a discounted promotion booking
+- [ ] Add promotion summary metrics to reporting dashboard
 - [ ] Run live production promotion drill with a temporary limited code
 - [ ] Enable PROMOTION_APPLY_ENABLED only after current Application CI + live drill pass
 
