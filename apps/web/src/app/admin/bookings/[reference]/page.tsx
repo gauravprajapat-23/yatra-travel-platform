@@ -78,6 +78,7 @@ export default async function BookingDetailPage({
         where: { reference },
         include: {
           package: { select: { title: true } },
+          promotion: { select: { code: true, name: true } },
           statusHistory: {
             orderBy: { createdAt: "desc" },
             take: 20,
@@ -103,6 +104,7 @@ export default async function BookingDetailPage({
           vehicleClass: { select: { name: true } },
           selectedVehicle: { select: { displayName: true, registrationNumber: true } },
           assignedDriver: { select: { displayName: true, phoneLast4: true } },
+          promotion: { select: { code: true, name: true } },
           statusHistory: {
             orderBy: { createdAt: "desc" },
             take: 20,
@@ -137,7 +139,11 @@ export default async function BookingDetailPage({
         guestName: rawBooking.data.guestName,
         guestEmail: rawBooking.data.guestEmail,
         currency: rawBooking.data.currency,
+        subtotalMinor: rawBooking.data.subtotalMinor,
+        discountMinor: rawBooking.data.discountMinor,
+        taxMinor: rawBooking.data.taxMinor,
         totalMinor: rawBooking.data.totalMinor,
+        promotion: rawBooking.data.promotion,
         createdAt: rawBooking.data.createdAt,
         history: rawBooking.data.statusHistory,
         paymentIntents: rawBooking.data.paymentIntents,
@@ -157,7 +163,11 @@ export default async function BookingDetailPage({
         guestName: rawBooking.data.guestName,
         guestEmail: rawBooking.data.guestEmail,
         currency: rawBooking.data.currency,
+        subtotalMinor: rawBooking.data.subtotalMinor,
+        discountMinor: rawBooking.data.discountMinor,
+        taxMinor: rawBooking.data.taxMinor,
         totalMinor: rawBooking.data.totalMinor,
+        promotion: rawBooking.data.promotion,
         createdAt: rawBooking.data.createdAt,
         history: rawBooking.data.statusHistory,
         paymentIntents: rawBooking.data.paymentIntents,
@@ -730,6 +740,19 @@ export default async function BookingDetailPage({
                 <div><dt>Travellers</dt><dd>{booking.travellers}</dd></div>
                 <div><dt>Assignment</dt><dd>{booking.assignment ?? "Not assigned"}</dd></div>
               </dl>
+              <dl>
+                <div><dt>Subtotal</dt><dd>{money(booking.subtotalMinor, booking.currency)}</dd></div>
+                <div><dt>Discount</dt><dd>{money(booking.discountMinor, booking.currency)}</dd></div>
+                <div><dt>Tax</dt><dd>{money(booking.taxMinor, booking.currency)}</dd></div>
+                <div>
+                  <dt>Promotion</dt>
+                  <dd>
+                    {booking.promotion
+                      ? `${booking.promotion.code} · ${booking.promotion.name}`
+                      : "None"}
+                  </dd>
+                </div>
+              </dl>
               <div className="admin-amount-card">
                 <span>Total Amount</span>
                 <strong>{money(booking.totalMinor, booking.currency)}</strong>
@@ -753,7 +776,10 @@ export default async function BookingDetailPage({
             <section className="admin-panel admin-detail-card">
               <h2>Financial & Cancellation Summary</h2>
               <dl>
+                <div><dt>Subtotal</dt><dd>{money(booking.subtotalMinor, booking.currency)}</dd></div>
+                <div><dt>Promotion discount</dt><dd>{money(booking.discountMinor, booking.currency)}</dd></div>
                 <div><dt>Booking total</dt><dd>{money(booking.totalMinor, booking.currency)}</dd></div>
+                <div><dt>Promotion</dt><dd>{booking.promotion?.code ?? "None"}</dd></div>
                 <div><dt>Captured / paid</dt><dd>{money(paidMinor, booking.currency)}</dd></div>
                 <div><dt>Pending refunds</dt><dd>{money(pendingRefundMinor, booking.currency)}</dd></div>
                 <div><dt>Processed refunds</dt><dd>{money(processedRefundMinor, booking.currency)}</dd></div>
