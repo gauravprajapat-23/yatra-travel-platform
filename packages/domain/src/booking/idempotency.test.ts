@@ -54,3 +54,52 @@ test("customer booking fingerprint changes when customer ownership changes", () 
 
   assert.notEqual(a, b);
 });
+
+test("booking fingerprint normalizes promotion code casing", () => {
+  const a = createBookingRequestFingerprint({
+    quoteId: "quote-1",
+    guestName: "Gaurav",
+    guestEmail: "user@example.com",
+    promotionCode: " yatra10 ",
+  });
+  const b = createBookingRequestFingerprint({
+    quoteId: "quote-1",
+    guestName: "Gaurav",
+    guestEmail: "user@example.com",
+    promotionCode: "YATRA10",
+  });
+
+  assert.equal(a, b);
+});
+
+test("booking fingerprint changes when promotion code changes", () => {
+  const a = createBookingRequestFingerprint({
+    quoteId: "quote-1",
+    guestName: "Gaurav",
+    guestEmail: "user@example.com",
+    promotionCode: "YATRA10",
+  });
+  const b = createBookingRequestFingerprint({
+    quoteId: "quote-1",
+    guestName: "Gaurav",
+    guestEmail: "user@example.com",
+    promotionCode: "YATRA20",
+  });
+
+  assert.notEqual(a, b);
+});
+
+test("customer booking fingerprint changes when promotion changes", () => {
+  const a = createCustomerBookingRequestFingerprint({
+    quoteId: "quote-1",
+    customerUserId: "customer-123",
+    promotionCode: "YATRA10",
+  });
+  const b = createCustomerBookingRequestFingerprint({
+    quoteId: "quote-1",
+    customerUserId: "customer-123",
+    promotionCode: null,
+  });
+
+  assert.notEqual(a, b);
+});
