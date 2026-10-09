@@ -19,13 +19,32 @@ function followUpTone(
   return "orange";
 }
 
-export default async function CrmPage() {
+export default async function CrmPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string }>;
+}) {
   const session = await requireAdminSession();
   if (!hasPermission(session.roles, "crm.read")) redirect("/admin");
+
+  const params = await searchParams;
+  const requestedView = String(params.view ?? "ALL").toUpperCase();
+  const view = ["ALL", "MINE", "OVERDUE", "DUE_SOON"].includes(requestedView)
+    ? requestedView
+    : "ALL";
 
   const db = getDb();
   const now = new Date();
   const next24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+  const followUpWhere = {
+    status: "OPEN" as const,
+    ...(view === "MINE" ? { assignedToUserId: session.userId } : {}),
+    ...(view === "OVERDUE" ? { dueAt: { lt: now } } : {}),
+    ...(view === "DUE_SOON"
+      ? { dueAt: { gte: now, lte: next24Hours } }
+      : {}),
+  };
 
   const [
     openFollowUps,
@@ -34,7 +53,7 @@ export default async function CrmPage() {
     recentInteractions,
   ] = await Promise.all([
     db.crmFollowUpTask.findMany({
-      where: { status: "OPEN" },
+      where: followUpWhere,
       orderBy: { dueAt: "asc" },
       take: 50,
       include: {
@@ -96,9 +115,30 @@ export default async function CrmPage() {
       title="CRM Follow-ups"
       subtitle="Internal customer and lead interaction history with auditable follow-up tasks."
     >
+      <nav className="admin-filter-tabs" aria-label="CRM follow-up filters">
+        {[
+          ["ALL", "All Open"],
+          ["MINE", "My Follow-ups"],
+          ["OVERDUE", "Overdue"],
+          ["DUE_SOON", "Due Next 24h"],
+        ].map(([key, label]) => (
+          <Link
+            key={key}
+            className={
+              view === key
+                ? "admin-filter-tab admin-filter-tab--active"
+                : "admin-filter-tab"
+            }
+            href={key === "ALL" ? "/admin/crm" : `/admin/crm?view=${key}`}
+          >
+            {label}
+          </Link>
+        ))}
+      </nav>
+
       <div className="admin-metric-grid">
         <article className="admin-metric">
-          <small>Open Follow-ups</small>
+          <small>{view === "ALL" ? "Open Follow-ups" : "Matching Follow-ups"}</small>
           <strong>{openFollowUps.length}</strong>
         </article>
         <article className="admin-metric">
@@ -117,7 +157,15 @@ export default async function CrmPage() {
 
       <section className="admin-panel">
         <div className="admin-panel-heading">
-          <h2>Open Follow-ups</h2>
+          <h2>
+            {view === "MINE"
+              ? "My Follow-ups"
+              : view === "OVERDUE"
+                ? "Overdue Follow-ups"
+                : view === "DUE_SOON"
+                  ? "Due Next 24 Hours"
+                  : "Open Follow-ups"}
+          </h2>
           <span>Earliest due first</span>
         </div>
         <div className="admin-table-wrap">
