@@ -47,6 +47,7 @@ export default async function CarBookingPage({
 
       <div className="shell">
         <CarBookingForm
+          promotionsEnabled={process.env.PROMOTION_APPLY_ENABLED === "true"}
           trip={{
             from: from || "Raipur",
             to: to || "Ujjain",
