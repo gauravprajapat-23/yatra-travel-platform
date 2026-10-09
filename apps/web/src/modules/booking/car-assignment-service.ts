@@ -101,6 +101,7 @@ export async function assignCarBookingResources(input: {
       const [
         vehicleBlock,
         driverBlock,
+        complianceBlocker,
         vehicleBookings,
         driverBookings,
       ] = await Promise.all([
@@ -119,6 +120,20 @@ export async function assignCarBookingResources(input: {
             endsAt: { gt: tripStart },
           },
           select: { id: true },
+        }),
+        tx.vehicleComplianceDocument.findFirst({
+          where: {
+            vehicleId: vehicle.id,
+            blocksDispatch: true,
+            expiresAt: { not: null, lte: tripEnd },
+          },
+          orderBy: { expiresAt: "asc" },
+          select: {
+            id: true,
+            type: true,
+            label: true,
+            expiresAt: true,
+          },
         }),
         tx.carBooking.findMany({
           where: {
@@ -140,8 +155,17 @@ export async function assignCarBookingResources(input: {
         }),
       ]);
 
-      if (vehicleBlock) throw new Error("Selected vehicle is blocked for this trip window.");
-      if (driverBlock) throw new Error("Selected driver is unavailable for this trip window.");
+      if (vehicleBlock) {
+        throw new Error("Selected vehicle is blocked for this trip window.");
+      }
+      if (complianceBlocker) {
+        throw new Error(
+          `Selected vehicle has a dispatch-blocking compliance document that does not remain valid through the trip: ${complianceBlocker.label}.`,
+        );
+      }
+      if (driverBlock) {
+        throw new Error("Selected driver is unavailable for this trip window.");
+      }
 
       const vehicleConflict = vehicleBookings.some((other) =>
         windowsOverlap(
