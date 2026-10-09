@@ -77,6 +77,11 @@ export async function GET(request: Request) {
     expiredComplianceCount,
     expiringComplianceCount,
     maintenanceCostGroups,
+    promotionGroups,
+    upcomingDepartures,
+    openCrmFollowUps,
+    overdueCrmFollowUps,
+    crmInteractionsInPeriod,
   ] = await Promise.all([
     db.carBooking.count({
       where: createdRange ? { createdAt: createdRange } : undefined,
@@ -167,6 +172,42 @@ export async function GET(request: Request) {
       },
       _sum: { costMinor: true },
     }),
+    db.promotionRedemption.groupBy({
+      by: ["promotionId", "currency"],
+      where: createdRange ? { redeemedAt: createdRange } : undefined,
+      _count: { _all: true },
+      _sum: { discountMinor: true },
+      orderBy: { _count: { promotionId: "desc" } },
+      take: 100,
+    }),
+    db.packageDeparture.findMany({
+      where: {
+        startsAt: { gte: now },
+        status: { in: ["OPEN", "SOLD_OUT"] },
+      },
+      orderBy: { startsAt: "asc" },
+      take: 100,
+      select: {
+        id: true,
+        startsAt: true,
+        status: true,
+        capacityTravellers: true,
+        reservedTravellers: true,
+        package: { select: { title: true } },
+      },
+    }),
+    db.crmFollowUpTask.count({
+      where: { status: "OPEN" },
+    }),
+    db.crmFollowUpTask.count({
+      where: {
+        status: "OPEN",
+        dueAt: { lt: now },
+      },
+    }),
+    db.crmInteraction.count({
+      where: createdRange ? { occurredAt: createdRange } : undefined,
+    }),
   ]);
 
   const packageIds = [...new Set(packageGroups.map((group) => group.packageId))];
@@ -178,6 +219,22 @@ export async function GET(request: Request) {
     : [];
   const packageNameById = new Map(
     packageNames.map((item) => [item.id, item.title]),
+  );
+
+  const promotionIds = [
+    ...new Set(promotionGroups.map((group) => group.promotionId)),
+  ];
+  const promotionNames = promotionIds.length
+    ? await db.promotion.findMany({
+        where: { id: { in: promotionIds } },
+        select: { id: true, code: true, name: true },
+      })
+    : [];
+  const promotionNameById = new Map(
+    promotionNames.map((item) => [
+      item.id,
+      `${item.code} · ${item.name}`,
+    ]),
   );
 
   const captured = new Map(
@@ -233,6 +290,10 @@ export async function GET(request: Request) {
     ["Fleet", "Open maintenance", "", "", openMaintenanceCount],
     ["Fleet", "Expired dispatch-blocking documents", "", "", expiredComplianceCount],
     ["Fleet", "Dispatch-blocking documents expiring within 30 days", "", "", expiringComplianceCount],
+    ["CRM", "Open follow-ups", "", "", openCrmFollowUps],
+    ["CRM", "Overdue follow-ups", "", "", overdueCrmFollowUps],
+    ["CRM", "Interactions in selected period", "", "", crmInteractionsInPeriod],
+    ["Packages", "Upcoming OPEN / SOLD_OUT departures", "", "", upcomingDepartures.length],
   ];
 
   for (const currency of [...currencies].sort()) {
@@ -254,6 +315,52 @@ export async function GET(request: Request) {
       group.currency,
       group._sum.costMinor ?? 0n,
     ]);
+  }
+
+  for (const group of promotionGroups) {
+    rows.push(
+      [
+        "Promotions",
+        "Redemptions",
+        promotionNameById.get(group.promotionId) ?? group.promotionId,
+        group.currency,
+        group._count._all,
+      ],
+      [
+        "Promotions",
+        "Customer savings minor",
+        promotionNameById.get(group.promotionId) ?? group.promotionId,
+        group.currency,
+        group._sum.discountMinor ?? 0n,
+      ],
+    );
+  }
+
+  for (const departure of upcomingDepartures) {
+    const remaining =
+      departure.capacityTravellers === null
+        ? "Unlimited"
+        : Math.max(
+            0,
+            departure.capacityTravellers - departure.reservedTravellers,
+          );
+
+    rows.push(
+      [
+        "Departures",
+        "Reserved travellers",
+        `${departure.package.title} · ${departure.id} · ${departure.startsAt.toISOString()} · ${departure.status}`,
+        "",
+        departure.reservedTravellers,
+      ],
+      [
+        "Departures",
+        "Remaining capacity",
+        `${departure.package.title} · ${departure.id} · ${departure.startsAt.toISOString()} · ${departure.status}`,
+        "",
+        remaining,
+      ],
+    );
   }
 
   for (const group of packageGroups) {
