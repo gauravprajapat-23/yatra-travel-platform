@@ -69,7 +69,10 @@ test("operations role cannot modify CRM", async ({ page }) => {
   await page.getByRole("button", { name: /sign in/i }).click();
   await expect(page).toHaveURL(/\/admin(?:$|\?)/);
 
+  await page.goto("/admin/crm");
+  await expect(page.getByRole("heading", { name: "CRM Follow-ups" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Assign" })).toHaveCount(0);
+
   await page.goto(`/admin/leads/${reference}?tab=crm`);
-  await expect(page.getByRole("button", { name: "Add Interaction" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Create Follow-up" })).toHaveCount(0);
+  await expect(page).toHaveURL(/\/admin(?:$|\?)/);
 });
