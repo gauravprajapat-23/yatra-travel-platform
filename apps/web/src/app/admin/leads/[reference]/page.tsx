@@ -480,15 +480,17 @@ export default async function LeadDetailPage({
                               <div className="admin-inline-actions">
                                 <form action={completeFollowUp}>
                                   <input type="hidden" name="taskId" value={task.id} />
-                                  <button className="admin-secondary-button" type="submit">
-                                    Complete
-                                  </button>
+                                  <AdminSubmitButton
+                                    label="Complete"
+                                    pendingLabel="Completing…"
+                                  />
                                 </form>
                                 <form action={cancelFollowUp}>
                                   <input type="hidden" name="taskId" value={task.id} />
-                                  <button className="admin-secondary-button" type="submit">
-                                    Cancel
-                                  </button>
+                                  <AdminSubmitButton
+                                    label="Cancel"
+                                    pendingLabel="Cancelling…"
+                                  />
                                 </form>
                               </div>
                             ) : (
