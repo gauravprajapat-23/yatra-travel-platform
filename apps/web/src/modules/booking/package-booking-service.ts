@@ -19,6 +19,10 @@ import {
   preparePromotionForBooking,
   PromotionRedemptionError,
 } from "@/modules/promotions/promotion-redemption-service";
+import {
+  PackageDepartureInventoryError,
+  reservePackageDepartureInventory,
+} from "@/modules/packages/package-departure-inventory-service";
 
 export type CreateGuestPackageBookingInput = {
   quoteId: string;
@@ -49,7 +53,8 @@ export class PackageBookingServiceError extends Error {
       | "BOOKING_CONFLICT"
       | "PROMOTION_DISABLED"
       | "PROMOTION_INVALID"
-      | "PROMOTION_UNAVAILABLE",
+      | "PROMOTION_UNAVAILABLE"
+      | "DEPARTURE_UNAVAILABLE",
     public readonly httpStatus: number,
   ) {
     super(message);
@@ -181,6 +186,7 @@ export async function createGuestPackageBooking(
           include: {
             booking: true,
             priceOption: true,
+            departure: true,
             package: {
               include: {
                 itinerary: {
@@ -271,6 +277,30 @@ export async function createGuestPackageBooking(
           destinations: quote.package.destinations.map((item) => item.destination),
         };
 
+        let departureReservation:
+          | Awaited<ReturnType<typeof reservePackageDepartureInventory>>
+          | null = null;
+
+        if (quote.departureId) {
+          try {
+            departureReservation = await reservePackageDepartureInventory(tx, {
+              departureId: quote.departureId,
+              packageId: quote.packageId,
+              travellers: quote.travellers,
+              at: now,
+            });
+          } catch (error) {
+            if (error instanceof PackageDepartureInventoryError) {
+              throw new PackageBookingServiceError(
+                error.message,
+                "DEPARTURE_UNAVAILABLE",
+                409,
+              );
+            }
+            throw error;
+          }
+        }
+
         let promotion:
           | Awaited<ReturnType<typeof preparePromotionForBooking>>
           | null = null;
@@ -336,6 +366,7 @@ export async function createGuestPackageBooking(
           priceMode: quote.priceOption.mode,
           quantity: quote.quantity,
           breakdown: quote.priceBreakdown,
+          departure: departureReservation?.snapshot ?? quote.departureSnapshot ?? null,
           promotion: promotion?.snapshot ?? null,
         };
 
@@ -352,7 +383,13 @@ export async function createGuestPackageBooking(
             priceOptionId: quote.priceOptionId,
             travellers: quote.travellers,
             vehicleCount: quote.vehicleCount,
-            travelStartAt: quote.travelStartAt,
+            travelStartAt: departureReservation
+              ? departureReservation.departure.startsAt
+              : quote.travelStartAt,
+            departureId: departureReservation?.departure.id ?? null,
+            departureSnapshot: departureReservation
+              ? asInputJson(departureReservation.snapshot)
+              : quote.departureSnapshot ?? Prisma.JsonNull,
             customerUserId,
             guestName: customerUserId ? null : guestName!.trim(),
             guestEmail: customerUserId
