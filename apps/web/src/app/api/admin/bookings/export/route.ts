@@ -6,6 +6,7 @@ import {
   type BookingStatus,
 } from "@yatra/domain/booking/status-machine";
 import { requireAdminSession } from "@/lib/auth/session";
+import { safeCsvCell } from "@/lib/admin/csv";
 
 export const dynamic = "force-dynamic";
 
@@ -23,11 +24,6 @@ function parseDateEnd(value: string): Date | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
   const parsed = new Date(`${value}T23:59:59.999+05:30`);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
-
-function csvCell(value: unknown) {
-  const text = String(value ?? "");
-  return `"${text.replaceAll('"', '""')}"`;
 }
 
 export async function GET(request: Request) {
@@ -227,7 +223,7 @@ export async function GET(request: Request) {
     ]),
   ];
 
-  const csv = rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
+  const csv = rows.map((row) => row.map(safeCsvCell).join(",")).join("\r\n");
   const stamp = new Date().toISOString().slice(0, 10);
 
   return new NextResponse(csv, {
