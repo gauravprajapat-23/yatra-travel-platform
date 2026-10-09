@@ -104,6 +104,10 @@ export default async function ReportsPage({
     trendRefunds,
     routeBookings,
     promotionGroups,
+    openMaintenanceCount,
+    expiredComplianceCount,
+    expiringComplianceCount,
+    maintenanceCostGroups,
   ] = await Promise.all([
     db.carBooking.count({
       where: createdRange ? { createdAt: createdRange } : undefined,
@@ -203,6 +207,35 @@ export default async function ReportsPage({
       orderBy: { _count: { promotionId: "desc" } },
       take: 10,
     }),
+    db.vehicleMaintenanceRecord.count({
+      where: { status: { in: ["SCHEDULED", "IN_PROGRESS"] } },
+    }),
+    db.vehicleComplianceDocument.count({
+      where: {
+        blocksDispatch: true,
+        expiresAt: { not: null, lte: now },
+        vehicle: { status: { not: "RETIRED" } },
+      },
+    }),
+    db.vehicleComplianceDocument.count({
+      where: {
+        blocksDispatch: true,
+        expiresAt: {
+          gt: now,
+          lte: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+        },
+        vehicle: { status: { not: "RETIRED" } },
+      },
+    }),
+    db.vehicleMaintenanceRecord.groupBy({
+      by: ["currency"],
+      where: {
+        status: "COMPLETED",
+        costMinor: { not: null },
+        ...(createdRange ? { completedAt: createdRange } : {}),
+      },
+      _sum: { costMinor: true },
+    }),
   ]);
 
   const capturedByCurrency = new Map<string, bigint>();
@@ -266,6 +299,14 @@ export default async function ReportsPage({
       group.currency,
       (promotionDiscountByCurrency.get(group.currency) ?? 0n) +
         (group._sum.discountMinor ?? 0n),
+    );
+  }
+
+  const maintenanceCostByCurrency = new Map<string, bigint>();
+  for (const group of maintenanceCostGroups) {
+    maintenanceCostByCurrency.set(
+      group.currency,
+      group._sum.costMinor ?? 0n,
     );
   }
 
@@ -453,6 +494,24 @@ export default async function ReportsPage({
           meta={`${promotionRedemptionCount} committed redemptions`}
           tone="blue"
         />
+        <AdminMetric
+          label="Open Maintenance"
+          value={openMaintenanceCount.toString()}
+          meta="scheduled + in progress"
+          tone={openMaintenanceCount > 0 ? "orange" : "green"}
+        />
+        <AdminMetric
+          label="Compliance Blockers"
+          value={expiredComplianceCount.toString()}
+          meta={`${expiringComplianceCount} more expire within 30 days`}
+          tone={expiredComplianceCount > 0 ? "red" : "orange"}
+        />
+        <AdminMetric
+          label="Maintenance Spend"
+          value={formatCurrencyMap(maintenanceCostByCurrency)}
+          meta="completed maintenance in selected period"
+          tone="orange"
+        />
       </div>
 
       <section className="admin-panel">
@@ -617,6 +676,20 @@ export default async function ReportsPage({
             </p>
             <p>
               Vehicles currently assigned <strong>{assignedTrips.length}</strong>
+            </p>
+            <p>
+              Open maintenance <strong>{openMaintenanceCount}</strong>
+            </p>
+            <p>
+              Expired blocking documents <strong>{expiredComplianceCount}</strong>
+            </p>
+            <p>
+              Blocking documents expiring within 30 days{" "}
+              <strong>{expiringComplianceCount}</strong>
+            </p>
+            <p>
+              Maintenance spend{" "}
+              <strong>{formatCurrencyMap(maintenanceCostByCurrency)}</strong>
             </p>
           </div>
         </section>
