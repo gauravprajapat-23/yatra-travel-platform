@@ -2,7 +2,10 @@ import "dotenv/config";
 import assert from "node:assert/strict";
 import { getDb, Prisma } from "@yatra/db/client";
 import { departureSnapshot, releasePackageDepartureInventory } from "../src/modules/packages/package-departure-inventory-service";
-import { createGuestPackageBooking } from "../src/modules/booking/package-booking-service";
+import {
+  createGuestPackageBooking,
+  PackageBookingServiceError,
+} from "../src/modules/booking/package-booking-service";
 import { transitionPackageBookingStatus } from "../src/modules/booking/booking-status-service";
 
 async function main() {
@@ -95,6 +98,54 @@ async function main() {
 
   assert.equal(replay.replayed, true);
   assert.equal(replay.booking.reference, first.booking.reference);
+
+  currentDeparture = await db.packageDeparture.findUniqueOrThrow({
+    where: { id: departureId },
+  });
+  assert.equal(currentDeparture.reservedTravellers, 2);
+
+  const competingQuoteId = "e2e_departure_competing_quote";
+  await db.packageQuote.deleteMany({ where: { id: competingQuoteId } });
+  await db.packageQuote.create({
+    data: {
+      id: competingQuoteId,
+      packageId,
+      priceOptionId,
+      travellers: 2,
+      vehicleCount: null,
+      quantity: 2,
+      travelStartAt: departure.startsAt,
+      departureId,
+      departureSnapshot: departureSnapshot(departure) as Prisma.InputJsonValue,
+      currency: price.currency,
+      subtotalMinor,
+      discountMinor: 0n,
+      taxMinor: 0n,
+      totalMinor: subtotalMinor,
+      priceBreakdown: {
+        mode: price.mode,
+        amountMinor: price.amountMinor.toString(),
+        quantity: 2,
+        travellers: 2,
+        vehicleCount: null,
+        departureId,
+      },
+      expiresAt: new Date(Date.now() + 30 * 60_000),
+    },
+  });
+
+  await assert.rejects(
+    () =>
+      createGuestPackageBooking({
+        quoteId: competingQuoteId,
+        idempotencyKey: "e2e-departure-booking-idempotency-0002",
+        guestName: "Departure Capacity E2E",
+        guestEmail: "departure-capacity@yatra.test",
+      }),
+    (error: unknown) =>
+      error instanceof PackageBookingServiceError &&
+      error.code === "DEPARTURE_UNAVAILABLE",
+  );
 
   currentDeparture = await db.packageDeparture.findUniqueOrThrow({
     where: { id: departureId },
