@@ -114,3 +114,17 @@ test("combined roles receive the union of their permissions", () => {
   assert.equal(hasPermission(combined, "refund.manage"), true);
   assert.equal(hasPermission(combined, "booking.write"), false);
 });
+
+test("CRM permissions separate operational read access from sales write access", () => {
+  assert.equal(hasPermission(["BOOKING_SALES"], "crm.read"), true);
+  assert.equal(hasPermission(["BOOKING_SALES"], "crm.write"), true);
+
+  assert.equal(hasPermission(["OPERATIONS"], "crm.read"), true);
+  assert.equal(hasPermission(["OPERATIONS"], "crm.write"), false);
+
+  assert.equal(hasPermission(["AUDITOR"], "crm.read"), true);
+  assert.equal(hasPermission(["AUDITOR"], "crm.write"), false);
+
+  assert.equal(hasPermission(["CUSTOMER"], "crm.read"), false);
+  assert.equal(hasPermission(["CUSTOMER"], "crm.write"), false);
+});
