@@ -544,44 +544,46 @@ export default async function ReportsPage({
           <div className="admin-panel-heading">
             <h2>Top Promotions</h2>
           </div>
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Promotion</th>
-                <th>Currency</th>
-                <th>Redemptions</th>
-                <th>Customer Savings</th>
-              </tr>
-            </thead>
-            <tbody>
-              {promotionGroups.length === 0 ? (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
                 <tr>
-                  <td colSpan={4}>No promotion redemptions in this period.</td>
+                  <th>Promotion</th>
+                  <th>Currency</th>
+                  <th>Redemptions</th>
+                  <th>Customer Savings</th>
                 </tr>
-              ) : (
-                promotionGroups.map((group) => {
-                  const promotion = promotionById.get(group.promotionId);
-                  return (
-                    <tr key={`${group.promotionId}-${group.currency}`}>
-                      <td>
-                        {promotion
-                          ? `${promotion.code} · ${promotion.name}`
-                          : group.promotionId}
-                      </td>
-                      <td>{group.currency}</td>
-                      <td>{group._count._all}</td>
-                      <td>
-                        {money(
-                          group._sum.discountMinor ?? 0n,
-                          group.currency,
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {promotionGroups.length === 0 ? (
+                  <tr>
+                    <td colSpan={4}>No promotion redemptions in this period.</td>
+                  </tr>
+                ) : (
+                  promotionGroups.map((group) => {
+                    const promotion = promotionById.get(group.promotionId);
+                    return (
+                      <tr key={`${group.promotionId}-${group.currency}`}>
+                        <td>
+                          {promotion
+                            ? `${promotion.code} · ${promotion.name}`
+                            : group.promotionId}
+                        </td>
+                        <td>{group.currency}</td>
+                        <td>{group._count._all}</td>
+                        <td>
+                          {money(
+                            group._sum.discountMinor ?? 0n,
+                            group.currency,
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <section className="admin-panel">
