@@ -2740,7 +2740,8 @@ body:has(.admin-root) {
 
 .admin-metric {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto minmax(0,1fr);
+  min-width: 0;
   gap: 3px 10px;
   padding: 16px;
   border: 1px solid #e8e1d6;
@@ -2764,8 +2765,20 @@ body:has(.admin-root) {
 .admin-metric__icon--blue { background:#e0efff;color:#2d79ba; }
 
 .admin-metric small { color:#7a837d;font-size:.67rem; }
-.admin-metric strong { color:#20352e;font-size:1.25rem;line-height:1.1; }
-.admin-metric p { margin:2px 0 0;color:#6a9f77;font-size:.64rem; }
+.admin-metric strong {
+  min-width: 0;
+  color:#20352e;
+  font-size:1.25rem;
+  line-height:1.1;
+  overflow-wrap:anywhere;
+}
+.admin-metric p {
+  min-width: 0;
+  margin:2px 0 0;
+  color:#6a9f77;
+  font-size:.64rem;
+  overflow-wrap:anywhere;
+}
 
 .admin-panel {
   border: 1px solid #e7dfd3;
