@@ -14,10 +14,16 @@ import {
   assertQuoteUsable,
   createPriceSnapshot,
 } from "@yatra/domain/booking/quote-policy";
+import {
+  createPromotionRedemption,
+  preparePromotionForBooking,
+  PromotionRedemptionError,
+} from "@/modules/promotions/promotion-redemption-service";
 
 export type CreateGuestPackageBookingInput = {
   quoteId: string;
   idempotencyKey: string;
+  promotionCode?: string | null;
 } & (
   | {
       customerUserId: string;
@@ -40,7 +46,10 @@ export class PackageBookingServiceError extends Error {
       | "QUOTE_ALREADY_USED"
       | "POLICY_UNAVAILABLE"
       | "IDEMPOTENCY_CONFLICT"
-      | "BOOKING_CONFLICT",
+      | "BOOKING_CONFLICT"
+      | "PROMOTION_DISABLED"
+      | "PROMOTION_INVALID"
+      | "PROMOTION_UNAVAILABLE",
     public readonly httpStatus: number,
   ) {
     super(message);
@@ -90,6 +99,7 @@ export async function createGuestPackageBooking(
   const customerUserId = input.customerUserId ?? null;
   const guestName = customerUserId ? null : input.guestName ?? null;
   const guestEmail = customerUserId ? null : input.guestEmail ?? null;
+  const promotionCode = input.promotionCode?.trim() || null;
 
   if (!customerUserId && (!guestName || !guestEmail)) {
     throw new Error("Guest booking requires name and email.");
@@ -108,11 +118,13 @@ export async function createGuestPackageBooking(
     ? createCustomerBookingRequestFingerprint({
         quoteId: input.quoteId,
         customerUserId,
+        promotionCode,
       })
     : createBookingRequestFingerprint({
         quoteId: input.quoteId,
         guestName: guestName!,
         guestEmail: guestEmail!,
+        promotionCode,
       });
 
   const db = getDb();
@@ -259,12 +271,64 @@ export async function createGuestPackageBooking(
           destinations: quote.package.destinations.map((item) => item.destination),
         };
 
+        let promotion:
+          | Awaited<ReturnType<typeof preparePromotionForBooking>>
+          | null = null;
+        let discountMinor = quote.discountMinor;
+        let totalMinor = quote.totalMinor;
+
+        if (promotionCode) {
+          if (process.env.PROMOTION_APPLY_ENABLED !== "true") {
+            throw new PackageBookingServiceError(
+              "Promotion application is not enabled yet.",
+              "PROMOTION_DISABLED",
+              503,
+            );
+          }
+
+          if (quote.discountMinor !== 0n) {
+            throw new PackageBookingServiceError(
+              "Promotion codes cannot be combined with another quote discount.",
+              "PROMOTION_UNAVAILABLE",
+              409,
+            );
+          }
+
+          try {
+            promotion = await preparePromotionForBooking(tx, {
+              code: promotionCode,
+              bookingType: "PACKAGE",
+              subtotalMinor: quote.subtotalMinor,
+              taxMinor: quote.taxMinor,
+              currency: quote.currency,
+              identity: customerUserId
+                ? { customerUserId }
+                : { guestEmailNormalized: guestEmail!.trim().toLowerCase() },
+              at: now,
+            });
+          } catch (error) {
+            if (error instanceof PromotionRedemptionError) {
+              throw new PackageBookingServiceError(
+                error.message,
+                error.code === "PROMOTION_NOT_FOUND"
+                  ? "PROMOTION_INVALID"
+                  : "PROMOTION_UNAVAILABLE",
+                error.code === "PROMOTION_NOT_FOUND" ? 404 : 409,
+              );
+            }
+            throw error;
+          }
+
+          discountMinor = promotion.discountMinor;
+          totalMinor = promotion.totalMinor;
+        }
+
         const priceSnapshot = {
           ...createPriceSnapshot({
             subtotalMinor: quote.subtotalMinor,
-            discountMinor: quote.discountMinor,
+            discountMinor,
             taxMinor: quote.taxMinor,
-            totalMinor: quote.totalMinor,
+            totalMinor,
             currency: quote.currency,
           }),
           quoteId: quote.id,
@@ -272,6 +336,7 @@ export async function createGuestPackageBooking(
           priceMode: quote.priceOption.mode,
           quantity: quote.quantity,
           breakdown: quote.priceBreakdown,
+          promotion: promotion?.snapshot ?? null,
         };
 
         const policySnapshot = createPolicySnapshot(policy);
@@ -293,11 +358,15 @@ export async function createGuestPackageBooking(
             guestEmail: customerUserId
               ? null
               : guestEmail!.trim().toLowerCase(),
+            promotionId: promotion?.promotionId ?? null,
+            promotionSnapshot: promotion
+              ? asInputJson(promotion.snapshot)
+              : Prisma.JsonNull,
             currency: quote.currency,
             subtotalMinor: quote.subtotalMinor,
-            discountMinor: quote.discountMinor,
+            discountMinor,
             taxMinor: quote.taxMinor,
-            totalMinor: quote.totalMinor,
+            totalMinor,
             packageSnapshot: asInputJson(packageSnapshot),
             priceSnapshot: asInputJson(priceSnapshot),
             policySnapshot: asInputJson(policySnapshot),
@@ -311,6 +380,32 @@ export async function createGuestPackageBooking(
             },
           },
         });
+
+        if (promotion) {
+          try {
+            await createPromotionRedemption(tx, {
+              promotionId: promotion.promotionId,
+              currency: quote.currency,
+              discountMinor: promotion.discountMinor,
+              identity: customerUserId
+                ? { customerUserId }
+                : { guestEmailNormalized: guestEmail!.trim().toLowerCase() },
+              booking: { packageBookingId: booking.id },
+              at: now,
+            });
+          } catch (error) {
+            if (error instanceof PromotionRedemptionError) {
+              throw new PackageBookingServiceError(
+                error.message,
+                error.code === "PROMOTION_NOT_FOUND"
+                  ? "PROMOTION_INVALID"
+                  : "PROMOTION_UNAVAILABLE",
+                error.code === "PROMOTION_NOT_FOUND" ? 404 : 409,
+              );
+            }
+            throw error;
+          }
+        }
 
         return {
           replayed: false,
