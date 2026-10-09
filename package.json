@@ -33,7 +33,8 @@
     "verify:customer-auth": "node scripts/verify-customer-auth-safety.mjs",
     "verify:notifications": "node scripts/verify-notification-foundation.mjs",
     "verify:promotions": "node scripts/verify-promotion-runtime-safety.mjs",
-    "verify:production-health": "node scripts/verify-production-health-contract.mjs"
+    "verify:production-health": "node scripts/verify-production-health-contract.mjs",
+    "certify:production-runtime": "node scripts/certify-production-runtime.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0"
