@@ -115,6 +115,9 @@ jobs:
       - name: Verify promotion redemption concurrency
         run: npm run db:verify:promotion-redemption -w @yatra/db
 
+      - name: Verify fleet operations foundation
+        run: npm run db:verify:fleet-operations -w @yatra/db
+
       - name: Lint
         run: npm run lint
 
