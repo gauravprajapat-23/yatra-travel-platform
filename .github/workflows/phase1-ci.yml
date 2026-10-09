@@ -103,6 +103,12 @@ jobs:
       - name: Bootstrap promotion preview fixture
         run: npm run db:bootstrap:e2e-promotion-preview -w @yatra/db
 
+      - name: Bootstrap package departure customer fixture
+        run: npm run db:bootstrap:e2e-package-departure -w @yatra/db
+
+      - name: Verify package departure booking replay and release
+        run: npm run verify:package-departure-booking -w @yatra/web
+
       - name: Verify discounted promotion booking
         run: npm run verify:promotion-booking -w @yatra/web
 
