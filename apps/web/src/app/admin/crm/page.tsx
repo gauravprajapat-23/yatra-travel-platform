@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
+import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { requireAdminSession } from "@/lib/auth/session";
 import { formatIstDateTime } from "@/lib/admin/datetime";
+import { reassignCrmFollowUp } from "@/modules/crm/crm-service";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +54,7 @@ export default async function CrmPage({
     overdueCount,
     dueSoonCount,
     recentInteractions,
+    staffUsers,
   ] = await Promise.all([
     db.crmFollowUpTask.findMany({
       where: followUpWhere,
@@ -83,7 +87,45 @@ export default async function CrmPage({
         createdBy: { select: { name: true, email: true } },
       },
     }),
+    hasPermission(session.roles, "crm.write")
+      ? db.user.findMany({
+          where: {
+            status: "ACTIVE",
+            roles: {
+              some: {
+                role: { key: { not: "CUSTOMER" } },
+              },
+            },
+          },
+          orderBy: [{ name: "asc" }, { email: "asc" }],
+          select: { id: true, name: true, email: true },
+          take: 100,
+        })
+      : Promise.resolve([]),
   ]);
+
+  async function reassignFollowUp(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "crm.write")) {
+      redirect("/admin/crm");
+    }
+
+    const taskId = String(formData.get("taskId") ?? "").trim();
+    const assignedToUserId =
+      String(formData.get("assignedToUserId") ?? "").trim() || null;
+
+    if (!taskId) throw new Error("Follow-up task is required.");
+
+    await reassignCrmFollowUp({
+      taskId,
+      assignedToUserId,
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath("/admin/crm");
+  }
 
   function subjectLabel(input: {
     lead: { reference: string; name: string } | null;
@@ -177,12 +219,13 @@ export default async function CrmPage({
                 <th>Due</th>
                 <th>Assigned</th>
                 <th>Status</th>
+                <th>Ownership</th>
               </tr>
             </thead>
             <tbody>
               {openFollowUps.length === 0 ? (
                 <tr>
-                  <td colSpan={5}>No open CRM follow-ups.</td>
+                  <td colSpan={6}>No open CRM follow-ups.</td>
                 </tr>
               ) : (
                 openFollowUps.map((task) => {
@@ -213,6 +256,31 @@ export default async function CrmPage({
                         >
                           {task.dueAt < now ? "OVERDUE" : task.status}
                         </StatusPill>
+                      </td>
+                      <td>
+                        {hasPermission(session.roles, "crm.write") ? (
+                          <form action={reassignFollowUp} className="admin-inline-actions">
+                            <input type="hidden" name="taskId" value={task.id} />
+                            <select
+                              name="assignedToUserId"
+                              defaultValue={task.assignedToUserId ?? ""}
+                              aria-label={`Assign ${task.title}`}
+                            >
+                              <option value="">Unassigned</option>
+                              {staffUsers.map((staff) => (
+                                <option key={staff.id} value={staff.id}>
+                                  {staff.name ?? staff.email}
+                                </option>
+                              ))}
+                            </select>
+                            <AdminSubmitButton
+                              label="Assign"
+                              pendingLabel="Assigning…"
+                            />
+                          </form>
+                        ) : (
+                          "Read only"
+                        )}
                       </td>
                     </tr>
                   );
