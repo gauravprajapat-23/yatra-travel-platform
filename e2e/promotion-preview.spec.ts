@@ -46,3 +46,46 @@ test("promotion preview rejects unknown code", async ({ request }) => {
   };
   expect(body.error?.code).toBe("PROMOTION_NOT_FOUND");
 });
+
+for (const scenario of [
+  {
+    code: "E2EEXPIRED",
+    email: "promo-expired@yatra.test",
+    message: /expired/i,
+  },
+  {
+    code: "E2EPACK",
+    email: "promo-scope@yatra.test",
+    message: /booking type/i,
+  },
+  {
+    code: "E2EMIN",
+    email: "promo-minimum@yatra.test",
+    message: /minimum/i,
+  },
+  {
+    code: "E2ELIMIT",
+    email: "promo-limit@yatra.test",
+    message: /per-customer redemption limit/i,
+  },
+] as const) {
+  test(`promotion preview rejects ${scenario.code} when ineligible`, async ({
+    request,
+  }) => {
+    const response = await request.post("/api/promotions/preview", {
+      data: {
+        quoteType: "CAR",
+        quoteId: "e2e_promotion_quote",
+        code: scenario.code,
+        guestEmail: scenario.email,
+      },
+    });
+
+    expect(response.status()).toBe(409);
+    const body = (await response.json()) as {
+      error?: { code?: string; message?: string };
+    };
+    expect(body.error?.code).toBe("PROMOTION_NOT_ELIGIBLE");
+    expect(body.error?.message ?? "").toMatch(scenario.message);
+  });
+}
