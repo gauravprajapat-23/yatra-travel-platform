@@ -4,20 +4,50 @@ Updated: 2026-10-09
 
 This checklist is the operational handoff from source-certified code to launch-certified production.
 
+## Current external launch blocker
+
+As of 2026-10-09, GitHub reports the Vercel deployment status as failed because the Vercel account has reached its **build-rate limit**. The newest source-certified commits therefore must not be assumed to be deployed.
+
+Operational rule while the rate limit is active:
+- stop unnecessary source commits once the newest Application CI is green,
+- do not enable production mutation flags on an older deployment,
+- wait for Vercel build capacity to recover or change the Vercel plan/build limit,
+- deploy exactly one certified main SHA,
+- verify that deployed SHA with the Production Readiness workflow using `expected_commit`,
+- only then begin capability-by-capability live drills.
+
+The connected Vercel scope available to this automation does not expose the project/team, so the production project Root Directory, production URL and cron placement cannot be certified from this environment. Do not add `vercel.json` blindly until the actual Vercel project Root Directory is confirmed.
+
 ## 0. Source certification
 
 Required before deployment:
 
-- [ ] Latest Application CI is green
-- [ ] Latest Neon Migration Verify is green
+- [ ] Latest Application CI is green on the exact SHA selected for release
+- [ ] Latest DB-changing revision has a green Neon Migration Verify
 - [ ] No pending migrations
 - [ ] Production build passes
 - [ ] Browser E2E passes
+- [ ] Production readiness workflow certification passes
+- [ ] Production runtime input-safety certification passes
 - [ ] Production health contract passes
 - [ ] Observability safety certification passes
 - [ ] Public SEO/private-route certification passes
 
-Do not continue from an older green commit if newer main is red.
+The last fully green source baseline before the launch-readiness workflow hardening was commit `2541bada7061b18641dcb527b7bed55172d36d61` (Application CI run `37923882562`). Do not release that older baseline if a newer `main` commit exists without its own green Application CI.
+
+Do not continue from an older green commit if newer main is red or still running.
+
+## Manual readiness workflow
+
+The GitHub **Production Readiness** workflow now accepts:
+- `production_url`
+- comma-separated `modes`
+- optional `expected_commit`
+- `require_refunds`
+- `require_password_reset`
+- `require_departures`
+
+Use `expected_commit` for every release drill so readiness fails if Vercel is still serving an older build.
 
 ## 1. Deploy exact certified revision
 
