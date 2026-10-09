@@ -126,7 +126,8 @@ export async function GET() {
       activePromotions,
       openPackageDepartures,
       fleetComplianceBlockers,
-      crmLeadCount,
+      crmInteractionCount,
+      crmFollowUpCount,
     ] = await Promise.all([
         db.vehicle.count({
           where: {
@@ -197,7 +198,8 @@ export async function GET() {
             vehicle: { status: { not: "RETIRED" } },
           },
         }),
-        db.lead.count(),
+        db.crmInteraction.count(),
+        db.crmFollowUpTask.count(),
       ]);
 
     status.activeVehicles = vehicles;
@@ -296,7 +298,8 @@ export async function GET() {
     status.crmReady =
       status.databaseReachable &&
       status.leadTableReady &&
-      crmLeadCount >= 0;
+      crmInteractionCount >= 0 &&
+      crmFollowUpCount >= 0;
 
     return NextResponse.json(status, {
       status: 200,
