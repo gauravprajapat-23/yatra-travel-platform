@@ -108,6 +108,7 @@ export default async function ReportsPage({
     expiredComplianceCount,
     expiringComplianceCount,
     maintenanceCostGroups,
+    upcomingDepartures,
   ] = await Promise.all([
     db.carBooking.count({
       where: createdRange ? { createdAt: createdRange } : undefined,
@@ -235,6 +236,22 @@ export default async function ReportsPage({
         ...(createdRange ? { completedAt: createdRange } : {}),
       },
       _sum: { costMinor: true },
+    }),
+    db.packageDeparture.findMany({
+      where: {
+        startsAt: { gte: now },
+        status: { in: ["OPEN", "SOLD_OUT"] },
+      },
+      orderBy: { startsAt: "asc" },
+      take: 20,
+      select: {
+        id: true,
+        startsAt: true,
+        status: true,
+        capacityTravellers: true,
+        reservedTravellers: true,
+        package: { select: { title: true } },
+      },
     }),
   ]);
 
@@ -409,6 +426,16 @@ export default async function ReportsPage({
     .sort((a, b) => b.bookings - a.bookings)
     .slice(0, 10);
 
+  const upcomingReservedTravellers = upcomingDepartures.reduce(
+    (sum, departure) => sum + departure.reservedTravellers,
+    0,
+  );
+  const upcomingCapacity = upcomingDepartures.reduce(
+    (sum, departure) =>
+      sum + (departure.capacityTravellers ?? departure.reservedTravellers),
+    0,
+  );
+
   return (
     <AdminShell
       active="Reports"
@@ -511,6 +538,12 @@ export default async function ReportsPage({
           value={formatCurrencyMap(maintenanceCostByCurrency)}
           meta="completed maintenance in selected period"
           tone="orange"
+        />
+        <AdminMetric
+          label="Upcoming Departures"
+          value={upcomingDepartures.length.toString()}
+          meta={`${upcomingReservedTravellers} reserved of ${upcomingCapacity} tracked seats`}
+          tone={upcomingDepartures.some((item) => item.status === "SOLD_OUT") ? "orange" : "green"}
         />
       </div>
 
@@ -640,6 +673,54 @@ export default async function ReportsPage({
                             group.currency,
                           )}
                         </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="admin-panel">
+          <div className="admin-panel-heading">
+            <h2>Upcoming Departure Inventory</h2>
+          </div>
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Package</th>
+                  <th>Departure</th>
+                  <th>Status</th>
+                  <th>Reserved</th>
+                  <th>Capacity</th>
+                  <th>Remaining</th>
+                </tr>
+              </thead>
+              <tbody>
+                {upcomingDepartures.length === 0 ? (
+                  <tr>
+                    <td colSpan={6}>No upcoming OPEN or SOLD_OUT departures.</td>
+                  </tr>
+                ) : (
+                  upcomingDepartures.map((departure) => {
+                    const remaining =
+                      departure.capacityTravellers === null
+                        ? "Unlimited"
+                        : Math.max(
+                            0,
+                            departure.capacityTravellers -
+                              departure.reservedTravellers,
+                          ).toString();
+                    return (
+                      <tr key={departure.id}>
+                        <td>{departure.package.title}</td>
+                        <td>{formatIstDate(departure.startsAt)}</td>
+                        <td>{departure.status}</td>
+                        <td>{departure.reservedTravellers}</td>
+                        <td>{departure.capacityTravellers ?? "Unlimited"}</td>
+                        <td>{remaining}</td>
                       </tr>
                     );
                   })
