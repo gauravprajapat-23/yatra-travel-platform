@@ -122,6 +122,7 @@ export default async function PackageDetailPage({
               priceOptions={pkg.priceOptions}
               departures={pkg.departures}
               bookingEnabled={process.env.PACKAGE_BOOKING_WRITE_ENABLED === "true"}
+              promotionsEnabled={process.env.PROMOTION_APPLY_ENABLED === "true"}
             />
 
             <Link
