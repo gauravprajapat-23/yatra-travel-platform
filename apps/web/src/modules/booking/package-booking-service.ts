@@ -462,6 +462,19 @@ export async function createGuestPackageBooking(
       typeof error === "object" &&
       error !== null &&
       "code" in error &&
+      error.code === "P2034"
+    ) {
+      throw new PackageBookingServiceError(
+        "Package inventory changed while this booking was being created. Request a fresh quote and retry.",
+        "BOOKING_CONFLICT",
+        409,
+      );
+    }
+
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
       error.code === "P2002"
     ) {
       const replay = await db.packageBooking.findUnique({
