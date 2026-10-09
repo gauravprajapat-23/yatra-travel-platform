@@ -3,6 +3,7 @@ import {
   assertBookingTransition,
   type BookingStatus,
 } from "@yatra/domain/booking/status-machine";
+import { releasePackageDepartureInventory } from "@/modules/packages/package-departure-inventory-service";
 
 type BookingKind = "CAR" | "PACKAGE";
 
@@ -111,6 +112,8 @@ export async function transitionCarBookingStatus(input: {
           id: true,
           status: true,
           totalMinor: true,
+          departureId: true,
+          inventoryReleasedAt: true,
         },
       });
 
@@ -189,6 +192,17 @@ export async function transitionPackageBookingStatus(input: {
       });
 
       const now = new Date();
+
+      if (
+        booking.departureId &&
+        !booking.inventoryReleasedAt &&
+        ["CANCELLED", "FAILED", "EXPIRED"].includes(input.toStatus)
+      ) {
+        await releasePackageDepartureInventory(tx, {
+          bookingId: booking.id,
+          at: now,
+        });
+      }
 
       const updated = await tx.packageBooking.update({
         where: { id: booking.id },
