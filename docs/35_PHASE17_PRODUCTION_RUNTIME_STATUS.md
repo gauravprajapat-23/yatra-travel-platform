@@ -55,6 +55,38 @@ Optional flags:
 - `--require-departures`
 - `--expect-commit <sha>`
 
+## One-command runtime suite
+
+Run several readiness modes against one deployed revision:
+
+```bash
+npm run certify:production-runtime -- \
+  --url https://your-production-domain.example \
+  --expect-commit <git-sha> \
+  --modes core,car,fleet,crm
+```
+
+Examples:
+
+```bash
+npm run certify:production-runtime -- \
+  --url https://your-production-domain.example \
+  --modes customer,notifications \
+  --require-password-reset
+
+npm run certify:production-runtime -- \
+  --url https://your-production-domain.example \
+  --modes package \
+  --require-departures
+
+npm run certify:production-runtime -- \
+  --url https://your-production-domain.example \
+  --modes payments \
+  --require-refunds
+```
+
+Any failing mode makes the suite exit non-zero.
+
 ## Production mutation policy
 
 Keep these disabled until their dedicated live drill passes:
