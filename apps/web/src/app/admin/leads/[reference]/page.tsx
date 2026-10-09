@@ -9,7 +9,20 @@ import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { AdminActionForm, type AdminActionState } from "@/components/admin-action-form";
 import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
-import { formatIstDateTime } from "@/lib/admin/datetime";
+import {
+  formatIstDateTime,
+  parseIstDateTimeLocal,
+} from "@/lib/admin/datetime";
+import {
+  cancelCrmFollowUp,
+  completeCrmFollowUp,
+  createCrmFollowUp,
+  createCrmInteraction,
+  crmInteractionDirections,
+  crmInteractionTypes,
+  type CrmInteractionDirectionValue,
+  type CrmInteractionTypeValue,
+} from "@/modules/crm/crm-service";
 
 export const dynamic = "force-dynamic";
 
@@ -49,19 +62,145 @@ export default async function LeadDetailPage({
   const { reference: rawReference } = await params;
   const { tab: requestedTab } = await searchParams;
   const reference = rawReference.trim().toUpperCase();
-  const activeTab = ["overview", "trip", "status"].includes(
+  const activeTab = ["overview", "trip", "crm", "status"].includes(
     requestedTab ?? "",
   )
     ? requestedTab!
     : "overview";
   const db = getDb();
 
-  const lead = await db.lead.findUnique({ where: { reference } });
+  const lead = await db.lead.findUnique({
+    where: { reference },
+    include: {
+      crmInteractions: {
+        orderBy: { occurredAt: "desc" },
+        take: 50,
+        include: {
+          createdBy: { select: { name: true, email: true } },
+        },
+      },
+      crmFollowUps: {
+        orderBy: [{ status: "asc" }, { dueAt: "asc" }],
+        take: 50,
+        include: {
+          assignedTo: { select: { name: true, email: true } },
+          createdBy: { select: { name: true, email: true } },
+        },
+      },
+    },
+  });
   if (!lead) notFound();
 
   const leadId = lead.id;
   const leadReference = lead.reference;
   const leadStatus = lead.status;
+
+  async function addInteraction(
+    _previousState: AdminActionState,
+    formData: FormData,
+  ): Promise<AdminActionState> {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "lead.write")) {
+      redirect("/admin/leads");
+    }
+
+    const type = String(formData.get("type") ?? "") as CrmInteractionTypeValue;
+    const direction = String(
+      formData.get("direction") ?? "",
+    ) as CrmInteractionDirectionValue;
+
+    if (!(crmInteractionTypes as readonly string[]).includes(type)) {
+      return { status: "error", message: "Select a valid interaction type." };
+    }
+    if (!(crmInteractionDirections as readonly string[]).includes(direction)) {
+      return { status: "error", message: "Select a valid interaction direction." };
+    }
+
+    try {
+      await createCrmInteraction({
+        subject: { leadId },
+        type,
+        direction,
+        subjectLine: String(formData.get("subject") ?? ""),
+        body: String(formData.get("body") ?? ""),
+        actorUserId: currentSession.userId,
+      });
+    } catch (error) {
+      return {
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to add CRM interaction.",
+      };
+    }
+
+    revalidatePath(`/admin/leads/${leadReference}`);
+    return { status: "success", message: "Interaction added." };
+  }
+
+  async function addFollowUp(
+    _previousState: AdminActionState,
+    formData: FormData,
+  ): Promise<AdminActionState> {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "lead.write")) {
+      redirect("/admin/leads");
+    }
+
+    try {
+      const dueAt = parseIstDateTimeLocal(formData.get("dueAt"));
+      if (!dueAt) throw new Error("Follow-up due date is required.");
+
+      await createCrmFollowUp({
+        subject: { leadId },
+        title: String(formData.get("title") ?? ""),
+        notes: String(formData.get("notes") ?? ""),
+        dueAt,
+        assignedToUserId: currentSession.userId,
+        actorUserId: currentSession.userId,
+      });
+    } catch (error) {
+      return {
+        status: "error",
+        message:
+          error instanceof Error ? error.message : "Unable to create follow-up.",
+      };
+    }
+
+    revalidatePath(`/admin/leads/${leadReference}`);
+    return { status: "success", message: "Follow-up created." };
+  }
+
+  async function completeFollowUp(formData: FormData) {
+    "use server";
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "lead.write")) {
+      redirect("/admin/leads");
+    }
+    await completeCrmFollowUp({
+      taskId: String(formData.get("taskId") ?? ""),
+      actorUserId: currentSession.userId,
+    });
+    revalidatePath(`/admin/leads/${leadReference}`);
+  }
+
+  async function cancelFollowUp(formData: FormData) {
+    "use server";
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "lead.write")) {
+      redirect("/admin/leads");
+    }
+    await cancelCrmFollowUp({
+      taskId: String(formData.get("taskId") ?? ""),
+      actorUserId: currentSession.userId,
+    });
+    revalidatePath(`/admin/leads/${leadReference}`);
+  }
 
   async function updateLeadStatus(
     _previousState: AdminActionState,
@@ -147,6 +286,19 @@ export default async function LeadDetailPage({
             badgeTone: tripData.length > 0 ? "success" : "neutral",
           },
           {
+            key: "crm",
+            label: "CRM",
+            description: "Interactions & follow-ups",
+            badge: String(
+              lead.crmFollowUps.filter((item) => item.status === "OPEN").length,
+            ),
+            badgeTone: lead.crmFollowUps.some(
+              (item) => item.status === "OPEN" && item.dueAt < new Date(),
+            )
+              ? "warning"
+              : "neutral",
+          },
+          {
             key: "status",
             label: "Status",
             description: "Qualification workflow",
@@ -203,6 +355,193 @@ export default async function LeadDetailPage({
               </dl>
             )}
           </section>
+        ) : null}
+
+        {activeTab === "crm" ? (
+          <>
+            <section className="admin-panel admin-detail-card">
+              <div className="admin-panel-heading">
+                <h2>Interaction History</h2>
+                <span>{lead.crmInteractions.length} recent</span>
+              </div>
+              {lead.crmInteractions.length === 0 ? (
+                <p>No CRM interactions recorded yet.</p>
+              ) : (
+                <div className="admin-card-body">
+                  {lead.crmInteractions.map((interaction) => (
+                    <article key={interaction.id}>
+                      <strong>
+                        {interaction.type} · {interaction.direction}
+                      </strong>
+                      <small>
+                        {formatIstDateTime(interaction.occurredAt)}
+                        {interaction.createdBy
+                          ? ` · ${interaction.createdBy.name ?? interaction.createdBy.email}`
+                          : ""}
+                      </small>
+                      {interaction.subject ? <h3>{interaction.subject}</h3> : null}
+                      <p>{interaction.body}</p>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {hasPermission(session.roles, "lead.write") ? (
+              <section className="admin-panel admin-detail-card">
+                <div className="admin-panel-heading">
+                  <h2>Log Interaction</h2>
+                </div>
+                <AdminActionForm action={addInteraction}>
+                  <AdminField label="Type" htmlFor="crmInteractionType">
+                    <select
+                      id="crmInteractionType"
+                      name="type"
+                      defaultValue="NOTE"
+                    >
+                      {crmInteractionTypes.map((item) => (
+                        <option key={item} value={item}>
+                          {item.replaceAll("_", " ")}
+                        </option>
+                      ))}
+                    </select>
+                  </AdminField>
+                  <AdminField label="Direction" htmlFor="crmDirection">
+                    <select
+                      id="crmDirection"
+                      name="direction"
+                      defaultValue="INTERNAL"
+                    >
+                      {crmInteractionDirections.map((item) => (
+                        <option key={item} value={item}>
+                          {item.replaceAll("_", " ")}
+                        </option>
+                      ))}
+                    </select>
+                  </AdminField>
+                  <AdminField label="Subject" htmlFor="crmSubject">
+                    <input id="crmSubject" name="subject" maxLength={200} />
+                  </AdminField>
+                  <AdminField label="Notes" htmlFor="crmBody">
+                    <textarea
+                      id="crmBody"
+                      name="body"
+                      rows={5}
+                      maxLength={5000}
+                      required
+                    />
+                  </AdminField>
+                  <AdminSubmitButton
+                    label="Add Interaction"
+                    pendingLabel="Adding…"
+                  />
+                </AdminActionForm>
+              </section>
+            ) : null}
+
+            <section className="admin-panel admin-detail-card">
+              <div className="admin-panel-heading">
+                <h2>Follow-ups</h2>
+                <span>
+                  {lead.crmFollowUps.filter((item) => item.status === "OPEN").length} open
+                </span>
+              </div>
+              {lead.crmFollowUps.length === 0 ? (
+                <p>No follow-up tasks yet.</p>
+              ) : (
+                <div className="admin-table-wrap">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Task</th>
+                        <th>Due</th>
+                        <th>Assigned</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lead.crmFollowUps.map((task) => (
+                        <tr key={task.id}>
+                          <td>
+                            <strong>{task.title}</strong>
+                            {task.notes ? <><br /><small>{task.notes}</small></> : null}
+                          </td>
+                          <td>{formatIstDateTime(task.dueAt)}</td>
+                          <td>
+                            {task.assignedTo?.name ??
+                              task.assignedTo?.email ??
+                              "Unassigned"}
+                          </td>
+                          <td>{task.status}</td>
+                          <td>
+                            {task.status === "OPEN" &&
+                            hasPermission(session.roles, "lead.write") ? (
+                              <div className="admin-inline-actions">
+                                <form action={completeFollowUp}>
+                                  <input type="hidden" name="taskId" value={task.id} />
+                                  <button className="admin-secondary-button" type="submit">
+                                    Complete
+                                  </button>
+                                </form>
+                                <form action={cancelFollowUp}>
+                                  <input type="hidden" name="taskId" value={task.id} />
+                                  <button className="admin-secondary-button" type="submit">
+                                    Cancel
+                                  </button>
+                                </form>
+                              </div>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
+            {hasPermission(session.roles, "lead.write") ? (
+              <section className="admin-panel admin-detail-card">
+                <div className="admin-panel-heading">
+                  <h2>Schedule Follow-up</h2>
+                </div>
+                <AdminActionForm action={addFollowUp}>
+                  <AdminField label="Task" htmlFor="crmFollowUpTitle">
+                    <input
+                      id="crmFollowUpTitle"
+                      name="title"
+                      minLength={2}
+                      maxLength={200}
+                      required
+                    />
+                  </AdminField>
+                  <AdminField label="Due at (IST)" htmlFor="crmFollowUpDueAt">
+                    <input
+                      id="crmFollowUpDueAt"
+                      name="dueAt"
+                      type="datetime-local"
+                      required
+                    />
+                  </AdminField>
+                  <AdminField label="Notes" htmlFor="crmFollowUpNotes">
+                    <textarea
+                      id="crmFollowUpNotes"
+                      name="notes"
+                      rows={4}
+                      maxLength={5000}
+                    />
+                  </AdminField>
+                  <AdminSubmitButton
+                    label="Create Follow-up"
+                    pendingLabel="Creating…"
+                  />
+                </AdminActionForm>
+              </section>
+            ) : null}
+          </>
         ) : null}
 
         {activeTab === "status" ? (
