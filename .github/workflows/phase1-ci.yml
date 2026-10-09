@@ -124,6 +124,9 @@ jobs:
       - name: Verify package departure foundation
         run: npm run db:verify:package-departures -w @yatra/db
 
+      - name: Verify package departure concurrency
+        run: npm run verify:package-departure-concurrency -w @yatra/web
+
       - name: Lint
         run: npm run lint
 
