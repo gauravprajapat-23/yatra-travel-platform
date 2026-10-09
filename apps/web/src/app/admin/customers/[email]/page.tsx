@@ -186,7 +186,7 @@ export default async function CustomerDetailPage({
     "use server";
 
     const currentSession = await requireAdminSession();
-    if (!hasPermission(currentSession.roles, "customer.write")) {
+    if (!hasPermission(currentSession.roles, "crm.write")) {
       redirect("/admin/customers");
     }
 
@@ -235,7 +235,7 @@ export default async function CustomerDetailPage({
     "use server";
 
     const currentSession = await requireAdminSession();
-    if (!hasPermission(currentSession.roles, "customer.write")) {
+    if (!hasPermission(currentSession.roles, "crm.write")) {
       redirect("/admin/customers");
     }
 
@@ -266,7 +266,7 @@ export default async function CustomerDetailPage({
   async function completeFollowUp(formData: FormData) {
     "use server";
     const currentSession = await requireAdminSession();
-    if (!hasPermission(currentSession.roles, "customer.write")) {
+    if (!hasPermission(currentSession.roles, "crm.write")) {
       redirect("/admin/customers");
     }
     await completeCrmFollowUp({
@@ -279,7 +279,7 @@ export default async function CustomerDetailPage({
   async function cancelFollowUp(formData: FormData) {
     "use server";
     const currentSession = await requireAdminSession();
-    if (!hasPermission(currentSession.roles, "customer.write")) {
+    if (!hasPermission(currentSession.roles, "crm.write")) {
       redirect("/admin/customers");
     }
     await cancelCrmFollowUp({
@@ -377,7 +377,7 @@ export default async function CustomerDetailPage({
         )}
       </section>
 
-      {hasPermission(session.roles, "customer.write") ? (
+      {hasPermission(session.roles, "crm.write") ? (
         <section className="admin-panel admin-detail-card">
           <div className="admin-panel-heading">
             <h2>Log Interaction</h2>
@@ -464,7 +464,7 @@ export default async function CustomerDetailPage({
                     <td>{task.status}</td>
                     <td>
                       {task.status === "OPEN" &&
-                      hasPermission(session.roles, "customer.write") ? (
+                      hasPermission(session.roles, "crm.write") ? (
                         <div className="admin-inline-actions">
                           <form action={completeFollowUp}>
                             <input type="hidden" name="taskId" value={task.id} />
@@ -491,7 +491,7 @@ export default async function CustomerDetailPage({
         </div>
       </section>
 
-      {hasPermission(session.roles, "customer.write") ? (
+      {hasPermission(session.roles, "crm.write") ? (
         <section className="admin-panel admin-detail-card">
           <div className="admin-panel-heading">
             <h2>Schedule Follow-up</h2>
