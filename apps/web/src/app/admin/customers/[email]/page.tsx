@@ -1,9 +1,30 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { getDb } from "@yatra/db/client";
 import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminShell, StatusPill } from "@/components/admin-shell";
+import {
+  AdminActionForm,
+  type AdminActionState,
+} from "@/components/admin-action-form";
+import { AdminField } from "@/components/admin-form";
+import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { requireAdminSession } from "@/lib/auth/session";
+import {
+  formatIstDateTime,
+  parseIstDateTimeLocal,
+} from "@/lib/admin/datetime";
+import {
+  cancelCrmFollowUp,
+  completeCrmFollowUp,
+  createCrmFollowUp,
+  createCrmInteraction,
+  crmInteractionDirections,
+  crmInteractionTypes,
+  type CrmInteractionDirectionValue,
+  type CrmInteractionTypeValue,
+} from "@/modules/crm/crm-service";
 
 export const dynamic = "force-dynamic";
 
@@ -68,7 +89,11 @@ export default async function CustomerDetailPage({
       }
     : { guestEmail: email };
 
-  const [cars, packages] = await Promise.all([
+  const crmSubject = customerUser
+    ? { customerUserId: customerUser.id as string }
+    : { customerEmailNormalized: email };
+
+  const [cars, packages, crmInteractions, crmFollowUps] = await Promise.all([
     db.carBooking.findMany({
       where: customerWhere,
       orderBy: { createdAt: "desc" },
@@ -96,6 +121,26 @@ export default async function CustomerDetailPage({
         totalMinor: true,
         createdAt: true,
         package: { select: { title: true } },
+      },
+    }),
+    db.crmInteraction.findMany({
+      where: customerUser
+        ? { customerUserId: customerUser.id }
+        : { customerEmailNormalized: email },
+      orderBy: { occurredAt: "desc" },
+      take: 50,
+      include: {
+        createdBy: { select: { name: true, email: true } },
+      },
+    }),
+    db.crmFollowUpTask.findMany({
+      where: customerUser
+        ? { customerUserId: customerUser.id }
+        : { customerEmailNormalized: email },
+      orderBy: [{ status: "asc" }, { dueAt: "asc" }],
+      take: 50,
+      include: {
+        assignedTo: { select: { name: true, email: true } },
       },
     }),
   ]);
@@ -133,6 +178,116 @@ export default async function CustomerDetailPage({
     );
   }
   const latest = bookings[0];
+
+  async function addInteraction(
+    _previousState: AdminActionState,
+    formData: FormData,
+  ): Promise<AdminActionState> {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "customer.write")) {
+      redirect("/admin/customers");
+    }
+
+    const type = String(formData.get("type") ?? "") as CrmInteractionTypeValue;
+    const direction = String(
+      formData.get("direction") ?? "",
+    ) as CrmInteractionDirectionValue;
+
+    if (!(crmInteractionTypes as readonly string[]).includes(type)) {
+      return { status: "error", message: "Select a valid interaction type." };
+    }
+    if (!(crmInteractionDirections as readonly string[]).includes(direction)) {
+      return {
+        status: "error",
+        message: "Select a valid interaction direction.",
+      };
+    }
+
+    try {
+      await createCrmInteraction({
+        subject: crmSubject,
+        type,
+        direction,
+        subjectLine: String(formData.get("subject") ?? ""),
+        body: String(formData.get("body") ?? ""),
+        actorUserId: currentSession.userId,
+      });
+    } catch (error) {
+      return {
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to add CRM interaction.",
+      };
+    }
+
+    revalidatePath(`/admin/customers/${encodeURIComponent(email)}`);
+    return { status: "success", message: "Interaction added." };
+  }
+
+  async function addFollowUp(
+    _previousState: AdminActionState,
+    formData: FormData,
+  ): Promise<AdminActionState> {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "customer.write")) {
+      redirect("/admin/customers");
+    }
+
+    try {
+      const dueAt = parseIstDateTimeLocal(formData.get("dueAt"));
+      if (!dueAt) throw new Error("Follow-up due date is required.");
+
+      await createCrmFollowUp({
+        subject: crmSubject,
+        title: String(formData.get("title") ?? ""),
+        notes: String(formData.get("notes") ?? ""),
+        dueAt,
+        assignedToUserId: currentSession.userId,
+        actorUserId: currentSession.userId,
+      });
+    } catch (error) {
+      return {
+        status: "error",
+        message:
+          error instanceof Error ? error.message : "Unable to create follow-up.",
+      };
+    }
+
+    revalidatePath(`/admin/customers/${encodeURIComponent(email)}`);
+    return { status: "success", message: "Follow-up created." };
+  }
+
+  async function completeFollowUp(formData: FormData) {
+    "use server";
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "customer.write")) {
+      redirect("/admin/customers");
+    }
+    await completeCrmFollowUp({
+      taskId: String(formData.get("taskId") ?? ""),
+      actorUserId: currentSession.userId,
+    });
+    revalidatePath(`/admin/customers/${encodeURIComponent(email)}`);
+  }
+
+  async function cancelFollowUp(formData: FormData) {
+    "use server";
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "customer.write")) {
+      redirect("/admin/customers");
+    }
+    await cancelCrmFollowUp({
+      taskId: String(formData.get("taskId") ?? ""),
+      actorUserId: currentSession.userId,
+    });
+    revalidatePath(`/admin/customers/${encodeURIComponent(email)}`);
+  }
 
   return (
     <AdminShell
@@ -193,6 +348,187 @@ export default async function CustomerDetailPage({
           </table>
         </div>
       </section>
+
+      <section className="admin-panel admin-detail-card">
+        <div className="admin-panel-heading">
+          <h2>CRM Interactions</h2>
+          <span>{crmInteractions.length} recent</span>
+        </div>
+        {crmInteractions.length === 0 ? (
+          <p>No CRM interactions recorded yet.</p>
+        ) : (
+          <div className="admin-card-body">
+            {crmInteractions.map((interaction) => (
+              <article key={interaction.id}>
+                <strong>
+                  {interaction.type} · {interaction.direction}
+                </strong>
+                <small>
+                  {formatIstDateTime(interaction.occurredAt)}
+                  {interaction.createdBy
+                    ? ` · ${interaction.createdBy.name ?? interaction.createdBy.email}`
+                    : ""}
+                </small>
+                {interaction.subject ? <h3>{interaction.subject}</h3> : null}
+                <p>{interaction.body}</p>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {hasPermission(session.roles, "customer.write") ? (
+        <section className="admin-panel admin-detail-card">
+          <div className="admin-panel-heading">
+            <h2>Log Interaction</h2>
+          </div>
+          <AdminActionForm action={addInteraction}>
+            <AdminField label="Type" htmlFor="customerCrmType">
+              <select id="customerCrmType" name="type" defaultValue="NOTE">
+                {crmInteractionTypes.map((item) => (
+                  <option key={item} value={item}>
+                    {item.replaceAll("_", " ")}
+                  </option>
+                ))}
+              </select>
+            </AdminField>
+            <AdminField label="Direction" htmlFor="customerCrmDirection">
+              <select
+                id="customerCrmDirection"
+                name="direction"
+                defaultValue="INTERNAL"
+              >
+                {crmInteractionDirections.map((item) => (
+                  <option key={item} value={item}>
+                    {item.replaceAll("_", " ")}
+                  </option>
+                ))}
+              </select>
+            </AdminField>
+            <AdminField label="Subject" htmlFor="customerCrmSubject">
+              <input
+                id="customerCrmSubject"
+                name="subject"
+                maxLength={200}
+              />
+            </AdminField>
+            <AdminField label="Notes" htmlFor="customerCrmBody">
+              <textarea
+                id="customerCrmBody"
+                name="body"
+                rows={5}
+                maxLength={5000}
+                required
+              />
+            </AdminField>
+            <AdminSubmitButton
+              label="Add Interaction"
+              pendingLabel="Adding…"
+            />
+          </AdminActionForm>
+        </section>
+      ) : null}
+
+      <section className="admin-panel">
+        <div className="admin-panel-heading">
+          <h2>CRM Follow-ups</h2>
+          <span>
+            {crmFollowUps.filter((item) => item.status === "OPEN").length} open
+          </span>
+        </div>
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th>Due</th>
+                <th>Assigned</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {crmFollowUps.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>No follow-up tasks yet.</td>
+                </tr>
+              ) : (
+                crmFollowUps.map((task) => (
+                  <tr key={task.id}>
+                    <td>
+                      <strong>{task.title}</strong>
+                      {task.notes ? <><br /><small>{task.notes}</small></> : null}
+                    </td>
+                    <td>{formatIstDateTime(task.dueAt)}</td>
+                    <td>{task.assignedTo?.name ?? task.assignedTo?.email ?? "Unassigned"}</td>
+                    <td>{task.status}</td>
+                    <td>
+                      {task.status === "OPEN" &&
+                      hasPermission(session.roles, "customer.write") ? (
+                        <div className="admin-inline-actions">
+                          <form action={completeFollowUp}>
+                            <input type="hidden" name="taskId" value={task.id} />
+                            <button className="admin-secondary-button" type="submit">
+                              Complete
+                            </button>
+                          </form>
+                          <form action={cancelFollowUp}>
+                            <input type="hidden" name="taskId" value={task.id} />
+                            <button className="admin-secondary-button" type="submit">
+                              Cancel
+                            </button>
+                          </form>
+                        </div>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {hasPermission(session.roles, "customer.write") ? (
+        <section className="admin-panel admin-detail-card">
+          <div className="admin-panel-heading">
+            <h2>Schedule Follow-up</h2>
+          </div>
+          <AdminActionForm action={addFollowUp}>
+            <AdminField label="Task" htmlFor="customerFollowUpTitle">
+              <input
+                id="customerFollowUpTitle"
+                name="title"
+                minLength={2}
+                maxLength={200}
+                required
+              />
+            </AdminField>
+            <AdminField label="Due at (IST)" htmlFor="customerFollowUpDueAt">
+              <input
+                id="customerFollowUpDueAt"
+                name="dueAt"
+                type="datetime-local"
+                required
+              />
+            </AdminField>
+            <AdminField label="Notes" htmlFor="customerFollowUpNotes">
+              <textarea
+                id="customerFollowUpNotes"
+                name="notes"
+                rows={4}
+                maxLength={5000}
+              />
+            </AdminField>
+            <AdminSubmitButton
+              label="Create Follow-up"
+              pendingLabel="Creating…"
+            />
+          </AdminActionForm>
+        </section>
+      ) : null}
     </AdminShell>
   );
 }
