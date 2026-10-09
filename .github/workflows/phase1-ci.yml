@@ -45,6 +45,7 @@ jobs:
       E2E_ALLOW_INSECURE_CUSTOMER_COOKIE: "true"
       CUSTOMER_AUTH_WRITE_ENABLED: "false"
       CUSTOMER_PASSWORD_RESET_ENABLED: "false"
+      PROMOTION_APPLY_ENABLED: "true"
       E2E_RESET_EMAIL: phase10-reset@yatra.test
       E2E_ALLOW_INSECURE_ADMIN_COOKIE: "true"
 
@@ -98,6 +99,9 @@ jobs:
 
       - name: Bootstrap notification delivery monitor fixture
         run: npm run db:bootstrap:e2e-notifications -w @yatra/db
+
+      - name: Bootstrap promotion preview fixture
+        run: npm run db:bootstrap:e2e-promotion-preview -w @yatra/db
 
       - name: Verify staff invite foundation
         run: npm run db:verify:staff-invites -w @yatra/db
