@@ -22,6 +22,9 @@ export async function GET() {
     activePricingRules: 0,
     activeCarBookingPolicies: 0,
     activePackageBookingPolicies: 0,
+    activePromotions: 0,
+    openPackageDepartures: 0,
+    fleetComplianceBlockers: 0,
     requiredLegalPagesPublished: 0,
     checkoutSessionSigningConfigured: checkoutSessionSigningConfigured(),
     bookingWriteEnabled: process.env.BOOKING_WRITE_ENABLED === "true",
@@ -29,6 +32,18 @@ export async function GET() {
       process.env.PACKAGE_BOOKING_WRITE_ENABLED === "true",
     paymentWriteEnabled: process.env.PAYMENT_WRITE_ENABLED === "true",
     refundWriteEnabled: process.env.REFUND_WRITE_ENABLED === "true",
+    customerAuthWriteEnabled:
+      process.env.CUSTOMER_AUTH_WRITE_ENABLED === "true",
+    customerPasswordResetEnabled:
+      process.env.CUSTOMER_PASSWORD_RESET_ENABLED === "true",
+    promotionApplyEnabled:
+      process.env.PROMOTION_APPLY_ENABLED === "true",
+    notificationEmailProviderConfigured: Boolean(
+      process.env.NOTIFICATION_EMAIL_PROVIDER?.trim().toLowerCase() ===
+        "resend" &&
+        process.env.RESEND_API_KEY?.trim() &&
+        process.env.NOTIFICATION_EMAIL_FROM?.trim(),
+    ),
     razorpayConfigured: Boolean(
       process.env.RAZORPAY_KEY_ID &&
         process.env.RAZORPAY_KEY_SECRET &&
@@ -71,6 +86,12 @@ export async function GET() {
     fullPaymentReady: false,
     refundReady: false,
     mediaReady: false,
+    customerAuthReady: false,
+    passwordResetReady: false,
+    promotionReady: false,
+    packageDepartureReady: false,
+    fleetComplianceReady: false,
+    crmReady: false,
   };
 
   if (!process.env.DATABASE_URL) {
@@ -102,6 +123,10 @@ export async function GET() {
       packagePolicies,
       legalPages,
       scheduledPublisherHeartbeat,
+      activePromotions,
+      openPackageDepartures,
+      fleetComplianceBlockers,
+      crmLeadCount,
     ] = await Promise.all([
         db.vehicle.count({
           where: {
@@ -142,12 +167,46 @@ export async function GET() {
           orderBy: { createdAt: "desc" },
           select: { createdAt: true },
         }),
+        db.promotion.count({
+          where: {
+            status: "ACTIVE",
+            OR: [
+              { activeFrom: null },
+              { activeFrom: { lte: now } },
+            ],
+            AND: [
+              {
+                OR: [
+                  { activeTo: null },
+                  { activeTo: { gt: now } },
+                ],
+              },
+            ],
+          },
+        }),
+        db.packageDeparture.count({
+          where: {
+            status: "OPEN",
+            startsAt: { gt: now },
+          },
+        }),
+        db.vehicleComplianceDocument.count({
+          where: {
+            blocksDispatch: true,
+            expiresAt: { not: null, lte: now },
+            vehicle: { status: { not: "RETIRED" } },
+          },
+        }),
+        db.lead.count(),
       ]);
 
     status.activeVehicles = vehicles;
     status.activePricingRules = pricingRules;
     status.activeCarBookingPolicies = carPolicies;
     status.activePackageBookingPolicies = packagePolicies;
+    status.activePromotions = activePromotions;
+    status.openPackageDepartures = openPackageDepartures;
+    status.fleetComplianceBlockers = fleetComplianceBlockers;
     status.requiredLegalPagesPublished = legalPages;
 
     if (scheduledPublisherHeartbeat) {
@@ -210,6 +269,34 @@ export async function GET() {
       status.databaseReachable &&
       status.storageConfigured &&
       status.mediaWriteEnabled;
+
+    status.customerAuthReady =
+      status.databaseReachable &&
+      status.checkoutSessionSigningConfigured &&
+      status.customerAuthWriteEnabled &&
+      status.notificationEmailProviderConfigured;
+
+    status.passwordResetReady =
+      status.customerAuthReady &&
+      status.customerPasswordResetEnabled;
+
+    status.promotionReady =
+      status.databaseReachable &&
+      status.promotionApplyEnabled &&
+      status.activePromotions > 0;
+
+    status.packageDepartureReady =
+      status.databaseReachable &&
+      status.openPackageDepartures > 0;
+
+    status.fleetComplianceReady =
+      status.databaseReachable &&
+      status.fleetComplianceBlockers === 0;
+
+    status.crmReady =
+      status.databaseReachable &&
+      status.leadTableReady &&
+      crmLeadCount >= 0;
 
     return NextResponse.json(status, {
       status: 200,
