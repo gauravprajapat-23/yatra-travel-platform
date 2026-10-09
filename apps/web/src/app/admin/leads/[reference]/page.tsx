@@ -102,7 +102,7 @@ export default async function LeadDetailPage({
     "use server";
 
     const currentSession = await requireAdminSession();
-    if (!hasPermission(currentSession.roles, "lead.write")) {
+    if (!hasPermission(currentSession.roles, "crm.write")) {
       redirect("/admin/leads");
     }
 
@@ -148,7 +148,7 @@ export default async function LeadDetailPage({
     "use server";
 
     const currentSession = await requireAdminSession();
-    if (!hasPermission(currentSession.roles, "lead.write")) {
+    if (!hasPermission(currentSession.roles, "crm.write")) {
       redirect("/admin/leads");
     }
 
@@ -179,7 +179,7 @@ export default async function LeadDetailPage({
   async function completeFollowUp(formData: FormData) {
     "use server";
     const currentSession = await requireAdminSession();
-    if (!hasPermission(currentSession.roles, "lead.write")) {
+    if (!hasPermission(currentSession.roles, "crm.write")) {
       redirect("/admin/leads");
     }
     await completeCrmFollowUp({
@@ -192,7 +192,7 @@ export default async function LeadDetailPage({
   async function cancelFollowUp(formData: FormData) {
     "use server";
     const currentSession = await requireAdminSession();
-    if (!hasPermission(currentSession.roles, "lead.write")) {
+    if (!hasPermission(currentSession.roles, "crm.write")) {
       redirect("/admin/leads");
     }
     await cancelCrmFollowUp({
@@ -209,7 +209,7 @@ export default async function LeadDetailPage({
     "use server";
 
     const currentSession = await requireAdminSession();
-    if (!hasPermission(currentSession.roles, "lead.write")) {
+    if (!hasPermission(currentSession.roles, "crm.write")) {
       redirect("/admin/leads");
     }
 
@@ -387,7 +387,7 @@ export default async function LeadDetailPage({
               )}
             </section>
 
-            {hasPermission(session.roles, "lead.write") ? (
+            {hasPermission(session.roles, "crm.write") ? (
               <section className="admin-panel admin-detail-card">
                 <div className="admin-panel-heading">
                   <h2>Log Interaction</h2>
@@ -476,7 +476,7 @@ export default async function LeadDetailPage({
                           <td>{task.status}</td>
                           <td>
                             {task.status === "OPEN" &&
-                            hasPermission(session.roles, "lead.write") ? (
+                            hasPermission(session.roles, "crm.write") ? (
                               <div className="admin-inline-actions">
                                 <form action={completeFollowUp}>
                                   <input type="hidden" name="taskId" value={task.id} />
@@ -503,7 +503,7 @@ export default async function LeadDetailPage({
               )}
             </section>
 
-            {hasPermission(session.roles, "lead.write") ? (
+            {hasPermission(session.roles, "crm.write") ? (
               <section className="admin-panel admin-detail-card">
                 <div className="admin-panel-heading">
                   <h2>Schedule Follow-up</h2>
@@ -552,7 +552,7 @@ export default async function LeadDetailPage({
                 {lead.status.replaceAll("_", " ")}
               </StatusPill>
             </div>
-            {hasPermission(session.roles, "lead.write") ? (
+            {hasPermission(session.roles, "crm.write") ? (
               <AdminActionForm action={updateLeadStatus}>
                 <AdminField
                   label="Lead status"
