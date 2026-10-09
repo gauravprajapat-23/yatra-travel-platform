@@ -128,6 +128,15 @@ enum PackagePriceMode {
   FIXED
 }
 
+enum PackageDepartureStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  SOLD_OUT
+  CANCELLED
+  COMPLETED
+}
+
 enum PromotionStatus {
   DRAFT
   ACTIVE
@@ -876,6 +885,7 @@ model TourPackage {
   destinations   PackageDestination[]
   itinerary      PackageItineraryDay[]
   priceOptions   PackagePriceOption[]
+  departures     PackageDeparture[]
   quotes         PackageQuote[]
   bookings       PackageBooking[]
 
@@ -932,6 +942,29 @@ model PackagePriceOption {
   @@index([vehicleClassId])
 }
 
+model PackageDeparture {
+  id                 String                 @id @default(cuid())
+  packageId          String
+  startsAt           DateTime
+  endsAt             DateTime?
+  status             PackageDepartureStatus @default(DRAFT)
+  capacityTravellers Int?
+  reservedTravellers Int                    @default(0)
+  salesOpenAt        DateTime?
+  salesCloseAt       DateTime?
+  notes              String?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  package  TourPackage      @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  quotes   PackageQuote[]
+  bookings PackageBooking[]
+
+  @@unique([packageId, startsAt])
+  @@index([packageId, status, startsAt])
+  @@index([status, salesOpenAt, salesCloseAt])
+}
+
 model PackageQuote {
   id             String   @id @default(cuid())
   packageId      String
@@ -940,6 +973,8 @@ model PackageQuote {
   vehicleCount   Int?
   quantity       Int
   travelStartAt  DateTime
+  departureId    String?
+  departureSnapshot Json?
   promotionId   String?
   promotionSnapshot Json?
   currency       String   @default("INR")
@@ -953,10 +988,12 @@ model PackageQuote {
 
   package     TourPackage        @relation(fields: [packageId], references: [id], onDelete: Restrict)
   priceOption PackagePriceOption @relation(fields: [priceOptionId], references: [id], onDelete: Restrict)
+  departure   PackageDeparture?  @relation(fields: [departureId], references: [id], onDelete: SetNull)
   promotion   Promotion?          @relation("PackageQuotePromotion", fields: [promotionId], references: [id], onDelete: SetNull)
   booking     PackageBooking?
 
   @@index([packageId, travelStartAt])
+  @@index([departureId])
   @@index([priceOptionId])
   @@index([promotionId])
   @@index([expiresAt])
@@ -974,6 +1011,9 @@ model PackageBooking {
   travellers             Int
   vehicleCount           Int?
   travelStartAt          DateTime
+  departureId            String?
+  departureSnapshot      Json?
+  inventoryReleasedAt    DateTime?
   customerUserId         String?
   guestName              String?
   guestEmail             String?
@@ -998,6 +1038,7 @@ model PackageBooking {
   quote         PackageQuote?         @relation(fields: [quoteId], references: [id], onDelete: SetNull)
   package       TourPackage           @relation(fields: [packageId], references: [id], onDelete: Restrict)
   priceOption   PackagePriceOption?   @relation(fields: [priceOptionId], references: [id], onDelete: SetNull)
+  departure     PackageDeparture?      @relation(fields: [departureId], references: [id], onDelete: SetNull)
   customer      User?                 @relation("CustomerPackageBookings", fields: [customerUserId], references: [id], onDelete: SetNull)
   promotion     Promotion?            @relation("PackageBookingPromotion", fields: [promotionId], references: [id], onDelete: SetNull)
   promotionRedemption PromotionRedemption? @relation("PackageBookingPromotionRedemption")
@@ -1007,6 +1048,7 @@ model PackageBooking {
 
   @@index([status, travelStartAt])
   @@index([packageId, travelStartAt])
+  @@index([departureId, status])
   @@index([customerUserId, createdAt])
   @@index([promotionId])
   @@index([bookingPolicyVersionId])
