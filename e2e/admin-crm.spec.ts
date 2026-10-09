@@ -47,7 +47,9 @@ test("admin logs CRM interaction, schedules follow-up, sees queue, and completes
 
   await page.goto("/admin/crm");
   await expect(page.getByText("Call customer", { exact: true })).toBeVisible();
-  await expect(page.getByText(/E2E CRM Traveller/)).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: /E2E CRM Traveller/ }).first(),
+  ).toBeVisible();
 
   await page.goto(`/admin/leads/${reference}?tab=crm`);
   await page.getByRole("button", { name: "Complete" }).click();
