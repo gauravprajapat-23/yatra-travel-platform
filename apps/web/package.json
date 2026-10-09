@@ -11,7 +11,8 @@
     "prebuild": "cd ../../packages/db && npm run db:generate",
     "verify:promotion-booking": "tsx scripts/verify-promotion-booking.ts",
     "verify:fleet-maintenance": "tsx scripts/verify-fleet-maintenance.ts",
-    "verify:package-departure-concurrency": "tsx scripts/verify-package-departure-concurrency.ts"
+    "verify:package-departure-concurrency": "tsx scripts/verify-package-departure-concurrency.ts",
+    "verify:package-departure-booking": "tsx scripts/verify-package-departure-booking.ts"
   },
   "dependencies": {
     "@yatra/db": "0.1.0",
