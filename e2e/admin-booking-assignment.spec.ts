@@ -39,9 +39,17 @@ test("operations admin assigns an available vehicle and driver", async ({ page }
   await expect(
     page.getByText(/E2E Busy Driver.*Overlaps booking YAT-E2EBLOCK/),
   ).toBeVisible();
+  await expect(
+    page.getByText(
+      /E2E Compliance Vehicle.*E2E Required Insurance does not remain valid through this trip/,
+    ),
+  ).toBeVisible();
 
   await expect(
     page.locator('#bookingVehicle option', { hasText: "E2E Busy Vehicle" }),
+  ).toHaveCount(0);
+  await expect(
+    page.locator('#bookingVehicle option', { hasText: "E2E Compliance Vehicle" }),
   ).toHaveCount(0);
   await expect(
     page.locator('#bookingDriver option', { hasText: "E2E Busy Driver" }),
