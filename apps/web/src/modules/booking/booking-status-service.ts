@@ -112,8 +112,6 @@ export async function transitionCarBookingStatus(input: {
           id: true,
           status: true,
           totalMinor: true,
-          departureId: true,
-          inventoryReleasedAt: true,
         },
       });
 
@@ -175,6 +173,8 @@ export async function transitionPackageBookingStatus(input: {
           id: true,
           status: true,
           totalMinor: true,
+          departureId: true,
+          inventoryReleasedAt: true,
         },
       });
 
