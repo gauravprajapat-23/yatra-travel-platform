@@ -1,6 +1,6 @@
 # Phase 11 — Promotions / Coupon Codes Status
 
-Status: CODE FOUNDATION + ATOMIC BOOKING INTEGRATION IMPLEMENTED — CUSTOMER APPLICATION GATED
+Status: CODE + CI CERTIFIED — LIVE PRODUCTION PROMOTION DRILL PENDING
 
 Updated: 2026-10-09
 
@@ -98,6 +98,9 @@ Add server-authoritative coupon/promotion support for car and package bookings w
 
 ## Certification evidence
 
+- Final code/browser/mobile certification: Application CI 37899825998 PASS
+- Admin promotion booking/report visibility and mobile reports containment are green in the final inherited head
+
 - Promotion migration: Neon Migration Verify PASS
 - Promotion preview/runtime safety: Application CI PASS on the gated foundation
 - Discounted booking verifier evidence: Application CI run 37895366931 passed the `Verify discounted promotion booking` step before continuing to production build
@@ -125,7 +128,7 @@ Admin promotion configuration is safe while the flag is off.
 - [x] Add promotion visibility to booking detail and CSV export
 - [x] Add booking search by promotion code
 - [x] Add admin browser coverage for locating and inspecting a discounted promotion booking
-- [ ] Add promotion summary metrics to reporting dashboard
+- [x] Add promotion summary metrics to reporting dashboard
 - [ ] Run live production promotion drill with a temporary limited code
 - [ ] Enable PROMOTION_APPLY_ENABLED only after current Application CI + live drill pass
 
