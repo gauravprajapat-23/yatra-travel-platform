@@ -4,10 +4,16 @@ export type BookingFingerprintInput = {
   quoteId: string;
   guestName: string;
   guestEmail: string;
+  promotionCode?: string | null;
 };
 
 function normalize(value: string): string {
   return value.trim().toLowerCase();
+}
+
+function normalizePromotionCode(value: string | null | undefined): string | null {
+  const code = value?.trim().toUpperCase() ?? "";
+  return code || null;
 }
 
 export function createBookingRequestFingerprint(
@@ -17,6 +23,7 @@ export function createBookingRequestFingerprint(
     quoteId: input.quoteId.trim(),
     guestName: normalize(input.guestName),
     guestEmail: normalize(input.guestEmail),
+    promotionCode: normalizePromotionCode(input.promotionCode),
   });
 
   return createHash("sha256").update(payload).digest("hex");
@@ -26,10 +33,12 @@ export function createBookingRequestFingerprint(
 export function createCustomerBookingRequestFingerprint(input: {
   quoteId: string;
   customerUserId: string;
+  promotionCode?: string | null;
 }): string {
   const payload = JSON.stringify({
     quoteId: input.quoteId.trim(),
     customerUserId: input.customerUserId.trim(),
+    promotionCode: normalizePromotionCode(input.promotionCode),
   });
 
   return createHash("sha256").update(payload).digest("hex");
