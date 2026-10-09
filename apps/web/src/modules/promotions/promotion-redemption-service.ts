@@ -1,4 +1,12 @@
 import { Prisma } from "@yatra/db/client";
+import {
+  calculatePromotionDiscount,
+  type PromotionRule,
+} from "@yatra/domain/promotions/discount";
+import {
+  normalizePromotionCode,
+  promotionSnapshot,
+} from "./promotion-management-service";
 
 type PromotionRedemptionIdentity =
   | { customerUserId: string; guestEmailNormalized?: never }
@@ -29,6 +37,138 @@ function normalizeGuestEmail(value: string): string {
     throw new Error("A valid guest email is required for promotion redemption.");
   }
   return email;
+}
+
+export async function preparePromotionForBooking(
+  tx: Prisma.TransactionClient,
+  input: {
+    code: string;
+    bookingType: "CAR" | "PACKAGE";
+    subtotalMinor: bigint;
+    taxMinor: bigint;
+    currency: string;
+    identity: PromotionRedemptionIdentity;
+    at?: Date;
+  },
+) {
+  const now = input.at ?? new Date();
+  const code = normalizePromotionCode(input.code);
+
+  const lockedRows = await tx.$queryRaw<Array<{ id: string }>>`
+    SELECT "id"
+    FROM "Promotion"
+    WHERE "code" = ${code}
+    FOR UPDATE
+  `;
+
+  const promotionId = lockedRows[0]?.id;
+  if (!promotionId) {
+    throw new PromotionRedemptionError(
+      "Promotion code is invalid.",
+      "PROMOTION_NOT_FOUND",
+    );
+  }
+
+  const promotion = await tx.promotion.findUnique({
+    where: { id: promotionId },
+  });
+
+  if (!promotion) {
+    throw new PromotionRedemptionError(
+      "Promotion code is invalid.",
+      "PROMOTION_NOT_FOUND",
+    );
+  }
+
+  if (promotion.status !== "ACTIVE") {
+    throw new PromotionRedemptionError(
+      "Promotion is no longer active.",
+      "PROMOTION_NOT_ACTIVE",
+    );
+  }
+
+  const customerUserId =
+    typeof input.identity.customerUserId === "string"
+      ? input.identity.customerUserId
+      : null;
+  const guestEmailNormalized =
+    typeof input.identity.guestEmailNormalized === "string"
+      ? normalizeGuestEmail(input.identity.guestEmailNormalized)
+      : null;
+
+  const customerRedemptionCount =
+    promotion.perCustomerLimit === null
+      ? 0
+      : await tx.promotionRedemption.count({
+          where: {
+            promotionId: promotion.id,
+            ...(customerUserId
+              ? { customerUserId }
+              : { guestEmailNormalized }),
+          },
+        });
+
+  const rule: PromotionRule = {
+    scope: promotion.scope,
+    discountKind: promotion.discountKind,
+    percentageBps: promotion.percentageBps,
+    fixedAmountMinor: promotion.fixedAmountMinor,
+    currency: promotion.currency,
+    minSubtotalMinor: promotion.minSubtotalMinor,
+    maxDiscountMinor: promotion.maxDiscountMinor,
+    activeFrom: promotion.activeFrom,
+    activeTo: promotion.activeTo,
+    maxRedemptions: promotion.maxRedemptions,
+    redeemedCount: promotion.redeemedCount,
+    perCustomerLimit: promotion.perCustomerLimit,
+  };
+
+  let calculated;
+  try {
+    calculated = calculatePromotionDiscount(rule, {
+      bookingType: input.bookingType,
+      subtotalMinor: input.subtotalMinor,
+      currency: input.currency,
+      at: now,
+      customerRedemptionCount,
+    });
+  } catch (error) {
+    throw new PromotionRedemptionError(
+      error instanceof Error
+        ? error.message
+        : "Promotion is not eligible for this booking.",
+      promotion.maxRedemptions !== null &&
+        promotion.redeemedCount >= promotion.maxRedemptions
+        ? "PROMOTION_EXHAUSTED"
+        : promotion.perCustomerLimit !== null &&
+            customerRedemptionCount >= promotion.perCustomerLimit
+          ? "CUSTOMER_LIMIT_REACHED"
+          : "PROMOTION_NOT_ACTIVE",
+    );
+  }
+
+  return {
+    promotionId: promotion.id,
+    code: promotion.code,
+    discountMinor: calculated.discountMinor,
+    totalMinor: calculated.payableBeforeTaxMinor + input.taxMinor,
+    snapshot: promotionSnapshot({
+      id: promotion.id,
+      code: promotion.code,
+      name: promotion.name,
+      scope: promotion.scope,
+      discountKind: promotion.discountKind,
+      percentageBps: promotion.percentageBps,
+      fixedAmountMinor: promotion.fixedAmountMinor,
+      currency: promotion.currency,
+      minSubtotalMinor: promotion.minSubtotalMinor,
+      maxDiscountMinor: promotion.maxDiscountMinor,
+      maxRedemptions: promotion.maxRedemptions,
+      perCustomerLimit: promotion.perCustomerLimit,
+      activeFrom: promotion.activeFrom,
+      activeTo: promotion.activeTo,
+    }),
+  };
 }
 
 export async function createPromotionRedemption(
