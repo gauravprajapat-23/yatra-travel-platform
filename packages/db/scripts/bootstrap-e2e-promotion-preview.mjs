@@ -14,6 +14,7 @@ const client = new Client({
 
 const promotionId = "e2e_promotion_preview";
 const quoteId = "e2e_promotion_quote";
+const bookingQuoteId = "e2e_promotion_booking_quote";
 
 await client.connect();
 
@@ -25,8 +26,8 @@ try {
     [promotionId],
   );
   await client.query(
-    `DELETE FROM "CarQuote" WHERE "id" = $1`,
-    [quoteId],
+    `DELETE FROM "CarQuote" WHERE "id" IN ($1,$2)`,
+    [quoteId, bookingQuoteId],
   );
   await client.query(
     `DELETE FROM "Promotion" WHERE "id" = $1 OR "code" = 'E2E10'`,
@@ -60,18 +61,31 @@ try {
         "discountMinor","taxMinor","totalMinor","priceBreakdown","expiresAt",
         "createdAt"
       )
-      VALUES (
+      VALUES
+      (
         $1,'ONE_WAY'::"TripType",'Bhopal','Indore',
         CURRENT_TIMESTAMP + INTERVAL '7 days',
         CURRENT_TIMESTAMP + INTERVAL '7 days 5 hours',2,
         'e2e_assignment_class','INR',100000,0,0,100000,
-        $2::jsonb,CURRENT_TIMESTAMP + INTERVAL '1 hour',CURRENT_TIMESTAMP
+        $3::jsonb,CURRENT_TIMESTAMP + INTERVAL '1 hour',CURRENT_TIMESTAMP
+      ),
+      (
+        $2,'ONE_WAY'::"TripType",'Bhopal','Indore',
+        CURRENT_TIMESTAMP + INTERVAL '8 days',
+        CURRENT_TIMESTAMP + INTERVAL '8 days 5 hours',2,
+        'e2e_assignment_class','INR',100000,0,0,100000,
+        $4::jsonb,CURRENT_TIMESTAMP + INTERVAL '1 hour',CURRENT_TIMESTAMP
       )
     `,
     [
       quoteId,
+      bookingQuoteId,
       JSON.stringify({
         source: "e2e-promotion-preview",
+        basis: "FIXED",
+      }),
+      JSON.stringify({
+        source: "e2e-promotion-booking",
         basis: "FIXED",
       }),
     ],
