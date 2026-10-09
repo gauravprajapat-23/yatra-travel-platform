@@ -22,6 +22,7 @@ type RequestBody = {
   quoteId?: unknown;
   guestName?: unknown;
   guestEmail?: unknown;
+  promotionCode?: unknown;
 };
 
 function isNonEmptyString(value: unknown, maxLength: number): value is string {
@@ -137,6 +138,9 @@ export async function POST(request: Request) {
     isNonEmptyString(body.guestEmail, 254) && isEmail(body.guestEmail)
       ? body.guestEmail.trim().toLowerCase()
       : null;
+  const promotionCode = isNonEmptyString(body.promotionCode, 32)
+    ? body.promotionCode.trim().toUpperCase()
+    : null;
 
   if (!customerSession && !guestName) {
     return NextResponse.json(
@@ -169,12 +173,14 @@ export async function POST(request: Request) {
             quoteId: body.quoteId.trim(),
             customerUserId: customerSession.userId,
             idempotencyKey,
+            promotionCode,
           }
         : {
             quoteId: body.quoteId.trim(),
             guestName: guestName!,
             guestEmail: guestEmail!,
             idempotencyKey,
+            promotionCode,
           },
     );
 
