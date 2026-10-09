@@ -168,6 +168,9 @@ jobs:
       - name: Check readiness script syntax
         run: node --check scripts/verify-production-readiness.mjs
 
+      - name: Production health contract certification
+        run: npm run verify:production-health
+
       - name: Payment runtime safety certification
         run: npm run verify:payment-runtime
 
