@@ -109,6 +109,9 @@ export default async function ReportsPage({
     expiringComplianceCount,
     maintenanceCostGroups,
     upcomingDepartures,
+    openCrmFollowUps,
+    overdueCrmFollowUps,
+    crmInteractionsInPeriod,
   ] = await Promise.all([
     db.carBooking.count({
       where: createdRange ? { createdAt: createdRange } : undefined,
@@ -252,6 +255,18 @@ export default async function ReportsPage({
         reservedTravellers: true,
         package: { select: { title: true } },
       },
+    }),
+    db.crmFollowUpTask.count({
+      where: { status: "OPEN" },
+    }),
+    db.crmFollowUpTask.count({
+      where: {
+        status: "OPEN",
+        dueAt: { lt: now },
+      },
+    }),
+    db.crmInteraction.count({
+      where: createdRange ? { occurredAt: createdRange } : undefined,
     }),
   ]);
 
@@ -544,6 +559,12 @@ export default async function ReportsPage({
           value={upcomingDepartures.length.toString()}
           meta={`${upcomingReservedTravellers} reserved of ${upcomingCapacity} tracked seats`}
           tone={upcomingDepartures.some((item) => item.status === "SOLD_OUT") ? "orange" : "green"}
+        />
+        <AdminMetric
+          label="CRM Follow-ups"
+          value={openCrmFollowUps.toString()}
+          meta={`${overdueCrmFollowUps} overdue · ${crmInteractionsInPeriod} interactions in selected period`}
+          tone={overdueCrmFollowUps > 0 ? "orange" : "green"}
         />
       </div>
 
