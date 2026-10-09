@@ -29,6 +29,8 @@ test("admin can find and inspect a discounted promotion booking", async ({ page 
   await bookingLink.click();
 
   await expect(page.getByText("E2E10 · E2E Ten Percent")).toBeVisible();
+
+  await page.getByRole("link", { name: /payments/i }).click();
   await expect(page.getByText("Promotion discount", { exact: true })).toBeVisible();
   await expect(page.getByText("E2E10", { exact: true }).first()).toBeVisible();
 
