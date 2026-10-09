@@ -12,7 +12,8 @@
     "verify:promotion-booking": "tsx scripts/verify-promotion-booking.ts",
     "verify:fleet-maintenance": "tsx scripts/verify-fleet-maintenance.ts",
     "verify:package-departure-concurrency": "tsx scripts/verify-package-departure-concurrency.ts",
-    "verify:package-departure-booking": "tsx scripts/verify-package-departure-booking.ts"
+    "verify:package-departure-booking": "tsx scripts/verify-package-departure-booking.ts",
+    "verify:csv-safety": "tsx scripts/verify-csv-safety.ts"
   },
   "dependencies": {
     "@yatra/db": "0.1.0",
