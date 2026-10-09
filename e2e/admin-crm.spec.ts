@@ -6,6 +6,22 @@ const reference = "LEAD-E2ECRM";
 
 test.describe.configure({ retries: 0 });
 
+async function waitForLeadServerAction(
+  page: import("@playwright/test").Page,
+  action: () => Promise<unknown>,
+) {
+  const [response] = await Promise.all([
+    page.waitForResponse(
+      (item) =>
+        item.request().method() === "POST" &&
+        item.url().includes(`/admin/leads/${reference}`),
+    ),
+    action(),
+  ]);
+
+  expect(response.status()).toBeLessThan(400);
+}
+
 test("admin logs CRM interaction, schedules follow-up, sees queue, and completes it", async ({ page }) => {
   if (!email || !password) {
     throw new Error("ADMIN_EMAIL and ADMIN_PASSWORD are required.");
@@ -30,7 +46,9 @@ test("admin logs CRM interaction, schedules follow-up, sees queue, and completes
 
   await page.locator("#crmSubject").fill("E2E CRM note");
   await page.locator("#crmBody").fill("Customer asked for a callback about temple package options.");
-  await page.getByRole("button", { name: "Add Interaction" }).click();
+  await waitForLeadServerAction(page, () =>
+    page.getByRole("button", { name: "Add Interaction" }).click(),
+  );
 
   await page.goto(`/admin/leads/${reference}?tab=crm`);
   await expect(page.getByText("E2E CRM note", { exact: true })).toBeVisible();
@@ -43,7 +61,9 @@ test("admin logs CRM interaction, schedules follow-up, sees queue, and completes
   await page.locator("#crmFollowUpTitle").fill("Call customer");
   await page.locator("#crmFollowUpDueAt").fill("2026-10-10T15:00");
   await page.locator("#crmFollowUpNotes").fill("Discuss package options and dates.");
-  await page.getByRole("button", { name: "Create Follow-up" }).click();
+  await waitForLeadServerAction(page, () =>
+    page.getByRole("button", { name: "Create Follow-up" }).click(),
+  );
 
   await page.goto("/admin/crm");
   await expect(page.getByText("Call customer", { exact: true })).toBeVisible();
@@ -52,7 +72,9 @@ test("admin logs CRM interaction, schedules follow-up, sees queue, and completes
   ).toBeVisible();
 
   await page.goto(`/admin/leads/${reference}?tab=crm`);
-  await page.getByRole("button", { name: "Complete" }).click();
+  await waitForLeadServerAction(page, () =>
+    page.getByRole("button", { name: "Complete" }).click(),
+  );
 
   await page.goto("/admin/crm");
   await expect(page.getByText("Call customer", { exact: true })).toHaveCount(0);
