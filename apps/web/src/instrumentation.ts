@@ -17,15 +17,25 @@ export const onRequestError: Instrumentation.onRequestError = async (
   request,
   context,
 ) => {
+  const safeError =
+    typeof error === "object" && error !== null
+      ? (error as { name?: unknown; digest?: unknown })
+      : null;
+  const errorName =
+    typeof safeError?.name === "string"
+      ? safeError.name.slice(0, 120)
+      : "Error";
+  const digest =
+    typeof safeError?.digest === "string"
+      ? safeError.digest.slice(0, 160)
+      : null;
+
   const event = {
     level: "error",
     event: "next_request_error",
     timestamp: new Date().toISOString(),
-    errorName: error.name?.slice(0, 120) || "Error",
-    digest:
-      typeof error.digest === "string"
-        ? error.digest.slice(0, 160)
-        : null,
+    errorName,
+    digest,
     method: request.method?.slice(0, 16) || "UNKNOWN",
     path: safePath(request.path ?? "/"),
     routerKind: context.routerKind,
