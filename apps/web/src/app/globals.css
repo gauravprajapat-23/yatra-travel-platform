@@ -6955,3 +6955,32 @@ body:has(.admin-root) {
   border-top: 1px solid #e2d9cc;
   padding-top: 28px;
 }
+
+/* === Admin report mobile containment === */
+.admin-main,
+.admin-panel,
+.admin-report-bottom,
+.admin-report-bottom > *,
+.admin-metric-grid,
+.admin-metric,
+.admin-table-wrap {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 700px) {
+  .admin-report-bottom {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .admin-metric-grid {
+    grid-template-columns: minmax(0,1fr);
+  }
+
+  .admin-table-wrap {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
