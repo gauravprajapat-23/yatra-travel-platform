@@ -172,6 +172,9 @@ jobs:
       - name: Promotion runtime safety certification
         run: npm run verify:promotions
 
+      - name: CSV export safety certification
+        run: npm run verify:csv-safety -w @yatra/web
+
       - name: Production build
         run: npm run build
 
