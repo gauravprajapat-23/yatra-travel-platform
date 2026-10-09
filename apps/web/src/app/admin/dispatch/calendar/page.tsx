@@ -48,6 +48,19 @@ export default async function FleetAvailabilityCalendarPage({
       displayName: true,
       registrationNumber: true,
       vehicleClass: { select: { name: true } },
+      complianceDocuments: {
+        where: {
+          blocksDispatch: true,
+          expiresAt: { not: null, lte: horizon },
+        },
+        orderBy: { expiresAt: "asc" },
+        select: {
+          id: true,
+          label: true,
+          type: true,
+          expiresAt: true,
+        },
+      },
       availability: {
         where: { startsAt: { lt: horizon }, endsAt: { gt: now } },
         select: { id: true, startsAt: true, endsAt: true, reason: true },
@@ -100,6 +113,18 @@ export default async function FleetAvailabilityCalendarPage({
     0,
   );
 
+  const complianceBlockedDays = vehicles.reduce(
+    (sum, vehicle) =>
+      sum +
+      dayStarts.filter((day) =>
+        vehicle.complianceDocuments.some(
+          (document) =>
+            document.expiresAt !== null && document.expiresAt <= day.end,
+        ),
+      ).length,
+    0,
+  );
+
   return (
     <AdminShell
       active="Dispatch"
@@ -133,6 +158,7 @@ export default async function FleetAvailabilityCalendarPage({
         <AdminMetric label="Active Vehicles" value={vehicles.length.toString()} meta="calendar resources" tone="green" />
         <AdminMetric label="Booked Vehicle Days" value={bookedDays.toString()} meta="assigned booking days" tone="blue" />
         <AdminMetric label="Blocked Vehicle Days" value={blockedDays.toString()} meta="availability block days" tone="orange" />
+        <AdminMetric label="Compliance Blocked Days" value={complianceBlockedDays.toString()} meta="required document expiry" tone="red" />
       </div>
 
       <section className="admin-panel">
@@ -168,15 +194,32 @@ export default async function FleetAvailabilityCalendarPage({
                   const booking = vehicle.bookings.find((item) =>
                     overlaps(item.startsAt, item.endsAt, day.start, day.end),
                   );
-                  const state = block ? "blocked" : booking ? "busy" : "free";
+                  const complianceBlocker = vehicle.complianceDocuments.find(
+                    (document) =>
+                      document.expiresAt !== null && document.expiresAt <= day.end,
+                  );
+                  const state = complianceBlocker
+                    ? "blocked"
+                    : block
+                      ? "blocked"
+                      : booking
+                        ? "busy"
+                        : "free";
+                  const title = complianceBlocker
+                    ? `Compliance: ${complianceBlocker.label}`
+                    : block?.reason ?? booking?.reference ?? "Free";
 
                   return (
                     <div
                       className={`${styles.cell} ${state === "blocked" ? styles.blocked : state === "busy" ? styles.busy : styles.free}`}
                       key={`${vehicle.id}-${day.key}`}
-                      title={block?.reason ?? booking?.reference ?? "Free"}
+                      title={title}
                     >
-                      {booking ? (
+                      {complianceBlocker ? (
+                        <Link href={`/admin/vehicles/${vehicle.id}?tab=compliance`}>
+                          Compliance
+                        </Link>
+                      ) : booking ? (
                         <Link href={`/admin/bookings/${booking.reference}`}>{booking.reference}</Link>
                       ) : (
                         <span>{block ? "Blocked" : "Free"}</span>
