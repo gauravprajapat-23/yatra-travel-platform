@@ -186,7 +186,7 @@ if (["package", "full"].includes(mode)) {
   );
 }
 
-if (["customer"].includes(mode)) {
+if (["customer", "full"].includes(mode)) {
   check(
     "customer auth writes enabled",
     health.customerAuthWriteEnabled === true,
@@ -217,7 +217,7 @@ if (["customer"].includes(mode)) {
   }
 }
 
-if (["notifications"].includes(mode)) {
+if (["notifications", "full"].includes(mode)) {
   check(
     "email notification provider configured",
     health.notificationEmailProviderConfigured === true,
@@ -225,7 +225,7 @@ if (["notifications"].includes(mode)) {
   );
 }
 
-if (["promotions"].includes(mode)) {
+if (["promotions", "full"].includes(mode)) {
   check(
     "promotion application enabled",
     health.promotionApplyEnabled === true,
@@ -243,7 +243,7 @@ if (["promotions"].includes(mode)) {
   );
 }
 
-if (["fleet"].includes(mode)) {
+if (["fleet", "full"].includes(mode)) {
   check(
     "no expired dispatch-blocking fleet documents",
     Number(health.fleetComplianceBlockers) === 0,
@@ -256,7 +256,7 @@ if (["fleet"].includes(mode)) {
   );
 }
 
-if (["crm"].includes(mode)) {
+if (["crm", "full"].includes(mode)) {
   check(
     "CRM tables ready",
     health.crmReady === true,
@@ -264,7 +264,7 @@ if (["crm"].includes(mode)) {
   );
 }
 
-if (["package"].includes(mode) && has("--require-departures")) {
+if (["package", "full"].includes(mode) && has("--require-departures")) {
   check(
     "sellable package departures available",
     Number(health.openPackageDepartures) > 0,
