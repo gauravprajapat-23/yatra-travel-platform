@@ -40,7 +40,8 @@
     "db:verify:package-departures": "node scripts/verify-package-departure-foundation.mjs",
     "db:bootstrap:e2e-package-departure": "node scripts/bootstrap-e2e-package-departure.mjs",
     "db:verify:crm": "node scripts/verify-crm-foundation.mjs",
-    "db:bootstrap:e2e-crm": "node scripts/bootstrap-e2e-crm.mjs"
+    "db:bootstrap:e2e-crm": "node scripts/bootstrap-e2e-crm.mjs",
+    "db:bootstrap:e2e-car-customer": "node scripts/bootstrap-e2e-car-customer.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
