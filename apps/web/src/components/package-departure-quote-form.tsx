@@ -45,6 +45,19 @@ type QuoteResult = {
   error?: { code?: string; message?: string };
 };
 
+type PromotionPreviewResult = {
+  promotion?: { id: string; code: string; name: string };
+  quote?: {
+    id: string;
+    currency: string;
+    subtotalMinor: string;
+    discountMinor: string;
+    taxMinor: string;
+    totalMinor: string;
+  };
+  error?: { code?: string; message?: string };
+};
+
 type BookingResult = {
   replayed?: boolean;
   booking?: {
@@ -67,11 +80,13 @@ export function PackageDepartureQuoteForm({
   priceOptions,
   departures,
   bookingEnabled,
+  promotionsEnabled = false,
 }: {
   packageSlug: string;
   priceOptions: PriceOption[];
   departures: Departure[];
   bookingEnabled: boolean;
+  promotionsEnabled?: boolean;
 }) {
   const [priceOptionId, setPriceOptionId] = useState(priceOptions[0]?.id ?? "");
   const [departureId, setDepartureId] = useState(departures[0]?.id ?? "");
@@ -81,6 +96,10 @@ export function PackageDepartureQuoteForm({
   const [vehicleCount, setVehicleCount] = useState(1);
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
+  const [promotionCode, setPromotionCode] = useState("");
+  const [promotionPreview, setPromotionPreview] =
+    useState<PromotionPreviewResult | null>(null);
+  const [promotionPending, setPromotionPending] = useState(false);
   const [quote, setQuote] = useState<QuoteResult["quote"]>();
   const [pending, setPending] = useState(false);
   const [bookingPending, setBookingPending] = useState(false);
@@ -98,6 +117,7 @@ export function PackageDepartureQuoteForm({
 
   function clearQuote() {
     setQuote(undefined);
+    setPromotionPreview(null);
     setError("");
   }
 
@@ -141,6 +161,56 @@ export function PackageDepartureQuoteForm({
     }
   }
 
+  async function applyPromotion() {
+    if (!promotionsEnabled || !quote) return;
+
+    setPromotionPending(true);
+    setError("");
+
+    try {
+      if (!promotionCode.trim()) {
+        setPromotionPreview(null);
+        return;
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())) {
+        throw new Error(
+          "Enter a valid traveller email before applying a promotion.",
+        );
+      }
+
+      const response = await fetch("/api/promotions/preview", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          quoteType: "PACKAGE",
+          quoteId: quote.id,
+          code: promotionCode.trim(),
+          guestEmail: guestEmail.trim().toLowerCase(),
+        }),
+      });
+
+      const result = (await response.json()) as PromotionPreviewResult;
+      if (!response.ok || !result.promotion || !result.quote) {
+        throw new Error(
+          result.error?.message ?? "Unable to validate promotion.",
+        );
+      }
+
+      setPromotionCode(result.promotion.code);
+      setPromotionPreview(result);
+    } catch (caught) {
+      setPromotionPreview(null);
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Unable to validate promotion.",
+      );
+    } finally {
+      setPromotionPending(false);
+    }
+  }
+
   async function createBooking() {
     if (!bookingEnabled || !quote) return;
 
@@ -163,6 +233,7 @@ export function PackageDepartureQuoteForm({
           quoteId: quote.id,
           guestName: guestName.trim() || undefined,
           guestEmail: guestEmail.trim().toLowerCase() || undefined,
+          promotionCode: promotionPreview?.promotion?.code ?? undefined,
         }),
       });
 
@@ -302,8 +373,22 @@ export function PackageDepartureQuoteForm({
               <dd>{money(quote.subtotalMinor, quote.currency)}</dd>
             </div>
             <div>
+              <dt>Discount</dt>
+              <dd>
+                {money(
+                  promotionPreview?.quote?.discountMinor ?? quote.discountMinor,
+                  promotionPreview?.quote?.currency ?? quote.currency,
+                )}
+              </dd>
+            </div>
+            <div>
               <dt>Total</dt>
-              <dd>{money(quote.totalMinor, quote.currency)}</dd>
+              <dd>
+                {money(
+                  promotionPreview?.quote?.totalMinor ?? quote.totalMinor,
+                  promotionPreview?.quote?.currency ?? quote.currency,
+                )}
+              </dd>
             </div>
           </dl>
           <small>
@@ -338,6 +423,40 @@ export function PackageDepartureQuoteForm({
                   placeholder="Required for guest checkout"
                 />
               </label>
+              {promotionsEnabled ? (
+                <div className="package-promotion-field">
+                  <label>
+                    Promotion code
+                    <input
+                      value={promotionCode}
+                      onChange={(event) => {
+                        setPromotionCode(event.target.value.toUpperCase());
+                        setPromotionPreview(null);
+                      }}
+                      maxLength={32}
+                      placeholder="YATRA10"
+                    />
+                  </label>
+                  <button
+                    className="button-link button-link--secondary"
+                    type="button"
+                    disabled={
+                      promotionPending ||
+                      !promotionCode.trim() ||
+                      !quote
+                    }
+                    onClick={applyPromotion}
+                  >
+                    {promotionPending ? "Checking…" : "Apply Promotion"}
+                  </button>
+                  {promotionPreview?.promotion ? (
+                    <p className="lead-form-success" role="status">
+                      {promotionPreview.promotion.code} applied ·{" "}
+                      {promotionPreview.promotion.name}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
               <button
                 className="button-link button-link--primary"
                 type="button"
