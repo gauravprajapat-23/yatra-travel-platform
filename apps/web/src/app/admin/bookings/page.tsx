@@ -120,6 +120,7 @@ export default async function AdminBookingsPage({
                     { reference: { contains: q, mode: "insensitive" as const } },
                     { guestName: { contains: q, mode: "insensitive" as const } },
                     { guestEmail: { contains: q, mode: "insensitive" as const } },
+                    { promotion: { code: { contains: q, mode: "insensitive" as const } } },
                     { originText: { contains: q, mode: "insensitive" as const } },
                     { destinationText: { contains: q, mode: "insensitive" as const } },
                   ],
@@ -139,6 +140,7 @@ export default async function AdminBookingsPage({
             { reference: { contains: q, mode: "insensitive" } },
             { guestName: { contains: q, mode: "insensitive" } },
             { guestEmail: { contains: q, mode: "insensitive" } },
+            { promotion: { code: { contains: q, mode: "insensitive" } } },
             {
               package: {
                 title: { contains: q, mode: "insensitive" },
