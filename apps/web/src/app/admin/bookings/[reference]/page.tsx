@@ -78,6 +78,16 @@ export default async function BookingDetailPage({
         where: { reference },
         include: {
           package: { select: { title: true } },
+          departure: {
+            select: {
+              id: true,
+              startsAt: true,
+              endsAt: true,
+              status: true,
+              capacityTravellers: true,
+              reservedTravellers: true,
+            },
+          },
           promotion: { select: { code: true, name: true } },
           statusHistory: {
             orderBy: { createdAt: "desc" },
@@ -144,6 +154,7 @@ export default async function BookingDetailPage({
         taxMinor: rawBooking.data.taxMinor,
         totalMinor: rawBooking.data.totalMinor,
         promotion: rawBooking.data.promotion,
+        departure: rawBooking.data.departure,
         createdAt: rawBooking.data.createdAt,
         history: rawBooking.data.statusHistory,
         paymentIntents: rawBooking.data.paymentIntents,
@@ -168,6 +179,7 @@ export default async function BookingDetailPage({
         taxMinor: rawBooking.data.taxMinor,
         totalMinor: rawBooking.data.totalMinor,
         promotion: rawBooking.data.promotion,
+        departure: null,
         createdAt: rawBooking.data.createdAt,
         history: rawBooking.data.statusHistory,
         paymentIntents: rawBooking.data.paymentIntents,
@@ -770,6 +782,16 @@ export default async function BookingDetailPage({
                       : "None"}
                   </dd>
                 </div>
+                {booking.type === "PACKAGE" ? (
+                  <div>
+                    <dt>Departure</dt>
+                    <dd>
+                      {booking.departure
+                        ? `${formatIstDateTime(booking.departure.startsAt)} · ${booking.departure.status}`
+                        : "Legacy / unlinked departure"}
+                    </dd>
+                  </div>
+                ) : null}
               </dl>
               <div className="admin-amount-card">
                 <span>Total Amount</span>
