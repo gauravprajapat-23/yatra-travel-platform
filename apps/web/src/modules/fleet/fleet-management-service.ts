@@ -6,9 +6,27 @@ import {
 
 export const vehicleStatuses = ["ACTIVE", "INACTIVE", "MAINTENANCE", "RETIRED"] as const;
 export const driverStatuses = ["ACTIVE", "INACTIVE", "ON_LEAVE", "SUSPENDED"] as const;
+export const vehicleMaintenanceStatuses = [
+  "SCHEDULED",
+  "IN_PROGRESS",
+  "COMPLETED",
+  "CANCELLED",
+] as const;
+export const vehicleDocumentTypes = [
+  "REGISTRATION",
+  "INSURANCE",
+  "POLLUTION_CERTIFICATE",
+  "PERMIT",
+  "FITNESS_CERTIFICATE",
+  "TAX",
+  "OTHER",
+] as const;
 
 export type VehicleStatusValue = (typeof vehicleStatuses)[number];
 export type DriverStatusValue = (typeof driverStatuses)[number];
+export type VehicleMaintenanceStatusValue =
+  (typeof vehicleMaintenanceStatuses)[number];
+export type VehicleDocumentTypeValue = (typeof vehicleDocumentTypes)[number];
 
 export function isVehicleStatus(value: string): value is VehicleStatusValue {
   return (vehicleStatuses as readonly string[]).includes(value);
@@ -16,6 +34,18 @@ export function isVehicleStatus(value: string): value is VehicleStatusValue {
 
 export function isDriverStatus(value: string): value is DriverStatusValue {
   return (driverStatuses as readonly string[]).includes(value);
+}
+
+export function isVehicleMaintenanceStatus(
+  value: string,
+): value is VehicleMaintenanceStatusValue {
+  return (vehicleMaintenanceStatuses as readonly string[]).includes(value);
+}
+
+export function isVehicleDocumentType(
+  value: string,
+): value is VehicleDocumentTypeValue {
+  return (vehicleDocumentTypes as readonly string[]).includes(value);
 }
 
 function normalizeSlug(value: string): string {
@@ -282,6 +312,419 @@ export async function deleteVehicleAvailabilityBlock(input: {
         entityType: "VehicleAvailabilityBlock",
         entityId: block.id,
         metadata: { vehicleId: input.vehicleId },
+      },
+    });
+  });
+}
+
+
+function assertMaintenanceMoney(input: {
+  odometerKm: number | null;
+  costMinor: bigint | null;
+  currency: string;
+}) {
+  if (
+    input.odometerKm !== null &&
+    (!Number.isInteger(input.odometerKm) || input.odometerKm < 0)
+  ) {
+    throw new Error("Maintenance odometer must be a non-negative whole number.");
+  }
+  if (input.costMinor !== null && input.costMinor < 0n) {
+    throw new Error("Maintenance cost cannot be negative.");
+  }
+  if (!/^[A-Z]{3}$/.test(input.currency)) {
+    throw new Error("Maintenance currency must be a three-letter code.");
+  }
+}
+
+export async function scheduleVehicleMaintenance(input: {
+  vehicleId: string;
+  category: string;
+  summary: string;
+  startsAt: Date;
+  endsAt: Date;
+  odometerKm: number | null;
+  costMinor: bigint | null;
+  currency: string;
+  vendor: string;
+  notes: string;
+  actorUserId: string;
+}) {
+  assertWindow(input.startsAt, input.endsAt);
+
+  const category = input.category.trim();
+  const summary = input.summary.trim();
+  const currency = input.currency.trim().toUpperCase();
+  const vendor = input.vendor.trim().slice(0, 160) || null;
+  const notes = input.notes.trim().slice(0, 2000) || null;
+
+  if (category.length < 2 || category.length > 80) {
+    throw new Error("Maintenance category must be between 2 and 80 characters.");
+  }
+  if (summary.length < 2 || summary.length > 200) {
+    throw new Error("Maintenance summary must be between 2 and 200 characters.");
+  }
+
+  assertMaintenanceMoney({
+    odometerKm: input.odometerKm,
+    costMinor: input.costMinor,
+    currency,
+  });
+
+  const db = getDb();
+
+  return db.$transaction(
+    async (tx) => {
+      const vehicle = await tx.vehicle.findUnique({
+        where: { id: input.vehicleId },
+        select: {
+          id: true,
+          displayName: true,
+          status: true,
+        },
+      });
+      if (!vehicle) throw new Error("Vehicle not found.");
+      if (vehicle.status === "RETIRED") {
+        throw new Error("Retired vehicles cannot receive new maintenance schedules.");
+      }
+
+      const bookingConflict = await tx.carBooking.findFirst({
+        where: {
+          selectedVehicleId: input.vehicleId,
+          status: { in: ["CONFIRMED", "DRIVER_ASSIGNED", "IN_PROGRESS"] },
+          startsAt: { lt: input.endsAt },
+          OR: [
+            { endsAt: null },
+            { endsAt: { gt: input.startsAt } },
+          ],
+        },
+        select: { reference: true },
+      });
+
+      if (bookingConflict) {
+        throw new Error(
+          `Maintenance overlaps assigned booking ${bookingConflict.reference}.`,
+        );
+      }
+
+      const block = await tx.vehicleAvailabilityBlock.create({
+        data: {
+          vehicleId: input.vehicleId,
+          startsAt: input.startsAt,
+          endsAt: input.endsAt,
+          reason: `Maintenance: ${summary}`.slice(0, 500),
+        },
+      });
+
+      const maintenance = await tx.vehicleMaintenanceRecord.create({
+        data: {
+          vehicleId: input.vehicleId,
+          availabilityBlockId: block.id,
+          status: "SCHEDULED",
+          category,
+          summary,
+          startsAt: input.startsAt,
+          endsAt: input.endsAt,
+          odometerKm: input.odometerKm,
+          costMinor: input.costMinor,
+          currency,
+          vendor,
+          notes,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorUserId: input.actorUserId,
+          action: "VEHICLE_MAINTENANCE_SCHEDULED",
+          entityType: "VehicleMaintenanceRecord",
+          entityId: maintenance.id,
+          metadata: {
+            vehicleId: input.vehicleId,
+            category,
+            summary,
+            startsAt: input.startsAt.toISOString(),
+            endsAt: input.endsAt.toISOString(),
+            availabilityBlockId: block.id,
+          },
+        },
+      });
+
+      return maintenance;
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
+}
+
+export async function startVehicleMaintenance(input: {
+  vehicleId: string;
+  maintenanceId: string;
+  actorUserId: string;
+}) {
+  const db = getDb();
+
+  return db.$transaction(async (tx) => {
+    const current = await tx.vehicleMaintenanceRecord.findFirst({
+      where: {
+        id: input.maintenanceId,
+        vehicleId: input.vehicleId,
+      },
+    });
+    if (!current) throw new Error("Maintenance record not found.");
+    if (current.status !== "SCHEDULED") {
+      throw new Error("Only scheduled maintenance can be started.");
+    }
+
+    const updated = await tx.vehicleMaintenanceRecord.update({
+      where: { id: current.id },
+      data: { status: "IN_PROGRESS" },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        actorUserId: input.actorUserId,
+        action: "VEHICLE_MAINTENANCE_STARTED",
+        entityType: "VehicleMaintenanceRecord",
+        entityId: current.id,
+        metadata: { vehicleId: input.vehicleId },
+      },
+    });
+
+    return updated;
+  });
+}
+
+export async function completeVehicleMaintenance(input: {
+  vehicleId: string;
+  maintenanceId: string;
+  actorUserId: string;
+}) {
+  const db = getDb();
+  const now = new Date();
+
+  return db.$transaction(async (tx) => {
+    const current = await tx.vehicleMaintenanceRecord.findFirst({
+      where: {
+        id: input.maintenanceId,
+        vehicleId: input.vehicleId,
+      },
+    });
+    if (!current) throw new Error("Maintenance record not found.");
+    if (!["SCHEDULED", "IN_PROGRESS"].includes(current.status)) {
+      throw new Error("Only open maintenance can be completed.");
+    }
+
+    const updated = await tx.vehicleMaintenanceRecord.update({
+      where: { id: current.id },
+      data: {
+        status: "COMPLETED",
+        completedAt: now,
+        availabilityBlockId: null,
+      },
+    });
+
+    if (current.availabilityBlockId) {
+      await tx.vehicleAvailabilityBlock.deleteMany({
+        where: {
+          id: current.availabilityBlockId,
+          vehicleId: input.vehicleId,
+        },
+      });
+    }
+
+    await tx.auditLog.create({
+      data: {
+        actorUserId: input.actorUserId,
+        action: "VEHICLE_MAINTENANCE_COMPLETED",
+        entityType: "VehicleMaintenanceRecord",
+        entityId: current.id,
+        metadata: {
+          vehicleId: input.vehicleId,
+          completedAt: now.toISOString(),
+        },
+      },
+    });
+
+    return updated;
+  });
+}
+
+export async function cancelVehicleMaintenance(input: {
+  vehicleId: string;
+  maintenanceId: string;
+  actorUserId: string;
+}) {
+  const db = getDb();
+
+  return db.$transaction(async (tx) => {
+    const current = await tx.vehicleMaintenanceRecord.findFirst({
+      where: {
+        id: input.maintenanceId,
+        vehicleId: input.vehicleId,
+      },
+    });
+    if (!current) throw new Error("Maintenance record not found.");
+    if (current.status !== "SCHEDULED") {
+      throw new Error("Only scheduled maintenance can be cancelled.");
+    }
+
+    const updated = await tx.vehicleMaintenanceRecord.update({
+      where: { id: current.id },
+      data: {
+        status: "CANCELLED",
+        availabilityBlockId: null,
+      },
+    });
+
+    if (current.availabilityBlockId) {
+      await tx.vehicleAvailabilityBlock.deleteMany({
+        where: {
+          id: current.availabilityBlockId,
+          vehicleId: input.vehicleId,
+        },
+      });
+    }
+
+    await tx.auditLog.create({
+      data: {
+        actorUserId: input.actorUserId,
+        action: "VEHICLE_MAINTENANCE_CANCELLED",
+        entityType: "VehicleMaintenanceRecord",
+        entityId: current.id,
+        metadata: { vehicleId: input.vehicleId },
+      },
+    });
+
+    return updated;
+  });
+}
+
+function normalizeReferenceLast4(value: string): string | null {
+  const normalized = value.trim().replace(/\s+/g, "");
+  if (!normalized) return null;
+  if (!/^[A-Za-z0-9]{1,4}$/.test(normalized)) {
+    throw new Error("Document reference suffix must be 1–4 letters or numbers.");
+  }
+  return normalized;
+}
+
+export async function saveVehicleComplianceDocument(input: {
+  id?: string;
+  vehicleId: string;
+  type: VehicleDocumentTypeValue;
+  label: string;
+  referenceLast4: string;
+  issuedAt: Date | null;
+  expiresAt: Date | null;
+  blocksDispatch: boolean;
+  notes: string;
+  actorUserId: string;
+}) {
+  const label = input.label.trim();
+  if (label.length < 2 || label.length > 120) {
+    throw new Error("Compliance document label must be between 2 and 120 characters.");
+  }
+  if (
+    input.issuedAt &&
+    input.expiresAt &&
+    input.issuedAt >= input.expiresAt
+  ) {
+    throw new Error("Compliance expiry must be after the issue date.");
+  }
+
+  const referenceLast4 = normalizeReferenceLast4(input.referenceLast4);
+  const notes = input.notes.trim().slice(0, 1000) || null;
+  const db = getDb();
+
+  return db.$transaction(async (tx) => {
+    const vehicle = await tx.vehicle.findUnique({
+      where: { id: input.vehicleId },
+      select: { id: true },
+    });
+    if (!vehicle) throw new Error("Vehicle not found.");
+
+    const document = input.id
+      ? await tx.vehicleComplianceDocument.update({
+          where: { id: input.id },
+          data: {
+            type: input.type,
+            label,
+            referenceLast4,
+            issuedAt: input.issuedAt,
+            expiresAt: input.expiresAt,
+            blocksDispatch: input.blocksDispatch,
+            notes,
+          },
+        })
+      : await tx.vehicleComplianceDocument.create({
+          data: {
+            vehicleId: input.vehicleId,
+            type: input.type,
+            label,
+            referenceLast4,
+            issuedAt: input.issuedAt,
+            expiresAt: input.expiresAt,
+            blocksDispatch: input.blocksDispatch,
+            notes,
+          },
+        });
+
+    if (document.vehicleId !== input.vehicleId) {
+      throw new Error("Compliance document does not belong to this vehicle.");
+    }
+
+    await tx.auditLog.create({
+      data: {
+        actorUserId: input.actorUserId,
+        action: input.id
+          ? "VEHICLE_COMPLIANCE_UPDATED"
+          : "VEHICLE_COMPLIANCE_CREATED",
+        entityType: "VehicleComplianceDocument",
+        entityId: document.id,
+        metadata: {
+          vehicleId: input.vehicleId,
+          type: document.type,
+          expiresAt: document.expiresAt?.toISOString() ?? null,
+          blocksDispatch: document.blocksDispatch,
+          referenceStored: Boolean(referenceLast4),
+        },
+      },
+    });
+
+    return document;
+  });
+}
+
+export async function deleteVehicleComplianceDocument(input: {
+  vehicleId: string;
+  documentId: string;
+  actorUserId: string;
+}) {
+  const db = getDb();
+
+  return db.$transaction(async (tx) => {
+    const document = await tx.vehicleComplianceDocument.findFirst({
+      where: {
+        id: input.documentId,
+        vehicleId: input.vehicleId,
+      },
+    });
+    if (!document) throw new Error("Compliance document not found.");
+
+    await tx.vehicleComplianceDocument.delete({
+      where: { id: document.id },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        actorUserId: input.actorUserId,
+        action: "VEHICLE_COMPLIANCE_DELETED",
+        entityType: "VehicleComplianceDocument",
+        entityId: document.id,
+        metadata: {
+          vehicleId: input.vehicleId,
+          type: document.type,
+        },
       },
     });
   });
