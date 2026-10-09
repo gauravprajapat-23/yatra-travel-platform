@@ -1,6 +1,6 @@
 # Phase 20 — Public UX / SEO Audit Status
 
-Status: CODE AUDIT + SAFETY GATES IMPLEMENTED — FINAL CONSOLIDATED CI RUNNING
+Status: CODE + CI CERTIFIED — DEPLOYED SEO / REAL-DEVICE REVIEW PENDING
 
 Updated: 2026-10-09
 
@@ -49,9 +49,20 @@ Finish the public-facing quality pass without changing business logic: preserve 
 - [x] Verifier checks branded 404 recovery
 - [x] Application CI runs SEO/privacy certification
 
+## CI certification evidence
+
+- Application CI run 37923472764 — PASS
+- Certified source commit: `58a3dbc0fc67435be9108941c2227c347c52c75b`
+- Public SEO/private-route certification — PASS
+- Production build — PASS
+- Runtime SEO E2E — PASS
+- Branded 404 E2E — PASS
+- Mobile admin E2E — PASS
+- Full browser suite: 41 tests — PASS
+
 ## Remaining Phase 20 work
 
-- [ ] Final newest-head Application CI PASS after Phase 17/19/20 additions
+- [x] Final newest-head Application CI PASS after Phase 17/19/20 additions — run 37923472764 PASS
 - [ ] Deployed-page metadata inspection on production domain
 - [ ] Search-engine crawl check after production launch
 - [ ] Real-device visual pass on representative mobile/tablet/desktop sizes
