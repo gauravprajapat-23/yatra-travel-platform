@@ -106,6 +106,9 @@ jobs:
       - name: Bootstrap package departure customer fixture
         run: npm run db:bootstrap:e2e-package-departure -w @yatra/db
 
+      - name: Bootstrap CRM browser fixture
+        run: npm run db:bootstrap:e2e-crm -w @yatra/db
+
       - name: Verify package departure booking replay and release
         run: npm run verify:package-departure-booking -w @yatra/web
 
