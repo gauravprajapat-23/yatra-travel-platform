@@ -31,4 +31,8 @@ test("admin can find and inspect a discounted promotion booking", async ({ page 
   await expect(page.getByText("E2E10 · E2E Ten Percent")).toBeVisible();
   await expect(page.getByText("Promotion discount", { exact: true })).toBeVisible();
   await expect(page.getByText("E2E10", { exact: true }).first()).toBeVisible();
+
+  await page.goto("/admin/reports");
+  await expect(page.getByText("Promotion Savings", { exact: true })).toBeVisible();
+  await expect(page.getByText("E2E10 · E2E Ten Percent")).toBeVisible();
 });
