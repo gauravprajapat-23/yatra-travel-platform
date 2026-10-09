@@ -1,6 +1,6 @@
 # Phase 14 — Customer Communication & CRM Status
 
-Status: INTERNAL CRM IMPLEMENTED — FINAL CURRENT-HEAD BROWSER CERTIFICATION RUNNING
+Status: INTERNAL CRM CODE + BROWSER BASELINE CERTIFIED — LATEST REASSIGNMENT HEAD RUNNING
 
 Updated: 2026-10-09
 
@@ -104,7 +104,8 @@ This phase intentionally separates:
 - [x] E2E checks read-only Operations access on central CRM queue
 - [x] Prisma Client removed from lead server-action closure
 - [x] Form-system shared submit controls used for follow-up mutations
-- [ ] Final current-head browser run PASS
+- [x] CRM interaction/follow-up browser baseline PASS — Application CI 37903691606
+- [ ] Final newest-head CI PASS after queue reassignment/report refinements
 
 ## Certification evidence
 
@@ -112,7 +113,7 @@ Already green:
 - CRM schema: Neon Migration Verify PASS
 - CRM migration / DB foundation: Application CI PASS
 - Audited CRM service layer: Application CI PASS
-- Post-Prisma-fix Application CI has passed typecheck, domain/provider tests, production build, admin form-system certification, and route-protection certification; Playwright is the remaining active step at this checkpoint.
+- Post-Prisma-fix Application CI 37903691606 PASS, including CRM browser lifecycle, typechecks, tests, production build, admin form-system certification, route protection and Playwright.
 
 ## Outbound communication gate
 
