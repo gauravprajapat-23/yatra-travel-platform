@@ -118,6 +118,9 @@ jobs:
       - name: Verify fleet operations foundation
         run: npm run db:verify:fleet-operations -w @yatra/db
 
+      - name: Verify fleet maintenance lifecycle
+        run: npm run verify:fleet-maintenance -w @yatra/web
+
       - name: Lint
         run: npm run lint
 
