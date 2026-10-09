@@ -30,6 +30,8 @@ export const permissions = [
   "lead.write",
   "customer.read",
   "customer.write",
+  "crm.read",
+  "crm.write",
   "payment.read",
   "payment.reconcile",
   "refund.manage",
@@ -61,6 +63,8 @@ export const rolePermissions: Readonly<Record<RoleKey, readonly Permission[]>> =
     "lead.write",
     "customer.read",
     "customer.write",
+    "crm.read",
+    "crm.write",
     "payment.read",
   ],
   OPERATIONS: [
@@ -73,6 +77,7 @@ export const rolePermissions: Readonly<Record<RoleKey, readonly Permission[]>> =
     "driver.write",
     "package.read",
     "customer.read",
+    "crm.read",
   ],
   CONTENT_SEO: [
     "admin.access",
@@ -100,6 +105,7 @@ export const rolePermissions: Readonly<Record<RoleKey, readonly Permission[]>> =
     "content.read",
     "lead.read",
     "customer.read",
+    "crm.read",
     "payment.read",
     "report.read",
     "audit.read",
