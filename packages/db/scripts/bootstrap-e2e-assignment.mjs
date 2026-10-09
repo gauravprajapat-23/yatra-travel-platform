@@ -17,6 +17,7 @@ const ids = {
   vehicleClass: "e2e_assignment_class",
   availableVehicle: "e2e_assignment_vehicle",
   busyVehicle: "e2e_assignment_busy_vehicle",
+  complianceVehicle: "e2e_assignment_compliance_vehicle",
   availableDriver: "e2e_assignment_driver",
   busyDriver: "e2e_assignment_busy_driver",
   targetBooking: "e2e_assignment_booking",
@@ -55,8 +56,8 @@ try {
     [ids.availableDriver, ids.busyDriver],
   );
   await client.query(
-    `DELETE FROM "Vehicle" WHERE "id" IN ($1,$2)`,
-    [ids.availableVehicle, ids.busyVehicle],
+    `DELETE FROM "Vehicle" WHERE "id" IN ($1,$2,$3)`,
+    [ids.availableVehicle, ids.busyVehicle, ids.complianceVehicle],
   );
   await client.query(
     `DELETE FROM "VehicleClass" WHERE "id" = $1`,
@@ -78,10 +79,28 @@ try {
       INSERT INTO "Vehicle"
         ("id","slug","registrationNumber","displayName","vehicleClassId","status","seats","luggage","airConditioned","isFeatured","createdAt","updatedAt")
       VALUES
-        ($1,'e2e-assignment-vehicle','MP04E2E9999','E2E Operations Vehicle',$3,'ACTIVE'::"VehicleStatus",6,3,true,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
-        ($2,'e2e-assignment-busy-vehicle','MP04E2E8888','E2E Busy Vehicle',$3,'ACTIVE'::"VehicleStatus",6,3,true,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+        ($1,'e2e-assignment-vehicle','MP04E2E9999','E2E Operations Vehicle',$4,'ACTIVE'::"VehicleStatus",6,3,true,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
+        ($2,'e2e-assignment-busy-vehicle','MP04E2E8888','E2E Busy Vehicle',$4,'ACTIVE'::"VehicleStatus",6,3,true,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
+        ($3,'e2e-assignment-compliance-vehicle','MP04E2E7777','E2E Compliance Vehicle',$4,'ACTIVE'::"VehicleStatus",6,3,true,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
     `,
-    [ids.availableVehicle, ids.busyVehicle, ids.vehicleClass],
+    [ids.availableVehicle, ids.busyVehicle, ids.complianceVehicle, ids.vehicleClass],
+  );
+
+  await client.query(
+    `
+      INSERT INTO "VehicleComplianceDocument" (
+        "id","vehicleId","type","label","referenceLast4","issuedAt","expiresAt",
+        "blocksDispatch","createdAt","updatedAt"
+      )
+      VALUES (
+        'e2e_assignment_expired_insurance',$1,
+        'INSURANCE'::"VehicleDocumentType",'E2E Required Insurance','7777',
+        CURRENT_TIMESTAMP - INTERVAL '300 days',
+        CURRENT_TIMESTAMP + INTERVAL '3 days',
+        true,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP
+      )
+    `,
+    [ids.complianceVehicle],
   );
 
   await client.query(
