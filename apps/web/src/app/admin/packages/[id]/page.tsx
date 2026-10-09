@@ -32,6 +32,12 @@ import {
   stringifyStructuredBody,
   updatePackageStructuredContentBody,
 } from "@/modules/content/admin-structured-content-service";
+import {
+  deletePackageDeparture,
+  isPackageDepartureAdminStatus,
+  packageDepartureAdminStatuses,
+  savePackageDeparture,
+} from "@/modules/packages/package-departure-management-service";
 
 export const dynamic = "force-dynamic";
 
@@ -91,6 +97,7 @@ export default async function PackageDetailPage({
     "destinations",
     "itinerary",
     "pricing",
+    "departures",
     "content",
     "media",
     "publishing",
@@ -125,6 +132,17 @@ export default async function PackageDetailPage({
         },
         priceOptions: {
           orderBy: [{ isActive: "desc" }, { sortOrder: "asc" }],
+        },
+        departures: {
+          orderBy: { startsAt: "asc" },
+          include: {
+            _count: {
+              select: {
+                quotes: true,
+                bookings: true,
+              },
+            },
+          },
         },
         itinerary: {
           orderBy: { dayNumber: "asc" },
@@ -221,6 +239,62 @@ export default async function PackageDetailPage({
 
     revalidatePath(`/admin/packages/${packageId}`);
     revalidatePath("/admin/packages");
+    revalidatePath(`/packages/${packageSlug}`);
+  }
+
+  async function saveDeparture(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "package.write")) {
+      redirect("/admin/packages");
+    }
+
+    const status = String(formData.get("status") ?? "DRAFT");
+    if (!isPackageDepartureAdminStatus(status)) {
+      throw new Error("Invalid package departure status.");
+    }
+
+    const startsAt =
+      parseIstDateTimeLocal(formData.get("startsAt")) ?? new Date(NaN);
+    const endsAt = parseIstDateTimeLocal(formData.get("endsAt"));
+    const salesOpenAt = parseIstDateTimeLocal(formData.get("salesOpenAt"));
+    const salesCloseAt = parseIstDateTimeLocal(formData.get("salesCloseAt"));
+
+    await savePackageDeparture({
+      id: String(formData.get("departureId") ?? "").trim() || undefined,
+      packageId,
+      startsAt,
+      endsAt,
+      status,
+      capacityTravellers: optionalPositiveInt(
+        formData.get("capacityTravellers"),
+      ),
+      salesOpenAt,
+      salesCloseAt,
+      notes: String(formData.get("notes") ?? ""),
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath(`/admin/packages/${packageId}`);
+    revalidatePath(`/packages/${packageSlug}`);
+  }
+
+  async function removeDeparture(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "package.write")) {
+      redirect("/admin/packages");
+    }
+
+    await deletePackageDeparture({
+      departureId: String(formData.get("departureId") ?? ""),
+      packageId,
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath(`/admin/packages/${packageId}`);
     revalidatePath(`/packages/${packageSlug}`);
   }
 
@@ -699,6 +773,15 @@ export default async function PackageDetailPage({
             badgeTone: pkg.priceOptions.length > 0 ? "success" : "warning",
           },
           {
+            key: "departures",
+            label: "Departures",
+            description: "Dates & inventory",
+            badge: String(pkg.departures.length),
+            badgeTone: pkg.departures.some((item) => item.status === "OPEN")
+              ? "success"
+              : "warning",
+          },
+          {
             key: "content",
             label: "Content",
             description: "Structured body",
@@ -785,6 +868,15 @@ export default async function PackageDetailPage({
                     : "Add at least one pricing option",
                 ready: pkg.priceOptions.length > 0,
                 href: `/admin/packages/${packageId}?tab=pricing`,
+              },
+              {
+                label: "Departures",
+                detail:
+                  pkg.departures.length > 0
+                    ? `${pkg.departures.length} configured · ${pkg.departures.filter((item) => item.status === "OPEN").length} open`
+                    : "Add at least one sellable departure",
+                ready: pkg.departures.some((item) => item.status === "OPEN"),
+                href: `/admin/packages/${packageId}?tab=departures`,
               },
               {
                 label: "Content",
@@ -1195,6 +1287,239 @@ export default async function PackageDetailPage({
                   />
                 </form>
               </section>
+            ) : null}
+          </section>
+        ) : null}
+
+        {activeTab === "departures" ? (
+          <section className="admin-panel admin-detail-card">
+            <div className="admin-panel-heading">
+              <div>
+                <h2>Package Departures</h2>
+                <p>
+                  Manage sellable travel dates, booking windows and traveller
+                  inventory. Quote previews do not reserve capacity.
+                </p>
+              </div>
+              <span>{pkg.departures.length} departure{pkg.departures.length === 1 ? "" : "s"}</span>
+            </div>
+
+            {pkg.departures.length === 0 ? (
+              <p>No package departures configured.</p>
+            ) : (
+              <div className="admin-table-wrap">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Departure</th>
+                      <th>Status</th>
+                      <th>Inventory</th>
+                      <th>Sales Window</th>
+                      <th>Usage</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pkg.departures.map((departure) => (
+                      <tr key={departure.id}>
+                        <td>
+                          <strong>{formatIstDateTime(departure.startsAt)}</strong>
+                          <br />
+                          <small>
+                            {departure.endsAt
+                              ? `Ends ${formatIstDateTime(departure.endsAt)}`
+                              : "No end time"}
+                          </small>
+                        </td>
+                        <td>
+                          <StatusPill
+                            tone={
+                              departure.status === "OPEN"
+                                ? "green"
+                                : departure.status === "SOLD_OUT"
+                                  ? "red"
+                                  : departure.status === "DRAFT"
+                                    ? "orange"
+                                    : "gray"
+                            }
+                          >
+                            {departure.status.replaceAll("_", " ")}
+                          </StatusPill>
+                        </td>
+                        <td>
+                          {departure.reservedTravellers}
+                          {" / "}
+                          {departure.capacityTravellers ?? "Unlimited"}
+                          <br />
+                          <small>travellers reserved</small>
+                        </td>
+                        <td>
+                          {departure.salesOpenAt
+                            ? formatIstDateTime(departure.salesOpenAt)
+                            : "Immediate"}
+                          <br />
+                          <small>
+                            to{" "}
+                            {departure.salesCloseAt
+                              ? formatIstDateTime(departure.salesCloseAt)
+                              : "departure"}
+                          </small>
+                        </td>
+                        <td>
+                          {departure._count.quotes} quotes ·{" "}
+                          {departure._count.bookings} bookings
+                        </td>
+                        <td>
+                          {hasPermission(session.roles, "package.write") ? (
+                            <details>
+                              <summary>Edit</summary>
+                              <form action={saveDeparture}>
+                                <input type="hidden" name="departureId" value={departure.id} />
+                                <AdminFormGrid columns={2}>
+                                  <AdminField label="Starts" htmlFor={`departure-start-${departure.id}`} required>
+                                    <input
+                                      id={`departure-start-${departure.id}`}
+                                      type="datetime-local"
+                                      name="startsAt"
+                                      defaultValue={formatIstDateTimeLocal(departure.startsAt)}
+                                      required
+                                    />
+                                  </AdminField>
+                                  <AdminField label="Ends" htmlFor={`departure-end-${departure.id}`}>
+                                    <input
+                                      id={`departure-end-${departure.id}`}
+                                      type="datetime-local"
+                                      name="endsAt"
+                                      defaultValue={formatIstDateTimeLocal(departure.endsAt)}
+                                    />
+                                  </AdminField>
+                                  <AdminField label="Status" htmlFor={`departure-status-${departure.id}`}>
+                                    <select
+                                      id={`departure-status-${departure.id}`}
+                                      name="status"
+                                      defaultValue={departure.status}
+                                    >
+                                      {packageDepartureAdminStatuses.map((status) => (
+                                        <option key={status} value={status}>
+                                          {status.replaceAll("_", " ")}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </AdminField>
+                                  <AdminField label="Capacity" htmlFor={`departure-capacity-${departure.id}`}>
+                                    <input
+                                      id={`departure-capacity-${departure.id}`}
+                                      type="number"
+                                      name="capacityTravellers"
+                                      min={1}
+                                      defaultValue={departure.capacityTravellers ?? ""}
+                                    />
+                                  </AdminField>
+                                  <AdminField label="Sales open" htmlFor={`departure-sales-open-${departure.id}`}>
+                                    <input
+                                      id={`departure-sales-open-${departure.id}`}
+                                      type="datetime-local"
+                                      name="salesOpenAt"
+                                      defaultValue={formatIstDateTimeLocal(departure.salesOpenAt)}
+                                    />
+                                  </AdminField>
+                                  <AdminField label="Sales close" htmlFor={`departure-sales-close-${departure.id}`}>
+                                    <input
+                                      id={`departure-sales-close-${departure.id}`}
+                                      type="datetime-local"
+                                      name="salesCloseAt"
+                                      defaultValue={formatIstDateTimeLocal(departure.salesCloseAt)}
+                                    />
+                                  </AdminField>
+                                  <AdminField label="Notes" htmlFor={`departure-notes-${departure.id}`} wide>
+                                    <textarea
+                                      id={`departure-notes-${departure.id}`}
+                                      name="notes"
+                                      defaultValue={departure.notes ?? ""}
+                                      maxLength={2000}
+                                      rows={4}
+                                    />
+                                  </AdminField>
+                                </AdminFormGrid>
+                                <AdminSubmitButton
+                                  label="Save Departure"
+                                  pendingLabel="Saving Departure…"
+                                />
+                              </form>
+                              {departure.status === "DRAFT" &&
+                              departure.reservedTravellers === 0 &&
+                              departure._count.quotes === 0 &&
+                              departure._count.bookings === 0 ? (
+                                <form action={removeDeparture}>
+                                  <input type="hidden" name="departureId" value={departure.id} />
+                                  <AdminConfirmSubmitButton
+                                    label="Delete Draft"
+                                    pendingLabel="Deleting…"
+                                    confirmMessage="Delete this unused draft departure?"
+                                  />
+                                </form>
+                              ) : null}
+                            </details>
+                          ) : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {hasPermission(session.roles, "package.write") ? (
+              <form action={saveDeparture}>
+                <h3>Add Departure</h3>
+                <AdminFormGrid columns={2}>
+                  <AdminField label="Starts" htmlFor="newDepartureStart" required>
+                    <input id="newDepartureStart" type="datetime-local" name="startsAt" required />
+                  </AdminField>
+                  <AdminField label="Ends" htmlFor="newDepartureEnd">
+                    <input id="newDepartureEnd" type="datetime-local" name="endsAt" />
+                  </AdminField>
+                  <AdminField label="Status" htmlFor="newDepartureStatus">
+                    <select id="newDepartureStatus" name="status" defaultValue="DRAFT">
+                      {packageDepartureAdminStatuses.map((status) => (
+                        <option key={status} value={status}>
+                          {status.replaceAll("_", " ")}
+                        </option>
+                      ))}
+                    </select>
+                  </AdminField>
+                  <AdminField
+                    label="Traveller capacity"
+                    htmlFor="newDepartureCapacity"
+                    hint="Leave blank for unlimited inventory."
+                  >
+                    <input
+                      id="newDepartureCapacity"
+                      type="number"
+                      name="capacityTravellers"
+                      min={1}
+                    />
+                  </AdminField>
+                  <AdminField label="Sales open" htmlFor="newDepartureSalesOpen">
+                    <input id="newDepartureSalesOpen" type="datetime-local" name="salesOpenAt" />
+                  </AdminField>
+                  <AdminField label="Sales close" htmlFor="newDepartureSalesClose">
+                    <input id="newDepartureSalesClose" type="datetime-local" name="salesCloseAt" />
+                  </AdminField>
+                  <AdminField label="Notes" htmlFor="newDepartureNotes" wide>
+                    <textarea
+                      id="newDepartureNotes"
+                      name="notes"
+                      maxLength={2000}
+                      rows={4}
+                    />
+                  </AdminField>
+                </AdminFormGrid>
+                <AdminSubmitButton
+                  label="Add Departure"
+                  pendingLabel="Adding Departure…"
+                />
+              </form>
             ) : null}
           </section>
         ) : null}
