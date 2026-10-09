@@ -224,12 +224,13 @@ export default async function LeadDetailPage({
     const previousStatus = leadStatus;
 
     try {
-      await db.$transaction([
-        db.lead.update({
+      const actionDb = getDb();
+      await actionDb.$transaction([
+        actionDb.lead.update({
           where: { id: leadId },
           data: { status },
         }),
-        db.auditLog.create({
+        actionDb.auditLog.create({
           data: {
             actorUserId: currentSession.userId,
             action: "LEAD_STATUS_CHANGED",
