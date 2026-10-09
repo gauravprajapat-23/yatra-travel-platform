@@ -2,8 +2,40 @@ import { createHash } from "node:crypto";
 import { getDb } from "@yatra/db/client";
 
 const WINDOW_MS = 15 * 60 * 1000;
-const IDENTITY_LIMIT = 8;
-const IP_LIMIT = 30;
+const DEFAULT_IDENTITY_LIMIT = 8;
+const DEFAULT_IP_LIMIT = 30;
+
+function e2eRateLimitOverride(
+  envName: "E2E_ADMIN_LOGIN_IDENTITY_LIMIT" | "E2E_ADMIN_LOGIN_IP_LIMIT",
+  fallback: number,
+): number {
+  if (process.env.E2E_ALLOW_INSECURE_ADMIN_COOKIE !== "true") {
+    return fallback;
+  }
+
+  const raw = process.env[envName]?.trim();
+  if (!raw) return fallback;
+
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed < fallback || parsed > 500) {
+    return fallback;
+  }
+
+  return parsed;
+}
+
+function adminLoginLimits() {
+  return {
+    identity: e2eRateLimitOverride(
+      "E2E_ADMIN_LOGIN_IDENTITY_LIMIT",
+      DEFAULT_IDENTITY_LIMIT,
+    ),
+    ip: e2eRateLimitOverride(
+      "E2E_ADMIN_LOGIN_IP_LIMIT",
+      DEFAULT_IP_LIMIT,
+    ),
+  };
+}
 
 function sha256(value: string): string {
   return createHash("sha256").update(value).digest("hex");
@@ -74,10 +106,12 @@ export async function consumeAdminLoginAttempt(input: {
     }),
   ]);
 
+  const limits = adminLoginLimits();
+
   return {
     allowed:
-      identityAttempts <= IDENTITY_LIMIT &&
-      ipAttempts <= IP_LIMIT,
+      identityAttempts <= limits.identity &&
+      ipAttempts <= limits.ip,
     retryAfterSeconds: Math.ceil(WINDOW_MS / 1000),
     identityHash,
   };
