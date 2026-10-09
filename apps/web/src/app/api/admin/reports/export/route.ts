@@ -73,6 +73,10 @@ export async function GET(request: Request) {
     assignedTrips,
     packageGroups,
     routeBookings,
+    openMaintenanceCount,
+    expiredComplianceCount,
+    expiringComplianceCount,
+    maintenanceCostGroups,
   ] = await Promise.all([
     db.carBooking.count({
       where: createdRange ? { createdAt: createdRange } : undefined,
@@ -133,6 +137,35 @@ export async function GET(request: Request) {
         totalMinor: true,
       },
       take: 10000,
+    }),
+    db.vehicleMaintenanceRecord.count({
+      where: { status: { in: ["SCHEDULED", "IN_PROGRESS"] } },
+    }),
+    db.vehicleComplianceDocument.count({
+      where: {
+        blocksDispatch: true,
+        expiresAt: { not: null, lte: now },
+        vehicle: { status: { not: "RETIRED" } },
+      },
+    }),
+    db.vehicleComplianceDocument.count({
+      where: {
+        blocksDispatch: true,
+        expiresAt: {
+          gt: now,
+          lte: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+        },
+        vehicle: { status: { not: "RETIRED" } },
+      },
+    }),
+    db.vehicleMaintenanceRecord.groupBy({
+      by: ["currency"],
+      where: {
+        status: "COMPLETED",
+        costMinor: { not: null },
+        ...(createdRange ? { completedAt: createdRange } : {}),
+      },
+      _sum: { costMinor: true },
     }),
   ]);
 
@@ -197,6 +230,9 @@ export async function GET(request: Request) {
     ["Summary", "Qualified / closed leads", "", "", convertedLeadCount],
     ["Summary", "Active vehicles", "", "", activeVehicles],
     ["Summary", "Vehicles currently assigned", "", "", assignedTrips.length],
+    ["Fleet", "Open maintenance", "", "", openMaintenanceCount],
+    ["Fleet", "Expired dispatch-blocking documents", "", "", expiredComplianceCount],
+    ["Fleet", "Dispatch-blocking documents expiring within 30 days", "", "", expiringComplianceCount],
   ];
 
   for (const currency of [...currencies].sort()) {
@@ -208,6 +244,16 @@ export async function GET(request: Request) {
       ["Financial", "Processed refund minor", "", currency, refundedMinor],
       ["Financial", "Net captured minor", "", currency, capturedMinor - refundedMinor],
     );
+  }
+
+  for (const group of maintenanceCostGroups) {
+    rows.push([
+      "Fleet",
+      "Completed maintenance cost minor",
+      "",
+      group.currency,
+      group._sum.costMinor ?? 0n,
+    ]);
   }
 
   for (const group of packageGroups) {
