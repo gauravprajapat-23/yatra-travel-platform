@@ -31,6 +31,7 @@ test("mobile admin dispatch remains usable without page-level horizontal overflo
     "/admin/dispatch",
     "/admin/bookings",
     "/admin/reports",
+    "/admin/crm",
     "/admin/notifications",
     "/admin/bookings/YAT-E2EASSIGN?tab=operations",
     "/admin/bookings/YAT-E2EREFUND?tab=payments",
