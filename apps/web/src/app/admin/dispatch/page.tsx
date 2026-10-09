@@ -54,6 +54,8 @@ export default async function DispatchPage({
     driverBlocks,
     expiringLicenses,
     maintenanceVehicles,
+    structuredMaintenance,
+    complianceAlerts,
     activeVehicles,
     activeDrivers,
   ] = await Promise.all([
@@ -170,6 +172,44 @@ export default async function DispatchPage({
         vehicleClass: { select: { name: true } },
       },
     }),
+    db.vehicleMaintenanceRecord.findMany({
+      where: {
+        status: { in: ["SCHEDULED", "IN_PROGRESS"] },
+        startsAt: { lt: horizon },
+        endsAt: { gt: now },
+      },
+      orderBy: { startsAt: "asc" },
+      take: 100,
+      include: {
+        vehicle: {
+          select: {
+            id: true,
+            displayName: true,
+            registrationNumber: true,
+            status: true,
+          },
+        },
+      },
+    }),
+    db.vehicleComplianceDocument.findMany({
+      where: {
+        blocksDispatch: true,
+        expiresAt: { not: null, lte: licenseAlertThrough },
+        vehicle: { status: { not: "RETIRED" } },
+      },
+      orderBy: { expiresAt: "asc" },
+      take: 100,
+      include: {
+        vehicle: {
+          select: {
+            id: true,
+            displayName: true,
+            registrationNumber: true,
+            status: true,
+          },
+        },
+      },
+    }),
     db.vehicle.count({ where: { status: "ACTIVE" } }),
     db.driver.count({ where: { status: "ACTIVE" } }),
   ]);
@@ -214,6 +254,24 @@ export default async function DispatchPage({
           label: `${maintenanceVehicles.length} vehicle${maintenanceVehicles.length === 1 ? "" : "s"} currently marked MAINTENANCE and excluded from active dispatch resources.`,
           href: "#maintenance-alerts",
           tone: "orange" as const,
+        }]
+      : []),
+    ...(structuredMaintenance.length > 0
+      ? [{
+          label: `${structuredMaintenance.length} scheduled/in-progress maintenance window${structuredMaintenance.length === 1 ? "" : "s"} overlap the next ${days} days.`,
+          href: "#structured-maintenance",
+          tone: "orange" as const,
+        }]
+      : []),
+    ...(complianceAlerts.length > 0
+      ? [{
+          label: `${complianceAlerts.length} dispatch-blocking vehicle document${complianceAlerts.length === 1 ? "" : "s"} are expired or expire within 30 days.`,
+          href: "#compliance-alerts",
+          tone: complianceAlerts.some(
+            (item) => item.expiresAt && item.expiresAt <= now,
+          )
+            ? ("red" as const)
+            : ("orange" as const),
         }]
       : []),
     ...((vehicleBlocks.length + driverBlocks.length) > 0
@@ -585,6 +643,102 @@ export default async function DispatchPage({
                   <td><Link href={`/admin/vehicles/${vehicle.id}`}>Review →</Link></td>
                 </tr>
               ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="admin-panel" id="structured-maintenance">
+        <div className="admin-panel-heading">
+          <h2>Structured Maintenance Schedule</h2>
+          <Link href="/admin/vehicles">Fleet Management →</Link>
+        </div>
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Vehicle</th>
+                <th>Status</th>
+                <th>Service</th>
+                <th>Starts</th>
+                <th>Ends</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {structuredMaintenance.length === 0 ? (
+                <tr>
+                  <td colSpan={6}>No scheduled or in-progress maintenance overlaps this planning window.</td>
+                </tr>
+              ) : structuredMaintenance.map((item) => (
+                <tr key={item.id}>
+                  <td>
+                    {item.vehicle.displayName} · {item.vehicle.registrationNumber}
+                  </td>
+                  <td>
+                    <StatusPill tone={item.status === "IN_PROGRESS" ? "red" : "orange"}>
+                      {item.status.replaceAll("_", " ")}
+                    </StatusPill>
+                  </td>
+                  <td>{item.category} · {item.summary}</td>
+                  <td>{formatIstDateTime(item.startsAt)}</td>
+                  <td>{formatIstDateTime(item.endsAt)}</td>
+                  <td>
+                    <Link href={`/admin/vehicles/${item.vehicle.id}?tab=maintenance`}>
+                      Review →
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="admin-panel" id="compliance-alerts">
+        <div className="admin-panel-heading">
+          <h2>Vehicle Compliance Alerts</h2>
+          <small>Dispatch-blocking documents expired or expiring within 30 days</small>
+        </div>
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Vehicle</th>
+                <th>Document</th>
+                <th>Expiry</th>
+                <th>State</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {complianceAlerts.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>No dispatch-blocking compliance documents expire within 30 days.</td>
+                </tr>
+              ) : complianceAlerts.map((document) => {
+                const expired =
+                  document.expiresAt !== null && document.expiresAt <= now;
+                return (
+                  <tr key={document.id}>
+                    <td>
+                      {document.vehicle.displayName} · {document.vehicle.registrationNumber}
+                    </td>
+                    <td>{document.type.replaceAll("_", " ")} · {document.label}</td>
+                    <td>{document.expiresAt ? formatIstDate(document.expiresAt) : "Not set"}</td>
+                    <td>
+                      <StatusPill tone={expired ? "red" : "orange"}>
+                        {expired ? "EXPIRED" : "EXPIRING"}
+                      </StatusPill>
+                    </td>
+                    <td>
+                      <Link href={`/admin/vehicles/${document.vehicle.id}?tab=compliance`}>
+                        Review →
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
