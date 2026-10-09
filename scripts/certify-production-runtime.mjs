@@ -14,19 +14,47 @@ function has(flag) {
   return args.includes(flag);
 }
 
-const baseUrl = (
+const rawBaseUrl =
   value("--url") ||
   process.env.PRODUCTION_URL ||
   process.env.NEXT_PUBLIC_APP_URL ||
-  ""
-).replace(/\/$/, "");
+  "";
+
+function normalizeBaseUrl(raw) {
+  let parsed;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return null;
+  }
+
+  if (!["http:", "https:"].includes(parsed.protocol)) return null;
+  if (parsed.username || parsed.password) return null;
+  if (parsed.search || parsed.hash) return null;
+  if (parsed.pathname !== "/" && parsed.pathname !== "") return null;
+
+  const local =
+    parsed.hostname === "localhost" ||
+    parsed.hostname === "127.0.0.1" ||
+    parsed.hostname === "::1";
+
+  if (!local && parsed.protocol !== "https:") return null;
+
+  return parsed.origin;
+}
+
+const baseUrl = normalizeBaseUrl(rawBaseUrl);
 
 const expectedCommit = value("--expect-commit").trim();
 const rawModes = value("--modes", "core");
-const modes = rawModes
-  .split(",")
-  .map((item) => item.trim().toLowerCase())
-  .filter(Boolean);
+const modes = [
+  ...new Set(
+    rawModes
+      .split(",")
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean),
+  ),
+];
 
 const allowedModes = new Set([
   "core",
@@ -43,7 +71,7 @@ const allowedModes = new Set([
   "full",
 ]);
 
-if (!baseUrl || !/^https?:\/\//i.test(baseUrl)) {
+if (!baseUrl) {
   console.error(
     "Usage: node scripts/certify-production-runtime.mjs --url https://example.com --modes core,car,fleet [--expect-commit <sha>]",
   );
@@ -60,6 +88,51 @@ for (const mode of modes) {
     console.error(`Unknown readiness mode: ${mode}`);
     process.exit(2);
   }
+}
+
+if (modes.includes("full") && modes.length > 1) {
+  console.error('Mode "full" cannot be combined with other modes.');
+  process.exit(2);
+}
+
+if (
+  expectedCommit &&
+  !/^[0-9a-f]{7,40}$/i.test(expectedCommit)
+) {
+  console.error(
+    "Expected commit must be a 7–40 character hexadecimal Git SHA or prefix.",
+  );
+  process.exit(2);
+}
+
+if (
+  has("--require-refunds") &&
+  !modes.some((mode) => ["payments", "full"].includes(mode))
+) {
+  console.error(
+    "--require-refunds requires payments or full readiness mode.",
+  );
+  process.exit(2);
+}
+
+if (
+  has("--require-password-reset") &&
+  !modes.some((mode) => ["customer", "full"].includes(mode))
+) {
+  console.error(
+    "--require-password-reset requires customer or full readiness mode.",
+  );
+  process.exit(2);
+}
+
+if (
+  has("--require-departures") &&
+  !modes.some((mode) => ["package", "full"].includes(mode))
+) {
+  console.error(
+    "--require-departures requires package or full readiness mode.",
+  );
+  process.exit(2);
 }
 
 const sharedFlags = [];
