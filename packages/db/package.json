@@ -38,7 +38,8 @@
     "db:bootstrap:e2e-promotion-preview": "node scripts/bootstrap-e2e-promotion-preview.mjs",
     "db:verify:fleet-operations": "node scripts/verify-fleet-operations-foundation.mjs",
     "db:verify:package-departures": "node scripts/verify-package-departure-foundation.mjs",
-    "db:bootstrap:e2e-package-departure": "node scripts/bootstrap-e2e-package-departure.mjs"
+    "db:bootstrap:e2e-package-departure": "node scripts/bootstrap-e2e-package-departure.mjs",
+    "db:verify:crm": "node scripts/verify-crm-foundation.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
