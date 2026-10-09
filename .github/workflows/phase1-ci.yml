@@ -82,6 +82,9 @@ jobs:
       - name: Bootstrap booking assignment fixture
         run: npm run db:bootstrap:e2e-assignment -w @yatra/db
 
+      - name: Bootstrap car customer-flow pricing fixture
+        run: npm run db:bootstrap:e2e-car-customer -w @yatra/db
+
       - name: Bootstrap booking lifecycle fixture
         run: npm run db:bootstrap:e2e-lifecycle -w @yatra/db
 
@@ -108,6 +111,9 @@ jobs:
 
       - name: Bootstrap CRM browser fixture
         run: npm run db:bootstrap:e2e-crm -w @yatra/db
+
+      - name: Verify car customer booking idempotency
+        run: npm run verify:car-customer-booking -w @yatra/web
 
       - name: Verify package departure booking replay and release
         run: npm run verify:package-departure-booking -w @yatra/web
