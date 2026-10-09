@@ -1,6 +1,6 @@
 # Phase 12 — Fleet Operations Upgrade Status
 
-Status: MAINTENANCE + COMPLIANCE FOUNDATION IMPLEMENTED — ENFORCEMENT UNDER CI CERTIFICATION
+Status: CODE + CI CERTIFIED — PRODUCTION ACCEPTANCE / REQUIRED-DOCUMENT POLICY PENDING
 
 Updated: 2026-10-09
 
@@ -82,14 +82,22 @@ This matches the existing “driver licence valid through trip end” policy.
 
 ## Remaining Phase 12 work
 
-- [ ] Current Application CI must pass with the new maintenance/compliance UI and assignment E2E
-- [ ] Add dedicated maintenance lifecycle E2E (schedule → availability block → complete/cancel release)
-- [ ] Add compliance create/delete admin E2E
-- [ ] Add maintenance/compliance indicators to resource schedule/calendar
-- [ ] Add fleet maintenance/compliance summary to reports/export
+- [x] Current Application CI passes with maintenance/compliance UI and assignment E2E
+- [x] Add dedicated maintenance lifecycle verification (schedule → availability block → complete/cancel release)
+- [x] Add compliance create/delete admin E2E
+- [x] Add maintenance/compliance indicators to resource schedule/calendar
+- [x] Add fleet maintenance/compliance summary to reports/export
 - [ ] Decide whether missing required document types should block dispatch (currently only recorded expired documents can block)
 - [ ] Add configurable required-document policy by vehicle class / operating region if needed
 - [ ] Production acceptance drill with one test vehicle before relying on compliance enforcement operationally
+
+## Certification evidence
+
+- Fleet schema migration: Neon Migration Verify PASS
+- Maintenance lifecycle gate: Application CI 37899984347 PASS
+- Resource schedule/calendar fleet indicators: Application CI 37900133840 and 37900139458 PASS
+- Fleet reporting/export: Application CI 37900219801 and 37900226320 PASS
+- Final maintenance/compliance admin browser certification: Application CI 37900294185 PASS
 
 ## Acceptance rule
 
