@@ -1,6 +1,6 @@
 # Phase 19 — Monitoring / Operational Safety Status
 
-Status: FIRST-PARTY SAFE ERROR OBSERVABILITY IMPLEMENTED — PRODUCTION LOG REVIEW PENDING
+Status: CODE + CI CERTIFIED — PRODUCTION LOG REVIEW PENDING
 
 Updated: 2026-10-09
 
@@ -40,6 +40,15 @@ Provide production-grade error visibility and recovery without adding a paid mon
 - [x] Verifier requires query stripping
 - [x] Verifier requires safe digest usage
 - [x] Application CI runs observability certification
+
+## CI certification evidence
+
+- Application CI run 37923472764 — PASS
+- Certified source commit: `58a3dbc0fc67435be9108941c2227c347c52c75b`
+- Web typecheck — PASS
+- Production build — PASS
+- Observability safety certification — PASS
+- Browser E2E — PASS
 
 ## Production operation
 
