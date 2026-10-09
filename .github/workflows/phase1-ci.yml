@@ -48,6 +48,8 @@ jobs:
       PROMOTION_APPLY_ENABLED: "true"
       E2E_RESET_EMAIL: phase10-reset@yatra.test
       E2E_ALLOW_INSECURE_ADMIN_COOKIE: "true"
+      E2E_ADMIN_LOGIN_IDENTITY_LIMIT: "120"
+      E2E_ADMIN_LOGIN_IP_LIMIT: "300"
 
     steps:
       - name: Checkout
