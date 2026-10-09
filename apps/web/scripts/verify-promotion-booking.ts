@@ -10,7 +10,7 @@ const { createGuestCarBooking } = await import(
 
 const db = getDb();
 const promotionId = "e2e_promotion_preview";
-const quoteId = "e2e_promotion_quote";
+const quoteId = "e2e_promotion_booking_quote";
 const idempotencyKey = "e2e-promotion-booking-idempotency-0001";
 const guestEmail = "promo-booking@yatra.test";
 
