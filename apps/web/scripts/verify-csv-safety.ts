@@ -13,8 +13,8 @@ for (const dangerous of [
   "@SUM(A1:A2)",
 ]) {
   const escaped = safeCsvCell(dangerous);
-  assert.equal(escaped.startsWith("\"'"), true);
-  assert.equal(escaped.includes(dangerous), true);
+  const expected = `"'${dangerous.replaceAll('"', '""')}"`;
+  assert.equal(escaped, expected);
 }
 
 assert.equal(safeCsvCell(123n), '"123"');
