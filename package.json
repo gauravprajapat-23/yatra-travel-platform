@@ -37,7 +37,8 @@
     "certify:production-runtime": "node scripts/certify-production-runtime.mjs",
     "verify:observability": "node scripts/verify-observability-safety.mjs",
     "verify:public-seo": "node scripts/verify-public-seo-safety.mjs",
-    "verify:production-readiness-workflow": "node scripts/verify-production-readiness-workflow.mjs"
+    "verify:production-readiness-workflow": "node scripts/verify-production-readiness-workflow.mjs",
+    "verify:runtime-inputs": "node scripts/verify-runtime-certifier-inputs.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0"
