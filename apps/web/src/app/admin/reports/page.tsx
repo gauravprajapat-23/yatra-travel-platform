@@ -103,6 +103,7 @@ export default async function ReportsPage({
     trendPayments,
     trendRefunds,
     routeBookings,
+    promotionGroups,
   ] = await Promise.all([
     db.carBooking.count({
       where: createdRange ? { createdAt: createdRange } : undefined,
@@ -194,6 +195,14 @@ export default async function ReportsPage({
       },
       take: 5000,
     }),
+    db.promotionRedemption.groupBy({
+      by: ["promotionId", "currency"],
+      where: createdRange ? { redeemedAt: createdRange } : undefined,
+      _count: { _all: true },
+      _sum: { discountMinor: true },
+      orderBy: { _count: { promotionId: "desc" } },
+      take: 10,
+    }),
   ]);
 
   const capturedByCurrency = new Map<string, bigint>();
@@ -235,6 +244,30 @@ export default async function ReportsPage({
       })
     : [];
   const nameById = new Map(packageNames.map((item) => [item.id, item.title]));
+
+  const promotionIds = [
+    ...new Set(promotionGroups.map((group) => group.promotionId)),
+  ];
+  const promotionNames = promotionIds.length
+    ? await db.promotion.findMany({
+        where: { id: { in: promotionIds } },
+        select: { id: true, code: true, name: true },
+      })
+    : [];
+  const promotionById = new Map(
+    promotionNames.map((item) => [item.id, item]),
+  );
+
+  const promotionDiscountByCurrency = new Map<string, bigint>();
+  let promotionRedemptionCount = 0;
+  for (const group of promotionGroups) {
+    promotionRedemptionCount += group._count._all;
+    promotionDiscountByCurrency.set(
+      group.currency,
+      (promotionDiscountByCurrency.get(group.currency) ?? 0n) +
+        (group._sum.discountMinor ?? 0n),
+    );
+  }
 
   const totalBookings = carCount + packageCount;
   const conversionRate =
@@ -414,6 +447,12 @@ export default async function ReportsPage({
           meta={`${assignedTrips.length} of ${activeVehicles} active vehicles now`}
           tone="green"
         />
+        <AdminMetric
+          label="Promotion Savings"
+          value={formatCurrencyMap(promotionDiscountByCurrency)}
+          meta={`${promotionRedemptionCount} committed redemptions`}
+          tone="blue"
+        />
       </div>
 
       <section className="admin-panel">
@@ -496,6 +535,50 @@ export default async function ReportsPage({
                     </td>
                   </tr>
                 ))
+              )}
+            </tbody>
+          </table>
+        </section>
+
+        <section className="admin-panel">
+          <div className="admin-panel-heading">
+            <h2>Top Promotions</h2>
+          </div>
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Promotion</th>
+                <th>Currency</th>
+                <th>Redemptions</th>
+                <th>Customer Savings</th>
+              </tr>
+            </thead>
+            <tbody>
+              {promotionGroups.length === 0 ? (
+                <tr>
+                  <td colSpan={4}>No promotion redemptions in this period.</td>
+                </tr>
+              ) : (
+                promotionGroups.map((group) => {
+                  const promotion = promotionById.get(group.promotionId);
+                  return (
+                    <tr key={`${group.promotionId}-${group.currency}`}>
+                      <td>
+                        {promotion
+                          ? `${promotion.code} · ${promotion.name}`
+                          : group.promotionId}
+                      </td>
+                      <td>{group.currency}</td>
+                      <td>{group._count._all}</td>
+                      <td>
+                        {money(
+                          group._sum.discountMinor ?? 0n,
+                          group.currency,
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
