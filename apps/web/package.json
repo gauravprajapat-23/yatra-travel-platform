@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "prebuild": "cd ../../packages/db && npm run db:generate"
+    "prebuild": "cd ../../packages/db && npm run db:generate",
+    "verify:promotion-booking": "tsx scripts/verify-promotion-booking.ts"
   },
   "dependencies": {
     "@yatra/db": "0.1.0",
