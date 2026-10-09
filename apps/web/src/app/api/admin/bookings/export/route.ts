@@ -150,6 +150,7 @@ export async function GET(request: Request) {
             discountMinor: true,
             totalMinor: true,
             promotion: { select: { code: true } },
+            departure: { select: { id: true, startsAt: true, status: true } },
             package: { select: { title: true } },
           },
         }),
@@ -173,6 +174,9 @@ export async function GET(request: Request) {
       "Subtotal Minor",
       "Discount Minor",
       "Promotion Code",
+      "Departure ID",
+      "Departure Start",
+      "Departure Status",
       "Total Minor",
     ],
     ...cars.map((booking) => [
@@ -194,6 +198,9 @@ export async function GET(request: Request) {
       booking.subtotalMinor.toString(),
       booking.discountMinor.toString(),
       booking.promotion?.code ?? "",
+      "",
+      "",
+      "",
       booking.totalMinor.toString(),
     ]),
     ...packages.map((booking) => [
@@ -213,6 +220,9 @@ export async function GET(request: Request) {
       booking.subtotalMinor.toString(),
       booking.discountMinor.toString(),
       booking.promotion?.code ?? "",
+      booking.departure?.id ?? "",
+      booking.departure?.startsAt.toISOString() ?? "",
+      booking.departure?.status ?? "",
       booking.totalMinor.toString(),
     ]),
   ];
