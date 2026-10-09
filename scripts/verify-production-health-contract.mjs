@@ -44,11 +44,12 @@ requireFragments(
 requireFragments(
   "scripts/verify-production-readiness.mjs",
   [
-    '"customer"',
-    '"notifications"',
-    '"promotions"',
-    '"fleet"',
-    '"crm"',
+    '["customer", "full"]',
+    '["notifications", "full"]',
+    '["promotions", "full"]',
+    '["fleet", "full"]',
+    '["crm", "full"]',
+    '["package", "full"].includes(mode) && has("--require-departures")',
     "--require-password-reset",
     "--require-departures",
     "expected deployment revision",
