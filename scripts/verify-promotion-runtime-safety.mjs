@@ -70,14 +70,28 @@ requireFragments(
 
 requireFragments(
   "apps/web/src/modules/booking/car-booking-service.ts",
-  ["createPriceSnapshot"],
-  "car booking still uses immutable price snapshots",
+  [
+    "createPriceSnapshot",
+    'process.env.PROMOTION_APPLY_ENABLED !== "true"',
+    "preparePromotionForBooking",
+    "createPromotionRedemption",
+    "promotionSnapshot",
+    "PROMOTION_DISABLED",
+  ],
+  "car booking promotion application is gated and atomic",
 );
 
 requireFragments(
   "apps/web/src/modules/booking/package-booking-service.ts",
-  ["createPriceSnapshot"],
-  "package booking still uses immutable price snapshots",
+  [
+    "createPriceSnapshot",
+    'process.env.PROMOTION_APPLY_ENABLED !== "true"',
+    "preparePromotionForBooking",
+    "createPromotionRedemption",
+    "promotionSnapshot",
+    "PROMOTION_DISABLED",
+  ],
+  "package booking promotion application is gated and atomic",
 );
 
 process.stdout.write("Promotion runtime safety certification passed.\n");
