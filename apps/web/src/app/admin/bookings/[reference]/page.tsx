@@ -301,6 +301,21 @@ export default async function BookingDetailPage({
               id: true,
               displayName: true,
               registrationNumber: true,
+              complianceDocuments: {
+                where: {
+                  blocksDispatch: true,
+                  expiresAt: {
+                    not: null,
+                    lte: assignmentWindow.endsAt,
+                  },
+                },
+                orderBy: { expiresAt: "asc" },
+                select: {
+                  type: true,
+                  label: true,
+                  expiresAt: true,
+                },
+              },
               availability: {
                 where: {
                   startsAt: { lt: assignmentWindow.endsAt },
@@ -368,13 +383,16 @@ export default async function BookingDetailPage({
           ),
         )
       : undefined;
-    const reason = vehicle.availability[0]?.reason
-      ? `Blocked: ${vehicle.availability[0].reason}`
-      : vehicle.availability.length > 0
-        ? "Blocked by an availability window"
-        : conflictingBooking
-          ? `Overlaps booking ${conflictingBooking.reference}`
-          : null;
+    const complianceBlocker = vehicle.complianceDocuments[0];
+    const reason = complianceBlocker
+      ? `${complianceBlocker.label} does not remain valid through this trip`
+      : vehicle.availability[0]?.reason
+        ? `Blocked: ${vehicle.availability[0].reason}`
+        : vehicle.availability.length > 0
+          ? "Blocked by an availability window"
+          : conflictingBooking
+            ? `Overlaps booking ${conflictingBooking.reference}`
+            : null;
 
     return { ...vehicle, conflictReason: reason };
   });
