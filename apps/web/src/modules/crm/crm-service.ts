@@ -204,6 +204,72 @@ export async function createCrmFollowUp(input: {
   return task;
 }
 
+export async function reassignCrmFollowUp(input: {
+  taskId: string;
+  assignedToUserId: string | null;
+  actorUserId: string;
+}) {
+  const db = getDb();
+
+  return db.$transaction(async (tx) => {
+    const current = await tx.crmFollowUpTask.findUnique({
+      where: { id: input.taskId },
+      select: {
+        id: true,
+        status: true,
+        assignedToUserId: true,
+      },
+    });
+    if (!current) throw new Error("Follow-up task not found.");
+    if (current.status !== "OPEN") {
+      throw new Error("Only open follow-up tasks can be reassigned.");
+    }
+
+    if (input.assignedToUserId) {
+      const assignee = await tx.user.findUnique({
+        where: { id: input.assignedToUserId },
+        select: {
+          id: true,
+          status: true,
+          roles: {
+            select: {
+              role: { select: { key: true } },
+            },
+          },
+        },
+      });
+
+      if (
+        !assignee ||
+        assignee.status !== "ACTIVE" ||
+        assignee.roles.every((item) => item.role.key === "CUSTOMER")
+      ) {
+        throw new Error("Follow-up assignee must be an active staff user.");
+      }
+    }
+
+    const task = await tx.crmFollowUpTask.update({
+      where: { id: current.id },
+      data: { assignedToUserId: input.assignedToUserId },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        actorUserId: input.actorUserId,
+        action: "CRM_FOLLOW_UP_REASSIGNED",
+        entityType: "CrmFollowUpTask",
+        entityId: task.id,
+        metadata: {
+          fromUserId: current.assignedToUserId,
+          toUserId: task.assignedToUserId,
+        },
+      },
+    });
+
+    return task;
+  });
+}
+
 export async function completeCrmFollowUp(input: {
   taskId: string;
   actorUserId: string;
