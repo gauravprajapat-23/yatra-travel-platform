@@ -1,6 +1,6 @@
 # Phase 13 — Package Departure & Inventory Status
 
-Status: FOUNDATION + ADMIN + QUOTE/BOOKING INTEGRATION IMPLEMENTED — FINAL E2E CERTIFICATION PENDING
+Status: CODE + CUSTOMER-FLOW CI CERTIFIED — FINAL CURRENT-HEAD / PRODUCTION ACCEPTANCE PENDING
 
 Updated: 2026-10-09
 
@@ -90,6 +90,13 @@ Replace free-form package travel dates with explicit sellable departures and con
 - [x] Losing reservation may be rejected by SOLD_OUT logic or PostgreSQL SERIALIZABLE conflict
 - [x] Package booking maps serializable conflicts to HTTP 409 / BOOKING_CONFLICT
 
+## Certification evidence
+
+- Departure schema migration: Neon Migration Verify PASS
+- Departure foundation + concurrency: Application CI PASS
+- Customer-flow fixture, booking replay/release verifier, quote E2E, build and Playwright: Application CI 37902093310 PASS
+- Production direct booking remains disabled during certification
+
 ## Production gate
 
 Keep direct package booking writes disabled until final acceptance:
@@ -102,17 +109,19 @@ Package departure configuration and package quote generation can be exercised in
 
 ## Remaining Phase 13 work
 
-- [ ] Final current Application CI must pass on the newest package customer flow
-- [ ] Add disposable published package + price option + OPEN departure browser/API fixture
-- [ ] E2E: public package page shows only sellable departures
-- [ ] E2E: package quote derives exact stored price and departure date
-- [ ] E2E: quote creation does not change reservedTravellers
-- [ ] E2E: booking creation increments reservedTravellers exactly once
-- [ ] E2E: idempotent booking replay does not double-reserve inventory
-- [ ] E2E: cancellation releases inventory exactly once
-- [ ] E2E: sold-out departure rejects a second booking
-- [ ] Add departure visibility to admin booking detail/reporting/export
-- [ ] Add package departure promotion preview UI now that direct package checkout exists
+- [x] Full Application CI customer-flow certification — run 37902093310 PASS
+- [x] Add disposable published package + price option + OPEN departure browser/API fixture
+- [x] E2E: public package page shows only sellable departures
+- [x] E2E: package quote derives exact stored price and departure date
+- [x] E2E: quote creation does not change reservedTravellers
+- [x] Service integration: booking creation increments reservedTravellers exactly once
+- [x] Service integration: idempotent booking replay does not double-reserve inventory
+- [x] Service integration: cancellation releases inventory exactly once
+- [x] Service integration: repeated release is a no-op
+- [x] Service integration: over-capacity second booking is rejected
+- [x] Add departure visibility to admin booking detail/reporting/export
+- [x] Add package departure promotion preview UI now that direct package checkout exists
+- [ ] Final newest-head Application CI must pass after admin/report/promotion refinements
 - [ ] Production acceptance drill with a small test departure
 - [ ] Enable PACKAGE_BOOKING_WRITE_ENABLED only after live acceptance
 
