@@ -100,6 +100,15 @@ export type PublicPackageDetail = PublicPackageCard & {
     maxTravellers: number | null;
     vehicleClass: string | null;
   }>;
+  departures: Array<{
+    id: string;
+    startsAt: string;
+    endsAt: string | null;
+    capacityTravellers: number | null;
+    reservedTravellers: number;
+    remainingCapacity: number | null;
+    salesCloseAt: string | null;
+  }>;
 };
 
 export async function getPublicPackageBySlug(
@@ -151,6 +160,25 @@ export async function getPublicPackageBySlug(
             description: true,
           },
         },
+        departures: {
+          where: {
+            status: "OPEN",
+            startsAt: { gt: now },
+            AND: [
+              { OR: [{ salesOpenAt: null }, { salesOpenAt: { lte: now } }] },
+              { OR: [{ salesCloseAt: null }, { salesCloseAt: { gt: now } }] },
+            ],
+          },
+          orderBy: { startsAt: "asc" },
+          select: {
+            id: true,
+            startsAt: true,
+            endsAt: true,
+            capacityTravellers: true,
+            reservedTravellers: true,
+            salesCloseAt: true,
+          },
+        },
         priceOptions: {
           where: { isActive: true },
           orderBy: { sortOrder: "asc" },
@@ -194,6 +222,28 @@ export async function getPublicPackageBySlug(
         : null,
       destinations: pkg.destinations.map((item) => item.destination),
       itinerary: pkg.itinerary,
+      departures: pkg.departures
+        .map((departure) => ({
+          id: departure.id,
+          startsAt: departure.startsAt.toISOString(),
+          endsAt: departure.endsAt?.toISOString() ?? null,
+          capacityTravellers: departure.capacityTravellers,
+          reservedTravellers: departure.reservedTravellers,
+          remainingCapacity:
+            departure.capacityTravellers === null
+              ? null
+              : Math.max(
+                  0,
+                  departure.capacityTravellers -
+                    departure.reservedTravellers,
+                ),
+          salesCloseAt: departure.salesCloseAt?.toISOString() ?? null,
+        }))
+        .filter(
+          (departure) =>
+            departure.remainingCapacity === null ||
+            departure.remainingCapacity > 0,
+        ),
       priceOptions: pkg.priceOptions.map((option) => ({
         id: option.id,
         amountMinor: option.amountMinor.toString(),
