@@ -174,6 +174,9 @@ jobs:
       - name: Production readiness workflow certification
         run: npm run verify:production-readiness-workflow
 
+      - name: Production runtime input safety certification
+        run: npm run verify:runtime-inputs
+
       - name: Production health contract certification
         run: npm run verify:production-health
 
