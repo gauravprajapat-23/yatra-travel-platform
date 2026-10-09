@@ -41,6 +41,35 @@ export default async function DispatchResourcesPage({
         displayName: true,
         registrationNumber: true,
         vehicleClass: { select: { name: true } },
+        maintenance: {
+          where: {
+            status: { in: ["SCHEDULED", "IN_PROGRESS"] },
+            startsAt: { lt: horizon },
+            endsAt: { gt: now },
+          },
+          orderBy: { startsAt: "asc" },
+          select: {
+            id: true,
+            status: true,
+            category: true,
+            summary: true,
+            startsAt: true,
+            endsAt: true,
+          },
+        },
+        complianceDocuments: {
+          where: {
+            blocksDispatch: true,
+            expiresAt: { not: null, lte: horizon },
+          },
+          orderBy: { expiresAt: "asc" },
+          select: {
+            id: true,
+            type: true,
+            label: true,
+            expiresAt: true,
+          },
+        },
         availability: {
           where: { startsAt: { lt: horizon }, endsAt: { gt: now } },
           orderBy: { startsAt: "asc" },
@@ -152,6 +181,18 @@ export default async function DispatchResourcesPage({
           meta={`next ${days} days`}
           tone="orange"
         />
+        <AdminMetric
+          label="Maintenance Windows"
+          value={vehicles.reduce((sum, item) => sum + item.maintenance.length, 0).toString()}
+          meta={`next ${days} days`}
+          tone="orange"
+        />
+        <AdminMetric
+          label="Compliance Alerts"
+          value={vehicles.reduce((sum, item) => sum + item.complianceDocuments.length, 0).toString()}
+          meta="blocking docs expiring in window"
+          tone="red"
+        />
       </div>
 
       <section className="admin-panel">
@@ -167,12 +208,14 @@ export default async function DispatchResourcesPage({
                 <th>Class</th>
                 <th>Upcoming Trips</th>
                 <th>Availability Blocks</th>
+                <th>Maintenance</th>
+                <th>Compliance</th>
                 <th>Next Commitment</th>
               </tr>
             </thead>
             <tbody>
               {vehicles.length === 0 ? (
-                <tr><td colSpan={5}>No active vehicles.</td></tr>
+                <tr><td colSpan={7}>No active vehicles.</td></tr>
               ) : vehicles.map((vehicle) => {
                 const nextBooking = vehicle.bookings.find((booking) => bookingTimeWindow(booking.startsAt, booking.endsAt).endsAt > now);
                 const nextBlock = vehicle.availability.find((block) => block.endsAt > now);
@@ -202,6 +245,34 @@ export default async function DispatchResourcesPage({
                       {vehicle.availability.length === 0 ? "—" : vehicle.availability.map((block) => (
                         <div key={block.id}>{formatIstDateTime(block.startsAt)} → {formatIstDateTime(block.endsAt)}</div>
                       ))}
+                    </td>
+                    <td>
+                      {vehicle.maintenance.length === 0 ? "—" : vehicle.maintenance.map((item) => (
+                        <div key={item.id}>
+                          <Link href={`/admin/vehicles/${vehicle.id}?tab=maintenance`}>
+                            {item.status.replaceAll("_", " ")} · {item.category}
+                          </Link>
+                          {" · "}{formatIstDateTime(item.startsAt)}
+                        </div>
+                      ))}
+                    </td>
+                    <td>
+                      {vehicle.complianceDocuments.length === 0 ? (
+                        <StatusPill tone="green">Clear</StatusPill>
+                      ) : vehicle.complianceDocuments.map((document) => {
+                        const expired =
+                          document.expiresAt !== null && document.expiresAt <= now;
+                        return (
+                          <div key={document.id}>
+                            <Link href={`/admin/vehicles/${vehicle.id}?tab=compliance`}>
+                              <StatusPill tone={expired ? "red" : "orange"}>
+                                {expired ? "Expired" : "Expiring"}
+                              </StatusPill>
+                              {" "}{document.label}
+                            </Link>
+                          </div>
+                        );
+                      })}
                     </td>
                     <td>{nextCommitment ? `${formatIstDateTime(nextCommitment.at)} · ${nextCommitment.label}` : "Free in selected window"}</td>
                   </tr>
