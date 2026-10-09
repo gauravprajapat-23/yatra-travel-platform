@@ -18,6 +18,7 @@ const ids = {
   availableVehicle: "e2e_assignment_vehicle",
   busyVehicle: "e2e_assignment_busy_vehicle",
   complianceVehicle: "e2e_assignment_compliance_vehicle",
+  maintenanceVehicle: "e2e_assignment_maintenance_vehicle",
   availableDriver: "e2e_assignment_driver",
   busyDriver: "e2e_assignment_busy_driver",
   targetBooking: "e2e_assignment_booking",
@@ -56,8 +57,13 @@ try {
     [ids.availableDriver, ids.busyDriver],
   );
   await client.query(
-    `DELETE FROM "Vehicle" WHERE "id" IN ($1,$2,$3)`,
-    [ids.availableVehicle, ids.busyVehicle, ids.complianceVehicle],
+    `DELETE FROM "Vehicle" WHERE "id" IN ($1,$2,$3,$4)`,
+    [
+      ids.availableVehicle,
+      ids.busyVehicle,
+      ids.complianceVehicle,
+      ids.maintenanceVehicle,
+    ],
   );
   await client.query(
     `DELETE FROM "VehicleClass" WHERE "id" = $1`,
@@ -79,11 +85,18 @@ try {
       INSERT INTO "Vehicle"
         ("id","slug","registrationNumber","displayName","vehicleClassId","status","seats","luggage","airConditioned","isFeatured","createdAt","updatedAt")
       VALUES
-        ($1,'e2e-assignment-vehicle','MP04E2E9999','E2E Operations Vehicle',$4,'ACTIVE'::"VehicleStatus",6,3,true,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
-        ($2,'e2e-assignment-busy-vehicle','MP04E2E8888','E2E Busy Vehicle',$4,'ACTIVE'::"VehicleStatus",6,3,true,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
-        ($3,'e2e-assignment-compliance-vehicle','MP04E2E7777','E2E Compliance Vehicle',$4,'ACTIVE'::"VehicleStatus",6,3,true,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+        ($1,'e2e-assignment-vehicle','MP04E2E9999','E2E Operations Vehicle',$5,'ACTIVE'::"VehicleStatus",6,3,true,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
+        ($2,'e2e-assignment-busy-vehicle','MP04E2E8888','E2E Busy Vehicle',$5,'ACTIVE'::"VehicleStatus",6,3,true,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
+        ($3,'e2e-assignment-compliance-vehicle','MP04E2E7777','E2E Compliance Vehicle',$5,'ACTIVE'::"VehicleStatus",6,3,true,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
+        ($4,'e2e-assignment-maintenance-vehicle','MP04E2E6666','E2E Maintenance Vehicle',$5,'ACTIVE'::"VehicleStatus",6,3,true,false,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
     `,
-    [ids.availableVehicle, ids.busyVehicle, ids.complianceVehicle, ids.vehicleClass],
+    [
+      ids.availableVehicle,
+      ids.busyVehicle,
+      ids.complianceVehicle,
+      ids.maintenanceVehicle,
+      ids.vehicleClass,
+    ],
   );
 
   await client.query(
