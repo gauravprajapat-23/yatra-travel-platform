@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StructuredContentRenderer } from "@/components/structured-content-renderer";
+import { PackageDepartureQuoteForm } from "@/components/package-departure-quote-form";
 import { getPublicPackageBySlug } from "@/lib/public-packages";
 
 export const dynamic = "force-dynamic";
@@ -115,6 +116,13 @@ export default async function PackageDetailPage({
             ) : (
               <p>Price is available by custom quote.</p>
             )}
+
+            <PackageDepartureQuoteForm
+              packageSlug={pkg.slug}
+              priceOptions={pkg.priceOptions}
+              departures={pkg.departures}
+              bookingEnabled={process.env.PACKAGE_BOOKING_WRITE_ENABLED === "true"}
+            />
 
             <Link
               className="button-link button-link--primary"
