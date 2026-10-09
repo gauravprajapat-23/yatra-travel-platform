@@ -643,34 +643,45 @@ export async function saveVehicleComplianceDocument(input: {
     });
     if (!vehicle) throw new Error("Vehicle not found.");
 
-    const document = input.id
-      ? await tx.vehicleComplianceDocument.update({
-          where: { id: input.id },
-          data: {
-            type: input.type,
-            label,
-            referenceLast4,
-            issuedAt: input.issuedAt,
-            expiresAt: input.expiresAt,
-            blocksDispatch: input.blocksDispatch,
-            notes,
-          },
-        })
-      : await tx.vehicleComplianceDocument.create({
-          data: {
-            vehicleId: input.vehicleId,
-            type: input.type,
-            label,
-            referenceLast4,
-            issuedAt: input.issuedAt,
-            expiresAt: input.expiresAt,
-            blocksDispatch: input.blocksDispatch,
-            notes,
-          },
-        });
+    let document;
 
-    if (document.vehicleId !== input.vehicleId) {
-      throw new Error("Compliance document does not belong to this vehicle.");
+    if (input.id) {
+      const existing = await tx.vehicleComplianceDocument.findFirst({
+        where: {
+          id: input.id,
+          vehicleId: input.vehicleId,
+        },
+        select: { id: true },
+      });
+      if (!existing) {
+        throw new Error("Compliance document not found for this vehicle.");
+      }
+
+      document = await tx.vehicleComplianceDocument.update({
+        where: { id: existing.id },
+        data: {
+          type: input.type,
+          label,
+          referenceLast4,
+          issuedAt: input.issuedAt,
+          expiresAt: input.expiresAt,
+          blocksDispatch: input.blocksDispatch,
+          notes,
+        },
+      });
+    } else {
+      document = await tx.vehicleComplianceDocument.create({
+        data: {
+          vehicleId: input.vehicleId,
+          type: input.type,
+          label,
+          referenceLast4,
+          issuedAt: input.issuedAt,
+          expiresAt: input.expiresAt,
+          blocksDispatch: input.blocksDispatch,
+          notes,
+        },
+      });
     }
 
     await tx.auditLog.create({
