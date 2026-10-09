@@ -1,6 +1,6 @@
 # Phase 16 — E2E / Integration Testing Status
 
-Status: BROAD AUTOMATED COVERAGE IMPLEMENTED — FINAL CONSOLIDATED CI + REAL RAZORPAY DRILL PENDING
+Status: CODE + CI CERTIFIED — REAL PROVIDER / PRODUCTION DRILLS PENDING
 
 Updated: 2026-10-09
 
@@ -87,7 +87,7 @@ Turn the production-critical product contracts into repeatable release gates acr
 - [x] CRM / promotion / departure / fleet sections
 - [x] Spreadsheet formula-injection hardening
 - [x] Shared booking/report CSV escaping
-- [ ] Final newest-head CSV/report E2E PASS after latest safety assertion fix
+- [x] Final newest-head CSV/report E2E PASS — Application CI run 37921454975 PASS
 
 ### Public car flow
 - [x] Disposable active vehicle/class reused from fleet fixture
@@ -96,7 +96,14 @@ Turn the production-critical product contracts into repeatable release gates acr
 - [x] Vehicle-capacity rejection E2E added
 - [x] Service-level idempotent car booking verifier added
 - [x] Public production booking write flag remains OFF
-- [ ] Final fully wired Application CI PASS
+- [x] Final fully wired Application CI PASS — run 37921454975 PASS
+
+## Consolidated CI evidence
+
+- Application CI run 37921454975: PASS
+- Browser E2E: PASS across admin, customer auth, CRM, promotions, package departures, public car flow, payment safety, reports/export and mobile admin checks
+- Production admin login defaults remain 8 identity attempts / 30 IP attempts per 15 minutes
+- Higher login attempt limits are accepted only when the explicit E2E insecure-admin-cookie mode is enabled in CI
 
 ## Payment coverage
 
