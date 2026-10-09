@@ -1,6 +1,6 @@
 # Phase 17 — Production Runtime Certification Status
 
-Status: CODE READINESS MODERNIZED — LIVE PROVIDER / DEPLOYMENT DRILLS PENDING
+Status: CODE + CI CERTIFIED — LIVE PROVIDER / DEPLOYMENT DRILLS PENDING
 
 Updated: 2026-10-09
 
@@ -101,6 +101,15 @@ Keep these disabled until their dedicated live drill passes:
 - `PROMOTION_APPLY_ENABLED=false`
 
 Notification delivery should remain unconfigured until the Resend provider drill succeeds.
+
+## Source certification evidence
+
+- Application CI run 37923472764 — PASS
+- Certified source commit: `58a3dbc0fc67435be9108941c2227c347c52c75b`
+- Production build — PASS
+- Production health contract certification — PASS
+- Runtime certification suite syntax — PASS
+- Full browser E2E — PASS
 
 ## Required external drills
 
