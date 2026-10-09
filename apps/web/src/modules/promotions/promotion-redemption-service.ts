@@ -91,9 +91,11 @@ export async function createPromotionRedemption(
   }
 
   const customerUserId =
-    "customerUserId" in input.identity ? input.identity.customerUserId : null;
+    typeof input.identity.customerUserId === "string"
+      ? input.identity.customerUserId
+      : null;
   const guestEmailNormalized =
-    "guestEmailNormalized" in input.identity
+    typeof input.identity.guestEmailNormalized === "string"
       ? normalizeGuestEmail(input.identity.guestEmailNormalized)
       : null;
 
@@ -120,9 +122,13 @@ export async function createPromotionRedemption(
         customerUserId,
         guestEmailNormalized,
         carBookingId:
-          "carBookingId" in input.booking ? input.booking.carBookingId : null,
+          typeof input.booking.carBookingId === "string"
+            ? input.booking.carBookingId
+            : null,
         packageBookingId:
-          "packageBookingId" in input.booking ? input.booking.packageBookingId : null,
+          typeof input.booking.packageBookingId === "string"
+            ? input.booking.packageBookingId
+            : null,
         currency: input.currency,
         discountMinor: input.discountMinor,
         redeemedAt: now,
