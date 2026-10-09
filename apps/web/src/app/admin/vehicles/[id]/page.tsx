@@ -16,10 +16,18 @@ import {
   addVehicleAvailabilityBlock,
   attachVehicleMedia,
   deleteVehicleAvailabilityBlock,
+  cancelVehicleMaintenance,
+  completeVehicleMaintenance,
+  deleteVehicleComplianceDocument,
   detachVehicleMedia,
+  isVehicleDocumentType,
   isVehicleStatus,
+  saveVehicleComplianceDocument,
+  scheduleVehicleMaintenance,
   setPrimaryVehicleMedia,
+  startVehicleMaintenance,
   updateVehicle,
+  vehicleDocumentTypes,
   vehicleStatuses,
 } from "@/modules/fleet/fleet-management-service";
 
@@ -40,6 +48,33 @@ function optionalInt(value: FormDataEntryValue | null): number | null {
   return parsed;
 }
 
+function optionalMoneyMinor(value: FormDataEntryValue | null): bigint | null {
+  const text = String(value ?? "").trim();
+  if (!text) return null;
+  if (!/^\d{1,12}(?:\.\d{1,2})?$/.test(text)) {
+    throw new Error("Maintenance cost must be positive with up to two decimals.");
+  }
+  const [whole, fraction = ""] = text.split(".");
+  return BigInt(whole) * 100n + BigInt((fraction + "00").slice(0, 2));
+}
+
+function optionalDate(value: FormDataEntryValue | null): Date | null {
+  const text = String(value ?? "").trim();
+  if (!text) return null;
+  const parsed = new Date(`${text}T00:00:00+05:30`);
+  if (Number.isNaN(parsed.getTime())) throw new Error("Invalid date.");
+  return parsed;
+}
+
+function money(minor: bigint | null, currency = "INR") {
+  if (minor === null) return "—";
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 2,
+  }).format(Number(minor) / 100);
+}
+
 export default async function VehicleDetailPage({
   params,
   searchParams,
@@ -52,9 +87,14 @@ export default async function VehicleDetailPage({
 
   const { id } = await params;
   const { tab: requestedTab } = await searchParams;
-  const activeTab = ["overview", "details", "availability", "media"].includes(
-    requestedTab ?? "",
-  )
+  const activeTab = [
+    "overview",
+    "details",
+    "availability",
+    "maintenance",
+    "compliance",
+    "media",
+  ].includes(requestedTab ?? "")
     ? requestedTab!
     : "overview";
   const db = getDb();
@@ -66,6 +106,14 @@ export default async function VehicleDetailPage({
         vehicleClass: true,
         availability: {
           orderBy: { startsAt: "desc" },
+          take: 50,
+        },
+        maintenance: {
+          orderBy: { startsAt: "desc" },
+          take: 50,
+        },
+        complianceDocuments: {
+          orderBy: [{ expiresAt: "asc" }, { createdAt: "desc" }],
           take: 50,
         },
         media: {
@@ -229,6 +277,124 @@ export default async function VehicleDetailPage({
     revalidatePath(`/admin/vehicles/${vehicleId}`);
   }
 
+  async function scheduleMaintenance(formData: FormData) {
+    "use server";
+
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "vehicle.write")) {
+      redirect("/admin/vehicles");
+    }
+
+    await scheduleVehicleMaintenance({
+      vehicleId,
+      category: String(formData.get("category") ?? ""),
+      summary: String(formData.get("summary") ?? ""),
+      startsAt: parseIstDateTimeLocal(formData.get("startsAt")) ?? new Date(NaN),
+      endsAt: parseIstDateTimeLocal(formData.get("endsAt")) ?? new Date(NaN),
+      odometerKm: optionalInt(formData.get("odometerKm")),
+      costMinor: optionalMoneyMinor(formData.get("cost")),
+      currency: String(formData.get("currency") ?? "INR"),
+      vendor: String(formData.get("vendor") ?? ""),
+      notes: String(formData.get("notes") ?? ""),
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath(`/admin/vehicles/${vehicleId}`);
+    revalidatePath("/admin/dispatch");
+    revalidatePath("/admin/dispatch/calendar");
+  }
+
+  async function startMaintenance(formData: FormData) {
+    "use server";
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "vehicle.write")) {
+      redirect("/admin/vehicles");
+    }
+    await startVehicleMaintenance({
+      vehicleId,
+      maintenanceId: String(formData.get("maintenanceId") ?? ""),
+      actorUserId: currentSession.userId,
+    });
+    revalidatePath(`/admin/vehicles/${vehicleId}`);
+  }
+
+  async function completeMaintenance(formData: FormData) {
+    "use server";
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "vehicle.write")) {
+      redirect("/admin/vehicles");
+    }
+    await completeVehicleMaintenance({
+      vehicleId,
+      maintenanceId: String(formData.get("maintenanceId") ?? ""),
+      actorUserId: currentSession.userId,
+    });
+    revalidatePath(`/admin/vehicles/${vehicleId}`);
+    revalidatePath("/admin/dispatch");
+    revalidatePath("/admin/dispatch/calendar");
+  }
+
+  async function cancelMaintenance(formData: FormData) {
+    "use server";
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "vehicle.write")) {
+      redirect("/admin/vehicles");
+    }
+    await cancelVehicleMaintenance({
+      vehicleId,
+      maintenanceId: String(formData.get("maintenanceId") ?? ""),
+      actorUserId: currentSession.userId,
+    });
+    revalidatePath(`/admin/vehicles/${vehicleId}`);
+    revalidatePath("/admin/dispatch");
+    revalidatePath("/admin/dispatch/calendar");
+  }
+
+  async function createComplianceDocument(formData: FormData) {
+    "use server";
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "vehicle.write")) {
+      redirect("/admin/vehicles");
+    }
+
+    const type = String(formData.get("type") ?? "");
+    if (!isVehicleDocumentType(type)) {
+      throw new Error("Invalid compliance document type.");
+    }
+
+    await saveVehicleComplianceDocument({
+      vehicleId,
+      type,
+      label: String(formData.get("label") ?? ""),
+      referenceLast4: String(formData.get("referenceLast4") ?? ""),
+      issuedAt: optionalDate(formData.get("issuedAt")),
+      expiresAt: optionalDate(formData.get("expiresAt")),
+      blocksDispatch: formData.get("blocksDispatch") === "on",
+      notes: String(formData.get("notes") ?? ""),
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath(`/admin/vehicles/${vehicleId}`);
+    revalidatePath("/admin/dispatch");
+  }
+
+  async function removeComplianceDocument(formData: FormData) {
+    "use server";
+    const currentSession = await requireAdminSession();
+    if (!hasPermission(currentSession.roles, "vehicle.write")) {
+      redirect("/admin/vehicles");
+    }
+
+    await deleteVehicleComplianceDocument({
+      vehicleId,
+      documentId: String(formData.get("documentId") ?? ""),
+      actorUserId: currentSession.userId,
+    });
+
+    revalidatePath(`/admin/vehicles/${vehicleId}`);
+    revalidatePath("/admin/dispatch");
+  }
+
   return (
     <AdminShell
       active="Fleet Management"
@@ -256,9 +422,34 @@ export default async function VehicleDetailPage({
           {
             key: "availability",
             label: "Availability",
-            description: "Blocks & maintenance",
+            description: "Manual blocks",
             badge: String(vehicle.availability.length),
             badgeTone: vehicle.availability.length === 0 ? "success" : "warning",
+          },
+          {
+            key: "maintenance",
+            label: "Maintenance",
+            description: "Service lifecycle",
+            badge: String(vehicle.maintenance.length),
+            badgeTone: vehicle.maintenance.some((item) =>
+              ["SCHEDULED", "IN_PROGRESS"].includes(item.status),
+            )
+              ? "warning"
+              : "success",
+          },
+          {
+            key: "compliance",
+            label: "Compliance",
+            description: "Expiry tracking",
+            badge: String(vehicle.complianceDocuments.length),
+            badgeTone: vehicle.complianceDocuments.some(
+              (item) =>
+                item.blocksDispatch &&
+                item.expiresAt &&
+                item.expiresAt <= new Date(),
+            )
+              ? "warning"
+              : "success",
           },
           {
             key: "media",
@@ -462,6 +653,270 @@ export default async function VehicleDetailPage({
                 <AdminSubmitButton
                   label="Add Block"
                   pendingLabel="Adding Block…"
+                />
+              </form>
+            ) : null}
+          </section>
+        ) : null}
+
+        {activeTab === "maintenance" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Maintenance</h2>
+            {vehicle.maintenance.length === 0 ? (
+              <p>No structured maintenance records yet.</p>
+            ) : (
+              <div className="admin-table-wrap">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Status</th>
+                      <th>Service</th>
+                      <th>Window</th>
+                      <th>Odometer</th>
+                      <th>Cost</th>
+                      <th>Vendor</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {vehicle.maintenance.map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.status.replaceAll("_", " ")}</td>
+                        <td>
+                          <strong>{item.category}</strong>
+                          <br />
+                          <small>{item.summary}</small>
+                        </td>
+                        <td>
+                          {formatIstDateTime(item.startsAt)}
+                          <br />
+                          <small>to {formatIstDateTime(item.endsAt)}</small>
+                        </td>
+                        <td>{item.odometerKm === null ? "—" : `${item.odometerKm.toLocaleString("en-IN")} km`}</td>
+                        <td>{money(item.costMinor, item.currency)}</td>
+                        <td>{item.vendor ?? "—"}</td>
+                        <td>
+                          {hasPermission(session.roles, "vehicle.write") ? (
+                            <>
+                              {item.status === "SCHEDULED" ? (
+                                <form action={startMaintenance}>
+                                  <input type="hidden" name="maintenanceId" value={item.id} />
+                                  <AdminSubmitButton
+                                    className="admin-secondary-button"
+                                    label="Start"
+                                    pendingLabel="Starting…"
+                                  />
+                                </form>
+                              ) : null}
+                              {["SCHEDULED", "IN_PROGRESS"].includes(item.status) ? (
+                                <form action={completeMaintenance}>
+                                  <input type="hidden" name="maintenanceId" value={item.id} />
+                                  <AdminConfirmSubmitButton
+                                    label="Complete"
+                                    pendingLabel="Completing…"
+                                    confirmMessage="Complete this maintenance record and release its linked availability block?"
+                                  />
+                                </form>
+                              ) : null}
+                              {item.status === "SCHEDULED" ? (
+                                <form action={cancelMaintenance}>
+                                  <input type="hidden" name="maintenanceId" value={item.id} />
+                                  <AdminConfirmSubmitButton
+                                    label="Cancel"
+                                    pendingLabel="Cancelling…"
+                                    confirmMessage="Cancel this maintenance schedule and release its linked availability block?"
+                                  />
+                                </form>
+                              ) : null}
+                            </>
+                          ) : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {hasPermission(session.roles, "vehicle.write") ? (
+              <form action={scheduleMaintenance}>
+                <h3>Schedule Maintenance</h3>
+                <AdminFormGrid columns={2}>
+                  <AdminField label="Category" htmlFor="maintenanceCategory" required>
+                    <input
+                      id="maintenanceCategory"
+                      name="category"
+                      required
+                      minLength={2}
+                      maxLength={80}
+                      placeholder="Periodic service"
+                    />
+                  </AdminField>
+                  <AdminField label="Summary" htmlFor="maintenanceSummary" required>
+                    <input
+                      id="maintenanceSummary"
+                      name="summary"
+                      required
+                      minLength={2}
+                      maxLength={200}
+                      placeholder="Engine oil and filter replacement"
+                    />
+                  </AdminField>
+                  <AdminDateTimeRange
+                    startName="startsAt"
+                    endName="endsAt"
+                    startLabel="Starts"
+                    endLabel="Ends"
+                    startId="maintenanceStarts"
+                    endId="maintenanceEnds"
+                    startRequired
+                    endRequired
+                  />
+                  <AdminField label="Odometer (km)" htmlFor="maintenanceOdometer">
+                    <input id="maintenanceOdometer" name="odometerKm" type="number" min={0} />
+                  </AdminField>
+                  <AdminField label="Cost" htmlFor="maintenanceCost">
+                    <input id="maintenanceCost" name="cost" inputMode="decimal" placeholder="2500.00" />
+                  </AdminField>
+                  <AdminField label="Currency" htmlFor="maintenanceCurrency">
+                    <input
+                      id="maintenanceCurrency"
+                      name="currency"
+                      defaultValue="INR"
+                      maxLength={3}
+                      pattern="[A-Za-z]{3}"
+                    />
+                  </AdminField>
+                  <AdminField label="Vendor" htmlFor="maintenanceVendor">
+                    <input id="maintenanceVendor" name="vendor" maxLength={160} />
+                  </AdminField>
+                  <AdminField label="Notes" htmlFor="maintenanceNotes" wide>
+                    <textarea id="maintenanceNotes" name="notes" maxLength={2000} rows={4} />
+                  </AdminField>
+                </AdminFormGrid>
+                <p>
+                  Scheduling maintenance also creates a linked availability block.
+                  The service rejects windows that overlap an assigned active trip.
+                </p>
+                <AdminSubmitButton
+                  label="Schedule Maintenance"
+                  pendingLabel="Scheduling…"
+                />
+              </form>
+            ) : null}
+          </section>
+        ) : null}
+
+        {activeTab === "compliance" ? (
+          <section className="admin-panel admin-detail-card">
+            <h2>Vehicle Compliance</h2>
+            {vehicle.complianceDocuments.length === 0 ? (
+              <p>No compliance documents recorded.</p>
+            ) : (
+              <div className="admin-table-wrap">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Label</th>
+                      <th>Reference</th>
+                      <th>Issued</th>
+                      <th>Expires</th>
+                      <th>Dispatch impact</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {vehicle.complianceDocuments.map((document) => {
+                      const expired =
+                        document.expiresAt && document.expiresAt <= new Date();
+                      return (
+                        <tr key={document.id}>
+                          <td>{document.type.replaceAll("_", " ")}</td>
+                          <td>{document.label}</td>
+                          <td>{document.referenceLast4 ? `•••• ${document.referenceLast4}` : "—"}</td>
+                          <td>{document.issuedAt ? document.issuedAt.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }) : "—"}</td>
+                          <td>
+                            {document.expiresAt
+                              ? document.expiresAt.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })
+                              : "No expiry"}
+                            {expired ? " · EXPIRED" : ""}
+                          </td>
+                          <td>{document.blocksDispatch ? "Blocks when expired" : "Advisory"}</td>
+                          <td>
+                            {hasPermission(session.roles, "vehicle.write") ? (
+                              <form action={removeComplianceDocument}>
+                                <input type="hidden" name="documentId" value={document.id} />
+                                <AdminConfirmSubmitButton
+                                  label="Delete"
+                                  pendingLabel="Deleting…"
+                                  confirmMessage="Delete this compliance record?"
+                                />
+                              </form>
+                            ) : "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {hasPermission(session.roles, "vehicle.write") ? (
+              <form action={createComplianceDocument}>
+                <h3>Add Compliance Document</h3>
+                <AdminFormGrid columns={2}>
+                  <AdminField label="Document type" htmlFor="complianceType" required>
+                    <select id="complianceType" name="type" defaultValue="INSURANCE">
+                      {vehicleDocumentTypes.map((type) => (
+                        <option key={type} value={type}>
+                          {type.replaceAll("_", " ")}
+                        </option>
+                      ))}
+                    </select>
+                  </AdminField>
+                  <AdminField label="Label" htmlFor="complianceLabel" required>
+                    <input
+                      id="complianceLabel"
+                      name="label"
+                      required
+                      minLength={2}
+                      maxLength={120}
+                      placeholder="Comprehensive insurance"
+                    />
+                  </AdminField>
+                  <AdminField
+                    label="Reference last 4"
+                    htmlFor="complianceReference"
+                    hint="Store only the final 1–4 letters/numbers, not the full document number."
+                  >
+                    <input
+                      id="complianceReference"
+                      name="referenceLast4"
+                      maxLength={4}
+                      autoComplete="off"
+                    />
+                  </AdminField>
+                  <AdminField label="Issued date" htmlFor="complianceIssued">
+                    <input id="complianceIssued" name="issuedAt" type="date" />
+                  </AdminField>
+                  <AdminField label="Expiry date" htmlFor="complianceExpiry">
+                    <input id="complianceExpiry" name="expiresAt" type="date" />
+                  </AdminField>
+                  <AdminField label="Notes" htmlFor="complianceNotes" wide>
+                    <textarea id="complianceNotes" name="notes" maxLength={1000} rows={4} />
+                  </AdminField>
+                </AdminFormGrid>
+                <AdminCheckbox
+                  name="blocksDispatch"
+                  defaultChecked
+                  label="Block dispatch after expiry"
+                  description="Expired required documents will become dispatch blockers once enforcement is certified."
+                />
+                <AdminSubmitButton
+                  label="Add Compliance Document"
+                  pendingLabel="Adding…"
                 />
               </form>
             ) : null}
