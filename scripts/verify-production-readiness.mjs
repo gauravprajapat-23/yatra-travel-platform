@@ -29,12 +29,17 @@ const allowedModes = new Set([
   "payments",
   "media",
   "scheduled",
+  "customer",
+  "notifications",
+  "promotions",
+  "fleet",
+  "crm",
   "full",
 ]);
 
 if (!baseUrl || !/^https?:\/\//i.test(baseUrl)) {
   console.error(
-    "Usage: node scripts/verify-production-readiness.mjs --url https://example.com [--mode core|car|package|payments|media|scheduled|full]",
+    "Usage: node scripts/verify-production-readiness.mjs --url https://example.com [--mode core|car|package|payments|media|scheduled|customer|notifications|promotions|fleet|crm|full]",
   );
   process.exit(2);
 }
@@ -178,6 +183,97 @@ if (["package", "full"].includes(mode)) {
     "package booking ready",
     health.packageBookingReady === true,
     String(health.packageBookingReady),
+  );
+}
+
+if (["customer"].includes(mode)) {
+  check(
+    "customer auth writes enabled",
+    health.customerAuthWriteEnabled === true,
+    String(health.customerAuthWriteEnabled),
+  );
+  check(
+    "email notification provider configured",
+    health.notificationEmailProviderConfigured === true,
+    String(health.notificationEmailProviderConfigured),
+  );
+  check(
+    "customer authentication ready",
+    health.customerAuthReady === true,
+    String(health.customerAuthReady),
+  );
+
+  if (has("--require-password-reset")) {
+    check(
+      "password reset enabled",
+      health.customerPasswordResetEnabled === true,
+      String(health.customerPasswordResetEnabled),
+    );
+    check(
+      "password reset ready",
+      health.passwordResetReady === true,
+      String(health.passwordResetReady),
+    );
+  }
+}
+
+if (["notifications"].includes(mode)) {
+  check(
+    "email notification provider configured",
+    health.notificationEmailProviderConfigured === true,
+    String(health.notificationEmailProviderConfigured),
+  );
+}
+
+if (["promotions"].includes(mode)) {
+  check(
+    "promotion application enabled",
+    health.promotionApplyEnabled === true,
+    String(health.promotionApplyEnabled),
+  );
+  check(
+    "active promotions available",
+    Number(health.activePromotions) > 0,
+    String(health.activePromotions),
+  );
+  check(
+    "promotion flow ready",
+    health.promotionReady === true,
+    String(health.promotionReady),
+  );
+}
+
+if (["fleet"].includes(mode)) {
+  check(
+    "no expired dispatch-blocking fleet documents",
+    Number(health.fleetComplianceBlockers) === 0,
+    String(health.fleetComplianceBlockers),
+  );
+  check(
+    "fleet compliance ready",
+    health.fleetComplianceReady === true,
+    String(health.fleetComplianceReady),
+  );
+}
+
+if (["crm"].includes(mode)) {
+  check(
+    "CRM tables ready",
+    health.crmReady === true,
+    String(health.crmReady),
+  );
+}
+
+if (["package"].includes(mode) && has("--require-departures")) {
+  check(
+    "sellable package departures available",
+    Number(health.openPackageDepartures) > 0,
+    String(health.openPackageDepartures),
+  );
+  check(
+    "package departure inventory ready",
+    health.packageDepartureReady === true,
+    String(health.packageDepartureReady),
   );
 }
 
