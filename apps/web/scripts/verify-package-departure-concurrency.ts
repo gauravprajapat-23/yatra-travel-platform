@@ -79,8 +79,20 @@ async function main() {
 
   const rejection = rejected[0];
   assert.equal(rejection.status, "rejected");
-  assert.ok(rejection.reason instanceof PackageDepartureInventoryError);
-  assert.equal(rejection.reason.code, "DEPARTURE_SOLD_OUT");
+
+  const safeInventoryRejection =
+    rejection.reason instanceof PackageDepartureInventoryError &&
+    rejection.reason.code === "DEPARTURE_SOLD_OUT";
+  const safeSerializationRejection =
+    typeof rejection.reason === "object" &&
+    rejection.reason !== null &&
+    "code" in rejection.reason &&
+    rejection.reason.code === "P2034";
+
+  assert.ok(
+    safeInventoryRejection || safeSerializationRejection,
+    "Losing reservation must be rejected as sold-out or by serializable concurrency control.",
+  );
 
   const departure = await db.packageDeparture.findUnique({
     where: { id: departureId },
