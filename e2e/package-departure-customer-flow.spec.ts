@@ -34,6 +34,24 @@ test("public package exposes only sellable departure and quote does not reserve 
   expect(body.quote.totalMinor).toBe("500000");
   expect(body.quote.departure.remainingCapacity).toBe(3);
 
+  const promotion = await request.post("/api/promotions/preview", {
+    data: {
+      quoteType: "PACKAGE",
+      quoteId: body.quote.id,
+      code: "E2EPACK",
+      guestEmail: "package-promo@yatra.test",
+    },
+  });
+
+  expect(promotion.status()).toBe(200);
+  const promotionBody = (await promotion.json()) as {
+    promotion: { code: string };
+    quote: { discountMinor: string; totalMinor: string };
+  };
+  expect(promotionBody.promotion.code).toBe("E2EPACK");
+  expect(promotionBody.quote.discountMinor).toBe("50000");
+  expect(promotionBody.quote.totalMinor).toBe("450000");
+
   const second = await request.post("/api/quotes/package", {
     data: {
       packageSlug: "e2e-departure-package",
