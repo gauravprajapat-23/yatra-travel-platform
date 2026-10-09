@@ -34,6 +34,23 @@ type QuoteResponse = {
   error?: { code?: string; message?: string };
 };
 
+type PromotionPreviewResponse = {
+  promotion?: {
+    id: string;
+    code: string;
+    name: string;
+  };
+  quote?: {
+    id: string;
+    currency: string;
+    subtotalMinor: string;
+    discountMinor: string;
+    taxMinor: string;
+    totalMinor: string;
+  };
+  error?: { code?: string; message?: string };
+};
+
 type BookingResponse = {
   booking?: {
     reference: string;
@@ -65,12 +82,22 @@ function idempotencyKey(): string {
   return `yatra-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-export function CarBookingForm({ trip }: { trip: BookingInput }) {
+export function CarBookingForm({
+  trip,
+  promotionsEnabled = false,
+}: {
+  trip: BookingInput;
+  promotionsEnabled?: boolean;
+}) {
   const router = useRouter();
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
   const [quote, setQuote] = useState<QuoteResponse["quote"]>(undefined);
+  const [promotionCode, setPromotionCode] = useState("");
+  const [promotionPreview, setPromotionPreview] =
+    useState<PromotionPreviewResponse | null>(null);
+  const [promotionPending, setPromotionPending] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -97,6 +124,54 @@ export function CarBookingForm({ trip }: { trip: BookingInput }) {
 
     setQuote(result.quote);
     return result.quote;
+  }
+
+  async function applyPromotion() {
+    setError("");
+
+    if (!promotionsEnabled) return;
+    if (!promotionCode.trim()) {
+      setPromotionPreview(null);
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())) {
+      setError("Enter a valid traveller email before applying a promotion.");
+      return;
+    }
+
+    setPromotionPending(true);
+    try {
+      const activeQuote = quote ?? (await createQuote());
+      const response = await fetch("/api/promotions/preview", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          quoteType: "CAR",
+          quoteId: activeQuote.id,
+          code: promotionCode.trim(),
+          guestEmail: guestEmail.trim().toLowerCase(),
+          promotionCode: promotionPreview?.promotion?.code ?? undefined,
+        }),
+      });
+      const result = (await response.json()) as PromotionPreviewResponse;
+      if (!response.ok || !result.promotion || !result.quote) {
+        throw new Error(
+          result.error?.message ?? "Unable to validate promotion.",
+        );
+      }
+
+      setPromotionCode(result.promotion.code);
+      setPromotionPreview(result);
+    } catch (caught) {
+      setPromotionPreview(null);
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Unable to validate promotion.",
+      );
+    } finally {
+      setPromotionPending(false);
+    }
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -196,6 +271,37 @@ export function CarBookingForm({ trip }: { trip: BookingInput }) {
       </div>
 
       <aside className="booking-sidebar">
+        {promotionsEnabled ? (
+          <div className="booking-card">
+            <h2>Promotion Code</h2>
+            <label>
+              Code
+              <input
+                value={promotionCode}
+                onChange={(event) => {
+                  setPromotionCode(event.target.value.toUpperCase());
+                  setPromotionPreview(null);
+                }}
+                maxLength={32}
+                placeholder="YATRA10"
+              />
+            </label>
+            <button
+              className="admin-secondary-button"
+              type="button"
+              disabled={promotionPending || !promotionCode.trim()}
+              onClick={applyPromotion}
+            >
+              {promotionPending ? "Checking…" : "Apply Promotion"}
+            </button>
+            {promotionPreview?.promotion ? (
+              <p className="lead-form-success" role="status">
+                {promotionPreview.promotion.code} applied · {promotionPreview.promotion.name}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
         <div className="booking-card">
           <h2>Trip Details</h2>
           <div className="trip-pair">
@@ -216,13 +322,42 @@ export function CarBookingForm({ trip }: { trip: BookingInput }) {
           {quote ? (
             <>
               <dl>
-                <div><dt>Subtotal</dt><dd>{money(quote.subtotalMinor, quote.currency)}</dd></div>
-                <div><dt>Discount</dt><dd>{money(quote.discountMinor, quote.currency)}</dd></div>
-                <div><dt>Tax</dt><dd>{money(quote.taxMinor, quote.currency)}</dd></div>
+                <div>
+                  <dt>Subtotal</dt>
+                  <dd>
+                    {money(
+                      promotionPreview?.quote?.subtotalMinor ?? quote.subtotalMinor,
+                      promotionPreview?.quote?.currency ?? quote.currency,
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Discount</dt>
+                  <dd>
+                    {money(
+                      promotionPreview?.quote?.discountMinor ?? quote.discountMinor,
+                      promotionPreview?.quote?.currency ?? quote.currency,
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Tax</dt>
+                  <dd>
+                    {money(
+                      promotionPreview?.quote?.taxMinor ?? quote.taxMinor,
+                      promotionPreview?.quote?.currency ?? quote.currency,
+                    )}
+                  </dd>
+                </div>
               </dl>
               <div className="fare-total">
                 <span>Total Amount</span>
-                <strong>{money(quote.totalMinor, quote.currency)}</strong>
+                <strong>
+                  {money(
+                    promotionPreview?.quote?.totalMinor ?? quote.totalMinor,
+                    promotionPreview?.quote?.currency ?? quote.currency,
+                  )}
+                </strong>
               </div>
               <small>Quote expires at {new Date(quote.expiresAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small>
             </>
