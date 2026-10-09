@@ -15,6 +15,7 @@ const protectedRoutes = [
   "/admin/promotions",
   "/admin/promotions/new",
   "/admin/customers",
+  "/admin/crm",
   "/admin/leads",
   "/admin/staff",
   "/admin/staff/new",
