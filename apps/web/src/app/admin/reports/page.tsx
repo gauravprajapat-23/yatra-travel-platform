@@ -480,26 +480,28 @@ export default async function ReportsPage({
           <div className="admin-panel-heading">
             <h2>Top Car Routes</h2>
           </div>
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Route</th>
-                <th>Bookings</th>
-                <th>Booked Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topRoutes.length === 0 ? (
-                <tr><td colSpan={3}>No car bookings in this period.</td></tr>
-              ) : topRoutes.map((item) => (
-                <tr key={item.route}>
-                  <td>{item.route}</td>
-                  <td>{item.bookings}</td>
-                  <td>{formatCurrencyMap(item.values)}</td>
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Route</th>
+                  <th>Bookings</th>
+                  <th>Booked Value</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {topRoutes.length === 0 ? (
+                  <tr><td colSpan={3}>No car bookings in this period.</td></tr>
+                ) : topRoutes.map((item) => (
+                  <tr key={item.route}>
+                    <td>{item.route}</td>
+                    <td>{item.bookings}</td>
+                    <td>{formatCurrencyMap(item.values)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
 
 
@@ -507,37 +509,39 @@ export default async function ReportsPage({
           <div className="admin-panel-heading">
             <h2>Top Packages by Bookings</h2>
           </div>
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Package</th>
-                <th>Currency</th>
-                <th>Bookings</th>
-                <th>Booked Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {packageGroups.length === 0 ? (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
                 <tr>
-                  <td colSpan={4}>No package bookings in this period.</td>
+                  <th>Package</th>
+                  <th>Currency</th>
+                  <th>Bookings</th>
+                  <th>Booked Value</th>
                 </tr>
-              ) : (
-                packageGroups.map((group) => (
-                  <tr key={`${group.packageId}-${group.currency}`}>
-                    <td>{nameById.get(group.packageId) ?? group.packageId}</td>
-                    <td>{group.currency}</td>
-                    <td>{group._count._all}</td>
-                    <td>
-                      {money(
-                        group._sum.totalMinor ?? 0n,
-                        group.currency,
-                      )}
-                    </td>
+              </thead>
+              <tbody>
+                {packageGroups.length === 0 ? (
+                  <tr>
+                    <td colSpan={4}>No package bookings in this period.</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  packageGroups.map((group) => (
+                    <tr key={`${group.packageId}-${group.currency}`}>
+                      <td>{nameById.get(group.packageId) ?? group.packageId}</td>
+                      <td>{group.currency}</td>
+                      <td>{group._count._all}</td>
+                      <td>
+                        {money(
+                          group._sum.totalMinor ?? 0n,
+                          group.currency,
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <section className="admin-panel">
