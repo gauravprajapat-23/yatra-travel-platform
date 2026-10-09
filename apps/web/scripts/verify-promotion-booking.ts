@@ -43,6 +43,7 @@ async function main() {
         version: 999,
         status: "ACTIVE",
         effectiveFrom: new Date(Date.now() - 60_000),
+        activatedAt: new Date(),
         document: {
           source: "e2e-promotion-booking",
           cancellation: "Fixture only",
