@@ -171,6 +171,9 @@ jobs:
       - name: Check runtime certification suite syntax
         run: node --check scripts/certify-production-runtime.mjs
 
+      - name: Production readiness workflow certification
+        run: npm run verify:production-readiness-workflow
+
       - name: Production health contract certification
         run: npm run verify:production-health
 
