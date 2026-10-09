@@ -35,7 +35,8 @@
     "db:bootstrap:e2e-notifications": "node scripts/bootstrap-e2e-notification-deliveries.mjs",
     "db:verify:promotions": "node scripts/verify-promotion-foundation.mjs",
     "db:verify:promotion-redemption": "node scripts/verify-promotion-redemption-concurrency.mjs",
-    "db:bootstrap:e2e-promotion-preview": "node scripts/bootstrap-e2e-promotion-preview.mjs"
+    "db:bootstrap:e2e-promotion-preview": "node scripts/bootstrap-e2e-promotion-preview.mjs",
+    "db:verify:fleet-operations": "node scripts/verify-fleet-operations-foundation.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
