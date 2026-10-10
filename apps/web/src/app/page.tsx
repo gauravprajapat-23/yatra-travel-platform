@@ -69,7 +69,7 @@ export default async function HomePage() {
                 <article className="fleet-card" key={car.id}>
                   <div className="fleet-card__visual">
                     <img
-                      src="/assets/car-innova.webp"
+                      src={car.primaryImageUrl ?? "/assets/car-innova.webp"}
                       alt={car.displayName}
                       loading="lazy"
                     />

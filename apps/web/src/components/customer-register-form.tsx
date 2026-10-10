@@ -8,7 +8,7 @@ type RegisterResponse = {
   error?: { message?: string };
 };
 
-export function CustomerRegisterForm() {
+export function CustomerRegisterForm({ registrationEnabled }: { registrationEnabled: boolean }) {
   const [name,setName]=useState("");
   const [email,setEmail]=useState("");
   const [password,setPassword]=useState("");
@@ -46,8 +46,9 @@ export function CustomerRegisterForm() {
       <span className="eyebrow">CREATE ACCOUNT</span>
       <h1>Your journeys, together.</h1>
       <p>
-        Registration remains protected until email verification is available.
-        Existing verified customers can sign in now.
+        {registrationEnabled
+          ? "Create your account, then verify your email before signing in."
+          : "New account registration is temporarily unavailable while email verification is being certified. Existing verified customers can still sign in."}
       </p>
 
       <label htmlFor="customerName">Name</label>
@@ -83,8 +84,8 @@ export function CustomerRegisterForm() {
       {error?<p className="lead-form-error" role="alert">{error}</p>:null}
       {message?<p className="lead-form-success" role="status">{message}</p>:null}
 
-      <button className="button-link button-link--primary" type="submit" disabled={pending}>
-        {pending?"Creating…":"Create Account"}
+      <button className="button-link button-link--primary" type="submit" disabled={pending || !registrationEnabled}>
+        {!registrationEnabled ? "Registration Temporarily Unavailable" : pending ? "Creating…" : "Create Account"}
       </button>
 
       <small>

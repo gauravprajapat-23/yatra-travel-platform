@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function CustomerRegisterPage() {
   return (
     <section className="customer-auth-page">
-      <CustomerRegisterForm />
+      <CustomerRegisterForm registrationEnabled={process.env.CUSTOMER_AUTH_WRITE_ENABLED === "true"} />
     </section>
   );
 }

@@ -150,7 +150,14 @@ export async function POST(request: Request) {
         status: "ACTIVE",
         vehicleClass: { isActive: true },
       },
-      include: { vehicleClass: true },
+      include: {
+        vehicleClass: true,
+        media: {
+          where: { isPrimary: true },
+          take: 1,
+          select: { media: { select: { publicUrl: true } } },
+        },
+      },
     });
 
     if (!vehicle) {
@@ -299,6 +306,7 @@ export async function POST(request: Request) {
             luggage: vehicle.luggage,
             airConditioned: vehicle.airConditioned,
             vehicleClass: vehicle.vehicleClass.name,
+            primaryImageUrl: vehicle.media[0]?.media.publicUrl ?? null,
           },
           currency: quote.currency,
           subtotalMinor: quote.subtotalMinor.toString(),

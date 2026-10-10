@@ -23,6 +23,7 @@ type QuoteResponse = {
       luggage: number | null;
       airConditioned: boolean;
       vehicleClass: string;
+      primaryImageUrl: string | null;
     };
     currency: string;
     subtotalMinor: string;
@@ -236,7 +237,7 @@ export function CarBookingForm({
           <h2>Your Selected Vehicle</h2>
           <div className="selected-vehicle">
             <div className="selected-vehicle__visual">
-              <img src="/assets/car-innova.webp" alt="Selected chauffeur-driven vehicle" />
+              <img src={quote?.vehicle.primaryImageUrl ?? "/assets/car-innova.webp"} alt={quote?.vehicle.displayName ?? "Selected chauffeur-driven vehicle"} />
             </div>
             <div>
               <h3>{quote?.vehicle.displayName ?? trip.vehicleSlug.replaceAll("-", " ")}</h3>

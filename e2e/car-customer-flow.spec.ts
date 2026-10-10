@@ -81,3 +81,24 @@ test("public car quote rejects a departure date in the past", async ({ request }
   };
   expect(body.error?.code).toBe("PAST_DEPARTURE_DATE");
 });
+
+
+test("car search links every published vehicle to its dynamic detail page", async ({ page }) => {
+  const departure = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+
+  await page.goto(
+    `/cars/search?from=Bhopal&to=Indore&departure=${departure}&travellers=2&tripType=ONE_WAY`,
+  );
+
+  const card = page
+    .locator(".search-result-card")
+    .filter({ hasText: "E2E Customer Car" })
+    .first();
+
+  await expect(card.getByRole("link", { name: "View Details" })).toHaveAttribute(
+    "href",
+    "/cars/e2e-assignment-vehicle",
+  );
+});

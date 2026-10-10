@@ -152,7 +152,7 @@ export function CarSearchResults({
             filtered.map((vehicle) => (
               <article className="search-result-card search-result-card--reference" key={vehicle.id}>
                 <div className="search-result-card__image">
-                  <img src="/assets/car-innova.webp" alt={vehicle.displayName} loading="lazy"/>
+                  <img src={vehicle.primaryImageUrl ?? "/assets/car-innova.webp"} alt={vehicle.displayName} loading="lazy"/>
                   {vehicle.isFeatured ? <span className="vehicle-card-badge">Featured</span> : null}
                 </div>
 
@@ -180,9 +180,7 @@ export function CarSearchResults({
                   >
                     Choose Vehicle →
                   </Link>
-                  {vehicle.slug === "innova-crysta" ? (
-                    <Link href="/cars/innova-crysta">View Details</Link>
-                  ) : null}
+                  <Link href={`/cars/${vehicle.slug}`}>View Details</Link>
                 </div>
               </article>
             ))
