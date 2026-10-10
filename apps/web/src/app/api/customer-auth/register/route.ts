@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { safeErrorName } from "@/lib/request-security";
 import { getDb } from "@yatra/db/client";
 import { hashPassword } from "@/lib/auth/password";
 import { JsonBodyError, readJsonBody } from "@/lib/read-json-body";
@@ -166,7 +167,7 @@ export async function POST(request: Request) {
     } catch (deliveryError) {
       console.error(
         "[customer-auth] registration verification delivery failed",
-        deliveryError instanceof Error ? deliveryError.message : "unknown",
+        safeErrorName(deliveryError),
       );
 
       return NextResponse.json(
@@ -194,7 +195,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error(
       "[customer-auth] registration failed",
-      error instanceof Error ? error.message : "unknown",
+      safeErrorName(error),
     );
     return NextResponse.json(
       {

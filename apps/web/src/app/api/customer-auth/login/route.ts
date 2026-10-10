@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { safeErrorName } from "@/lib/request-security";
 import { getDb } from "@yatra/db/client";
 import { hasPermission, type RoleKey } from "@yatra/domain/auth/permissions";
 import { verifyPassword } from "@/lib/auth/password";
@@ -183,7 +184,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error(
       "[customer-auth] login failed",
-      error instanceof Error ? error.message : "unknown",
+      safeErrorName(error),
     );
     return NextResponse.json(
       {

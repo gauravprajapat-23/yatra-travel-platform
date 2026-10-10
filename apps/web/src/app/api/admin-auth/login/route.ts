@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { safeErrorName } from "@/lib/request-security";
 import { getDb } from "@yatra/db/client";
 import { verifyPassword } from "@/lib/auth/password";
 import { createAdminSession } from "@/lib/auth/session";
@@ -228,7 +229,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error(
       "[admin-auth] Login runtime failure:",
-      error instanceof Error ? error.message : "Unknown database/runtime error",
+      safeErrorName(error),
     );
 
     const identityHash = loginIdentityHash(email);

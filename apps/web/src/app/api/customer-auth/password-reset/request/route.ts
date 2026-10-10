@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { safeErrorName } from "@/lib/request-security";
 import { getDb } from "@yatra/db/client";
 import { JsonBodyError, readJsonBody } from "@/lib/read-json-body";
 import {
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error(
       "[customer-auth] password reset provider unavailable",
-      error instanceof Error ? error.message : "unknown",
+      safeErrorName(error),
     );
     return NextResponse.json(
       {
@@ -141,7 +142,7 @@ export async function POST(request: Request) {
     } catch (error) {
       console.error(
         "[customer-auth] password reset delivery failed",
-        error instanceof Error ? error.message : "unknown",
+        safeErrorName(error),
       );
     }
   }

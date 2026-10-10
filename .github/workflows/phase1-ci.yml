@@ -183,6 +183,9 @@ jobs:
       - name: Observability safety certification
         run: npm run verify:observability
 
+      - name: Auth runtime privacy certification
+        run: npm run verify:auth-runtime-safety
+
       - name: Public SEO / private route certification
         run: npm run verify:public-seo
 
