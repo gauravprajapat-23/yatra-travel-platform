@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 function toInputDate(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -9,6 +9,8 @@ function toInputDate(date: Date): string {
 
 export function HomeCarSearch() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedVehicle = searchParams.get("vehicle")?.trim().slice(0, 120) || "";
   const today = useMemo(() => new Date(), []);
   const defaultDeparture = useMemo(() => {
     const d = new Date(today);
@@ -59,11 +61,17 @@ export function HomeCarSearch() {
     });
     if (returnDate) params.set("return", returnDate);
 
-    router.push(`/cars/search?${params.toString()}`);
+    if (selectedVehicle) params.set("vehicle", selectedVehicle);
+
+    router.push(
+      selectedVehicle
+        ? `/booking/car?${params.toString()}`
+        : `/cars/search?${params.toString()}`,
+    );
   }
 
   return (
-    <form className="shell reference-search-card reference-search-card--interactive" onSubmit={submit}>
+    <form id="car-search" className="shell reference-search-card reference-search-card--interactive" onSubmit={submit}>
       <label className="reference-search-card__field">
         <span>From</span>
         <input value={from} onChange={(e) => setFrom(e.target.value)} aria-label="From city" />
@@ -84,7 +92,7 @@ export function HomeCarSearch() {
         <span>Travellers</span>
         <input type="number" min="1" max="30" value={travellers} onChange={(e) => setTravellers(e.target.value)} aria-label="Travellers" />
       </label>
-      <button className="button-link button-link--primary" type="submit">Find Cars →</button>
+      <button className="button-link button-link--primary" type="submit">{selectedVehicle ? "Continue With This Car →" : "Find Cars →"}</button>
       {error ? <p className="reference-search-card__error" role="alert">{error}</p> : null}
     </form>
   );

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { CarBookingForm } from "@/components/car-booking-form";
 
 export const metadata: Metadata = {
@@ -24,12 +25,19 @@ export default async function CarBookingPage({
   searchParams: SearchParams;
 }) {
   const params = await searchParams;
-  const from = first(params.from, "Raipur").trim().slice(0, 120);
-  const to = first(params.to, "Ujjain").trim().slice(0, 120);
+  const from = first(params.from).trim().slice(0, 120);
+  const to = first(params.to).trim().slice(0, 120);
   const departure = first(params.departure).trim().slice(0, 20);
   const returnDate = first(params.return).trim().slice(0, 20);
-  const vehicleSlug = first(params.vehicle, "innova-crysta").trim().slice(0, 120);
+  const vehicleSlug = first(params.vehicle).trim().slice(0, 120);
   const count = travellers(first(params.travellers, "4"));
+
+  if (!from || !to || !departure || !vehicleSlug) {
+    const target = vehicleSlug
+      ? `/?vehicle=${encodeURIComponent(vehicleSlug)}#car-search`
+      : "/#car-search";
+    redirect(target);
+  }
   const tripType =
     first(params.tripType) === "ONE_WAY" || !returnDate
       ? "ONE_WAY"
@@ -49,8 +57,8 @@ export default async function CarBookingPage({
         <CarBookingForm
           promotionsEnabled={process.env.PROMOTION_APPLY_ENABLED === "true"}
           trip={{
-            from: from || "Raipur",
-            to: to || "Ujjain",
+            from,
+            to,
             departure,
             returnDate,
             travellers: count,

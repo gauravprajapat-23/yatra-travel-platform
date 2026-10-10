@@ -59,7 +59,7 @@ test("vehicle detail preserves the selected vehicle when starting booking", asyn
   const bookingLink = page.getByRole("link", { name: "Book This Car" });
   await expect(bookingLink).toHaveAttribute(
     "href",
-    "/booking/car?vehicle=e2e-assignment-vehicle",
+    "/?vehicle=e2e-assignment-vehicle#car-search",
   );
 });
 
@@ -101,4 +101,29 @@ test("car search links every published vehicle to its dynamic detail page", asyn
     "href",
     "/cars/e2e-assignment-vehicle",
   );
+});
+
+
+test("selected vehicle survives trip search from vehicle detail", async ({ page }) => {
+  await page.goto("/cars/e2e-assignment-vehicle");
+  await page.getByRole("link", { name: "Book This Car" }).click();
+
+  await expect(page).toHaveURL(/vehicle=e2e-assignment-vehicle/);
+  await page.getByLabel("From city").fill("Bhopal");
+  await page.getByLabel("Destination city").fill("Indore");
+
+  const departure = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  await page.getByLabel("Departure date").fill(departure);
+  await page.getByLabel("Return date").fill("");
+
+  await page.getByRole("button", { name: "Continue With This Car" }).click();
+
+  await expect(page).toHaveURL(/\/booking\/car\?/);
+  expect(new URL(page.url()).searchParams.get("vehicle")).toBe(
+    "e2e-assignment-vehicle",
+  );
+  expect(new URL(page.url()).searchParams.get("from")).toBe("Bhopal");
+  expect(new URL(page.url()).searchParams.get("to")).toBe("Indore");
 });
