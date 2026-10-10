@@ -22,6 +22,7 @@ type RequestBody = {
   quoteId?: unknown;
   guestName?: unknown;
   guestEmail?: unknown;
+  guestPhone?: unknown;
   promotionCode?: unknown;
 };
 
@@ -138,6 +139,9 @@ export async function POST(request: Request) {
     isNonEmptyString(body.guestEmail, 254) && isEmail(body.guestEmail)
       ? body.guestEmail.trim().toLowerCase()
       : null;
+  const guestPhone = isNonEmptyString(body.guestPhone, 32)
+    ? body.guestPhone.trim()
+    : null;
   const promotionCode = isNonEmptyString(body.promotionCode, 32)
     ? body.promotionCode.trim().toUpperCase()
     : null;
@@ -179,6 +183,7 @@ export async function POST(request: Request) {
             quoteId: body.quoteId.trim(),
             guestName: guestName!,
             guestEmail: guestEmail!,
+            guestPhone,
             idempotencyKey,
             promotionCode,
           },

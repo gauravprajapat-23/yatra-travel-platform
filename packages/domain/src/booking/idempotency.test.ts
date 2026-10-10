@@ -103,3 +103,21 @@ test("customer booking fingerprint changes when promotion changes", () => {
 
   assert.notEqual(a, b);
 });
+
+
+test("guest phone participates in booking idempotency fingerprint", () => {
+  const base = createBookingRequestFingerprint({
+    quoteId: "quote-phone",
+    guestName: "Guest",
+    guestEmail: "guest@example.com",
+    guestPhone: "+91 90000 00000",
+  });
+  const changed = createBookingRequestFingerprint({
+    quoteId: "quote-phone",
+    guestName: "Guest",
+    guestEmail: "guest@example.com",
+    guestPhone: "+91 91111 11111",
+  });
+
+  assert.notEqual(base, changed);
+});

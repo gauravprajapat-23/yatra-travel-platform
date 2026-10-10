@@ -151,6 +151,7 @@ export function CarBookingForm({
           quoteId: activeQuote.id,
           code: promotionCode.trim(),
           guestEmail: guestEmail.trim().toLowerCase(),
+          guestPhone: guestPhone.trim() || undefined,
           promotionCode: promotionPreview?.promotion?.code ?? undefined,
         }),
       });
@@ -216,13 +217,7 @@ export function CarBookingForm({
         throw new Error(result.error?.message ?? "Unable to create booking.");
       }
 
-      const params = new URLSearchParams({
-        source: "car-booking",
-        bookingReference: result.booking.reference,
-      });
-      if (guestPhone.trim()) params.set("phone", guestPhone.trim());
-
-      router.push(`/checkout?${params.toString()}`);
+      router.push("/checkout");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to continue.");
     } finally {

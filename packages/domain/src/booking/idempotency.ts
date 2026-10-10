@@ -4,6 +4,7 @@ export type BookingFingerprintInput = {
   quoteId: string;
   guestName: string;
   guestEmail: string;
+  guestPhone?: string | null;
   promotionCode?: string | null;
 };
 
@@ -23,6 +24,7 @@ export function createBookingRequestFingerprint(
     quoteId: input.quoteId.trim(),
     guestName: normalize(input.guestName),
     guestEmail: normalize(input.guestEmail),
+    guestPhone: input.guestPhone?.trim() || null,
     promotionCode: normalizePromotionCode(input.promotionCode),
   });
 

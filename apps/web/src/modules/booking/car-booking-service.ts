@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getDb, Prisma } from "@yatra/db/client";
+import { encryptSensitiveString } from "@yatra/providers/security/field-encryption";
 import {
   createPolicySnapshot,
   selectActiveBookingPolicy,
@@ -34,6 +35,7 @@ export type CreateGuestCarBookingInput = {
       customerUserId?: null;
       guestName: string;
       guestEmail: string;
+      guestPhone?: string | null;
     }
 );
 
@@ -103,6 +105,7 @@ export async function createGuestCarBooking(
   const customerUserId = input.customerUserId ?? null;
   const guestName = customerUserId ? null : input.guestName ?? null;
   const guestEmail = customerUserId ? null : input.guestEmail ?? null;
+  const guestPhone = customerUserId ? null : input.guestPhone?.trim() || null;
   const promotionCode = input.promotionCode?.trim() || null;
 
   if (!customerUserId && (!guestName || !guestEmail)) {
@@ -128,6 +131,7 @@ export async function createGuestCarBooking(
         quoteId: input.quoteId,
         guestName: guestName!,
         guestEmail: guestEmail!,
+        guestPhone,
         promotionCode,
       });
 
@@ -314,9 +318,14 @@ export async function createGuestCarBooking(
             ? "PENDING_PAYMENT"
             : "PENDING_REVIEW";
 
+        const reference = createBookingReference();
+        const guestPhoneCiphertext = guestPhone
+          ? encryptSensitiveString(guestPhone, `car-booking:${reference}:guest-phone`)
+          : null;
+
         const booking = await tx.carBooking.create({
           data: {
-            reference: createBookingReference(),
+            reference,
             quoteId: quote.id,
             idempotencyKey: input.idempotencyKey,
             requestFingerprint: fingerprint,
@@ -332,6 +341,7 @@ export async function createGuestCarBooking(
             guestEmail: customerUserId
               ? null
               : guestEmail!.trim().toLowerCase(),
+            guestPhoneCiphertext,
             vehicleClassId: quote.vehicleClassId,
             pricingRuleId: quote.pricingRuleId,
             promotionId: promotion?.promotionId ?? null,
