@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@yatra/db/client";
+import { safeErrorName } from "@/lib/request-security";
 
 export const runtime = "nodejs";
 
@@ -22,7 +23,7 @@ export async function GET() {
   } catch (error) {
     console.error(
       "[admin-auth] Health check database failure:",
-      error instanceof Error ? error.message : "Unknown database/runtime error",
+      safeErrorName(error),
     );
 
     return NextResponse.json(

@@ -14,6 +14,19 @@ export const metadata: Metadata = {
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
+type CheckoutBooking = {
+  type: "CAR" | "PACKAGE";
+  reference: string;
+  status: string;
+  title: string;
+  route: string;
+  startsAt: Date;
+  endsAt: Date | null;
+  travellers: number;
+  currency: string;
+  totalMinor: bigint;
+};
+
 function first(value: string | string[] | undefined, fallback = ""): string {
   if (Array.isArray(value)) return value[0] ?? fallback;
   return value ?? fallback;
@@ -53,20 +66,7 @@ export default async function CheckoutPage({
       }
     : null;
 
-  let booking:
-    | {
-        reference: string;
-        status: string;
-        originText: string;
-        destinationText: string;
-        startsAt: Date;
-        endsAt: Date | null;
-        travellers: number;
-        currency: string;
-        totalMinor: bigint;
-        vehicleClass: { name: string };
-      }
-    | null = null;
+  let booking: CheckoutBooking | null = null;
 
   if (!isCustomTrip && process.env.DATABASE_URL) {
     const jar = await cookies();
@@ -74,23 +74,69 @@ export default async function CheckoutPage({
       jar.get(CHECKOUT_SESSION_COOKIE)?.value,
     );
 
-    if (checkoutSession?.t === "CAR") {
+    if (checkoutSession) {
       const db = getDb();
-      booking = await db.carBooking.findUnique({
-        where: { reference: checkoutSession.r },
-        select: {
-          reference: true,
-          status: true,
-          originText: true,
-          destinationText: true,
-          startsAt: true,
-          endsAt: true,
-          travellers: true,
-          currency: true,
-          totalMinor: true,
-          vehicleClass: { select: { name: true } },
-        },
-      });
+
+      if (checkoutSession.t === "PACKAGE") {
+        const record = await db.packageBooking.findUnique({
+          where: { reference: checkoutSession.r },
+          select: {
+            reference: true,
+            status: true,
+            travelStartAt: true,
+            travellers: true,
+            currency: true,
+            totalMinor: true,
+            package: { select: { title: true } },
+          },
+        });
+
+        if (record) {
+          booking = {
+            type: "PACKAGE",
+            reference: record.reference,
+            status: record.status,
+            title: record.package.title,
+            route: "Tour package",
+            startsAt: record.travelStartAt,
+            endsAt: null,
+            travellers: record.travellers,
+            currency: record.currency,
+            totalMinor: record.totalMinor,
+          };
+        }
+      } else {
+        const record = await db.carBooking.findUnique({
+          where: { reference: checkoutSession.r },
+          select: {
+            reference: true,
+            status: true,
+            originText: true,
+            destinationText: true,
+            startsAt: true,
+            endsAt: true,
+            travellers: true,
+            currency: true,
+            totalMinor: true,
+            vehicleClass: { select: { name: true } },
+          },
+        });
+
+        if (record) {
+          booking = {
+            type: "CAR",
+            reference: record.reference,
+            status: record.status,
+            title: record.vehicleClass.name,
+            route: `${record.originText} → ${record.destinationText}`,
+            startsAt: record.startsAt,
+            endsAt: record.endsAt,
+            travellers: record.travellers,
+            currency: record.currency,
+            totalMinor: record.totalMinor,
+          };
+        }
+      }
     }
   }
 
@@ -99,7 +145,7 @@ export default async function CheckoutPage({
       <section className="reference-section reference-section--cream">
         <div className="shell checkout-invalid-state booking-card">
           <h1>Checkout session unavailable</h1>
-          <p>Your booking session may have expired. Please search for a vehicle and create a new booking.</p>
+          <p>Your booking session may have expired. Please return to search or your package and create a new booking.</p>
           <Link className="button-link button-link--primary" href="/">Start New Search →</Link>
         </div>
       </section>
@@ -153,12 +199,12 @@ export default async function CheckoutPage({
             </>
           ) : booking ? (
             <>
-              <h3>{booking.originText} → {booking.destinationText}</h3>
-              <p>{booking.vehicleClass.name} · {booking.travellers} Travellers</p>
+              <h3>{booking.route}</h3>
+              <p>{booking.title} · {booking.travellers} Travellers</p>
               <dl className="checkout-trip-details">
                 <div><dt>Booking</dt><dd>{booking.reference}</dd></div>
                 <div><dt>Departure</dt><dd>{booking.startsAt.toLocaleDateString("en-IN")}</dd></div>
-                <div><dt>Return</dt><dd>{booking.endsAt?.toLocaleDateString("en-IN") ?? "One way"}</dd></div>
+                <div><dt>Return</dt><dd>{booking.endsAt?.toLocaleDateString("en-IN") ?? (booking.type === "CAR" ? "One way" : "As per itinerary")}</dd></div>
                 <div><dt>Status</dt><dd>{booking.status.replaceAll("_", " ")}</dd></div>
               </dl>
               <div className="fare-total">

@@ -32,6 +32,15 @@ function date(value: unknown): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+function indiaDateKey(value: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(value);
+}
+
 function daysInclusive(startsAt: Date, endsAt: Date | null): number {
   if (!endsAt) return 1;
   const diff = Math.ceil((endsAt.getTime() - startsAt.getTime()) / 86_400_000);
@@ -107,6 +116,13 @@ export async function POST(request: Request) {
   if (!origin || !destination || !startsAt || !vehicleSlug || !tripType) {
     return NextResponse.json(
       { error: { code: "INVALID_QUOTE_INPUT", message: "Route, date, trip type and vehicle are required." } },
+      { status: 400 },
+    );
+  }
+
+  if (indiaDateKey(startsAt) < indiaDateKey(new Date())) {
+    return NextResponse.json(
+      { error: { code: "PAST_DEPARTURE_DATE", message: "Departure date cannot be in the past." } },
       { status: 400 },
     );
   }

@@ -112,7 +112,9 @@ export default async function VehicleDetailPage({
             <small>
               Final fare depends on route, dates, availability and active pricing rules.
             </small>
-            <ButtonLink href="/booking/car">Book This Car →</ButtonLink>
+            <ButtonLink href={`/booking/car?vehicle=${encodeURIComponent(vehicle.slug)}`}>
+              Book This Car →
+            </ButtonLink>
           </div>
         </div>
       </div>

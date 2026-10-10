@@ -244,7 +244,7 @@ export function PackageDepartureQuoteForm({
         );
       }
 
-      window.location.assign("/booking/success");
+      window.location.assign("/checkout");
     } catch (caught) {
       setError(
         caught instanceof Error

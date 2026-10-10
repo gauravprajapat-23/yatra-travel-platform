@@ -202,6 +202,7 @@ export function CarBookingForm({
           quoteId: activeQuote.id,
           guestName: guestName.trim(),
           guestEmail: guestEmail.trim().toLowerCase(),
+          promotionCode: promotionPreview?.promotion?.code ?? undefined,
         }),
       });
 
