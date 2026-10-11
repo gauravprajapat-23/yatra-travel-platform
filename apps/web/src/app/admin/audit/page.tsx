@@ -5,7 +5,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminTablePage } from "@/components/admin-table-page";
 import { AdminField } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
-import { formatIstDate, formatIstDateTime } from "@/lib/admin/datetime";
+import { formatIstDate, formatIstDateTime, parseIstDateEnd, parseIstDateStart } from "@/lib/admin/datetime";
 
 export const dynamic = "force-dynamic";
 
@@ -54,18 +54,6 @@ function metadataText(value: unknown): string {
   }
 }
 
-function parseDateStart(value: string): Date | null {
-  if (!value) return null;
-  const parsed = new Date(`${value}T00:00:00`);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
-
-function parseDateEnd(value: string): Date | null {
-  if (!value) return null;
-  const parsed = new Date(`${value}T23:59:59.999`);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
-
 export default async function AuditPage({
   searchParams,
 }: {
@@ -87,8 +75,24 @@ export default async function AuditPage({
   const entityType = String(params.entityType ?? "").trim().slice(0, 120);
   const from = String(params.from ?? "").trim();
   const to = String(params.to ?? "").trim();
-  const fromDate = parseDateStart(from);
-  const toDate = parseDateEnd(to);
+  const fromDate = parseIstDateStart(from);
+  const toDate = parseIstDateEnd(to);
+  const reversedRange = Boolean(fromDate && toDate && fromDate > toDate);
+  const fromError =
+    from && !fromDate
+      ? "Enter a valid start date."
+      : reversedRange
+        ? "Start date must be on or before the end date."
+        : undefined;
+  const toError =
+    to && !toDate
+      ? "Enter a valid end date."
+      : reversedRange
+        ? "End date must be on or after the start date."
+        : undefined;
+  const hasRangeError = Boolean(fromError || toError);
+  const effectiveFromDate = hasRangeError ? null : fromDate;
+  const effectiveToDate = hasRangeError ? null : toDate;
   const requestedPage = Number(params.page ?? "1");
   const page =
     Number.isInteger(requestedPage) && requestedPage > 0
@@ -100,11 +104,11 @@ export default async function AuditPage({
   const where: Prisma.AuditLogWhereInput = {
     ...(action ? { action } : {}),
     ...(entityType ? { entityType } : {}),
-    ...(fromDate || toDate
+    ...(effectiveFromDate || effectiveToDate
       ? {
           createdAt: {
-            ...(fromDate ? { gte: fromDate } : {}),
-            ...(toDate ? { lte: toDate } : {}),
+            ...(effectiveFromDate ? { gte: effectiveFromDate } : {}),
+            ...(effectiveToDate ? { lte: effectiveToDate } : {}),
           },
         }
       : {}),
@@ -270,7 +274,7 @@ export default async function AuditPage({
             </select>
           </AdminField>
 
-          <AdminField label="From" htmlFor="auditFrom">
+          <AdminField label="From" htmlFor="auditFrom" error={fromError}>
             <input
               id="auditFrom"
               type="date"
@@ -279,7 +283,7 @@ export default async function AuditPage({
             />
           </AdminField>
 
-          <AdminField label="To" htmlFor="auditTo">
+          <AdminField label="To" htmlFor="auditTo" error={toError}>
             <input
               id="auditTo"
               type="date"

@@ -138,6 +138,17 @@ export default async function SettingsPage() {
   const paymentWriteEnabled = process.env.PAYMENT_WRITE_ENABLED === "true";
   const refundWriteEnabled = process.env.REFUND_WRITE_ENABLED === "true";
   const mediaWriteEnabled = process.env.MEDIA_WRITE_ENABLED === "true";
+  const customerAuthWriteEnabled =
+    process.env.CUSTOMER_AUTH_WRITE_ENABLED === "true";
+  const customerPasswordResetEnabled =
+    process.env.CUSTOMER_PASSWORD_RESET_ENABLED === "true";
+  const promotionApplyEnabled =
+    process.env.PROMOTION_APPLY_ENABLED === "true";
+  const notificationEmailProviderConfigured = Boolean(
+    process.env.NOTIFICATION_EMAIL_PROVIDER?.trim().toLowerCase() === "resend" &&
+      process.env.RESEND_API_KEY?.trim() &&
+      process.env.NOTIFICATION_EMAIL_FROM?.trim(),
+  );
 
   const legalReady = legalPages === 3;
   const carReady =
@@ -174,6 +185,11 @@ export default async function SettingsPage() {
       "AUTH_SECRET with at least 32 characters",
     ],
     ["Razorpay", yesNo(razorpayConfigured), "Key ID + secret + webhook secret"],
+    [
+      "Resend Email",
+      yesNo(notificationEmailProviderConfigured),
+      "Provider + API key + verified sender",
+    ],
     ["S3 Storage", yesNo(storageConfigured), "Bucket, endpoint, credentials, public base URL"],
     ["Field Encryption", yesNo(fieldEncryptionConfigured), "32-byte AES-256-GCM key for driver phone/license fields"],
     [
@@ -198,6 +214,9 @@ export default async function SettingsPage() {
     ["Payment writes", gate(paymentWriteEnabled)],
     ["Refund writes", gate(refundWriteEnabled)],
     ["Media writes", gate(mediaWriteEnabled)],
+    ["Customer auth writes", gate(customerAuthWriteEnabled)],
+    ["Customer password reset", gate(customerPasswordResetEnabled)],
+    ["Promotion application", gate(promotionApplyEnabled)],
   ];
 
   return (
@@ -248,6 +267,12 @@ export default async function SettingsPage() {
           value={refundReady ? "Ready" : "Blocked"}
           meta="refund write gate + Razorpay configuration"
           tone={refundReady ? "green" : "orange"}
+        />
+        <AdminMetric
+          label="Customer Email"
+          value={notificationEmailProviderConfigured ? "Ready" : "Blocked"}
+          meta="Resend provider + API key + sender"
+          tone={notificationEmailProviderConfigured ? "green" : "orange"}
         />
         <AdminMetric
           label="Admin Staff"

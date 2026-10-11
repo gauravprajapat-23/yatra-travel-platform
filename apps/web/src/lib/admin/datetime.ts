@@ -61,3 +61,27 @@ export function formatIstDateTime(value: Date | null | undefined): string {
     hour12: true,
   }).format(value);
 }
+
+
+export function parseIstDateStart(value: string): Date | null {
+  const text = value.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
+  const parsed = new Date(`${text}T00:00:00.000${IST_OFFSET}`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+export function parseIstDateEnd(value: string): Date | null {
+  const text = value.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
+  const parsed = new Date(`${text}T23:59:59.999${IST_OFFSET}`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+export function istDateKey(value: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(value);
+}

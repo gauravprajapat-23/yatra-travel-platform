@@ -5,7 +5,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminMetric, AdminShell } from "@/components/admin-shell";
 import { AdminField, AdminFormGrid } from "@/components/admin-form";
 import { requireAdminSession } from "@/lib/auth/session";
-import { formatIstDate } from "@/lib/admin/datetime";
+import { formatIstDate, istDateKey, parseIstDateEnd, parseIstDateStart } from "@/lib/admin/datetime";
 
 export const dynamic = "force-dynamic";
 
@@ -15,18 +15,6 @@ function money(minor: bigint, currency = "INR") {
     currency,
     maximumFractionDigits: 0,
   }).format(Number(minor) / 100);
-}
-
-function parseIstStart(value: string): Date | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
-  const parsed = new Date(`${value}T00:00:00.000+05:30`);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
-
-function parseIstEnd(value: string): Date | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
-  const parsed = new Date(`${value}T23:59:59.999+05:30`);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 function formatCurrencyMap(values: ReadonlyMap<string, bigint>): string {
@@ -49,8 +37,8 @@ export default async function ReportsPage({
   const params = await searchParams;
   const from = String(params.from ?? "").trim();
   const to = String(params.to ?? "").trim();
-  const fromDate = parseIstStart(from);
-  const toDate = parseIstEnd(to);
+  const fromDate = parseIstDateStart(from);
+  const toDate = parseIstDateEnd(to);
   const reversedRange = Boolean(
     fromDate && toDate && fromDate > toDate,
   );
@@ -73,7 +61,11 @@ export default async function ReportsPage({
   const db = getDb();
   const now = new Date();
   const trendEnd = effectiveToDate ?? now;
-  const trendStartFloor = new Date(trendEnd.getTime() - 13 * 24 * 60 * 60 * 1000);
+  const trendEndDay = parseIstDateEnd(istDateKey(trendEnd)) ?? trendEnd;
+  const trendStartFloor =
+    parseIstDateStart(
+      istDateKey(new Date(trendEndDay.getTime() - 13 * 24 * 60 * 60 * 1000)),
+    ) ?? new Date(trendEndDay.getTime() - 13 * 24 * 60 * 60 * 1000);
   const trendStart =
     effectiveFromDate && effectiveFromDate > trendStartFloor
       ? effectiveFromDate
@@ -364,8 +356,7 @@ export default async function ReportsPage({
     ? `/api/admin/reports/export?${exportQuery}`
     : "/api/admin/reports/export";
 
-  const dayKey = (value: Date) =>
-    value.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  const dayKey = (value: Date) => istDateKey(value);
 
   const trendBuckets = new Map<string, {
     date: string;

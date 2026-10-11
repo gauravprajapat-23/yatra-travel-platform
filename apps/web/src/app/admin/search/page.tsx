@@ -253,10 +253,11 @@ export default async function AdminSearchPage({
                 ],
               },
               {
-                OR: [
-                  { carBookings: { some: {} } },
-                  { packageBookings: { some: {} } },
-                ],
+                roles: {
+                  some: {
+                    role: { key: "CUSTOMER" },
+                  },
+                },
               },
             ],
           },
