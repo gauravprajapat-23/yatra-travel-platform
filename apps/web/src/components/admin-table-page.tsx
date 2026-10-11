@@ -65,7 +65,7 @@ export function AdminTablePage({
         <div className="admin-table-scope">
           <div className="admin-table-scope__chips">
             {filters.map((filter) => (
-              <span className="admin-filter-tab admin-filter-tab--active" key={filter}>
+              <span className="admin-filter-tab" key={filter}>
                 {filter}
               </span>
             ))}

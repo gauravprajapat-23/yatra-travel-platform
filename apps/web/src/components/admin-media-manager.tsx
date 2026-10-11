@@ -284,7 +284,7 @@ export function AdminMediaManager({
                 <small>{formatIstDate(new Date(asset.createdAt))}</small>
                 <small>
                   {asset.referenceCount > 0
-                    ? `${asset.referenceCount} active reference${asset.referenceCount === 1 ? "" : "s"}`
+                    ? `${asset.referenceCount} reference${asset.referenceCount === 1 ? "" : "s"}`
                     : "Orphaned / unused"}
                 </small>
                 {canWrite && editingId === asset.id ? (
