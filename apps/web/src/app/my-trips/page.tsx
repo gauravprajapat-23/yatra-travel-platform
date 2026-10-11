@@ -77,6 +77,16 @@ export default async function MyTripsPage() {
         currency: true,
         totalMinor: true,
         vehicleClass: { select: { name: true } },
+        selectedVehicle: {
+          select: {
+            displayName: true,
+            media: {
+              where: { isPrimary: true },
+              take: 1,
+              select: { media: { select: { publicUrl: true } } },
+            },
+          },
+        },
       },
     }),
     db.packageBooking.findMany({
@@ -101,7 +111,10 @@ export default async function MyTripsPage() {
       type: "CAR" as const,
       reference: booking.reference,
       status: booking.status,
-      title: booking.vehicleClass.name,
+      title: booking.selectedVehicle?.displayName ?? booking.vehicleClass.name,
+      imageUrl:
+        booking.selectedVehicle?.media[0]?.media.publicUrl ??
+        "/assets/car-innova.webp",
       route: `${booking.originText} → ${booking.destinationText}`,
       startsAt: booking.startsAt,
       endsAt: booking.endsAt,
@@ -115,6 +128,7 @@ export default async function MyTripsPage() {
       reference: booking.reference,
       status: booking.status,
       title: booking.package.title,
+      imageUrl: "/assets/temple-hero.webp",
       route: "Tour package",
       startsAt: booking.travelStartAt,
       endsAt: null,
@@ -174,8 +188,8 @@ export default async function MyTripsPage() {
                 <article className="trip-list-card trip-list-card--live" key={booking.key}>
                   <div className="trip-list-card__image">
                     <img
-                      src={booking.type === "CAR" ? "/assets/car-innova.webp" : "/assets/temple-hero.webp"}
-                      alt=""
+                      src={booking.imageUrl}
+                      alt={booking.title}
                     />
                   </div>
                   <div>

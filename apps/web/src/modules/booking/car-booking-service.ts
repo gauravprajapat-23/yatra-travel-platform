@@ -105,7 +105,11 @@ export async function createGuestCarBooking(
   const customerUserId = input.customerUserId ?? null;
   const guestName = customerUserId ? null : input.guestName ?? null;
   const guestEmail = customerUserId ? null : input.guestEmail ?? null;
-  const guestPhone = customerUserId ? null : input.guestPhone?.trim() || null;
+  const guestPhone = customerUserId
+    ? null
+    : "guestPhone" in input
+      ? input.guestPhone?.trim() || null
+      : null;
   const promotionCode = input.promotionCode?.trim() || null;
 
   if (!customerUserId && (!guestName || !guestEmail)) {
@@ -220,6 +224,26 @@ export async function createGuestCarBooking(
             409,
           );
         }
+
+        const selectedVehicleSlug =
+          typeof quote.priceBreakdown === "object" &&
+          quote.priceBreakdown !== null &&
+          !Array.isArray(quote.priceBreakdown) &&
+          "selectedVehicleSlug" in quote.priceBreakdown &&
+          typeof (quote.priceBreakdown as Record<string, unknown>).selectedVehicleSlug === "string"
+            ? ((quote.priceBreakdown as Record<string, unknown>).selectedVehicleSlug as string)
+            : null;
+
+        const selectedVehicle = selectedVehicleSlug
+          ? await tx.vehicle.findFirst({
+              where: {
+                slug: selectedVehicleSlug,
+                status: "ACTIVE",
+                vehicleClassId: quote.vehicleClassId,
+              },
+              select: { id: true },
+            })
+          : null;
 
         const policyRows = await tx.bookingPolicyVersion.findMany({
           where: {
@@ -343,6 +367,7 @@ export async function createGuestCarBooking(
               : guestEmail!.trim().toLowerCase(),
             guestPhoneCiphertext,
             vehicleClassId: quote.vehicleClassId,
+            selectedVehicleId: selectedVehicle?.id ?? null,
             pricingRuleId: quote.pricingRuleId,
             promotionId: promotion?.promotionId ?? null,
             promotionSnapshot: promotion

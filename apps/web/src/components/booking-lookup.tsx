@@ -8,6 +8,7 @@ type Booking = {
   reference: string;
   status: string;
   title: string;
+  imageUrl: string;
   route: string;
   startsAt: string;
   endsAt: string | null;
@@ -82,7 +83,7 @@ export function BookingLookup() {
         <div className="shell trip-list">
           <article className="trip-list-card trip-list-card--live">
             <div className="trip-list-card__image">
-              <img src={booking.type==="CAR"?"/assets/car-innova.webp":"/assets/temple-hero.webp"} alt="" />
+              <img src={booking.imageUrl} alt={booking.title} />
             </div>
             <div>
               <span className="reference-badge">{booking.status.replaceAll("_"," ")}</span>

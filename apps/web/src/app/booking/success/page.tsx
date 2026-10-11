@@ -18,6 +18,7 @@ type SuccessBooking = {
   reference: string;
   status: string;
   title: string;
+  imageUrl: string | null;
   route: string;
   startsAt: Date;
   endsAt: Date | null;
@@ -61,6 +62,7 @@ async function loadBooking(
       reference: booking.reference,
       status: booking.status,
       title: booking.package.title,
+      imageUrl: "/assets/temple-hero.webp",
       route: "Tour package",
       startsAt: booking.travelStartAt,
       endsAt: null,
@@ -83,6 +85,16 @@ async function loadBooking(
       currency: true,
       totalMinor: true,
       vehicleClass: { select: { name: true } },
+      selectedVehicle: {
+        select: {
+          displayName: true,
+          media: {
+            where: { isPrimary: true },
+            take: 1,
+            select: { media: { select: { publicUrl: true } } },
+          },
+        },
+      },
     },
   });
 
@@ -92,7 +104,10 @@ async function loadBooking(
     type: "CAR",
     reference: booking.reference,
     status: booking.status,
-    title: booking.vehicleClass.name,
+    title: booking.selectedVehicle?.displayName ?? booking.vehicleClass.name,
+    imageUrl:
+      booking.selectedVehicle?.media[0]?.media.publicUrl ??
+      "/assets/car-innova.webp",
     route: `${booking.originText} → ${booking.destinationText}`,
     startsAt: booking.startsAt,
     endsAt: booking.endsAt,
@@ -160,7 +175,7 @@ export default async function BookingSuccessPage() {
             <div className="selected-vehicle">
               {booking.type === "CAR" ? (
                 <div className="selected-vehicle__visual">
-                  <img src="/assets/car-innova.webp" alt="Booked chauffeur-driven vehicle"/>
+                  <img src={booking.imageUrl ?? "/assets/car-innova.webp"} alt={booking.title}/>
                 </div>
               ) : null}
               <div>

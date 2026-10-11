@@ -94,7 +94,7 @@ test("car search links every published vehicle to its dynamic detail page", asyn
 
   const card = page
     .locator(".search-result-card")
-    .filter({ hasText: "E2E Customer Car" })
+    .filter({ hasText: "E2E Operations Vehicle" })
     .first();
 
   await expect(card.getByRole("link", { name: "View Details" })).toHaveAttribute(

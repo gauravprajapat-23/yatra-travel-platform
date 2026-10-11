@@ -133,6 +133,16 @@ export async function POST(request: Request) {
         confirmedAt: true,
         createdAt: true,
         vehicleClass: { select: { name: true } },
+        selectedVehicle: {
+          select: {
+            displayName: true,
+            media: {
+              where: { isPrimary: true },
+              take: 1,
+              select: { media: { select: { publicUrl: true } } },
+            },
+          },
+        },
       },
     });
 
@@ -145,7 +155,10 @@ export async function POST(request: Request) {
           type: "CAR",
           reference: car.reference,
           status: car.status,
-          title: car.vehicleClass.name,
+          title: car.selectedVehicle?.displayName ?? car.vehicleClass.name,
+          imageUrl:
+            car.selectedVehicle?.media[0]?.media.publicUrl ??
+            "/assets/car-innova.webp",
           route: `${car.originText} → ${car.destinationText}`,
           startsAt: car.startsAt.toISOString(),
           endsAt: car.endsAt?.toISOString() ?? null,
@@ -183,6 +196,7 @@ export async function POST(request: Request) {
           reference: pkg.reference,
           status: pkg.status,
           title: pkg.package.title,
+          imageUrl: "/assets/temple-hero.webp",
           route: "Tour package",
           startsAt: pkg.travelStartAt.toISOString(),
           endsAt: null,
