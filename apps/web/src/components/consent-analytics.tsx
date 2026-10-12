@@ -11,11 +11,15 @@ export function ConsentAnalytics({ measurementId }: { measurementId?: string }) 
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored === "analytics" || stored === "essential") {
-      setConsent(stored);
-    }
-    setReady(true);
+    const timer = window.setTimeout(() => {
+      const stored = window.localStorage.getItem(STORAGE_KEY);
+      if (stored === "analytics" || stored === "essential") {
+        setConsent(stored);
+      }
+      setReady(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   function choose(value: Exclude<Consent, null>) {
