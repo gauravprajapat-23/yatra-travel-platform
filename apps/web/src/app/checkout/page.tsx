@@ -12,8 +12,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
-
 type CheckoutBooking = {
   type: "CAR" | "PACKAGE";
   reference: string;
@@ -27,15 +25,6 @@ type CheckoutBooking = {
   totalMinor: bigint;
 };
 
-function first(value: string | string[] | undefined, fallback = ""): string {
-  if (Array.isArray(value)) return value[0] ?? fallback;
-  return value ?? fallback;
-}
-
-function clean(value: string, maxLength: number): string {
-  return value.trim().slice(0, maxLength);
-}
-
 function money(minor: bigint, currency: string): string {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -44,31 +33,10 @@ function money(minor: bigint, currency: string): string {
   }).format(Number(minor) / 100);
 }
 
-export default async function CheckoutPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  const params = await searchParams;
-  const source = first(params.source);
-  const isCustomTrip = source === "custom-trip";
-
-  const customTrip = isCustomTrip
-    ? {
-        title: "Custom Journey",
-        from: clean(first(params.from, "Delhi"), 120),
-        to: clean(first(params.to, "Kedarnath"), 120),
-        duration: clean(first(params.duration, "6"), 2),
-        travelDate: clean(first(params.travelDate), 20),
-        travellers: clean(first(params.travellers, "4"), 2),
-        vehicle: clean(first(params.vehicle, "SUV · 6 Seats"), 80),
-        requests: clean(first(params.requests), 1000),
-      }
-    : null;
-
+export default async function CheckoutPage() {
   let booking: CheckoutBooking | null = null;
 
-  if (!isCustomTrip && process.env.DATABASE_URL) {
+  if (process.env.DATABASE_URL) {
     const jar = await cookies();
     const checkoutSession = verifyCheckoutSessionToken(
       jar.get(CHECKOUT_SESSION_COOKIE)?.value,
@@ -140,7 +108,7 @@ export default async function CheckoutPage({
     }
   }
 
-  if (!isCustomTrip && !booking) {
+  if (!booking) {
     return (
       <section className="reference-section reference-section--cream">
         <div className="shell checkout-invalid-state booking-card">
@@ -176,28 +144,7 @@ export default async function CheckoutPage({
           <h2>Trip Summary</h2>
           <div className="checkout-trip-image" />
 
-          {customTrip ? (
-            <>
-              <h3>{customTrip.title}</h3>
-              <p>{customTrip.duration} Days · {customTrip.vehicle}</p>
-              <dl className="checkout-trip-details">
-                <div><dt>From</dt><dd>{customTrip.from}</dd></div>
-                <div><dt>To</dt><dd>{customTrip.to}</dd></div>
-                <div><dt>Travel date</dt><dd>{customTrip.travelDate || "To be confirmed"}</dd></div>
-                <div><dt>Travellers</dt><dd>{customTrip.travellers}</dd></div>
-              </dl>
-              {customTrip.requests ? (
-                <div className="checkout-special-request">
-                  <strong>Special requests</strong>
-                  <p>{customTrip.requests}</p>
-                </div>
-              ) : null}
-              <div className="fare-total">
-                <span>Final Price</span>
-                <strong>Quote pending</strong>
-              </div>
-            </>
-          ) : booking ? (
+          {booking ? (
             <>
               <h3>{booking.route}</h3>
               <p>{booking.title} · {booking.travellers} Travellers</p>
@@ -228,12 +175,7 @@ export default async function CheckoutPage({
         <aside className="booking-card payment-column">
           <h2>Payment</h2>
 
-          {customTrip ? (
-            <div className="custom-trip-checkout-notice">
-              <strong>Price confirmation required</strong>
-              <p>Your request needs review before payment can be enabled.</p>
-            </div>
-          ) : canPay && booking ? (
+          {canPay && booking ? (
             <Link className="button-link button-link--primary" href="/payment">
               Continue to Secure Payment →
             </Link>
