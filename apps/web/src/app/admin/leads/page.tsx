@@ -142,7 +142,7 @@ export default async function LeadsPage({
     <AdminTablePage
       active="Enquiries / Leads"
       title="Leads & Enquiries"
-      subtitle="Live contact and custom-trip enquiries captured from the public website."
+      subtitle="Contact and custom-trip enquiries only. Completed car/package booking attempts appear under Bookings."
       metrics={[
         {
           label: "Matching Leads",
@@ -238,7 +238,7 @@ export default async function LeadsPage({
       emptyMessage={
         q || status || type
           ? "Clear or adjust the current search, type or status filters."
-          : "Public contact and custom-trip enquiries will appear here automatically."
+          : "Contact and custom-trip enquiries appear here. Car and package bookings are tracked separately under Bookings."
       }
       rows={rows}
       footer={
