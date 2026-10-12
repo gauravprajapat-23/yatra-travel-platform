@@ -41,7 +41,8 @@
     "verify:runtime-inputs": "node scripts/verify-runtime-certifier-inputs.mjs",
     "verify:auth-runtime-safety": "node scripts/verify-auth-runtime-safety.mjs",
     "catalog:bootstrap": "npm run db:bootstrap:launch-catalog -w @yatra/db",
-    "catalog:verify": "npm run db:verify:launch-catalog -w @yatra/db"
+    "catalog:verify": "npm run db:verify:launch-catalog -w @yatra/db",
+    "verify:public-launch-quality": "node scripts/verify-public-launch-quality.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0"
