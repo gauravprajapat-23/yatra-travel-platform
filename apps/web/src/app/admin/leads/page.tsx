@@ -36,6 +36,13 @@ function interest(type: string, tripData: unknown): string {
   if (type === "CONTACT") return "General enquiry";
   if (typeof tripData === "object" && tripData !== null) {
     const data = tripData as Record<string, unknown>;
+    const from =
+      typeof data.from === "string" ? data.from.trim() : "";
+    const to =
+      typeof data.to === "string" ? data.to.trim() : "";
+
+    if (from && to) return `${from} → ${to}`;
+
     for (const key of ["destination", "package", "route", "tripType"]) {
       const value = data[key];
       if (typeof value === "string" && value.trim()) return value.trim();
