@@ -95,5 +95,11 @@ jobs:
       - name: Verify payment foundation
         run: npm run db:verify:payments -w @yatra/db
 
+      - name: Bootstrap launch catalog
+        run: npm run catalog:bootstrap
+
+      - name: Verify launch catalog
+        run: npm run catalog:verify
+
       - name: Verify migration status
         run: npm run db:migrate:status -w @yatra/db
