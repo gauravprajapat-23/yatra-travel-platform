@@ -385,7 +385,7 @@ try {
 
   for (const [id, objectKey, publicUrl, altText] of media) {
     await client.query(
-      \`INSERT INTO "MediaAsset"
+      `INSERT INTO "MediaAsset"
         ("id","storageProvider","objectKey","publicUrl","mimeType","altText","createdAt","updatedAt")
        VALUES ($1,'local',$2,$3,'image/webp',$4,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
        ON CONFLICT ("id") DO UPDATE SET
@@ -393,14 +393,14 @@ try {
          "publicUrl"=EXCLUDED."publicUrl",
          "mimeType"=EXCLUDED."mimeType",
          "altText"=EXCLUDED."altText",
-         "updatedAt"=CURRENT_TIMESTAMP\`,
+         "updatedAt"=CURRENT_TIMESTAMP`,
       [id, objectKey, publicUrl, altText],
     );
   }
 
   for (const item of destinations) {
     await client.query(
-      \`INSERT INTO "Destination"
+      `INSERT INTO "Destination"
         ("id","slug","name","kind","summary","body","status","isFeatured","publishedAt","heroMediaId",
          "seoTitle","seoDescription","robotsIndex","robotsFollow","createdAt","updatedAt")
        VALUES ($1,$2,$3,$4::"DestinationKind",$5,$6::jsonb,'PUBLISHED'::"ContentStatus",$7,$8,$9,$10,$11,true,true,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
@@ -417,15 +417,15 @@ try {
          "seoDescription"=EXCLUDED."seoDescription",
          "robotsIndex"=true,
          "robotsFollow"=true,
-         "updatedAt"=CURRENT_TIMESTAMP\`,
+         "updatedAt"=CURRENT_TIMESTAMP`,
       [item.id, item.slug, item.name, item.kind, item.summary, json(item.body), item.featured, publishedAt, item.mediaId, item.seoTitle, item.seoDescription],
     );
 
     if (item.temple) {
-      const dest = await client.query(\`SELECT "id" FROM "Destination" WHERE "slug"=$1\`, [item.slug]);
+      const dest = await client.query(`SELECT "id" FROM "Destination" WHERE "slug"=$1`, [item.slug]);
       const destinationId = dest.rows[0].id;
       await client.query(
-        \`INSERT INTO "TempleProfile"
+        `INSERT INTO "TempleProfile"
           ("id","destinationId","templeName","deity","darshanNotes","dressCode","openingHours","nearbyPlaces","practicalNotes","createdAt","updatedAt")
          VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9::jsonb,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
          ON CONFLICT ("destinationId") DO UPDATE SET
@@ -436,7 +436,7 @@ try {
            "openingHours"=EXCLUDED."openingHours",
            "nearbyPlaces"=EXCLUDED."nearbyPlaces",
            "practicalNotes"=EXCLUDED."practicalNotes",
-           "updatedAt"=CURRENT_TIMESTAMP\`,
+           "updatedAt"=CURRENT_TIMESTAMP`,
         ["catalog-temple-" + item.slug, destinationId, item.temple.templeName, item.temple.deity, item.temple.darshanNotes, item.temple.dressCode, json(item.temple.openingHours), json(item.temple.nearbyPlaces), json(item.temple.practicalNotes)],
       );
     }
@@ -444,7 +444,7 @@ try {
 
   for (const row of vehicleClasses) {
     await client.query(
-      \`INSERT INTO "VehicleClass"
+      `INSERT INTO "VehicleClass"
         ("id","slug","name","description","defaultSeats","defaultLuggage","isActive","sortOrder","createdAt","updatedAt")
        VALUES ($1,$2,$3,$4,$5,$6,true,$7,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
        ON CONFLICT ("slug") DO UPDATE SET
@@ -454,17 +454,17 @@ try {
          "defaultLuggage"=EXCLUDED."defaultLuggage",
          "isActive"=true,
          "sortOrder"=EXCLUDED."sortOrder",
-         "updatedAt"=CURRENT_TIMESTAMP\`,
+         "updatedAt"=CURRENT_TIMESTAMP`,
       row,
     );
   }
 
   for (const item of vehicles) {
-    const classRow = await client.query(\`SELECT "id" FROM "VehicleClass" WHERE "slug"=(SELECT "slug" FROM "VehicleClass" WHERE "id"=$1 LIMIT 1)\`, [item.classId]);
+    const classRow = await client.query(`SELECT "id" FROM "VehicleClass" WHERE "slug"=(SELECT "slug" FROM "VehicleClass" WHERE "id"=$1 LIMIT 1)`, [item.classId]);
     const vehicleClassId = classRow.rows[0]?.id ?? item.classId;
 
     await client.query(
-      \`INSERT INTO "Vehicle"
+      `INSERT INTO "Vehicle"
         ("id","slug","registrationNumber","displayName","vehicleClassId","status","seats","luggage","airConditioned",
          "features","description","isFeatured","createdAt","updatedAt")
        VALUES ($1,$2,$3,$4,$5,'ACTIVE'::"VehicleStatus",$6,$7,true,$8::jsonb,$9,$10,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
@@ -479,15 +479,15 @@ try {
          "features"=EXCLUDED."features",
          "description"=EXCLUDED."description",
          "isFeatured"=EXCLUDED."isFeatured",
-         "updatedAt"=CURRENT_TIMESTAMP\`,
+         "updatedAt"=CURRENT_TIMESTAMP`,
       [item.id, item.slug, item.registration, item.name, vehicleClassId, item.seats, item.luggage, json(item.features), item.description, item.featured],
     );
 
-    const vehicleRow = await client.query(\`SELECT "id" FROM "Vehicle" WHERE "slug"=$1\`, [item.slug]);
+    const vehicleRow = await client.query(`SELECT "id" FROM "Vehicle" WHERE "slug"=$1`, [item.slug]);
     await client.query(
-      \`INSERT INTO "VehicleMedia" ("vehicleId","mediaId","sortOrder","isPrimary")
+      `INSERT INTO "VehicleMedia" ("vehicleId","mediaId","sortOrder","isPrimary")
        VALUES ($1,$2,0,true)
-       ON CONFLICT ("vehicleId","mediaId") DO UPDATE SET "sortOrder"=0,"isPrimary"=true\`,
+       ON CONFLICT ("vehicleId","mediaId") DO UPDATE SET "sortOrder"=0,"isPrimary"=true`,
       [vehicleRow.rows[0].id, item.mediaId],
     );
   }
@@ -506,7 +506,7 @@ try {
 
   for (const row of pricing) {
     await client.query(
-      \`INSERT INTO "PricingRule"
+      `INSERT INTO "PricingRule"
         ("id","name","vehicleClassId","tripType","basis","currency","baseAmountMinor","perKmMinor","minimumDistanceKm",
          "driverAllowancePerDayMinor","nightAllowanceMinor","originKey","destinationKey","priority","status","activeFrom","createdAt","updatedAt")
        VALUES ($1,$2,$3,$4::"TripType",$5::"PricingBasis",'INR',$6,$7,$8,$9,$10,$11,$12,$13,'ACTIVE'::"PricingRuleStatus",$14,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
@@ -527,14 +527,14 @@ try {
          "status"='ACTIVE'::"PricingRuleStatus",
          "activeFrom"=EXCLUDED."activeFrom",
          "activeTo"=NULL,
-         "updatedAt"=CURRENT_TIMESTAMP\`,
+         "updatedAt"=CURRENT_TIMESTAMP`,
       [...row, publishedAt],
     );
   }
 
   for (const pkg of packages) {
     await client.query(
-      \`INSERT INTO "TourPackage"
+      `INSERT INTO "TourPackage"
         ("id","slug","title","summary","body","status","durationDays","durationNights","heroMediaId","publishedAt",
          "seoTitle","seoDescription","robotsIndex","robotsFollow","createdAt","updatedAt")
        VALUES ($1,$2,$3,$4,$5::jsonb,'PUBLISHED'::"ContentStatus",$6,$7,$8,$9,$10,$11,true,true,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
@@ -551,38 +551,38 @@ try {
          "seoDescription"=EXCLUDED."seoDescription",
          "robotsIndex"=true,
          "robotsFollow"=true,
-         "updatedAt"=CURRENT_TIMESTAMP\`,
+         "updatedAt"=CURRENT_TIMESTAMP`,
       [pkg.id, pkg.slug, pkg.title, pkg.summary, json(pkg.body), pkg.days, pkg.nights, pkg.mediaId, publishedAt, pkg.title, pkg.summary],
     );
 
-    const packageRow = await client.query(\`SELECT "id" FROM "TourPackage" WHERE "slug"=$1\`, [pkg.slug]);
+    const packageRow = await client.query(`SELECT "id" FROM "TourPackage" WHERE "slug"=$1`, [pkg.slug]);
     const packageId = packageRow.rows[0].id;
 
-    await client.query(\`DELETE FROM "PackageDestination" WHERE "packageId"=$1\`, [packageId]);
+    await client.query(`DELETE FROM "PackageDestination" WHERE "packageId"=$1`, [packageId]);
     for (let index = 0; index < pkg.destinations.length; index += 1) {
       const destinationSlug = destinations.find((item) => item.id === pkg.destinations[index])?.slug;
-      const destinationRow = await client.query(\`SELECT "id" FROM "Destination" WHERE "slug"=$1\`, [destinationSlug]);
+      const destinationRow = await client.query(`SELECT "id" FROM "Destination" WHERE "slug"=$1`, [destinationSlug]);
       await client.query(
-        \`INSERT INTO "PackageDestination" ("packageId","destinationId","sortOrder") VALUES ($1,$2,$3)
-         ON CONFLICT ("packageId","destinationId") DO UPDATE SET "sortOrder"=EXCLUDED."sortOrder"\`,
+        `INSERT INTO "PackageDestination" ("packageId","destinationId","sortOrder") VALUES ($1,$2,$3)
+         ON CONFLICT ("packageId","destinationId") DO UPDATE SET "sortOrder"=EXCLUDED."sortOrder"`,
         [packageId, destinationRow.rows[0].id, index],
       );
     }
 
-    await client.query(\`DELETE FROM "PackageItineraryDay" WHERE "packageId"=$1\`, [packageId]);
+    await client.query(`DELETE FROM "PackageItineraryDay" WHERE "packageId"=$1`, [packageId]);
     for (let index = 0; index < pkg.itinerary.length; index += 1) {
       const [title, description] = pkg.itinerary[index];
       await client.query(
-        \`INSERT INTO "PackageItineraryDay" ("id","packageId","dayNumber","title","description","body")
+        `INSERT INTO "PackageItineraryDay" ("id","packageId","dayNumber","title","description","body")
          VALUES ($1,$2,$3,$4,$5,'[]'::jsonb)
          ON CONFLICT ("packageId","dayNumber") DO UPDATE SET
-           "title"=EXCLUDED."title","description"=EXCLUDED."description","body"=EXCLUDED."body"\`,
+           "title"=EXCLUDED."title","description"=EXCLUDED."description","body"=EXCLUDED."body"`,
         [pkg.id + "-day-" + (index + 1), packageId, index + 1, title, description],
       );
     }
 
     await client.query(
-      \`INSERT INTO "PackagePriceOption"
+      `INSERT INTO "PackagePriceOption"
         ("id","packageId","mode","currency","amountMinor","minTravellers","maxTravellers","isActive","sortOrder","createdAt","updatedAt")
        VALUES ($1,$2,'PER_PERSON'::"PackagePriceMode",'INR',$3,1,12,true,0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
        ON CONFLICT ("id") DO UPDATE SET
@@ -594,7 +594,7 @@ try {
          "maxTravellers"=12,
          "isActive"=true,
          "sortOrder"=0,
-         "updatedAt"=CURRENT_TIMESTAMP\`,
+         "updatedAt"=CURRENT_TIMESTAMP`,
       [pkg.id + "-per-person", packageId, pkg.price],
     );
 
@@ -604,7 +604,7 @@ try {
       const endsAt = new Date(startsAt.getTime() + Math.max(0, pkg.days - 1) * 24 * 60 * 60 * 1000 + 10 * 60 * 60 * 1000);
       const salesCloseAt = new Date(startsAt.getTime() - 24 * 60 * 60 * 1000);
       await client.query(
-        \`INSERT INTO "PackageDeparture"
+        `INSERT INTO "PackageDeparture"
           ("id","packageId","startsAt","endsAt","status","capacityTravellers","reservedTravellers","salesOpenAt","salesCloseAt","notes","createdAt","updatedAt")
          VALUES ($1,$2,$3,$4,'OPEN'::"PackageDepartureStatus",12,0,$5,$6,$7,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
          ON CONFLICT ("packageId","startsAt") DO UPDATE SET
@@ -614,7 +614,7 @@ try {
            "salesOpenAt"=EXCLUDED."salesOpenAt",
            "salesCloseAt"=EXCLUDED."salesCloseAt",
            "notes"=EXCLUDED."notes",
-           "updatedAt"=CURRENT_TIMESTAMP\`,
+           "updatedAt"=CURRENT_TIMESTAMP`,
         [pkg.id + "-departure-" + (index + 1), packageId, startsAt, endsAt, publishedAt, salesCloseAt, "Launch catalog scheduled departure"],
       );
     }
@@ -622,7 +622,7 @@ try {
 
   for (const [id, scope, question, answer, sortOrder] of faqs) {
     await client.query(
-      \`INSERT INTO "Faq"
+      `INSERT INTO "Faq"
         ("id","scope","question","answer","sortOrder","status","publishedAt","createdAt","updatedAt")
        VALUES ($1,$2::"FaqScope",$3,$4,$5,'PUBLISHED'::"ContentStatus",$6,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
        ON CONFLICT ("id") DO UPDATE SET
@@ -632,13 +632,13 @@ try {
          "sortOrder"=EXCLUDED."sortOrder",
          "status"='PUBLISHED'::"ContentStatus",
          "publishedAt"=EXCLUDED."publishedAt",
-         "updatedAt"=CURRENT_TIMESTAMP\`,
+         "updatedAt"=CURRENT_TIMESTAMP`,
       [id, scope, question, answer, sortOrder, publishedAt],
     );
   }
 
   await client.query(
-    \`INSERT INTO "Promotion"
+    `INSERT INTO "Promotion"
       ("id","code","name","description","status","scope","discountKind","percentageBps","maxDiscountMinor",
        "minSubtotalMinor","maxRedemptions","redeemedCount","perCustomerLimit","activeFrom","activeTo","createdAt","updatedAt")
      VALUES
@@ -659,7 +659,7 @@ try {
        "perCustomerLimit"=1,
        "activeFrom"=EXCLUDED."activeFrom",
        "activeTo"=EXCLUDED."activeTo",
-       "updatedAt"=CURRENT_TIMESTAMP\`,
+       "updatedAt"=CURRENT_TIMESTAMP`,
     [publishedAt, addDays(120, 18, 29)],
   );
 
