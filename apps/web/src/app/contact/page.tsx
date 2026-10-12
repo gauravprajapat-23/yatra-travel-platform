@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default function ContactPage() {
-  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim();
+  const supportEmail = process.env.SUPPORT_EMAIL?.trim();
 
   return (
     <>
