@@ -5,6 +5,7 @@ import { hasPermission } from "@yatra/domain/auth/permissions";
 import { AdminField } from "@/components/admin-form";
 import { AdminMetric, AdminShell } from "@/components/admin-shell";
 import { AdminMediaManager } from "@/components/admin-media-manager";
+import { AdminSubmitButton } from "@/components/admin-submit-button";
 import { requireAdminSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -142,7 +143,7 @@ export default async function MediaPage({
               placeholder="Filename, alt text, caption or MIME type"
             />
           </AdminField>
-          <button className="admin-primary-button" type="submit">Search</button>
+          <AdminSubmitButton label="Search" pendingLabel="Searching…" />
           {q ? (
             <Link className="admin-secondary-button" href="/admin/media">
               Reset
