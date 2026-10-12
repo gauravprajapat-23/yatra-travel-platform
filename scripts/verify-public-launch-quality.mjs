@@ -56,6 +56,35 @@ if (missingAlt.length) {
   throw new Error("Image elements missing alt text:\n" + missingAlt.join("\n"));
 }
 
+const appDir = path.join(root, "apps/web/src/app");
+const routePatterns = walk(appDir)
+  .filter((file) => file.endsWith(path.sep + "page.tsx"))
+  .map((file) => {
+    let route = path.relative(appDir, path.dirname(file)).replaceAll(path.sep, "/");
+    route = route === "." ? "" : "/" + route;
+    const parts = route.split("/").filter(Boolean).map((part) => {
+      if (/^\\[\\.\\.\\..+\\]$/.test(part)) return "(.+)";
+      if (/^\\[[^\\]]+\\]$/.test(part)) return "([^/]+)";
+      return part.replace(/[.*+?^$()|[\\]\\\\]/g, "\\\\const layout = fs.readFileSync");
+    });
+    return new RegExp("^/" + parts.join("/") + "/?$");
+  });
+
+const brokenLinks = [];
+for (const file of sourceFiles) {
+  const content = fs.readFileSync(file, "utf8");
+  const matches = content.matchAll(/(?:href|primaryHref)\\s*=\\s*["\'](\\/[^"\'#?]*)[^"\']*["\']/g);
+  for (const match of matches) {
+    const href = match[1] || "/";
+    if (href.startsWith("/api/") || href.startsWith("/_next/")) continue;
+    if (!routePatterns.some((pattern) => pattern.test(href))) {
+      brokenLinks.push(path.relative(root, file) + " -> " + href);
+    }
+  }
+}
+if (brokenLinks.length) {
+  throw new Error("Broken static internal links:\\n" + brokenLinks.join("\\n"));
+}
 const layout = fs.readFileSync(path.join(root, "apps/web/src/app/layout.tsx"), "utf8");
 for (const required of ["openGraph", "twitter", "ConsentAnalytics"]) {
   if (!layout.includes(required)) {
@@ -75,4 +104,5 @@ console.log("PASS launch-critical files:", requiredFiles.length);
 console.log("PASS public asset count:", assets.length);
 console.log("PASS public asset bytes:", totalBytes);
 console.log("PASS image alt audit:", sourceFiles.length, "TSX files");
+console.log("PASS static internal-link audit:", routePatterns.length, "routes");
 console.log("PASS social metadata, consent, HSTS and image optimization contracts");
