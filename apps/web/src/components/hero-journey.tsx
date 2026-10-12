@@ -15,10 +15,7 @@ export function HeroJourney() {
           long-distance tours — designed around you.
         </p>
         <div className="reference-hero__actions">
-          <ButtonLink href="/cars">Explore Fleet</ButtonLink>
-          <ButtonLink href="/packages" variant="ghost">
-            Explore Tours
-          </ButtonLink>
+          <ButtonLink href="/custom-trip">Plan My Trip →</ButtonLink>
         </div>
       </div>
 
