@@ -20,6 +20,38 @@ export function ContactForm() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus({kind:"idle",message:""});
+
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPhone = phone.trim();
+    const trimmedMessage = message.trim();
+
+    if (trimmedName.length < 2 || trimmedName.length > 120) {
+      setStatus({kind:"error",message:"Please enter your full name."});
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setStatus({kind:"error",message:"Please enter a valid email address."});
+      return;
+    }
+    if (trimmedPhone && !/^[+()\d\s-]{7,40}$/.test(trimmedPhone)) {
+      setStatus({kind:"error",message:"Please enter a valid phone number."});
+      return;
+    }
+    if (!trimmedMessage) {
+      setStatus({kind:"error",message:"Please enter a message."});
+      return;
+    }
+    if (travelDate) {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const selected = new Date(`${travelDate}T00:00:00`);
+      if (selected < today) {
+        setStatus({kind:"error",message:"Preferred travel date cannot be in the past."});
+        return;
+      }
+    }
+
     setPending(true);
 
     try {
@@ -28,10 +60,10 @@ export function ContactForm() {
         headers:{"content-type":"application/json","Idempotency-Key":key()},
         body:JSON.stringify({
           type:"CONTACT",
-          name,
-          email,
-          phone,
-          message: travelDate ? `Preferred travel date: ${travelDate}\n\n${message}` : message,
+          name: trimmedName,
+          email: trimmedEmail,
+          phone: trimmedPhone,
+          message: travelDate ? `Preferred travel date: ${travelDate}\n\n${trimmedMessage}` : trimmedMessage,
           sourcePath:"/contact",
           website,
         }),
@@ -53,9 +85,9 @@ export function ContactForm() {
       <p className="eyebrow">SEND US A MESSAGE</p>
       <h2>Tell us about your travel plans.</h2>
       <div className="form-grid">
-        <label>Full Name<input value={name} onChange={e=>setName(e.target.value)} autoComplete="name" required /></label>
-        <label>Email Address<input type="email" value={email} onChange={e=>setEmail(e.target.value)} autoComplete="email" required /></label>
-        <label>Phone Number<input value={phone} onChange={e=>setPhone(e.target.value)} autoComplete="tel" placeholder="+91" /></label>
+        <label>Full Name<input value={name} onChange={e=>setName(e.target.value)} autoComplete="name" minLength={2} maxLength={120} required /></label>
+        <label>Email Address<input type="email" value={email} onChange={e=>setEmail(e.target.value)} autoComplete="email" maxLength={254} required /></label>
+        <label>Phone Number<input type="tel" inputMode="tel" value={phone} onChange={e=>setPhone(e.target.value)} autoComplete="tel" maxLength={40} placeholder="+91" /></label>
         <label>Preferred Travel Date<input type="date" value={travelDate} onChange={e=>setTravelDate(e.target.value)} /></label>
       </div>
 
