@@ -73,7 +73,7 @@ const routePatterns = walk(appDir)
 const brokenLinks = [];
 for (const file of sourceFiles) {
   const content = fs.readFileSync(file, "utf8");
-  const matches = content.matchAll(/(?:href|primaryHref)\\s*=\\s*["\'](\\/[^"\'#?]*)[^"\']*["\']/g);
+  const matches = content.matchAll(/(?:href|primaryHref)\s*=\s*["\'](\/[^"\'#?]*)[^"\']*["\']/g);
   for (const match of matches) {
     const href = match[1] || "/";
     if (href.startsWith("/api/") || href.startsWith("/_next/")) continue;
