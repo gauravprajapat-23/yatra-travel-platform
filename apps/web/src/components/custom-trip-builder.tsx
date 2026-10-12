@@ -75,6 +75,11 @@ export function CustomTripBuilder() {
       return;
     }
 
+    if (phone && !/^[+()\d\s-]{7,40}$/.test(phone)) {
+      setError("Please enter a valid phone number.");
+      return;
+    }
+
     if (!from || !to) {
       setError("Please enter both the starting city and destination.");
       return;
@@ -82,6 +87,14 @@ export function CustomTripBuilder() {
 
     if (!form.travelDate) {
       setError("Please select your travel date.");
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(`${form.travelDate}T00:00:00`);
+    if (selectedDate < today) {
+      setError("Travel date cannot be in the past.");
       return;
     }
 
@@ -174,6 +187,8 @@ export function CustomTripBuilder() {
               value={form.name}
               onChange={(event) => update("name", event.target.value)}
               autoComplete="name"
+              minLength={2}
+              maxLength={120}
               required
             />
           </label>
@@ -186,6 +201,7 @@ export function CustomTripBuilder() {
               value={form.email}
               onChange={(event) => update("email", event.target.value)}
               autoComplete="email"
+              maxLength={254}
               required
             />
           </label>
@@ -194,6 +210,9 @@ export function CustomTripBuilder() {
             Mobile Number
             <input
               name="phone"
+              type="tel"
+              inputMode="tel"
+              maxLength={40}
               value={form.phone}
               onChange={(event) => update("phone", event.target.value)}
               autoComplete="tel"
@@ -208,6 +227,7 @@ export function CustomTripBuilder() {
               value={form.from}
               onChange={(event) => update("from", event.target.value)}
               autoComplete="address-level2"
+              maxLength={120}
               required
             />
           </label>
@@ -219,6 +239,7 @@ export function CustomTripBuilder() {
               value={form.to}
               onChange={(event) => update("to", event.target.value)}
               autoComplete="off"
+              maxLength={120}
               required
             />
           </label>
