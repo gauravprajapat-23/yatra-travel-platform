@@ -148,22 +148,11 @@ export function CustomTripBuilder() {
       }
 
       const params = new URLSearchParams({
-        source: "custom-trip",
-        leadReference: result.reference,
-        from,
-        to,
-        duration: String(duration),
-        travelDate: form.travelDate,
-        travellers: String(travellers),
-        vehicle: form.vehicle,
+        reference: result.reference,
       });
 
-      if (form.requests.trim()) {
-        params.set("requests", form.requests.trim());
-      }
-
       startTransition(() => {
-        router.push(`/checkout?${params.toString()}`);
+        router.push(`/custom-trip/success?${params.toString()}`);
       });
     } catch (caught) {
       setError(
