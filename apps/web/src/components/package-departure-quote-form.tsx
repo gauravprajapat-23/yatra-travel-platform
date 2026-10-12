@@ -96,6 +96,7 @@ export function PackageDepartureQuoteForm({
   const [vehicleCount, setVehicleCount] = useState(1);
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
   const [promotionCode, setPromotionCode] = useState("");
   const [promotionPreview, setPromotionPreview] =
     useState<PromotionPreviewResult | null>(null);
@@ -218,6 +219,16 @@ export function PackageDepartureQuoteForm({
     setError("");
 
     try {
+      if (!guestName.trim()) {
+        throw new Error("Enter the traveller name before booking.");
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())) {
+        throw new Error("Enter a valid traveller email before booking.");
+      }
+      if (guestPhone.trim() && !/^[+()\d\s-]{7,32}$/.test(guestPhone.trim())) {
+        throw new Error("Enter a valid traveller phone number.");
+      }
+
       const idempotencyKey =
         typeof crypto !== "undefined" && "randomUUID" in crypto
           ? `package-${crypto.randomUUID()}`
@@ -233,6 +244,7 @@ export function PackageDepartureQuoteForm({
           quoteId: quote.id,
           guestName: guestName.trim() || undefined,
           guestEmail: guestEmail.trim().toLowerCase() || undefined,
+          guestPhone: guestPhone.trim() || undefined,
           promotionCode: promotionPreview?.promotion?.code ?? undefined,
         }),
       });
@@ -421,6 +433,18 @@ export function PackageDepartureQuoteForm({
                   type="email"
                   autoComplete="email"
                   placeholder="Required for guest checkout"
+                />
+              </label>
+              <label>
+                Traveller phone
+                <input
+                  value={guestPhone}
+                  onChange={(event) => setGuestPhone(event.target.value)}
+                  maxLength={32}
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="+91"
                 />
               </label>
               {promotionsEnabled ? (
