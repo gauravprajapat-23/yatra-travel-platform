@@ -204,6 +204,7 @@ export function CarBookingForm({
           quoteId: activeQuote.id,
           guestName: guestName.trim(),
           guestEmail: guestEmail.trim().toLowerCase(),
+          guestPhone: guestPhone.trim() || undefined,
           promotionCode: promotionPreview?.promotion?.code ?? undefined,
         }),
       });
@@ -259,7 +260,15 @@ export function CarBookingForm({
             </label>
             <label>
               Mobile Number
-              <input value={guestPhone} onChange={(e) => setGuestPhone(e.target.value)} autoComplete="tel" placeholder="+91" />
+              <input
+                type="tel"
+                inputMode="tel"
+                maxLength={32}
+                value={guestPhone}
+                onChange={(e) => setGuestPhone(e.target.value)}
+                autoComplete="tel"
+                placeholder="+91"
+              />
             </label>
           </div>
         </section>
