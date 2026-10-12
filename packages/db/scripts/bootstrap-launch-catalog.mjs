@@ -370,6 +370,55 @@ const packages = [
   },
 ];
 
+const legalPages = [
+  {
+    id: "catalog-cms-privacy-policy",
+    slug: "privacy-policy",
+    title: "Privacy Policy",
+    excerpt: "How YATRA collects, uses and protects information when you use our travel website and booking services.",
+    seoTitle: "Privacy Policy",
+    seoDescription: "Read how YATRA handles account, booking, payment, enquiry and website usage information.",
+    body: [
+      { id: "privacy-intro", type: "paragraph", data: { text: "This Privacy Policy explains how YATRA collects, uses, stores and shares information when you browse our website, submit an enquiry, create an account or make a booking." } },
+      { id: "privacy-collect-h", type: "heading", data: { text: "Information we collect", level: 2 } },
+      { id: "privacy-collect", type: "list", data: { items: ["Contact details such as name, email address and phone number.", "Trip, traveller and booking information you submit.", "Payment status and provider references; YATRA does not store full card details.", "Account and authentication information when customer accounts are enabled.", "Security, device and technical information needed to protect the service and prevent abuse.", "Optional analytics information only after you accept analytics cookies." ] } },
+      { id: "privacy-use-h", type: "heading", data: { text: "How we use information", level: 2 } },
+      { id: "privacy-use", type: "paragraph", data: { text: "We use information to respond to enquiries, prepare and manage travel services, process bookings and payments, provide customer support, secure the platform, meet legal obligations and improve the service." } },
+      { id: "privacy-sharing-h", type: "heading", data: { text: "Sharing and service providers", level: 2 } },
+      { id: "privacy-sharing", type: "paragraph", data: { text: "We share information only when necessary with service providers involved in operating the platform or fulfilling a requested service, such as payment, email, hosting, storage or travel operations providers. We do not sell personal information." } },
+      { id: "privacy-retention-h", type: "heading", data: { text: "Retention and security", level: 2 } },
+      { id: "privacy-retention", type: "paragraph", data: { text: "We retain information only for as long as reasonably necessary for service delivery, legal, accounting, fraud-prevention and dispute-resolution purposes. We use access controls, encryption where appropriate and operational safeguards to protect information." } },
+      { id: "privacy-cookies-h", type: "heading", data: { text: "Cookies and analytics", level: 2 } },
+      { id: "privacy-cookies", type: "paragraph", data: { text: "Essential browser storage may be used for core functionality. Optional analytics does not load until you choose to accept analytics in the cookie banner. You can keep essential-only mode." } },
+      { id: "privacy-rights-h", type: "heading", data: { text: "Your choices", level: 2 } },
+      { id: "privacy-rights", type: "paragraph", data: { text: "You may contact YATRA to ask about your personal information, request corrections or raise a privacy concern. Some records may need to be retained where required for legal, security or transaction purposes." } },
+      { id: "privacy-contact", type: "cta", data: { label: "Contact YATRA", href: "/contact", text: "For privacy questions or requests, contact our support team." } }
+    ],
+  },
+  {
+    id: "catalog-cms-terms",
+    slug: "terms",
+    title: "Terms & Conditions",
+    excerpt: "The terms that apply when you use YATRA, request travel services or make a booking.",
+    seoTitle: "Terms & Conditions",
+    seoDescription: "Read the terms governing YATRA enquiries, quotes, bookings, payments, cancellations and travel services.",
+    body: [
+      { id: "terms-intro", type: "paragraph", data: { text: "These Terms & Conditions apply to your use of the YATRA website and to enquiries, quotes and bookings made through the service." } },
+      { id: "terms-quotes-h", type: "heading", data: { text: "Quotes and availability", level: 2 } },
+      { id: "terms-quotes", type: "paragraph", data: { text: "Quotes are based on the route, dates, travellers, vehicle class, pricing rules and availability shown at the time of quotation. A trip is not confirmed until the required booking and payment steps are completed and confirmation is issued." } },
+      { id: "terms-pricing-h", type: "heading", data: { text: "Pricing and additional charges", level: 2 } },
+      { id: "terms-pricing", type: "paragraph", data: { text: "The checkout breakdown controls the booked price. Approved itinerary changes, additional distance or time, tolls, parking, permits, taxes, night allowances or third-party charges may apply where they are not included in the original quote." } },
+      { id: "terms-travel-h", type: "heading", data: { text: "Travel conditions", level: 2 } },
+      { id: "terms-travel", type: "paragraph", data: { text: "Travel times and itineraries may be affected by weather, road closures, traffic, government restrictions, temple rules, local operating hours or other circumstances outside YATRA's reasonable control. Safety-related route or vehicle decisions may be made when necessary." } },
+      { id: "terms-cancel-h", type: "heading", data: { text: "Cancellations and refunds", level: 2 } },
+      { id: "terms-cancel", type: "paragraph", data: { text: "Cancellation and refund eligibility is governed by the booking policy accepted during checkout and any specific package or provider terms shown before payment." } },
+      { id: "terms-conduct-h", type: "heading", data: { text: "Acceptable use", level: 2 } },
+      { id: "terms-conduct", type: "paragraph", data: { text: "You must provide accurate information, use the service lawfully and not attempt to abuse, disrupt or gain unauthorised access to the platform, accounts, payment flows or operational systems." } },
+      { id: "terms-contact", type: "cta", data: { label: "Contact YATRA", href: "/contact", text: "If you have questions about these terms before booking, contact our support team." } }
+    ],
+  },
+];
+
 const faqs = [
   ["catalog-faq-booking-1", "BOOKING", "Can I book a car without creating an account?", "Yes. Guest car booking is supported. Keep your booking reference and the email used during checkout to retrieve the trip later.", 10],
   ["catalog-faq-vehicle-1", "VEHICLES", "Is the exact car model guaranteed?", "The selected vehicle is recorded when available. Operational substitutions, if ever required, should be to an equivalent or higher suitable class and confirmed with the traveller.", 20],
@@ -618,6 +667,26 @@ try {
         [pkg.id + "-departure-" + (index + 1), packageId, startsAt, endsAt, publishedAt, salesCloseAt, "Launch catalog scheduled departure"],
       );
     }
+  }
+
+  for (const page of legalPages) {
+    await client.query(
+      `INSERT INTO "CmsPage"
+        ("id","slug","title","excerpt","body","status","publishedAt","seoTitle","seoDescription","robotsIndex","robotsFollow","createdAt","updatedAt")
+       VALUES ($1,$2,$3,$4,$5::jsonb,'PUBLISHED'::"ContentStatus",$6,$7,$8,true,true,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+       ON CONFLICT ("slug") DO UPDATE SET
+         "title"=EXCLUDED."title",
+         "excerpt"=EXCLUDED."excerpt",
+         "body"=EXCLUDED."body",
+         "status"='PUBLISHED'::"ContentStatus",
+         "publishedAt"=EXCLUDED."publishedAt",
+         "seoTitle"=EXCLUDED."seoTitle",
+         "seoDescription"=EXCLUDED."seoDescription",
+         "robotsIndex"=true,
+         "robotsFollow"=true,
+         "updatedAt"=CURRENT_TIMESTAMP`,
+      [page.id, page.slug, page.title, page.excerpt, json(page.body), publishedAt, page.seoTitle, page.seoDescription],
+    );
   }
 
   for (const [id, scope, question, answer, sortOrder] of faqs) {
