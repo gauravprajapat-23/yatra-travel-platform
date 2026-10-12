@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getDb, Prisma } from "@yatra/db/client";
+import { encryptSensitiveString } from "@yatra/providers/security/field-encryption";
 import {
   createPolicySnapshot,
   selectActiveBookingPolicy,
@@ -38,6 +39,7 @@ export type CreateGuestPackageBookingInput = {
       customerUserId?: null;
       guestName: string;
       guestEmail: string;
+      guestPhone?: string | null;
     }
 );
 
@@ -104,6 +106,11 @@ export async function createGuestPackageBooking(
   const customerUserId = input.customerUserId ?? null;
   const guestName = customerUserId ? null : input.guestName ?? null;
   const guestEmail = customerUserId ? null : input.guestEmail ?? null;
+  const guestPhone = customerUserId
+    ? null
+    : "guestPhone" in input
+      ? input.guestPhone?.trim() || null
+      : null;
   const promotionCode = input.promotionCode?.trim() || null;
 
   if (!customerUserId && (!guestName || !guestEmail)) {
@@ -129,6 +136,7 @@ export async function createGuestPackageBooking(
         quoteId: input.quoteId,
         guestName: guestName!,
         guestEmail: guestEmail!,
+        guestPhone,
         promotionCode,
       });
 
@@ -372,9 +380,17 @@ export async function createGuestPackageBooking(
 
         const policySnapshot = createPolicySnapshot(policy);
 
+        const reference = createPackageBookingReference();
+        const guestPhoneCiphertext = guestPhone
+          ? encryptSensitiveString(
+              guestPhone,
+              `package-booking:${reference}:guest-phone`,
+            )
+          : null;
+
         const booking = await tx.packageBooking.create({
           data: {
-            reference: createPackageBookingReference(),
+            reference,
             quoteId: quote.id,
             idempotencyKey: input.idempotencyKey,
             requestFingerprint: fingerprint,
@@ -395,6 +411,7 @@ export async function createGuestPackageBooking(
             guestEmail: customerUserId
               ? null
               : guestEmail!.trim().toLowerCase(),
+            guestPhoneCiphertext,
             promotionId: promotion?.promotionId ?? null,
             promotionSnapshot: promotion
               ? asInputJson(promotion.snapshot)
