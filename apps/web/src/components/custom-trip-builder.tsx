@@ -315,7 +315,7 @@ export function CustomTripBuilder() {
           type="submit"
           disabled={isPending}
         >
-          {isPending ? "Creating Trip…" : "Create My Trip →"}
+          {isPending ? "Submitting Request…" : "Submit Trip Request →"}
         </button>
       </form>
 
