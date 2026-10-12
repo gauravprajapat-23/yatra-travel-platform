@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="YATRA">
+  <rect width="64" height="64" rx="14" fill="#0c1a16"/>
+  <path d="M14 17h10l8 13 8-13h10L36 38v11h-8V38L14 17Z" fill="#f8f4ea"/>
+  <circle cx="48" cy="16" r="5" fill="#f59a52"/>
+</svg>
