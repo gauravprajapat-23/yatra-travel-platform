@@ -36,6 +36,16 @@ function validEmail(value: string): boolean {
   return value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
+function validPhone(value: string): boolean {
+  return /^[+()\d\s-]{7,40}$/.test(value);
+}
+
+function validIsoDate(value: unknown): value is string {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime());
+}
+
 function leadReference(): string {
   return `LD-${randomUUID().replaceAll("-", "").slice(0, 10).toUpperCase()}`;
 }
@@ -128,12 +138,62 @@ export async function POST(request: Request) {
   const phone = optional(body.phone, 40);
   const message = optional(body.message, 2000);
   const sourcePath = optional(body.sourcePath, 200);
+  const trip = type === "CUSTOM_TRIP" ? tripData(body.trip) : undefined;
 
   if (!type || !name || !email || !validEmail(email)) {
     return NextResponse.json(
       { error: { code: "INVALID_LEAD", message: "Name, valid email and lead type are required." } },
       { status: 400 },
     );
+  }
+
+  if (phone && !validPhone(phone)) {
+    return NextResponse.json(
+      { error: { code: "INVALID_PHONE", message: "Please enter a valid phone number." } },
+      { status: 400 },
+    );
+  }
+
+  if (sourcePath && (!sourcePath.startsWith("/") || sourcePath.startsWith("//"))) {
+    return NextResponse.json(
+      { error: { code: "INVALID_SOURCE_PATH", message: "Invalid form source." } },
+      { status: 400 },
+    );
+  }
+
+  if (type === "CUSTOM_TRIP") {
+    const from = typeof trip?.from === "string" ? trip.from.trim() : "";
+    const to = typeof trip?.to === "string" ? trip.to.trim() : "";
+    const travelDate = trip?.travelDate;
+    const travellers = Number(trip?.travellers);
+    const duration = Number(trip?.duration);
+
+    if (
+      !from ||
+      !to ||
+      !validIsoDate(travelDate) ||
+      !Number.isInteger(travellers) ||
+      travellers < 1 ||
+      travellers > 30 ||
+      !Number.isInteger(duration) ||
+      duration < 1 ||
+      duration > 30
+    ) {
+      return NextResponse.json(
+        { error: { code: "INVALID_TRIP", message: "Please review the trip details and try again." } },
+        { status: 400 },
+      );
+    }
+
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const requested = new Date(`${travelDate}T00:00:00.000Z`);
+    if (requested < today) {
+      return NextResponse.json(
+        { error: { code: "PAST_TRAVEL_DATE", message: "Travel date cannot be in the past." } },
+        { status: 400 },
+      );
+    }
   }
 
   if (type === "CONTACT" && !message) {
@@ -180,7 +240,7 @@ export async function POST(request: Request) {
         emailNormalized: email,
         phone,
         message,
-        tripData: type === "CUSTOM_TRIP" ? tripData(body.trip) : undefined,
+        tripData: trip,
         sourcePath,
       },
     });
