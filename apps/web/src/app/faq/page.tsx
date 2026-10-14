@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { FaqBrowser } from "@/components/faq-browser";
 import { getPublicFaqs } from "@/lib/public-faqs";
-import { JsonLd, appUrl, breadcrumbSchema } from "@/components/seo-json-ld";
+import { JsonLd, breadcrumbSchema } from "@/components/seo-json-ld";
 
 export const dynamic = "force-dynamic";
 
