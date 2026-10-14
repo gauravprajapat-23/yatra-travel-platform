@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { StructuredContentRenderer } from "@/components/structured-content-renderer";
 import { PackageDepartureQuoteForm } from "@/components/package-departure-quote-form";
 import { getPublicPackageBySlug } from "@/lib/public-packages";
+import { JsonLd, appUrl, breadcrumbSchema } from "@/components/seo-json-ld";
 
 export const dynamic = "force-dynamic";
 
@@ -30,9 +31,30 @@ export async function generateMetadata({
       pkg.seoDescription ??
       pkg.summary ??
       `${pkg.durationDays}-day chauffeur-driven YATRA tour package.`,
-    alternates: pkg.canonicalUrl
-      ? { canonical: pkg.canonicalUrl }
-      : undefined,
+    alternates: {
+      canonical: pkg.canonicalUrl ?? `/packages/${pkg.slug}`,
+    },
+    openGraph: {
+      type: "website",
+      title: pkg.seoTitle ?? pkg.title,
+      description:
+        pkg.seoDescription ??
+        pkg.summary ??
+        `${pkg.durationDays}-day chauffeur-driven YATRA tour package.`,
+      url: `/packages/${pkg.slug}`,
+      images: pkg.heroUrl
+        ? [{ url: pkg.heroUrl, alt: pkg.title }]
+        : [{ url: "/assets/packages-hero.webp", alt: pkg.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: pkg.seoTitle ?? pkg.title,
+      description:
+        pkg.seoDescription ??
+        pkg.summary ??
+        `${pkg.durationDays}-day chauffeur-driven YATRA tour package.`,
+      images: [pkg.heroUrl ?? "/assets/packages-hero.webp"],
+    },
     robots: {
       index: pkg.robotsIndex,
       follow: pkg.robotsFollow,
@@ -50,8 +72,43 @@ export default async function PackageDetailPage({
 
   if (!pkg) notFound();
 
+  const packageSchema = {
+    "@context": "https://schema.org",
+    "@type": "TouristTrip",
+    "@id": `${appUrl(`/packages/${pkg.slug}`)}#trip`,
+    name: pkg.title,
+    description: pkg.summary ?? undefined,
+    url: appUrl(`/packages/${pkg.slug}`),
+    image: pkg.heroUrl ? [pkg.heroUrl] : [appUrl("/assets/packages-hero.webp")],
+    touristType: ["Pilgrims", "Families", "Private travellers"],
+    itinerary: pkg.destinations.map((destination) => ({
+      "@type": "TouristDestination",
+      name: destination.name,
+      url: appUrl(`/destinations/${destination.slug}`),
+    })),
+    offers: pkg.priceOptions.slice(0, 6).map((option) => ({
+      "@type": "Offer",
+      priceCurrency: option.currency,
+      price: (Number(option.amountMinor) / 100).toFixed(0),
+      availability: pkg.departures.length
+        ? "https://schema.org/InStock"
+        : "https://schema.org/LimitedAvailability",
+      url: appUrl(`/packages/${pkg.slug}`),
+    })),
+    provider: {
+      "@id": `${appUrl("/")}#organization`,
+    },
+  };
+
+  const breadcrumbs = breadcrumbSchema([
+    { name: "Home", path: "/" },
+    { name: "Tour Packages", path: "/packages" },
+    { name: pkg.title, path: `/packages/${pkg.slug}` },
+  ]);
+
   return (
     <>
+      <JsonLd data={[packageSchema, breadcrumbs]} />
       <section
         className="reference-page-hero reference-page-hero--packages package-detail-live-hero"
         style={{
