@@ -1,8 +1,23 @@
+import type { Metadata } from "next";
 import { ButtonLink } from "@/components/button-link";
 import { HeroJourney } from "@/components/hero-journey";
 import { getPublicFleet } from "@/lib/public-fleet";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Private Tours & Chauffeur-Driven Cars in India",
+  description:
+    "Plan private chauffeur-driven road trips, temple circuits and curated tour packages across India with YATRA. Explore Ujjain, Omkareshwar, Bhopal, Indore, Maheshwar, Mandu, Varanasi and more.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Private Tours & Chauffeur-Driven Cars in India | YATRA",
+    description:
+      "Private cars, temple circuits and curated road journeys across India.",
+    url: "/",
+    images: [{ url: "/assets/home-hero.webp", alt: "YATRA private road journeys across India" }],
+  },
+};
 
 const sacredJourneys = [
   { title: "Mahakaleshwar", place: "Ujjain", objectPosition: "22% center" },
