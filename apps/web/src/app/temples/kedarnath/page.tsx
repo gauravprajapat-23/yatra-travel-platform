@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { ButtonLink } from "@/components/button-link";
 
-export const metadata: Metadata = { title: "Kedarnath Dham" };
+export const metadata: Metadata = {
+  title: "Kedarnath Dham Trip Planning",
+  description:
+    "Request a custom Kedarnath journey with YATRA. Final route, access, seasonal conditions and pricing are confirmed before booking.",
+  robots: { index: false, follow: true },
+};
 
 const itineraries = [
   { name: "Kedarnath Yatra", nights: 4, days: 5, price: 28500, assetClass: "asset-temple--kedarnath" },
@@ -18,7 +23,7 @@ export default function KedarnathPage(){
           <p className="eyebrow">CHAR DHAM</p>
           <h1>Kedarnath<br/>Dham.</h1>
           <p>A divine journey to one of the holiest Jyotirlingas, nestled in the majestic Himalayas.</p>
-          <div className="temple-facts"><span>3,583 m Altitude</span><span>May–Nov Darshan</span><span>Road / Trek Accessible</span><span>VIP Darshan Available</span></div>
+          <div className="temple-facts"><span>3,583 m Altitude</span><span>Seasonal Access</span><span>Road + Trek Journey</span><span>Confirm Current Temple Rules</span></div>
         </div>
       </section>
 
@@ -48,7 +53,7 @@ export default function KedarnathPage(){
                   <h3>{trip.name}</h3>
                   <p>{trip.nights} Nights · {trip.days} Days</p>
                   <strong>₹{trip.price.toLocaleString("en-IN")} <small>/ person</small></strong>
-                  <ButtonLink href="/packages/kedarnath-badrinath">View Details →</ButtonLink>
+                  <ButtonLink href="/custom-trip?destination=kedarnath">Request This Journey →</ButtonLink>
                 </div>
               </article>
             ))}
