@@ -743,14 +743,7 @@ try {
         `INSERT INTO "PackageDeparture"
           ("id","packageId","startsAt","endsAt","status","capacityTravellers","reservedTravellers","salesOpenAt","salesCloseAt","notes","createdAt","updatedAt")
          VALUES ($1,$2,$3,$4,'OPEN'::"PackageDepartureStatus",12,0,$5,$6,$7,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
-         ON CONFLICT ("packageId","startsAt") DO UPDATE SET
-           "endsAt"=EXCLUDED."endsAt",
-           "status"='OPEN'::"PackageDepartureStatus",
-           "capacityTravellers"=12,
-           "salesOpenAt"=EXCLUDED."salesOpenAt",
-           "salesCloseAt"=EXCLUDED."salesCloseAt",
-           "notes"=EXCLUDED."notes",
-           "updatedAt"=CURRENT_TIMESTAMP`,
+         ON CONFLICT ("id") DO NOTHING`,
         [pkg.id + "-departure-" + (index + 1), packageId, startsAt, endsAt, publishedAt, salesCloseAt, "Launch catalog scheduled departure"],
       );
     }
