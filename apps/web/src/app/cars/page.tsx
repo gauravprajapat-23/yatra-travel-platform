@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ButtonLink } from "@/components/button-link";
 import { getPublicFleet } from "@/lib/public-fleet";
+import { JsonLd, appUrl, breadcrumbSchema } from "@/components/seo-json-ld";
 
 export const dynamic = "force-dynamic";
 
@@ -21,8 +22,26 @@ export const metadata: Metadata = {
 export default async function CarsPage() {
   const vehicles = await getPublicFleet();
 
+  const itemList = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "YATRA Chauffeur-Driven Fleet",
+    itemListElement: vehicles.map((vehicle, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: vehicle.displayName,
+      url: appUrl(`/cars/${vehicle.slug}`),
+    })),
+  };
+
+  const breadcrumbs = breadcrumbSchema([
+    { name: "Home", path: "/" },
+    { name: "Cars", path: "/cars" },
+  ]);
+
   return (
     <>
+      <JsonLd data={[itemList, breadcrumbs]} />
       <section className="reference-page-hero reference-page-hero--fleet fleet-reference-hero">
         <div className="reference-page-hero__overlay" />
         <div className="shell reference-page-hero__content">
