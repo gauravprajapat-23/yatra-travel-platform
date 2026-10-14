@@ -57,6 +57,18 @@ export const metadata: Metadata = {
     shortcut: "/icon.svg",
     apple: "/icon.svg",
   },
+  verification: {
+    ...(process.env.GOOGLE_SITE_VERIFICATION
+      ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+      : {}),
+    ...(process.env.BING_SITE_VERIFICATION
+      ? {
+          other: {
+            "msvalidate.01": process.env.BING_SITE_VERIFICATION,
+          },
+        }
+      : {}),
+  },
 };
 
 export default function RootLayout({
