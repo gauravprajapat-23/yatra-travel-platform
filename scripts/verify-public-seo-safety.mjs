@@ -53,6 +53,18 @@ requireFragments(
 );
 
 requireFragments(
+  "apps/web/src/app/robots.ts",
+  ['"OAI-SearchBot"', '"Googlebot"', '"Bingbot"'],
+  "AI crawler access",
+);
+
+requireFragments(
+  "apps/web/src/app/llms.txt/route.ts",
+  ["# YATRA", "Tour packages", "Destinations", "Sitemap:"],
+  "AI-readable site guide",
+);
+
+requireFragments(
   "apps/web/src/app/sitemap.ts",
   [
     "getPublicPackages",
@@ -73,10 +85,44 @@ for (const file of [
 ]) {
   requireFragments(
     file,
-    ["generateMetadata", "description:"],
-    `${file} dynamic metadata`,
+    ["generateMetadata", "description:", "canonical:", "JsonLd", "breadcrumbSchema"],
+    `${file} dynamic metadata and schema`,
   );
 }
+
+for (const file of [
+  "apps/web/src/app/page.tsx",
+  "apps/web/src/app/cars/page.tsx",
+  "apps/web/src/app/packages/page.tsx",
+  "apps/web/src/app/destinations/page.tsx",
+  "apps/web/src/app/travel-guides/page.tsx",
+  "apps/web/src/app/faq/page.tsx",
+  "apps/web/src/app/contact/page.tsx",
+  "apps/web/src/app/offers/page.tsx",
+]) {
+  requireFragments(
+    file,
+    ["alternates:", "canonical:", "description:"],
+    `${file} canonical metadata`,
+  );
+}
+
+requireFragments(
+  "apps/web/src/app/layout.tsx",
+  [
+    "organizationSchema",
+    "websiteSchema",
+    "GOOGLE_SITE_VERIFICATION",
+    "BING_SITE_VERIFICATION",
+  ],
+  "site entity and verification metadata",
+);
+
+requireFragments(
+  "apps/web/src/app/faq/page.tsx",
+  ['"FAQPage"', '"Question"', '"Answer"'],
+  "FAQ structured data",
+);
 
 requireFragments(
   "apps/web/src/app/not-found.tsx",
