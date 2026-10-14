@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ButtonLink } from "@/components/button-link";
 import { getPublicFleetVehicleBySlug } from "@/lib/public-fleet";
+import { JsonLd, appUrl, breadcrumbSchema } from "@/components/seo-json-ld";
 
 export const dynamic = "force-dynamic";
 
@@ -30,11 +31,32 @@ export async function generateMetadata({
   const vehicle = await getPublicFleetVehicleBySlug(slug);
   if (!vehicle) return {};
 
+  const description =
+    vehicle.description ??
+    `${vehicle.displayName} · ${vehicle.className} · ${vehicle.seats} seats. Request a server-verified YATRA quote.`;
+
   return {
-    title: vehicle.displayName,
-    description:
-      vehicle.description ??
-      `${vehicle.displayName} · ${vehicle.className} · ${vehicle.seats} seats. Request a server-verified YATRA quote.`,
+    title: `${vehicle.displayName} Chauffeur-Driven Car`,
+    description,
+    alternates: { canonical: `/cars/${vehicle.slug}` },
+    openGraph: {
+      type: "website",
+      title: `${vehicle.displayName} Chauffeur-Driven Car`,
+      description,
+      url: `/cars/${vehicle.slug}`,
+      images: [
+        {
+          url: vehicle.primaryImageUrl ?? "/assets/car-innova.webp",
+          alt: vehicle.displayName,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${vehicle.displayName} Chauffeur-Driven Car`,
+      description,
+      images: [vehicle.primaryImageUrl ?? "/assets/car-innova.webp"],
+    },
   };
 }
 
@@ -55,8 +77,33 @@ export default async function VehicleDetailPage({
       ? vehicle.galleryUrls
       : [primary];
 
+  const vehicleSchema = {
+    "@context": "https://schema.org",
+    "@type": "Vehicle",
+    "@id": `${appUrl(`/cars/${vehicle.slug}`)}#vehicle`,
+    name: vehicle.displayName,
+    description: vehicle.description ?? undefined,
+    url: appUrl(`/cars/${vehicle.slug}`),
+    image: gallery.map((url) =>
+      url.startsWith("http") ? url : appUrl(url),
+    ),
+    vehicleSeatingCapacity: vehicle.seats,
+    vehicleConfiguration: vehicle.className,
+    provider: {
+      "@id": `${appUrl("/")}#organization`,
+    },
+  };
+
+  const breadcrumbs = breadcrumbSchema([
+    { name: "Home", path: "/" },
+    { name: "Cars", path: "/cars" },
+    { name: vehicle.displayName, path: `/cars/${vehicle.slug}` },
+  ]);
+
   return (
-    <section className="reference-section reference-section--cream car-detail-reference">
+    <>
+      <JsonLd data={[vehicleSchema, breadcrumbs]} />
+      <section className="reference-section reference-section--cream car-detail-reference">
       <div className="shell car-detail-top">
         <div className="car-detail-gallery">
           <div className="car-detail-gallery__main">
@@ -145,6 +192,7 @@ export default async function VehicleDetailPage({
           <ButtonLink href="/custom-trip">Request a Custom Trip →</ButtonLink>
         </aside>
       </div>
-    </section>
+      </section>
+    </>
   );
 }
