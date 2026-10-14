@@ -12,14 +12,22 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
       title: "About YATRA",
       description:
-        "Learn about YATRA, our values and our approach to premium road journeys across India.",
+        "Learn how YATRA plans chauffeur-driven road journeys, temple circuits and curated tours across India.",
+      alternates: { canonical: "/about" },
+      openGraph: {
+        title: "About YATRA",
+        description:
+          "Chauffeur-driven road journeys, temple circuits and curated tours across India.",
+        url: "/about",
+        images: [{ url: "/assets/home-hero.webp", alt: "About YATRA" }],
+      },
     };
   }
 
   return {
     title: page.seoTitle ?? page.title,
     description: page.seoDescription ?? page.excerpt ?? undefined,
-    alternates: page.canonicalUrl ? { canonical: page.canonicalUrl } : undefined,
+    alternates: { canonical: page.canonicalUrl ?? "/about" },
     robots: {
       index: page.robotsIndex,
       follow: page.robotsFollow,
