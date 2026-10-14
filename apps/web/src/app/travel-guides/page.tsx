@@ -5,8 +5,17 @@ import { getPublicBlogPosts } from "@/lib/public-blog";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Travel Stories & Guides",
-  description: "Destination stories, temple guides and road-trip inspiration from YATRA.",
+  title: "India Travel Guides: Temple & Road Trip Planning",
+  description:
+    "Read practical YATRA guides for Ujjain, Mahakaleshwar, Omkareshwar, Bhopal road trips, Maheshwar–Mandu and Varanasi spiritual travel.",
+  alternates: { canonical: "/travel-guides" },
+  openGraph: {
+    title: "India Travel Guides: Temple & Road Trip Planning | YATRA",
+    description:
+      "Practical temple, destination and private road-trip planning guides across India.",
+    url: "/travel-guides",
+    images: [{ url: "/assets/home-hero.webp", alt: "YATRA India travel guides" }],
+  },
 };
 
 export default async function TravelGuidesPage() {
