@@ -5,8 +5,17 @@ import { getPublicPackages } from "@/lib/public-packages";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Tour Packages",
-  description: "Curated temple, heritage and road-trip packages across India.",
+  title: "India Tour Packages: Temple, Heritage & Road Trips",
+  description:
+    "Explore curated India tour packages including Ujjain–Omkareshwar Jyotirlinga, Maheshwar–Mandu, Bhopal–Sanchi, Varanasi and Madhya Pradesh road journeys.",
+  alternates: { canonical: "/packages" },
+  openGraph: {
+    title: "India Tour Packages: Temple, Heritage & Road Trips | YATRA",
+    description:
+      "Curated temple, heritage and chauffeur-driven road-trip packages across India.",
+    url: "/packages",
+    images: [{ url: "/assets/packages-hero.webp", alt: "YATRA India tour packages" }],
+  },
 };
 
 export default async function PackagesPage() {
