@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StructuredContentRenderer } from "@/components/structured-content-renderer";
 import { getPublicDestinationBySlug } from "@/lib/public-destinations";
+import { JsonLd, appUrl, breadcrumbSchema } from "@/components/seo-json-ld";
 
 export const dynamic = "force-dynamic";
 
@@ -64,9 +65,34 @@ export async function generateMetadata({
       destination.seoDescription ??
       destination.summary ??
       `Plan a chauffeur-driven journey to ${destination.name} with YATRA.`,
-    alternates: destination.canonicalUrl
-      ? { canonical: destination.canonicalUrl }
-      : undefined,
+    alternates: {
+      canonical:
+        destination.canonicalUrl ?? `/destinations/${destination.slug}`,
+    },
+    openGraph: {
+      type: "website",
+      title: destination.seoTitle ?? destination.name,
+      description:
+        destination.seoDescription ??
+        destination.summary ??
+        `Plan a chauffeur-driven journey to ${destination.name} with YATRA.`,
+      url: `/destinations/${destination.slug}`,
+      images: [
+        {
+          url: destination.heroUrl ?? "/assets/temple-hero.webp",
+          alt: `${destination.name} travel destination`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: destination.seoTitle ?? destination.name,
+      description:
+        destination.seoDescription ??
+        destination.summary ??
+        `Plan a chauffeur-driven journey to ${destination.name} with YATRA.`,
+      images: [destination.heroUrl ?? "/assets/temple-hero.webp"],
+    },
     robots: {
       index: destination.robotsIndex,
       follow: destination.robotsFollow,
@@ -86,8 +112,47 @@ export default async function DestinationDetailPage({
 
   const temple = destination.templeProfile;
 
+  const destinationSchema = {
+    "@context": "https://schema.org",
+    "@type": "TouristDestination",
+    "@id": `${appUrl(`/destinations/${destination.slug}`)}#destination`,
+    name: destination.name,
+    description: destination.summary ?? undefined,
+    url: appUrl(`/destinations/${destination.slug}`),
+    image: destination.heroUrl
+      ? [destination.heroUrl]
+      : [appUrl("/assets/temple-hero.webp")],
+    touristType:
+      destination.kind === "TEMPLE"
+        ? ["Pilgrims", "Spiritual travellers", "Families"]
+        : ["Leisure travellers", "Families", "Road-trip travellers"],
+  };
+
+  const templeSchema = temple
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Place",
+        name: temple.templeName,
+        description: temple.darshanNotes ?? destination.summary ?? undefined,
+        url: appUrl(`/destinations/${destination.slug}`),
+        containedInPlace: {
+          "@id": `${appUrl(`/destinations/${destination.slug}`)}#destination`,
+        },
+      }
+    : null;
+
+  const breadcrumbs = breadcrumbSchema([
+    { name: "Home", path: "/" },
+    { name: "Destinations", path: "/destinations" },
+    {
+      name: destination.name,
+      path: `/destinations/${destination.slug}`,
+    },
+  ]);
+
   return (
     <>
+      <JsonLd data={[destinationSchema, ...(templeSchema ? [templeSchema] : []), breadcrumbs]} />
       <section
         className="destination-detail-hero destination-detail-hero--live"
         style={{
