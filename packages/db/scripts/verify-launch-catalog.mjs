@@ -22,6 +22,7 @@ try {
     ["active launch pricing rules", "SELECT COUNT(*)::int AS count FROM \"PricingRule\" WHERE \"status\"='ACTIVE' AND \"id\" LIKE 'catalog-rate-%'", 9],
     ["open launch departures", "SELECT COUNT(*)::int AS count FROM \"PackageDeparture\" WHERE \"status\"='OPEN' AND \"id\" LIKE 'catalog-package-%-departure-%'", 15],
     ["published launch FAQs", "SELECT COUNT(*)::int AS count FROM \"Faq\" WHERE \"status\"='PUBLISHED' AND \"id\" LIKE 'catalog-faq-%'", 5],
+    ["published SEO travel guides", "SELECT COUNT(*)::int AS count FROM \"BlogPost\" WHERE \"status\"='PUBLISHED' AND \"id\" LIKE 'catalog-guide-%'", 5],
     ["launch promotion", "SELECT COUNT(*)::int AS count FROM \"Promotion\" WHERE \"status\"='ACTIVE' AND \"code\"='YATRA5'", 1],
   ];
 
