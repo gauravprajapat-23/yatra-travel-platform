@@ -2,7 +2,7 @@ import pg from "pg";
 
 const { Client } = pg;
 const baseUrl = (process.env.ADMIN_SMOKE_BASE_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "");
-const appOrigin = process.env.NEXT_PUBLIC_APP_URL ?? baseUrl;
+const appOrigin = process.env.APP_URL ?? baseUrl;
 const email = process.env.ADMIN_EMAIL;
 const password = process.env.ADMIN_PASSWORD;
 const databaseUrl = process.env.DATABASE_URL;
