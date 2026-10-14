@@ -5,8 +5,17 @@ import { getPublicDestinations } from "@/lib/public-destinations";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Destinations",
-  description: "Discover published temple towns, spiritual cities and road-trip destinations across India.",
+  title: "India Travel Destinations & Temple Tour Guides",
+  description:
+    "Explore YATRA destination guides for Ujjain, Omkareshwar, Indore, Bhopal, Maheshwar, Mandu, Sanchi, Varanasi and other meaningful India road journeys.",
+  alternates: { canonical: "/destinations" },
+  openGraph: {
+    title: "India Travel Destinations & Temple Tour Guides | YATRA",
+    description:
+      "Temple towns, heritage cities and meaningful private road-trip destinations across India.",
+    url: "/destinations",
+    images: [{ url: "/assets/temple-hero.webp", alt: "YATRA India destination guides" }],
+  },
 };
 
 export default async function DestinationsPage() {
