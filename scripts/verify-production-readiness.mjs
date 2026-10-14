@@ -15,7 +15,7 @@ function has(flag) {
 const rawBaseUrl =
   value("--url") ||
   process.env.PRODUCTION_URL ||
-  process.env.NEXT_PUBLIC_APP_URL ||
+  process.env.APP_URL ||
   "";
 
 function normalizeBaseUrl(raw) {
