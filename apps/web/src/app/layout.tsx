@@ -4,6 +4,7 @@ import "@/app/globals.css";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { ConsentAnalytics } from "@/components/consent-analytics";
+import { JsonLd, organizationSchema, websiteSchema } from "@/components/seo-json-ld";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -69,6 +70,7 @@ export default function RootLayout({
         <a className="skip-link" href="#main-content">
           Skip to content
         </a>
+        <JsonLd data={[organizationSchema(), websiteSchema()]} />
         <SiteHeader />
         <main id="main-content" tabIndex={-1}>{children}</main>
         <SiteFooter />
