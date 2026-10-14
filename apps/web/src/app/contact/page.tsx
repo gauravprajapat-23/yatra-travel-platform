@@ -3,8 +3,17 @@ import { ButtonLink } from "@/components/button-link";
 import { ContactForm } from "@/components/contact-form";
 
 export const metadata: Metadata = {
-  title: "Contact YATRA",
-  description: "Talk to YATRA about bookings, custom trips and travel support.",
+  title: "Contact YATRA for Tour & Car Booking Support",
+  description:
+    "Contact YATRA for chauffeur-driven car enquiries, tour packages, custom trip planning and existing booking support across India.",
+  alternates: { canonical: "/contact" },
+  openGraph: {
+    title: "Contact YATRA for Tour & Car Booking Support",
+    description:
+      "Get help with private car journeys, tour packages and custom travel planning across India.",
+    url: "/contact",
+    images: [{ url: "/assets/home-hero.webp", alt: "Contact YATRA travel support" }],
+  },
 };
 
 export default function ContactPage() {
