@@ -2,8 +2,17 @@ import type { Metadata } from "next";
 import { ButtonLink } from "@/components/button-link";
 
 export const metadata: Metadata = {
-  title: "Travel Offers",
-  description: "Current YATRA travel offer availability and custom trip assistance.",
+  title: "India Tour & Car Booking Offers",
+  description:
+    "Check current YATRA travel promotions and request a server-verified quote for private cars, temple circuits and curated India tour packages.",
+  alternates: { canonical: "/offers" },
+  openGraph: {
+    title: "India Tour & Car Booking Offers | YATRA",
+    description:
+      "Current verified YATRA travel promotions and private-trip quote options.",
+    url: "/offers",
+    images: [{ url: "/assets/packages-hero.webp", alt: "YATRA travel offers" }],
+  },
 };
 
 export default function OffersPage() {
