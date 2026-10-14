@@ -5,8 +5,17 @@ import { getPublicFleet } from "@/lib/public-fleet";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Cars & Fleet",
-  description: "Explore active YATRA chauffeur-driven vehicles for road journeys across India.",
+  title: "Chauffeur-Driven Cars for India Road Trips",
+  description:
+    "Explore YATRA chauffeur-driven Innova, MUV and SUV options for private road trips, temple tours, airport transfers and family travel across India.",
+  alternates: { canonical: "/cars" },
+  openGraph: {
+    title: "Chauffeur-Driven Cars for India Road Trips | YATRA",
+    description:
+      "Private chauffeur-driven cars for temple tours, family trips and long-distance journeys across India.",
+    url: "/cars",
+    images: [{ url: "/assets/car-innova.webp", alt: "YATRA chauffeur-driven car fleet" }],
+  },
 };
 
 export default async function CarsPage() {
