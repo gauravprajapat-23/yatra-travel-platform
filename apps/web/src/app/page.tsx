@@ -20,9 +20,24 @@ export const metadata: Metadata = {
 };
 
 const sacredJourneys = [
-  { title: "Mahakaleshwar", place: "Ujjain", objectPosition: "22% center" },
-  { title: "Omkareshwar", place: "Narmada", objectPosition: "52% center" },
-  { title: "Rameswaram", place: "Tamil Nadu", objectPosition: "82% center" },
+  {
+    title: "Mahakaleshwar",
+    place: "Ujjain",
+    href: "/destinations/ujjain",
+    objectPosition: "22% center",
+  },
+  {
+    title: "Omkareshwar",
+    place: "Narmada",
+    href: "/destinations/omkareshwar",
+    objectPosition: "52% center",
+  },
+  {
+    title: "Kashi Vishwanath",
+    place: "Varanasi",
+    href: "/destinations/varanasi",
+    objectPosition: "82% center",
+  },
 ];
 
 export default async function HomePage() {
@@ -59,7 +74,7 @@ export default async function HomePage() {
                 <div className="journey-card__body">
                   <h3>{journey.title}</h3>
                   <p>{journey.place}</p>
-                  <ButtonLink href="/packages" variant="ghost">View tours →</ButtonLink>
+                  <ButtonLink href={journey.href} variant="ghost">View destination →</ButtonLink>
                 </div>
               </article>
             ))}
