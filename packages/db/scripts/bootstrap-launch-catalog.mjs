@@ -370,6 +370,93 @@ const packages = [
   },
 ];
 
+const seoGuides = [
+  {
+    id: "catalog-guide-ujjain-mahakaleshwar",
+    slug: "ujjain-mahakaleshwar-travel-guide",
+    title: "Ujjain Mahakaleshwar Travel Guide: Planning a Comfortable Temple Journey",
+    excerpt: "How to plan a private Ujjain and Mahakaleshwar trip with realistic temple buffers, local sightseeing and road travel from Indore or Bhopal.",
+    category: "Temple Travel",
+    seoTitle: "Ujjain Mahakaleshwar Travel Guide & Private Car Planning",
+    seoDescription: "Plan a Ujjain Mahakaleshwar journey with temple timing buffers, private-car travel, nearby spiritual stops and practical trip planning.",
+    mediaId: "catalog-media-temple",
+    body: [
+      { id: "ujjain-guide-intro", type: "paragraph", data: { text: "Ujjain is one of central India's most important spiritual destinations, and Mahakaleshwar Jyotirlinga is the centre of most pilgrimage itineraries. A comfortable plan should leave room for temple security, queues, local traffic and changing ritual schedules instead of treating the city like a fixed-hour sightseeing stop." } },
+      { id: "ujjain-guide-plan-h", type: "heading", data: { text: "How to plan the journey", level: 2 } },
+      { id: "ujjain-guide-plan", type: "list", data: { items: ["Use Indore or Bhopal as a practical arrival point depending on your wider itinerary.", "Keep the Mahakaleshwar visit flexible because crowd levels vary by weekday, festival and ritual schedule.", "Add Harsiddhi Mata Temple, Ram Ghat, Kal Bhairav and Mangalnath only when the day has enough buffer.", "For families or senior travellers, avoid stacking a long road transfer immediately after a crowded temple visit."] } },
+      { id: "ujjain-guide-car-h", type: "heading", data: { text: "Why a private chauffeur-driven car helps", level: 2 } },
+      { id: "ujjain-guide-car", type: "paragraph", data: { text: "A private vehicle is useful when your trip combines Ujjain with Indore, Omkareshwar or Maheshwar. It keeps luggage, hotel transfers and intercity travel in one plan while allowing the temple portion of the day to stay flexible." } },
+      { id: "ujjain-guide-cta", type: "cta", data: { label: "Explore Ujjain & Omkareshwar Tour", href: "/packages/ujjain-omkareshwar-jyotirlinga", text: "See the published multi-day Jyotirlinga itinerary and current departure options." } }
+    ],
+  },
+  {
+    id: "catalog-guide-omkareshwar-indore",
+    slug: "omkareshwar-from-indore-private-car-guide",
+    title: "Omkareshwar from Indore: Private Car Trip Planning Guide",
+    excerpt: "A practical guide to planning an Omkareshwar Jyotirlinga road journey from Indore with temple, riverfront and return-trip considerations.",
+    category: "Road Trips",
+    seoTitle: "Omkareshwar from Indore by Car: Trip Planning Guide",
+    seoDescription: "Plan an Indore to Omkareshwar private-car trip with realistic temple buffers, Narmada-side walking time and flexible return travel.",
+    mediaId: "catalog-media-temple",
+    body: [
+      { id: "om-guide-intro", type: "paragraph", data: { text: "Omkareshwar is a natural road-trip choice from Indore for travellers who want a Jyotirlinga visit without changing transport multiple times. The destination combines temple access, walking, steps and riverfront movement, so the itinerary should allow more time than the road transfer alone suggests." } },
+      { id: "om-guide-day-h", type: "heading", data: { text: "A realistic day-trip structure", level: 2 } },
+      { id: "om-guide-day", type: "list", data: { items: ["Leave enough time for traffic and a calm arrival rather than planning around a single exact temple-entry minute.", "Keep footwear and luggage practical because the temple and ghat areas involve walking.", "Check local river and monsoon conditions before relying on any optional river-related activity.", "If combining Omkareshwar with Maheshwar, consider an overnight or a slower two-day plan instead of compressing both destinations."] } },
+      { id: "om-guide-cta", type: "cta", data: { label: "View Omkareshwar Destination Guide", href: "/destinations/omkareshwar", text: "Review the published destination notes before building your route." } }
+    ],
+  },
+  {
+    id: "catalog-guide-bhopal-ujjain",
+    slug: "bhopal-to-ujjain-car-travel-guide",
+    title: "Bhopal to Ujjain by Car: What to Plan Before Your Journey",
+    excerpt: "Planning notes for a chauffeur-driven Bhopal to Ujjain road trip, including temple timing, comfort stops and onward Madhya Pradesh circuits.",
+    category: "Road Trips",
+    seoTitle: "Bhopal to Ujjain by Car: Chauffeur-Driven Travel Guide",
+    seoDescription: "Plan a Bhopal to Ujjain private-car journey with temple timing buffers, comfortable road breaks and onward options to Indore or Omkareshwar.",
+    mediaId: "catalog-media-home",
+    body: [
+      { id: "bhopal-ujjain-intro", type: "paragraph", data: { text: "A Bhopal to Ujjain road journey works well for families and spiritual travellers who want direct door-to-door travel without changing trains or local vehicles. The best itinerary depends on whether Ujjain is the final destination or the first stop in a longer Madhya Pradesh circuit." } },
+      { id: "bhopal-ujjain-plan-h", type: "heading", data: { text: "Plan around the purpose of the trip", level: 2 } },
+      { id: "bhopal-ujjain-plan", type: "paragraph", data: { text: "If Mahakaleshwar is the main purpose, schedule enough buffer after arrival before important temple activities. If the trip continues to Indore or Omkareshwar, use Ujjain as a proper stop instead of treating it as a quick roadside visit." } },
+      { id: "bhopal-ujjain-vehicle-h", type: "heading", data: { text: "Choosing the vehicle", level: 2 } },
+      { id: "bhopal-ujjain-vehicle", type: "paragraph", data: { text: "For small groups, luggage volume and passenger comfort matter more than choosing the largest vehicle. An MPV such as an Innova Crysta is often suitable for longer family journeys, while a value MUV can work well for lighter luggage and smaller budgets." } },
+      { id: "bhopal-ujjain-cta", type: "cta", data: { label: "Explore Chauffeur-Driven Cars", href: "/cars", text: "Compare the active YATRA fleet before requesting a server-verified quote." } }
+    ],
+  },
+  {
+    id: "catalog-guide-maheshwar-mandu",
+    slug: "maheshwar-mandu-road-trip-itinerary",
+    title: "Maheshwar and Mandu Road Trip: A Relaxed Heritage Itinerary",
+    excerpt: "How to combine Maheshwar's Narmada riverfront with Mandu's hilltop monuments in a comfortable private road itinerary.",
+    category: "Heritage Travel",
+    seoTitle: "Maheshwar & Mandu Road Trip Itinerary by Private Car",
+    seoDescription: "Plan a Maheshwar and Mandu private-car itinerary with Narmada ghats, Ahilya Fort and Mandu's major heritage monuments.",
+    mediaId: "catalog-media-home",
+    body: [
+      { id: "maheshwar-mandu-intro", type: "paragraph", data: { text: "Maheshwar and Mandu complement each other well: one is centred on the Narmada riverfront, fort and temple landscape, while the other spreads across a large hilltop heritage zone. A private-car itinerary lets you move between the two without rushing the walking portions of either destination." } },
+      { id: "maheshwar-mandu-order-h", type: "heading", data: { text: "A practical two-stop sequence", level: 2 } },
+      { id: "maheshwar-mandu-order", type: "list", data: { items: ["Give Maheshwar enough time for Ahilya Fort, the ghats and old-town exploration.", "Keep Mandu for a separate half-day or full-day block because the monuments are geographically spread out.", "During hotter months, move the most exposed monument visits away from the harshest part of the day.", "Use Indore as a convenient arrival or departure base when the trip is part of a broader central India circuit."] } },
+      { id: "maheshwar-mandu-cta", type: "cta", data: { label: "View Maheshwar & Mandu Tour", href: "/packages/indore-maheshwar-mandu", text: "See the published three-day heritage route." } }
+    ],
+  },
+  {
+    id: "catalog-guide-varanasi",
+    slug: "varanasi-spiritual-trip-planning-guide",
+    title: "Varanasi Spiritual Trip Planning Guide: Temples, Ghats and Transfers",
+    excerpt: "Plan a Varanasi spiritual journey by separating old-city walking, temple time, riverfront experiences and private transfers.",
+    category: "Temple Travel",
+    seoTitle: "Varanasi Spiritual Trip Guide: Temples, Ghats & Transfers",
+    seoDescription: "Plan a Varanasi spiritual journey with realistic temple buffers, ghat time, Sarnath excursions and private airport or railway transfers.",
+    mediaId: "catalog-media-temple",
+    body: [
+      { id: "varanasi-guide-intro", type: "paragraph", data: { text: "Varanasi is best planned as several different travel experiences rather than one continuous car itinerary. Private transport is especially useful for airport or railway transfers and Sarnath, while many old-city and ghat experiences involve walking." } },
+      { id: "varanasi-guide-plan-h", type: "heading", data: { text: "Separate vehicle time from old-city time", level: 2 } },
+      { id: "varanasi-guide-plan", type: "list", data: { items: ["Allow extra time for Kashi Vishwanath security and current entry procedures.", "Treat ghat exploration as a walking-first activity and keep vehicle pickup points flexible.", "Use a separate block for Sarnath instead of squeezing it between temple visits.", "Reconfirm current temple, aarti and local access rules close to the travel date."] } },
+      { id: "varanasi-guide-cta", type: "cta", data: { label: "Explore Varanasi Spiritual Journey", href: "/packages/varanasi-spiritual-journey", text: "See YATRA's published three-day Varanasi itinerary." } }
+    ],
+  },
+];
+
 const legalPages = [
   {
     id: "catalog-cms-privacy-policy",
@@ -667,6 +754,63 @@ try {
         [pkg.id + "-departure-" + (index + 1), packageId, startsAt, endsAt, publishedAt, salesCloseAt, "Launch catalog scheduled departure"],
       );
     }
+  }
+
+  await client.query(
+    `INSERT INTO "BlogCategory" ("id","slug","name","description","createdAt","updatedAt")
+     VALUES
+       ('catalog-blog-temple','temple-travel','Temple Travel','Temple and pilgrimage planning guides.',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
+       ('catalog-blog-road','road-trips','Road Trips','Private road-trip planning guides across India.',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
+       ('catalog-blog-heritage','heritage-travel','Heritage Travel','Heritage itineraries and destination planning guides.',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+     ON CONFLICT ("slug") DO UPDATE SET
+       "name"=EXCLUDED."name",
+       "description"=EXCLUDED."description",
+       "updatedAt"=CURRENT_TIMESTAMP`
+  );
+
+  for (const guide of seoGuides) {
+    const categorySlug =
+      guide.category === "Temple Travel"
+        ? "temple-travel"
+        : guide.category === "Heritage Travel"
+          ? "heritage-travel"
+          : "road-trips";
+    const category = await client.query(
+      `SELECT "id" FROM "BlogCategory" WHERE "slug"=$1`,
+      [categorySlug],
+    );
+
+    await client.query(
+      `INSERT INTO "BlogPost"
+        ("id","slug","title","excerpt","body","status","categoryId","heroMediaId","publishedAt",
+         "seoTitle","seoDescription","robotsIndex","robotsFollow","createdAt","updatedAt")
+       VALUES ($1,$2,$3,$4,$5::jsonb,'PUBLISHED'::"ContentStatus",$6,$7,$8,$9,$10,true,true,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+       ON CONFLICT ("slug") DO UPDATE SET
+         "title"=EXCLUDED."title",
+         "excerpt"=EXCLUDED."excerpt",
+         "body"=EXCLUDED."body",
+         "status"='PUBLISHED'::"ContentStatus",
+         "categoryId"=EXCLUDED."categoryId",
+         "heroMediaId"=EXCLUDED."heroMediaId",
+         "publishedAt"=EXCLUDED."publishedAt",
+         "seoTitle"=EXCLUDED."seoTitle",
+         "seoDescription"=EXCLUDED."seoDescription",
+         "robotsIndex"=true,
+         "robotsFollow"=true,
+         "updatedAt"=CURRENT_TIMESTAMP`,
+      [
+        guide.id,
+        guide.slug,
+        guide.title,
+        guide.excerpt,
+        json(guide.body),
+        category.rows[0].id,
+        guide.mediaId,
+        publishedAt,
+        guide.seoTitle,
+        guide.seoDescription,
+      ],
+    );
   }
 
   for (const page of legalPages) {
