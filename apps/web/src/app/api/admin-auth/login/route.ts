@@ -37,7 +37,7 @@ function serviceUnavailable(code: string) {
 function sameOrigin(request: Request): boolean {
   if (process.env.NODE_ENV !== "production") return true;
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  const appUrl = process.env.APP_URL?.trim();
   if (!appUrl) return false;
 
   const origin = request.headers.get("origin");
