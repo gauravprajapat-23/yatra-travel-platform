@@ -12,7 +12,7 @@ function allowInsecureCiSessionCookie(): boolean {
     return false;
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  const appUrl = process.env.APP_URL?.trim();
   if (!appUrl) return false;
 
   try {
